@@ -1,0 +1,36 @@
+import { GridItemEight, GridItemFour, GridLayout } from '@components/GridLayout'
+import Footer from '@components/Shared/Footer'
+import PostShimmer from '@components/Shared/Shimmer/PublicationShimmer'
+import PublicationsShimmer from '@components/Shared/Shimmer/PublicationsShimmer'
+import UserProfileShimmer from '@components/Shared/Shimmer/UserProfileShimmer'
+import { Card, CardBody } from '@components/UI/Card'
+import React, { FC } from 'react'
+
+const PublicationPageShimmer: FC = () => {
+  return (
+    <GridLayout>
+      <GridItemEight className="space-y-5">
+        <Card>
+          <PostShimmer />
+        </Card>
+        <PublicationsShimmer />
+      </GridItemEight>
+      <GridItemFour className="space-y-5">
+        <Card>
+          <CardBody>
+            <UserProfileShimmer />
+          </CardBody>
+        </Card>
+        <Card>
+          <CardBody className="flex justify-between">
+            <div className="w-1/2 h-3 rounded-lg shimmer" />
+            <div className="w-1/4 h-3 rounded-lg shimmer" />
+          </CardBody>
+        </Card>
+        <Footer />
+      </GridItemFour>
+    </GridLayout>
+  )
+}
+
+export default PublicationPageShimmer

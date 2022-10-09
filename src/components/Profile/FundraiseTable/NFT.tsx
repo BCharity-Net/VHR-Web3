@@ -1,5 +1,5 @@
 import { gql, useQuery } from '@apollo/client'
-import { Profile, ProfileFeedDocument, PublicationTypes } from '@generated/types'
+import { ProfileFeedDocument, PublicationTypes } from '@generated/types'
 import { FC } from 'react'
 import { useAppStore } from 'src/store/app'
 

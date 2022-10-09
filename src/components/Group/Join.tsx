@@ -4,48 +4,18 @@ import { Button } from '@components/UI/Button'
 import { Spinner } from '@components/UI/Spinner'
 import useBroadcast from '@components/utils/hooks/useBroadcast'
 import { Group } from '@generated/bcharitytypes'
-import { CreateCollectBroadcastItemResult, Mutation } from '@generated/types'
+import { CreateCollectBroadcastItemResult, CreateCollectTypedDataDocument, Mutation } from '@generated/types'
 import { PlusIcon } from '@heroicons/react/outline'
 import getSignature from '@lib/getSignature'
 import { Mixpanel } from '@lib/mixpanel'
 import onError from '@lib/onError'
 import splitSignature from '@lib/splitSignature'
-import React, { Dispatch, FC } from 'react'
+import { Dispatch, FC } from 'react'
 import toast from 'react-hot-toast'
 import { LENSHUB_PROXY, RELAY_ON, SIGN_WALLET } from 'src/constants'
 import { useAppStore } from 'src/store/app'
 import { GROUP } from 'src/tracking'
 import { useAccount, useContractWrite, useSignTypedData } from 'wagmi'
-
-const CREATE_COLLECT_TYPED_DATA_MUTATION = gql`
-  mutation CreateCollectTypedData($options: TypedDataOptions, $request: CreateCollectRequest!) {
-    createCollectTypedData(options: $options, request: $request) {
-      id
-      expiresAt
-      typedData {
-        types {
-          CollectWithSig {
-            name
-            type
-          }
-        }
-        domain {
-          name
-          chainId
-          version
-          verifyingContract
-        }
-        value {
-          nonce
-          deadline
-          profileId
-          pubId
-          data
-        }
-      }
-    }
-  }
-`
 
 interface Props {
   group: Group
@@ -77,7 +47,7 @@ const Join: FC<Props> = ({ group, setJoined, showJoin = true }) => {
 
   const { broadcast, loading: broadcastLoading } = useBroadcast({ onCompleted })
   const [createCollectTypedData, { loading: typedDataLoading }] = useMutation<Mutation>(
-    CREATE_COLLECT_TYPED_DATA_MUTATION,
+    CreateCollectTypedDataDocument,
     {
       onCompleted: async ({
         createCollectTypedData

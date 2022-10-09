@@ -1,7 +1,5 @@
 import { gql, useQuery } from '@apollo/client'
-import { CommentFields } from '@gql/CommentFields'
-import { MirrorFields } from '@gql/MirrorFields'
-import { PostFields } from '@gql/PostFields'
+import { Profile, ProfileFeedDocument, PublicationTypes } from '@generated/types'
 import { FC } from 'react'
 import { useAppStore } from 'src/store/app'
 
@@ -13,35 +11,6 @@ const PROFILE_QUERY = gql`
       id
     }
   }
-`
-
-const PROFILE_FEED_QUERY = gql`
-  query ProfileFeed(
-    $request: PublicationsQueryRequest!
-    $reactionRequest: ReactionFieldResolverRequest
-    $profileId: ProfileId
-  ) {
-    publications(request: $request) {
-      items {
-        ... on Post {
-          ...PostFields
-        }
-        ... on Comment {
-          ...CommentFields
-        }
-        ... on Mirror {
-          ...MirrorFields
-        }
-      }
-      pageInfo {
-        totalCount
-        next
-      }
-    }
-  }
-  ${PostFields}
-  ${CommentFields}
-  ${MirrorFields}
 `
 
 interface ProfileProps {
@@ -58,10 +27,10 @@ interface Props {
 const Profile: FC<ProfileProps> = ({ id, nft, callback }) => {
   const currentProfile = useAppStore((state) => state.currentProfile)
 
-  useQuery(PROFILE_FEED_QUERY, {
+  useQuery(ProfileFeedDocument, {
     variables: {
       request: {
-        publicationTypes: 'POST',
+        publicationTypes: [PublicationTypes.Post],
         profileId: id
       },
       reactionRequest: currentProfile ? { profileId: currentProfile?.id } : null,

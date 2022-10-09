@@ -1,5 +1,5 @@
 import { LensHubProxy } from '@abis/LensHubProxy'
-import { gql, useMutation, useQuery } from '@apollo/client'
+import { useMutation, useQuery } from '@apollo/client'
 import IndexStatus from '@components/Shared/IndexStatus'
 import { Button } from '@components/UI/Button'
 import { Card } from '@components/UI/Card'
@@ -7,14 +7,19 @@ import { Form, useZodForm } from '@components/UI/Form'
 import { Input } from '@components/UI/Input'
 import { Spinner } from '@components/UI/Spinner'
 import useBroadcast from '@components/utils/hooks/useBroadcast'
-import { CreateSetFollowModuleBroadcastItemResult, Erc20, Mutation } from '@generated/types'
+import {
+  CreateSetFollowModuleTypedDataDocument,
+  EnabledCurrencyModulesWithProfileDocument,
+  Erc20,
+  Mutation
+} from '@generated/types'
 import { StarIcon, XIcon } from '@heroicons/react/outline'
 import getSignature from '@lib/getSignature'
 import getTokenImage from '@lib/getTokenImage'
 import { Mixpanel } from '@lib/mixpanel'
 import onError from '@lib/onError'
 import splitSignature from '@lib/splitSignature'
-import React, { FC, useState } from 'react'
+import { FC, useState } from 'react'
 import toast from 'react-hot-toast'
 import { useTranslation } from 'react-i18next'
 import { ADDRESS_REGEX, DEFAULT_COLLECT_TOKEN, LENSHUB_PROXY, RELAY_ON, SIGN_WALLET } from 'src/constants'
@@ -22,55 +27,6 @@ import { useAppStore } from 'src/store/app'
 import { SETTINGS } from 'src/tracking'
 import { useContractWrite, useSignTypedData } from 'wagmi'
 import { object, string } from 'zod'
-
-const MODULES_CURRENCY_QUERY = gql`
-  query EnabledCurrencyModules($request: SingleProfileQueryRequest!) {
-    enabledModuleCurrencies {
-      name
-      symbol
-      decimals
-      address
-    }
-    profile(request: $request) {
-      followModule {
-        __typename
-      }
-    }
-  }
-`
-
-export const CREATE_SET_FOLLOW_MODULE_TYPED_DATA_MUTATION = gql`
-  mutation CreateSetFollowModuleTypedData(
-    $options: TypedDataOptions
-    $request: CreateSetFollowModuleRequest!
-  ) {
-    createSetFollowModuleTypedData(options: $options, request: $request) {
-      id
-      expiresAt
-      typedData {
-        types {
-          SetFollowModuleWithSig {
-            name
-            type
-          }
-        }
-        domain {
-          name
-          chainId
-          version
-          verifyingContract
-        }
-        value {
-          nonce
-          deadline
-          profileId
-          followModule
-          followModuleInitData
-        }
-      }
-    }
-  }
-`
 
 const SuperFollow: FC = () => {
   const userSigNonce = useAppStore((state) => state.userSigNonce)
@@ -80,7 +36,7 @@ const SuperFollow: FC = () => {
   const [selectedCurrency, setSelectedCurrency] = useState(DEFAULT_COLLECT_TOKEN)
   const [selectedCurrencySymobol, setSelectedCurrencySymobol] = useState('WMATIC')
   const { isLoading: signLoading, signTypedDataAsync } = useSignTypedData({ onError })
-  const { data: currencyData, loading } = useQuery(MODULES_CURRENCY_QUERY, {
+  const { data: currencyData, loading } = useQuery(EnabledCurrencyModulesWithProfileDocument, {
     variables: { request: { profileId: currentProfile?.id } },
     skip: !currentProfile?.id
   })
@@ -118,16 +74,12 @@ const SuperFollow: FC = () => {
 
   const { broadcast, data: broadcastData, loading: broadcastLoading } = useBroadcast({ onCompleted })
   const [createSetFollowModuleTypedData, { loading: typedDataLoading }] = useMutation<Mutation>(
-    CREATE_SET_FOLLOW_MODULE_TYPED_DATA_MUTATION,
+    CreateSetFollowModuleTypedDataDocument,
     {
-      onCompleted: async ({
-        createSetFollowModuleTypedData
-      }: {
-        createSetFollowModuleTypedData: CreateSetFollowModuleBroadcastItemResult
-      }) => {
+      onCompleted: async ({ createSetFollowModuleTypedData }) => {
         try {
           const { id, typedData } = createSetFollowModuleTypedData
-          const { profileId, followModule, followModuleInitData, deadline } = typedData?.value
+          const { profileId, followModule, followModuleInitData, deadline } = typedData.value
           const signature = await signTypedDataAsync(getSignature(typedData))
           const { v, r, s } = splitSignature(signature)
           const sig = { v, r, s, deadline }
@@ -195,7 +147,7 @@ const SuperFollow: FC = () => {
     )
   }
 
-  const followType = currencyData?.profile?.followModule.__typename
+  const followType = currencyData?.profile?.followModule?.__typename
 
   return (
     <Card>

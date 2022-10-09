@@ -1,13 +1,12 @@
 import { useMutation } from '@apollo/client'
-import { HIDE_POST_MUTATION } from '@components/Publication/Actions/Menu/Delete'
 import { Button } from '@components/UI/Button'
 import { WarningMessage } from '@components/UI/WarningMessage'
 import { Group } from '@generated/bcharitytypes'
-import { Mutation } from '@generated/types'
+import { HidePublicationDocument, Mutation } from '@generated/types'
 import { TrashIcon } from '@heroicons/react/outline'
 import { Mixpanel } from '@lib/mixpanel'
 import { useRouter } from 'next/router'
-import React, { FC } from 'react'
+import { FC } from 'react'
 import { GROUP } from 'src/tracking'
 
 interface Props {
@@ -16,7 +15,7 @@ interface Props {
 
 const Settings: FC<Props> = ({ group }) => {
   const { push } = useRouter()
-  const [hidePost] = useMutation<Mutation>(HIDE_POST_MUTATION, {
+  const [hidePost] = useMutation<Mutation>(HidePublicationDocument, {
     onCompleted: () => {
       Mixpanel.track(GROUP.SETTINGS.DELETE)
       push('/')

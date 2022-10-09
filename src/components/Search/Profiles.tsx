@@ -1,35 +1,18 @@
-import { gql, useQuery } from '@apollo/client'
+import { useQuery } from '@apollo/client'
 import UserProfilesShimmer from '@components/Shared/Shimmer/UserProfilesShimmer'
 import UserProfile from '@components/Shared/UserProfile'
-import { Card, CardBody } from '@components/UI/Card'
+import { Card } from '@components/UI/Card'
 import { EmptyState } from '@components/UI/EmptyState'
 import { ErrorMessage } from '@components/UI/ErrorMessage'
 import { Spinner } from '@components/UI/Spinner'
-import { CustomFiltersTypes, Profile } from '@generated/types'
-import { ProfileFields } from '@gql/ProfileFields'
+import { CustomFiltersTypes, Profile, SearchProfilesDocument, SearchRequestTypes } from '@generated/types'
 import { UsersIcon } from '@heroicons/react/outline'
 import { Mixpanel } from '@lib/mixpanel'
-import React, { FC } from 'react'
+import { FC } from 'react'
 import { useInView } from 'react-cool-inview'
 import { useTranslation } from 'react-i18next'
+import { PAGINATION_ROOT_MARGIN } from 'src/constants'
 import { PAGINATION } from 'src/tracking'
-
-const SEARCH_PROFILES_QUERY = gql`
-  query SearchProfiles($request: SearchQueryRequest!) {
-    search(request: $request) {
-      ... on ProfileSearchResult {
-        items {
-          ...ProfileFields
-        }
-        pageInfo {
-          next
-          totalCount
-        }
-      }
-    }
-  }
-  ${ProfileFields}
-`
 
 interface Props {
   query: string | string[]
@@ -39,14 +22,21 @@ const Profiles: FC<Props> = ({ query }) => {
   const { t } = useTranslation('common')
 
   // Variables
-  const request = { query, type: 'PROFILE', customFilters: [CustomFiltersTypes.Gardeners], limit: 10 }
+  const request = {
+    query,
+    type: SearchRequestTypes.Profile,
+    customFilters: [CustomFiltersTypes.Gardeners],
+    limit: 10
+  }
 
-  const { data, loading, error, fetchMore } = useQuery(SEARCH_PROFILES_QUERY, {
+  const { data, loading, error, fetchMore } = useQuery(SearchProfilesDocument, {
     variables: { request },
     skip: !query
   })
 
+  // @ts-ignore
   const profiles = data?.search?.items
+  // @ts-ignore
   const pageInfo = data?.search?.pageInfo
 
   const { observe } = useInView({
@@ -59,40 +49,44 @@ const Profiles: FC<Props> = ({ query }) => {
         variables: { request: { ...request, cursor: pageInfo?.next } }
       })
       Mixpanel.track(PAGINATION.PROFILE_SEARCH)
-    }
+    },
+    rootMargin: PAGINATION_ROOT_MARGIN
   })
+
+  if (loading) {
+    return <UserProfilesShimmer isBig />
+  }
+
+  if (profiles?.length === 0) {
+    return (
+      <EmptyState
+        message={
+          <div>
+            No profiles for <b>&ldquo;{query}&rdquo;</b>
+          </div>
+        }
+        icon={<UsersIcon className="w-8 h-8 text-brand" />}
+      />
+    )
+  }
+
+  if (error) {
+    return <ErrorMessage title="Failed to load profiles" error={error} />
+  }
 
   return (
     <>
-      {loading && <UserProfilesShimmer isBig />}
-      {profiles?.length === 0 && (
-        <EmptyState
-          message={
-            <div>
-              {t('No profiles for')} <b>&ldquo;{query}&rdquo;</b>
-            </div>
-          }
-          icon={<UsersIcon className="w-8 h-8 text-brand" />}
-        />
-      )}
-      <ErrorMessage title="Failed to load profiles list" error={error} />
-      {!error && !loading && (
-        <>
-          <div className="space-y-3">
-            {profiles?.map((profile: Profile) => (
-              <Card key={profile?.id}>
-                <CardBody>
-                  <UserProfile profile={profile} showBio isBig />
-                </CardBody>
-              </Card>
-            ))}
-          </div>
-          {pageInfo?.next && profiles?.length !== pageInfo?.totalCount && (
-            <span ref={observe} className="flex justify-center p-5">
-              <Spinner size="sm" />
-            </span>
-          )}
-        </>
+      <div className="space-y-3">
+        {profiles?.map((profile: Profile) => (
+          <Card key={profile?.id} className="p-5">
+            <UserProfile profile={profile} showBio isBig />
+          </Card>
+        ))}
+      </div>
+      {pageInfo?.next && profiles?.length !== pageInfo.totalCount && (
+        <span ref={observe} className="flex justify-center p-5">
+          <Spinner size="sm" />
+        </span>
       )}
     </>
   )

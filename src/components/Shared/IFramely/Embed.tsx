@@ -1,6 +1,6 @@
 import { Card } from '@components/UI/Card'
 import { Mixpanel } from '@lib/mixpanel'
-import React, { FC } from 'react'
+import { FC } from 'react'
 import { PUBLICATION } from 'src/tracking'
 
 interface Props {

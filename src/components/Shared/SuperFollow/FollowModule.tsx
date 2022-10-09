@@ -1,13 +1,19 @@
 import { LensHubProxy } from '@abis/LensHubProxy'
-import { gql, useMutation, useQuery } from '@apollo/client'
-import { ALLOWANCE_SETTINGS_QUERY } from '@components/Settings/Allowance'
+import { useMutation, useQuery } from '@apollo/client'
 import AllowanceButton from '@components/Settings/Allowance/Button'
 import { Button } from '@components/UI/Button'
 import { Spinner } from '@components/UI/Spinner'
 import { WarningMessage } from '@components/UI/WarningMessage'
 import useBroadcast from '@components/utils/hooks/useBroadcast'
 import { BCharityFollowModule } from '@generated/bcharitytypes'
-import { CreateFollowBroadcastItemResult, FeeFollowModuleSettings, Mutation, Profile } from '@generated/types'
+import {
+  ApprovedModuleAllowanceAmountDocument,
+  CreateFollowTypedDataDocument,
+  FollowModules,
+  Mutation,
+  Profile,
+  SuperFollowDocument
+} from '@generated/types'
 import { StarIcon, UserIcon } from '@heroicons/react/outline'
 import formatAddress from '@lib/formatAddress'
 import getSignature from '@lib/getSignature'
@@ -26,57 +32,6 @@ import { useAccount, useBalance, useContractWrite, useSignTypedData } from 'wagm
 import Loader from '../Loader'
 import Slug from '../Slug'
 import Uniswap from '../Uniswap'
-
-const SUPER_FOLLOW_QUERY = gql`
-  query SuperFollow($request: SingleProfileQueryRequest!) {
-    profile(request: $request) {
-      id
-      followModule {
-        ... on FeeFollowModuleSettings {
-          amount {
-            asset {
-              name
-              symbol
-              decimals
-              address
-            }
-            value
-          }
-          recipient
-        }
-      }
-    }
-  }
-`
-
-const CREATE_FOLLOW_TYPED_DATA_MUTATION = gql`
-  mutation CreateFollowTypedData($request: FollowRequest!) {
-    createFollowTypedData(request: $request) {
-      id
-      expiresAt
-      typedData {
-        domain {
-          name
-          chainId
-          version
-          verifyingContract
-        }
-        types {
-          FollowWithSig {
-            name
-            type
-          }
-        }
-        value {
-          nonce
-          deadline
-          profileIds
-          datas
-        }
-      }
-    }
-  }
-`
 
 interface Props {
   profile: Profile
@@ -110,18 +65,18 @@ const FollowModule: FC<Props> = ({ profile, setFollowing, setShowFollowModal, ag
     onError
   })
 
-  const { data, loading } = useQuery(SUPER_FOLLOW_QUERY, {
+  const { data, loading } = useQuery(SuperFollowDocument, {
     variables: { request: { profileId: profile?.id } },
     skip: !profile?.id
   })
 
-  const followModule: FeeFollowModuleSettings = data?.profile?.followModule
+  const followModule: any = data?.profile?.followModule
 
-  const { data: allowanceData, loading: allowanceLoading } = useQuery(ALLOWANCE_SETTINGS_QUERY, {
+  const { data: allowanceData, loading: allowanceLoading } = useQuery(ApprovedModuleAllowanceAmountDocument, {
     variables: {
       request: {
         currencies: followModule?.amount?.asset?.address,
-        followModules: 'FeeFollowModule',
+        followModules: [FollowModules.FeeFollowModule],
         collectModules: [],
         referenceModules: []
       }
@@ -148,16 +103,12 @@ const FollowModule: FC<Props> = ({ profile, setFollowing, setShowFollowModal, ag
 
   const { broadcast, loading: broadcastLoading } = useBroadcast({ onCompleted })
   const [createFollowTypedData, { loading: typedDataLoading }] = useMutation<Mutation>(
-    CREATE_FOLLOW_TYPED_DATA_MUTATION,
+    CreateFollowTypedDataDocument,
     {
-      onCompleted: async ({
-        createFollowTypedData
-      }: {
-        createFollowTypedData: CreateFollowBroadcastItemResult
-      }) => {
+      onCompleted: async ({ createFollowTypedData }) => {
         try {
           const { id, typedData } = createFollowTypedData
-          const { profileIds, datas: followData, deadline } = typedData?.value
+          const { profileIds, datas: followData, deadline } = typedData.value
           const signature = await signTypedDataAsync(getSignature(typedData))
           const { v, r, s } = splitSignature(signature)
           const sig = { v, r, s, deadline }

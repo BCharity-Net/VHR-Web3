@@ -1,0 +1,16 @@
+query BCharityStats {
+  globalProtocolStats(request: { sources: "BCharity" }) {
+    totalProfiles
+    totalPosts
+    totalBurntProfiles
+    totalMirrors
+    totalComments
+    totalCollects
+    totalFollows
+  }
+  fundraiseStats: globalProtocolStats(
+      request: { sources: "${APP_NAME} Fundraise" }
+    ) {
+      totalPosts
+    }
+}

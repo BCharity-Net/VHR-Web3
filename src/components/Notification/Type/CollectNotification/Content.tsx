@@ -3,7 +3,7 @@ import { NewCollectNotification } from '@generated/types'
 import getIPFSLink from '@lib/getIPFSLink'
 import imagekitURL from '@lib/imagekitURL'
 import Link from 'next/link'
-import React, { FC } from 'react'
+import { FC } from 'react'
 
 interface Props {
   notification: NewCollectNotification

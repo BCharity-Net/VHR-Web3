@@ -1,12 +1,13 @@
 import { gql, useQuery } from '@apollo/client'
-import { GridItemFour, GridLayout } from '@components/GridLayout'
+import { GridItemFour, GridLayout } from '@components/UI/GridLayout'
 import { PageLoading } from '@components/UI/PageLoading'
-import Seo from '@components/utils/Seo'
+import MetaTags from '@components/utils/MetaTags'
+import { GroupDocument } from '@generated/types'
 import { GroupFields } from '@gql/GroupFields'
 import { ChartBarIcon, FireIcon, SparklesIcon } from '@heroicons/react/outline'
 import { Mixpanel } from '@lib/mixpanel'
 import { NextPage } from 'next'
-import React, { useEffect } from 'react'
+import { useEffect } from 'react'
 import { useTranslation } from 'react-i18next'
 import { APP_NAME } from 'src/constants'
 import Custom500 from 'src/pages/500'
@@ -15,7 +16,7 @@ import { PAGEVIEW } from 'src/tracking'
 import List from './List'
 
 const GROUP_QUERY = gql`
-  query (
+  query Group(
     $topCommented: ExplorePublicationRequest!
     $topCollected: ExplorePublicationRequest!
     $latest: ExplorePublicationRequest!
@@ -84,7 +85,7 @@ const Groups: NextPage = () => {
 
   return (
     <GridLayout>
-      <Seo title={`Groups • ${APP_NAME}`} />
+      <MetaTags title={`Groups • ${APP_NAME}`} />
       <GridItemFour>
         <div className="flex items-center mb-2 space-x-1.5 font-bold text-gray-500">
           <FireIcon className="w-5 h-5 text-yellow-500" />

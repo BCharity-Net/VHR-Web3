@@ -1,4 +1,4 @@
-import { gql, useQuery } from '@apollo/client'
+import { useQuery } from '@apollo/client'
 import SinglePublication from '@components/Publication/SinglePublication'
 import PublicationsShimmer from '@components/Shared/Shimmer/PublicationsShimmer'
 import { Card } from '@components/UI/Card'
@@ -6,50 +6,18 @@ import { EmptyState } from '@components/UI/EmptyState'
 import { ErrorMessage } from '@components/UI/ErrorMessage'
 import { Spinner } from '@components/UI/Spinner'
 import { BCharityPublication } from '@generated/bcharitytypes'
-import { CustomFiltersTypes, PublicationSortCriteria } from '@generated/types'
-import { CommentFields } from '@gql/CommentFields'
-import { MirrorFields } from '@gql/MirrorFields'
-import { PostFields } from '@gql/PostFields'
+import { CustomFiltersTypes, ExploreFeedDocument, PublicationSortCriteria } from '@generated/types'
 import { CollectionIcon } from '@heroicons/react/outline'
 import { Mixpanel } from '@lib/mixpanel'
-import React, { FC } from 'react'
+import { FC } from 'react'
 import { useInView } from 'react-cool-inview'
 import { useTranslation } from 'react-i18next'
 import { PAGINATION_ROOT_MARGIN } from 'src/constants'
 import { useAppStore } from 'src/store/app'
 import { PAGINATION } from 'src/tracking'
 
-export const EXPLORE_FEED_QUERY = gql`
-  query ExploreFeed(
-    $request: ExplorePublicationRequest!
-    $reactionRequest: ReactionFieldResolverRequest
-    $profileId: ProfileId
-  ) {
-    explorePublications(request: $request) {
-      items {
-        ... on Post {
-          ...PostFields
-        }
-        ... on Comment {
-          ...CommentFields
-        }
-        ... on Mirror {
-          ...MirrorFields
-        }
-      }
-      pageInfo {
-        totalCount
-        next
-      }
-    }
-  }
-  ${PostFields}
-  ${CommentFields}
-  ${MirrorFields}
-`
-
 interface Props {
-  feedType?: string
+  feedType?: PublicationSortCriteria
 }
 
 const Feed: FC<Props> = ({ feedType = PublicationSortCriteria.CuratedProfiles }) => {
@@ -66,7 +34,7 @@ const Feed: FC<Props> = ({ feedType = PublicationSortCriteria.CuratedProfiles })
   const reactionRequest = currentProfile ? { profileId: currentProfile?.id } : null
   const profileId = currentProfile?.id ?? null
 
-  const { data, loading, error, fetchMore } = useQuery(EXPLORE_FEED_QUERY, {
+  const { data, loading, error, fetchMore } = useQuery(ExploreFeedDocument, {
     variables: { request, reactionRequest, profileId }
   })
 
@@ -87,30 +55,37 @@ const Feed: FC<Props> = ({ feedType = PublicationSortCriteria.CuratedProfiles })
     rootMargin: PAGINATION_ROOT_MARGIN
   })
 
+  if (loading) {
+    return <PublicationsShimmer />
+  }
+
+  if (publications?.length === 0) {
+    return (
+      <EmptyState
+        message={<div>No posts yet!</div>}
+        icon={<CollectionIcon className="w-8 h-8 text-brand" />}
+      />
+    )
+  }
+
+  if (error) {
+    return <ErrorMessage title="Failed to load explore feed" error={error} />
+  }
+
   return (
     <>
-      {loading && <PublicationsShimmer />}
-      {publications?.length === 0 && (
-        <EmptyState
-          message={<div>{t('No posts 1')}</div>}
-          icon={<CollectionIcon className="w-8 h-8 text-brand" />}
-        />
-      )}
-      <ErrorMessage title="Failed to load explore feed" error={error} />
-      <div data-test="explore-feed" />
-      {!error && !loading && publications?.length !== 0 && (
-        <>
-          <Card className="divide-y-[1px] dark:divide-gray-700/80">
-            {publications?.map((post: BCharityPublication, index: number) => (
-              <SinglePublication key={`${post?.id}_${index}`} publication={post} />
-            ))}
-          </Card>
-          {pageInfo?.next && publications?.length !== pageInfo?.totalCount && (
-            <span ref={observe} className="flex justify-center p-5">
-              <Spinner size="sm" />
-            </span>
-          )}
-        </>
+      <Card className="divide-y-[1px] dark:divide-gray-700/80">
+        {publications?.map((publication, index: number) => (
+          <SinglePublication
+            key={`${publication.id}_${index}`}
+            publication={publication as BCharityPublication}
+          />
+        ))}
+      </Card>
+      {pageInfo?.next && publications?.length !== pageInfo.totalCount && (
+        <span ref={observe} className="flex justify-center p-5">
+          <Spinner size="sm" />
+        </span>
       )}
     </>
   )

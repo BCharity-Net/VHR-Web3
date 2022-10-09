@@ -1,0 +1,27 @@
+query Group(
+    $topCommented: ExplorePublicationRequest!
+    $topCollected: ExplorePublicationRequest!
+    $latest: ExplorePublicationRequest!
+  ) {
+    topCommented: explorePublications(request: $topCommented) {
+      items {
+        ... on Post {
+          ...GroupFields
+        }
+      }
+    }
+    topCollected: explorePublications(request: $topCollected) {
+      items {
+        ... on Post {
+          ...GroupFields
+        }
+      }
+    }
+    latest: explorePublications(request: $latest) {
+      items {
+        ... on Post {
+          ...GroupFields
+        }
+      }
+    }
+  }

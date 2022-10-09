@@ -1,13 +1,13 @@
 import { gql, useQuery } from '@apollo/client'
-import { GridItemEight, GridItemFour, GridLayout } from '@components/GridLayout'
 import PublicationsShimmer from '@components/Shared/Shimmer/PublicationsShimmer'
-import Seo from '@components/utils/Seo'
+import { GridItemEight, GridItemFour, GridLayout } from '@components/UI/GridLayout'
+import MetaTags from '@components/utils/MetaTags'
 import { GroupFields } from '@gql/GroupFields'
 import { Mixpanel } from '@lib/mixpanel'
 import { NextPage } from 'next'
 import dynamic from 'next/dynamic'
 import { useRouter } from 'next/router'
-import React, { useEffect } from 'react'
+import { useEffect } from 'react'
 import Custom404 from 'src/pages/404'
 import Custom500 from 'src/pages/500'
 import { PAGEVIEW } from 'src/tracking'
@@ -56,7 +56,7 @@ const ViewGroup: NextPage = () => {
 
   return (
     <GridLayout>
-      <Seo title={`${data?.publication?.metadata?.name} • BCharity`} />
+      <MetaTags title={`${data?.publication?.metadata?.name} • BCharity`} />
       <GridItemFour>
         <Details group={data.publication} />
       </GridItemFour>

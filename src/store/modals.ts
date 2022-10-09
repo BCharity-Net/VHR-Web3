@@ -1,4 +1,3 @@
-/* eslint-disable no-unused-vars */
 import { BCharityPublication } from '@generated/bcharitytypes'
 import create from 'zustand'
 

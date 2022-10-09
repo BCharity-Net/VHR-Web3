@@ -1,7 +1,7 @@
 import Slug from '@components/Shared/Slug'
 import { Mirror } from '@generated/types'
 import { HeartIcon } from '@heroicons/react/solid'
-import React, { FC } from 'react'
+import { FC } from 'react'
 import { useTranslation } from 'react-i18next'
 
 interface Props {

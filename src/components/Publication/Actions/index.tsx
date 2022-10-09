@@ -1,6 +1,6 @@
 import { BCharityPublication } from '@generated/bcharitytypes'
 import clsx from 'clsx'
-import React, { FC } from 'react'
+import { FC } from 'react'
 import { useAppStore } from 'src/store/app'
 
 import Collect from './Collect'

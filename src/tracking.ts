@@ -20,7 +20,6 @@ export const PROFILE = {
 
 export const PUBLICATION = {
   OPEN: 'Open publication',
-  OPEN_NEW: 'Open new Publication modal',
   LIKE: 'Like publication',
   DISLIKE: 'Dislike publication',
   MIRROR: 'Mirror publication',
@@ -47,14 +46,14 @@ export const PUBLICATION = {
     MARKDOWN_PREVIEW: 'Preview markdown',
     OPEN_GIF: 'Open GIF modal',
     COLLECT_MODULE: {
-      OPEN_COLLECT_CONFIG: 'Open collect module config',
-      BACK_FEE_ENTRY: 'Back from fee entry'
+      OPEN_COLLECT_SETTINGS: 'Open collect module settings'
     },
     REFERENCE_MODULE: {
-      OPEN_COLLECT_CONFIG: 'Open reference modal',
+      OPEN_REFERENCE_SETTINGS: 'Open reference module settings',
       EVERYONE: 'Select everyone reference',
-      ONLY_FOLLOWERS: 'Select only followers reference',
-      DEGREES: 'Select degrees reference'
+      MY_FOLLOWERS: 'Select my followers reference',
+      MY_FOLLOWS: 'Select my follows reference',
+      FRIENDS_OF_FRIENDS: 'Select friends of friends reference'
     }
   }
 }

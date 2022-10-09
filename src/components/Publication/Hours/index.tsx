@@ -6,7 +6,7 @@ import { BCharityPublication } from '@generated/bcharitytypes'
 import { ClockIcon } from '@heroicons/react/outline'
 import getIPFSLink from '@lib/getIPFSLink'
 import imagekitURL from '@lib/imagekitURL'
-import React, { FC, useState } from 'react'
+import { FC, useState } from 'react'
 import { useAppStore } from 'src/store/app'
 
 import Verify from './Verify'

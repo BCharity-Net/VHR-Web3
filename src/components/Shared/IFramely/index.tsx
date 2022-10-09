@@ -1,5 +1,5 @@
 import imagekitURL from '@lib/imagekitURL'
-import React, { FC, useEffect, useState } from 'react'
+import { FC, useEffect, useState } from 'react'
 
 import Embed from './Embed'
 import Player from './Player'

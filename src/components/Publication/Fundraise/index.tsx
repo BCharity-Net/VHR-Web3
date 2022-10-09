@@ -1,23 +1,25 @@
 import { LensHubProxy } from '@abis/LensHubProxy'
-import { gql, useMutation, useQuery } from '@apollo/client'
-import { GridItemSix, GridLayout } from '@components/GridLayout'
+import { useMutation, useQuery } from '@apollo/client'
 import Markup from '@components/Shared/Markup'
 import Collectors from '@components/Shared/Modal/Collectors'
 import ReferralAlert from '@components/Shared/ReferralAlert'
 import FundraiseShimmer from '@components/Shared/Shimmer/FundraiseShimmer'
 import { Button } from '@components/UI/Button'
 import { Card } from '@components/UI/Card'
+import { GridItemSix, GridLayout } from '@components/UI/GridLayout'
 import { Modal } from '@components/UI/Modal'
 import { Spinner } from '@components/UI/Spinner'
 import { Tooltip } from '@components/UI/Tooltip'
 import { BCharityPublication } from '@generated/bcharitytypes'
-import { CreateCommentBroadcastItemResult, Mutation } from '@generated/types'
-import { BROADCAST_MUTATION } from '@gql/BroadcastMutation'
-import { CommentFields } from '@gql/CommentFields'
 import {
-  CREATE_COMMENT_TYPED_DATA_MUTATION,
-  CREATE_COMMENT_VIA_DISPATHCER_MUTATION
-} from '@gql/TypedAndDispatcherData/CreateComment'
+  BroadcastDocument,
+  CollectModuleDocument,
+  CommentFeedDocument,
+  CreateCommentBroadcastItemResult,
+  CreateCommentTypedDataDocument,
+  Mutation,
+  PublicationRevenueDocument
+} from '@generated/types'
 import { CashIcon, CurrencyDollarIcon, UsersIcon } from '@heroicons/react/outline'
 import getIPFSLink from '@lib/getIPFSLink'
 import getSignature from '@lib/getSignature'
@@ -27,7 +29,7 @@ import { Mixpanel } from '@lib/mixpanel'
 import uploadToArweave from '@lib/uploadToArweave'
 import clsx from 'clsx'
 import { splitSignature } from 'ethers/lib/utils'
-import React, { FC, ReactNode, useEffect, useState } from 'react'
+import { FC, ReactNode, useEffect, useState } from 'react'
 import toast from 'react-hot-toast'
 import { useTranslation } from 'react-i18next'
 import {
@@ -44,41 +46,7 @@ import { FUNDRAISE } from 'src/tracking'
 import { v4 as uuid } from 'uuid'
 import { useContractWrite, useSignTypedData } from 'wagmi'
 
-import { COLLECT_QUERY } from '../Actions/Collect/CollectModule'
 import Fund from './Fund'
-
-export const PUBLICATION_REVENUE_QUERY = gql`
-  query PublicationRevenue($request: PublicationRevenueQueryRequest!) {
-    publicationRevenue(request: $request) {
-      revenue {
-        total {
-          value
-        }
-      }
-    }
-  }
-`
-
-const COMMENT_FEED_QUERY = gql`
-  query CommentFeed(
-    $request: PublicationsQueryRequest!
-    $reactionRequest: ReactionFieldResolverRequest
-    $profileId: ProfileId
-  ) {
-    publications(request: $request) {
-      items {
-        ... on Comment {
-          ...CommentFields
-        }
-      }
-      pageInfo {
-        totalCount
-        next
-      }
-    }
-  }
-  ${CommentFields}
-`
 
 interface BadgeProps {
   title: ReactNode
@@ -105,7 +73,7 @@ interface CommentProps {
 }
 
 export const CommentValue: FC<CommentProps> = ({ id, callback }) => {
-  useQuery(PUBLICATION_REVENUE_QUERY, {
+  useQuery(PublicationRevenueDocument, {
     variables: {
       request: {
         publicationId: id
@@ -129,7 +97,7 @@ const Fundraise: FC<Props> = ({ fund }) => {
   const currentProfile = useAppStore((state) => state.currentProfile)
   const [isUploading, setIsUploading] = useState(false)
   const [newAmount, setNewAmount] = useState('')
-  const { data, loading } = useQuery(COLLECT_QUERY, {
+  const { data, loading } = useQuery(CollectModuleDocument, {
     variables: { request: { publicationId: fund?.id } }
   })
 
@@ -137,7 +105,7 @@ const Fundraise: FC<Props> = ({ fund }) => {
 
   let commentValue = 0
 
-  const { data: commentFeed, loading: commentFeedLoading } = useQuery(COMMENT_FEED_QUERY, {
+  const { data: commentFeed, loading: commentFeedLoading } = useQuery(CommentFeedDocument, {
     variables: {
       request: { commentsOf: fund.id },
       reactionRequest: currentProfile ? { profileId: currentProfile?.id } : null,
@@ -146,7 +114,7 @@ const Fundraise: FC<Props> = ({ fund }) => {
     fetchPolicy: 'no-cache'
   })
 
-  const { data: revenueData, loading: revenueLoading } = useQuery(PUBLICATION_REVENUE_QUERY, {
+  const { data: revenueData, loading: revenueLoading } = useQuery(PublicationRevenueDocument, {
     variables: {
       request: {
         publicationId: fund.__typename === 'Mirror' ? fund?.mirrorOf?.id : fund?.id
@@ -155,7 +123,7 @@ const Fundraise: FC<Props> = ({ fund }) => {
   })
 
   useEffect(() => {
-    setRevenue(parseFloat(revenueData?.publicationRevenue?.revenue?.total?.value ?? 0))
+    setRevenue(parseFloat((revenueData?.publicationRevenue?.revenue?.total?.value as any) ?? 0))
   }, [revenueData])
 
   const { isLoading: signLoading, signTypedDataAsync } = useSignTypedData({
@@ -163,7 +131,7 @@ const Fundraise: FC<Props> = ({ fund }) => {
       toast.error(error?.message)
     }
   })
-  const [broadcast, { loading: broadcastLoading }] = useMutation(BROADCAST_MUTATION, {
+  const [broadcast, { loading: broadcastLoading }] = useMutation(BroadcastDocument, {
     onError: (error) => {
       if (error.message === ERRORS.notMined) {
         toast.error(error.message)
@@ -181,8 +149,8 @@ const Fundraise: FC<Props> = ({ fund }) => {
     }
   })
 
-  const [createCommentTypedData, { loading: typedDataLoading }] = useMutation(
-    CREATE_COMMENT_TYPED_DATA_MUTATION,
+  const [createCommentTypedData, { loading: typedDataLoading }] = useMutation<Mutation>(
+    CreateCommentTypedDataDocument,
     {
       onCompleted: async ({
         createCommentTypedData
@@ -221,13 +189,11 @@ const Fundraise: FC<Props> = ({ fund }) => {
 
           setUserSigNonce(userSigNonce + 1)
           if (RELAY_ON) {
-            const {
-              data: { broadcast: result }
-            } = await broadcast({
+            const { data } = await broadcast({
               variables: { request: { id, signature } }
             })
 
-            if ('reason' in result) {
+            if ('reason') {
               commentWrite?.({ recklesslySetUnpreparedArgs: inputStruct })
             }
           } else {
@@ -240,20 +206,6 @@ const Fundraise: FC<Props> = ({ fund }) => {
       }
     }
   )
-
-  // const [createCommentViaDispatcher, { data: dispatcherData, loading: dispatcherLoading }] = useMutation(
-  //   CREATE_COMMENT_VIA_DISPATHCER_MUTATION,
-  //   {
-  //     onCompleted,
-  //     onError: (error) => {
-  //       toast.error(error.message ?? ERROR_MESSAGE)
-  //       Mixpanel.track(COMMENT.NEW, {
-  //         result: 'dispatcher_error',
-  //         error: error?.message
-  //       });
-  //     }
-  //   }
-  // )
 
   const createComment = async (
     title: string,

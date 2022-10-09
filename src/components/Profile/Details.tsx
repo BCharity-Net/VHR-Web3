@@ -1,3 +1,4 @@
+import Message from '@components/Profile/Message'
 import Follow from '@components/Shared/Follow'
 import Markup from '@components/Shared/Markup'
 import Slug from '@components/Shared/Slug'
@@ -13,11 +14,12 @@ import { BadgeCheckIcon } from '@heroicons/react/solid'
 import formatAddress from '@lib/formatAddress'
 import getAttribute from '@lib/getAttribute'
 import getAvatar from '@lib/getAvatar'
+import isFeatureEnabled from '@lib/isFeatureEnabled'
 import isStaff from '@lib/isStaff'
 import isVerified from '@lib/isVerified'
 import Link from 'next/link'
 import { useTheme } from 'next-themes'
-import React, { FC, ReactElement, useState } from 'react'
+import { FC, ReactElement, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { STATIC_ASSETS } from 'src/constants'
 import { useAppStore } from 'src/store/app'
@@ -97,11 +99,18 @@ const Details: FC<Props> = ({ profile }) => {
                 {followType === 'FeeFollowModuleSettings' && (
                   <SuperFollow profile={profile} setFollowing={setFollowing} again />
                 )}
+                {isFeatureEnabled('messages', currentProfile?.id) && <Message profile={profile} />}
               </div>
             ) : followType === 'FeeFollowModuleSettings' ? (
-              <SuperFollow profile={profile} setFollowing={setFollowing} showText />
+              <div className="flex space-x-2">
+                <SuperFollow profile={profile} setFollowing={setFollowing} showText />
+                {isFeatureEnabled('messages', currentProfile?.id) && <Message profile={profile} />}
+              </div>
             ) : (
-              <Follow profile={profile} setFollowing={setFollowing} showText />
+              <div className="flex space-x-2">
+                <Follow profile={profile} setFollowing={setFollowing} showText />
+                {isFeatureEnabled('messages', currentProfile?.id) && <Message profile={profile} />}
+              </div>
             )
           ) : null}
         </div>

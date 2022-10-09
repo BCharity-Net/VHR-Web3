@@ -1,5 +1,5 @@
 import { Button } from '@components/UI/Button'
-import Seo from '@components/utils/Seo'
+import MetaTags from '@components/utils/MetaTags'
 import { HomeIcon } from '@heroicons/react/outline'
 import { Mixpanel } from '@lib/mixpanel'
 import Link from 'next/link'
@@ -15,7 +15,7 @@ export default function Custom500() {
   const { t } = useTranslation('common')
   return (
     <div className="flex-col page-center">
-      <Seo title={`500 • ${APP_NAME}`} />
+      <MetaTags title={`500 • ${APP_NAME}`} />
       <div className="py-10 text-center">
         <h1 className="mb-4 text-3xl font-bold">{t('Something went wrong')}</h1>
         <div className="mb-4 text-gray-500">{t('Something went wrong description')}</div>

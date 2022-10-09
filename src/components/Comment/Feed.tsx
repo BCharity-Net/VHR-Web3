@@ -1,4 +1,4 @@
-import { gql, useQuery } from '@apollo/client'
+import { useQuery } from '@apollo/client'
 import QueuedPublication from '@components/Publication/QueuedPublication'
 import SinglePublication from '@components/Publication/SinglePublication'
 import PublicationsShimmer from '@components/Shared/Shimmer/PublicationsShimmer'
@@ -7,11 +7,10 @@ import { EmptyState } from '@components/UI/EmptyState'
 import { ErrorMessage } from '@components/UI/ErrorMessage'
 import { Spinner } from '@components/UI/Spinner'
 import { BCharityPublication } from '@generated/bcharitytypes'
-import { CustomFiltersTypes } from '@generated/types'
-import { CommentFields } from '@gql/CommentFields'
+import { CommentFeedDocument, CustomFiltersTypes } from '@generated/types'
 import { CollectionIcon } from '@heroicons/react/outline'
 import { Mixpanel } from '@lib/mixpanel'
-import React, { FC } from 'react'
+import { FC } from 'react'
 import { useInView } from 'react-cool-inview'
 import { useTranslation } from 'react-i18next'
 import { PAGINATION_ROOT_MARGIN } from 'src/constants'
@@ -19,29 +18,8 @@ import { useAppStore } from 'src/store/app'
 import { useTransactionPersistStore } from 'src/store/transaction'
 import { PAGINATION } from 'src/tracking'
 
+import NewComment from '../Composer/Comment/New'
 import CommentWarning from '../Shared/CommentWarning'
-import NewComment from './New'
-
-const COMMENT_FEED_QUERY = gql`
-  query CommentFeed(
-    $request: PublicationsQueryRequest!
-    $reactionRequest: ReactionFieldResolverRequest
-    $profileId: ProfileId
-  ) {
-    publications(request: $request) {
-      items {
-        ... on Comment {
-          ...CommentFields
-        }
-      }
-      pageInfo {
-        totalCount
-        next
-      }
-    }
-  }
-  ${CommentFields}
-`
 
 interface Props {
   publication: BCharityPublication
@@ -59,12 +37,12 @@ const Feed: FC<Props> = ({ publication, type = 'comment' }) => {
   const reactionRequest = currentProfile ? { profileId: currentProfile?.id } : null
   const profileId = currentProfile?.id ?? null
 
-  const { data, loading, error, fetchMore } = useQuery(COMMENT_FEED_QUERY, {
+  const { data, loading, error, fetchMore } = useQuery(CommentFeedDocument, {
     variables: { request, reactionRequest, profileId },
     skip: !publicationId
   })
 
-  const comments = data?.publications?.items
+  const comments = data?.publications?.items ?? []
   const pageInfo = data?.publications?.pageInfo
 
   const { observe } = useInView({
@@ -114,11 +92,15 @@ const Feed: FC<Props> = ({ publication, type = 'comment' }) => {
                   </div>
                 )
             )}
-            {comments?.map((comment: BCharityPublication, index: number) => (
-              <SinglePublication key={`${publicationId}_${index}`} publication={comment} showType={false} />
+            {comments?.map((comment, index: number) => (
+              <SinglePublication
+                key={`${publicationId}_${index}`}
+                publication={comment as BCharityPublication}
+                showType={false}
+              />
             ))}
           </Card>
-          {pageInfo?.next && comments?.length !== pageInfo?.totalCount && (
+          {pageInfo?.next && comments?.length !== pageInfo.totalCount && (
             <span ref={observe} className="flex justify-center p-5">
               <Spinner size="sm" />
             </span>

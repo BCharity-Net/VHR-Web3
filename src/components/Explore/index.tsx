@@ -1,13 +1,14 @@
-import { GridItemEight, GridItemFour, GridLayout } from '@components/GridLayout'
 import RecommendedProfiles from '@components/Home/RecommendedProfiles'
 import Trending from '@components/Home/Trending'
 import Footer from '@components/Shared/Footer'
-import Seo from '@components/utils/Seo'
+import { GridItemEight, GridItemFour, GridLayout } from '@components/UI/GridLayout'
+import MetaTags from '@components/utils/MetaTags'
 import { PublicationSortCriteria } from '@generated/types'
+import isFeatureEnabled from '@lib/isFeatureEnabled'
 import { Mixpanel } from '@lib/mixpanel'
 import { NextPage } from 'next'
 import { useRouter } from 'next/router'
-import React, { useEffect, useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useAppStore } from 'src/store/app'
 import { PAGEVIEW } from 'src/tracking'
@@ -33,13 +34,13 @@ const Explore: NextPage = () => {
 
   return (
     <GridLayout>
-      <Seo title={t('Explore web')} description={t('Web description')} />
+      <MetaTags title={t('Explore web')} description={t('Web description')} />
       <GridItemEight className="space-y-5" data-test="explore-feed">
         <FeedType setFeedType={setFeedType} feedType={feedType} />
-        <Feed feedType={feedType} />
+        <Feed feedType={feedType as PublicationSortCriteria} />
       </GridItemEight>
       <GridItemFour>
-        <Trending />
+        {isFeatureEnabled('trending-widget', currentProfile?.id) && <Trending />}
         {currentProfile ? <RecommendedProfiles /> : null}
         <Footer />
       </GridItemFour>

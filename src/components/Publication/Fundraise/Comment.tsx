@@ -4,13 +4,13 @@ import ReferralAlert from '@components/Shared/ReferralAlert'
 import { Card } from '@components/UI/Card'
 import { Modal } from '@components/UI/Modal'
 import { BCharityPublication } from '@generated/bcharitytypes'
+import { CollectModuleDocument } from '@generated/types'
 import { CashIcon, CurrencyDollarIcon, UsersIcon } from '@heroicons/react/outline'
 import Logger from '@lib/logger'
-import React, { FC, ReactNode, useState } from 'react'
+import { FC, ReactNode, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useAppStore } from 'src/store/app'
 
-import { COLLECT_QUERY } from '../Actions/Collect/CollectModule'
 import Fund from './Fund'
 
 interface BadgeProps {
@@ -34,7 +34,7 @@ const FundraiseComment: FC<Props> = ({ fund }) => {
   const [showFundersModal, setShowFundersModal] = useState(false)
   const [revenue, setRevenue] = useState(0)
   const currentProfile = useAppStore((state) => state.currentProfile)
-  const { data } = useQuery(COLLECT_QUERY, {
+  const { data } = useQuery(CollectModuleDocument, {
     variables: { request: { publicationId: fund?.id } },
     onCompleted: () => {
       Logger.log('[Query]', `Fetched collect module details Fundraise:${fund?.id}`)

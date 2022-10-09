@@ -12,7 +12,7 @@ import isVerified from '@lib/isVerified'
 import { Mixpanel } from '@lib/mixpanel'
 import nFormatter from '@lib/nFormatter'
 import clsx from 'clsx'
-import React, { Dispatch, FC, ReactNode, useEffect, useState } from 'react'
+import { Dispatch, FC, ReactNode, useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { getTotalVHRSent } from 'src/alchemy'
 import { VHR_TOKEN } from 'src/constants'
@@ -72,11 +72,11 @@ const FeedType: FC<Props> = ({ stats, address, id, setFeedType, feedType, profil
       aria-label={name}
     >
       {icon}
-      <div className="hidden sm:block">{name}</div>
+      <span className="hidden sm:block">{name}</span>
       {count ? (
-        <div className="px-2 text-xs font-medium rounded-full bg-brand-200 dark:bg-brand-800">
+        <span className="px-2 text-xs font-medium rounded-full bg-brand-200 dark:bg-brand-800">
           {nFormatter(count)}
-        </div>
+        </span>
       ) : null}
     </button>
   )

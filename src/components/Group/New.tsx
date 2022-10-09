@@ -1,19 +1,18 @@
 import { LensHubProxy } from '@abis/LensHubProxy'
 import { useMutation } from '@apollo/client'
-import { GridItemEight, GridItemFour, GridLayout } from '@components/GridLayout'
 import ChooseFile from '@components/Shared/ChooseFile'
 import Pending from '@components/Shared/Pending'
 import SettingsHelper from '@components/Shared/SettingsHelper'
 import { Button } from '@components/UI/Button'
 import { Card } from '@components/UI/Card'
 import { Form, useZodForm } from '@components/UI/Form'
+import { GridItemEight, GridItemFour, GridLayout } from '@components/UI/GridLayout'
 import { Input } from '@components/UI/Input'
 import { Spinner } from '@components/UI/Spinner'
 import { TextArea } from '@components/UI/TextArea'
 import useBroadcast from '@components/utils/hooks/useBroadcast'
-import Seo from '@components/utils/Seo'
-import { CreatePostBroadcastItemResult, Mutation } from '@generated/types'
-import { CREATE_POST_TYPED_DATA_MUTATION } from '@gql/TypedAndDispatcherData/CreatePost'
+import MetaTags from '@components/utils/MetaTags'
+import { CreatePostBroadcastItemResult, CreatePostTypedDataDocument, Mutation } from '@generated/types'
 import { PlusIcon } from '@heroicons/react/outline'
 import getSignature from '@lib/getSignature'
 import { Mixpanel } from '@lib/mixpanel'
@@ -22,7 +21,7 @@ import splitSignature from '@lib/splitSignature'
 import uploadMediaToIPFS from '@lib/uploadMediaToIPFS'
 import uploadToArweave from '@lib/uploadToArweave'
 import { NextPage } from 'next'
-import React, { ChangeEvent, useEffect, useState } from 'react'
+import { ChangeEvent, useEffect, useState } from 'react'
 import toast from 'react-hot-toast'
 import { useTranslation } from 'react-i18next'
 import { APP_NAME, LENSHUB_PROXY, RELAY_ON, SIGN_WALLET } from 'src/constants'
@@ -94,7 +93,7 @@ const NewGroup: NextPage = () => {
 
   const { broadcast, data: broadcastData, loading: broadcastLoading } = useBroadcast({ onCompleted })
   const [createPostTypedData, { loading: typedDataLoading }] = useMutation<Mutation>(
-    CREATE_POST_TYPED_DATA_MUTATION,
+    CreatePostTypedDataDocument,
     {
       onCompleted: async ({
         createPostTypedData
@@ -196,7 +195,7 @@ const NewGroup: NextPage = () => {
 
   return (
     <GridLayout>
-      <Seo title={`Create Group • ${APP_NAME}`} />
+      <MetaTags title={`Create Group • ${APP_NAME}`} />
       <GridItemFour>
         <SettingsHelper heading={t('Create group')} description={t('Create group description')} />
       </GridItemFour>

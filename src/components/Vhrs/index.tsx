@@ -1,7 +1,7 @@
 /* eslint-disable react/jsx-key */
-import { GridItemSix, GridLayout } from '@components/GridLayout'
 import { ProfileCell } from '@components/Profile/OpportunitiesTable/Cells'
 import { Card } from '@components/UI/Card'
+import { GridItemSix, GridLayout } from '@components/UI/GridLayout'
 import isVerified from '@lib/isVerified'
 import JSSoup from 'jssoup'
 import { NextPage } from 'next'
@@ -28,8 +28,8 @@ const Vhrs: NextPage = () => {
   const [topHolders, setTopHolders] = useState<Item[]>([])
 
   useEffect(() => {
-    if (topHolders.length === 0)
-      {fetch(`api/cors?url=${VHR_TOP_HOLDERS_URL}`)
+    if (topHolders.length === 0) {
+      fetch(`api/cors?url=${VHR_TOP_HOLDERS_URL}`)
         .then((response) => {
           return response.text()
         })
@@ -55,7 +55,8 @@ const Vhrs: NextPage = () => {
           }
           setTopHolders([...items])
           return html
-        })}
+        })
+    }
   }, [topHolders])
 
   const HandleHolders = () => {
@@ -169,9 +170,15 @@ const Vhrs: NextPage = () => {
               <tr {...row.getRowProps()}>
                 {row.cells.map((cell) => {
                   let className = ''
-                  if (index === 0) {className = 'bg-yellow-300'}
-                  if (index === 1) {className = 'bg-slate-300'}
-                  if (index === 2) {className = 'bg-amber-500'}
+                  if (index === 0) {
+                    className = 'bg-yellow-300'
+                  }
+                  if (index === 1) {
+                    className = 'bg-slate-300'
+                  }
+                  if (index === 2) {
+                    className = 'bg-amber-500'
+                  }
                   return (
                     <td className={`p-4 ${className}`} {...cell.getCellProps()}>
                       {cell.render('Cell', { rank: index })}

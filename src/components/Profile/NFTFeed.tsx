@@ -1,40 +1,18 @@
-import { gql, useQuery } from '@apollo/client'
+import { useQuery } from '@apollo/client'
 import SingleNFT from '@components/NFT/SingleNFT'
 import NFTSShimmer from '@components/Shared/Shimmer/NFTSShimmer'
 import { EmptyState } from '@components/UI/EmptyState'
 import { ErrorMessage } from '@components/UI/ErrorMessage'
 import { Spinner } from '@components/UI/Spinner'
-import { Nft, Profile } from '@generated/types'
+import { Nft, NftFeedDocument, Profile } from '@generated/types'
 import { CollectionIcon } from '@heroicons/react/outline'
 import { Mixpanel } from '@lib/mixpanel'
-import React, { FC } from 'react'
+import { FC } from 'react'
 import { useInView } from 'react-cool-inview'
 import { useTranslation } from 'react-i18next'
 import { CHAIN_ID, IS_MAINNET, PAGINATION_ROOT_MARGIN } from 'src/constants'
 import { PAGINATION } from 'src/tracking'
 import { chain } from 'wagmi'
-
-const PROFILE_NFT_FEED_QUERY = gql`
-  query ProfileNFTFeed($request: NFTsRequest!) {
-    nfts(request: $request) {
-      items {
-        name
-        collectionName
-        contractAddress
-        tokenId
-        chainId
-        originalContent {
-          uri
-          animatedUrl
-        }
-      }
-      pageInfo {
-        next
-        totalCount
-      }
-    }
-  }
-`
 
 interface Props {
   profile: Profile
@@ -50,7 +28,7 @@ const NFTFeed: FC<Props> = ({ profile }) => {
     limit: 10
   }
 
-  const { data, loading, error, fetchMore } = useQuery(PROFILE_NFT_FEED_QUERY, {
+  const { data, loading, error, fetchMore } = useQuery(NftFeedDocument, {
     variables: { request },
     skip: !profile?.ownedBy
   })
@@ -74,36 +52,41 @@ const NFTFeed: FC<Props> = ({ profile }) => {
     rootMargin: PAGINATION_ROOT_MARGIN
   })
 
+  if (loading) {
+    return <NFTSShimmer />
+  }
+
+  if (nfts?.length === 0) {
+    return (
+      <EmptyState
+        message={
+          <div>
+            <span className="mr-1 font-bold">@{profile?.handle}</span>
+            <span>doesn’t have any NFTs!</span>
+          </div>
+        }
+        icon={<CollectionIcon className="w-8 h-8 text-brand" />}
+      />
+    )
+  }
+
+  if (error) {
+    return <ErrorMessage title="Failed to load nft feed" error={error} />
+  }
+
   return (
     <>
-      {loading && <NFTSShimmer />}
-      {nfts?.length === 0 && (
-        <EmptyState
-          message={
-            <div>
-              <span className="mr-1 font-bold">@{profile?.handle}</span>
-              <span>{t('No NFT')}</span>
-            </div>
-          }
-          icon={<CollectionIcon className="w-8 h-8 text-brand" />}
-        />
-      )}
-      <ErrorMessage title="Failed to load nft feed" error={error} />
-      {!error && (
-        <>
-          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-            {nfts?.map((nft: Nft) => (
-              <div key={`${nft?.chainId}_${nft?.contractAddress}_${nft?.tokenId}`}>
-                <SingleNFT nft={nft} />
-              </div>
-            ))}
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+        {nfts?.map((nft) => (
+          <div key={`${nft?.chainId}_${nft?.contractAddress}_${nft?.tokenId}`}>
+            <SingleNFT nft={nft as Nft} />
           </div>
-          {pageInfo?.next && nfts?.length !== pageInfo?.totalCount && (
-            <span ref={observe} className="flex justify-center p-5">
-              <Spinner size="sm" />
-            </span>
-          )}
-        </>
+        ))}
+      </div>
+      {pageInfo?.next && nfts?.length !== pageInfo.totalCount && (
+        <span ref={observe} className="flex justify-center p-5">
+          <Spinner size="sm" />
+        </span>
       )}
     </>
   )

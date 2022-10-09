@@ -7,16 +7,13 @@ import { ErrorMessage } from '@components/UI/ErrorMessage'
 import { Spinner } from '@components/UI/Spinner'
 import useBroadcast from '@components/utils/hooks/useBroadcast'
 import {
-  CreateSetProfileImageUriBroadcastItemResult,
+  CreateSetProfileImageUriTypedDataDocument,
+  CreateSetProfileImageUriViaDispatcherDocument,
   MediaSet,
   Mutation,
   NftImage,
   Profile
 } from '@generated/types'
-import {
-  CREATE_SET_PROFILE_IMAGE_URI_TYPED_DATA_MUTATION,
-  CREATE_SET_PROFILE_IMAGE_URI_VIA_DISPATHCER_MUTATION
-} from '@gql/TypedAndDispatcherData/CreateSetProfileImageURI'
 import { PencilIcon } from '@heroicons/react/outline'
 import getIPFSLink from '@lib/getIPFSLink'
 import getSignature from '@lib/getSignature'
@@ -25,7 +22,7 @@ import { Mixpanel } from '@lib/mixpanel'
 import onError from '@lib/onError'
 import splitSignature from '@lib/splitSignature'
 import uploadMediaToIPFS from '@lib/uploadMediaToIPFS'
-import React, { ChangeEvent, FC, useEffect, useState } from 'react'
+import { ChangeEvent, FC, useEffect, useState } from 'react'
 import toast from 'react-hot-toast'
 import { useTranslation } from 'react-i18next'
 import { LENSHUB_PROXY, RELAY_ON, SIGN_WALLET } from 'src/constants'
@@ -74,16 +71,12 @@ const Picture: FC<Props> = ({ profile }) => {
 
   const { broadcast, data: broadcastData, loading: broadcastLoading } = useBroadcast({ onCompleted })
   const [createSetProfileImageURITypedData, { loading: typedDataLoading }] = useMutation<Mutation>(
-    CREATE_SET_PROFILE_IMAGE_URI_TYPED_DATA_MUTATION,
+    CreateSetProfileImageUriTypedDataDocument,
     {
-      onCompleted: async ({
-        createSetProfileImageURITypedData
-      }: {
-        createSetProfileImageURITypedData: CreateSetProfileImageUriBroadcastItemResult
-      }) => {
+      onCompleted: async ({ createSetProfileImageURITypedData }) => {
         try {
           const { id, typedData } = createSetProfileImageURITypedData
-          const { profileId, imageURI, deadline } = typedData?.value
+          const { profileId, imageURI, deadline } = typedData.value
           const signature = await signTypedDataAsync(getSignature(typedData))
           const { v, r, s } = splitSignature(signature)
           const sig = { v, r, s, deadline }
@@ -112,7 +105,7 @@ const Picture: FC<Props> = ({ profile }) => {
   )
 
   const [createSetProfileImageURIViaDispatcher, { data: dispatcherData, loading: dispatcherLoading }] =
-    useMutation(CREATE_SET_PROFILE_IMAGE_URI_VIA_DISPATHCER_MUTATION, { onCompleted, onError })
+    useMutation(CreateSetProfileImageUriViaDispatcherDocument, { onCompleted, onError })
 
   const handleUpload = async (evt: ChangeEvent<HTMLInputElement>) => {
     evt.preventDefault()
@@ -153,6 +146,11 @@ const Picture: FC<Props> = ({ profile }) => {
   }
 
   const isLoading = typedDataLoading || dispatcherLoading || signLoading || writeLoading || broadcastLoading
+  const txHash =
+    writeData?.hash ??
+    broadcastData?.broadcast?.txHash ??
+    (dispatcherData?.createSetProfileImageURIViaDispatcher.__typename === 'RelayerResult' &&
+      dispatcherData?.createSetProfileImageURIViaDispatcher.txHash)
 
   return (
     <>
@@ -186,17 +184,7 @@ const Picture: FC<Props> = ({ profile }) => {
         >
           {t('Save')}
         </Button>
-        {writeData?.hash ??
-        broadcastData?.broadcast?.txHash ??
-        dispatcherData?.createSetProfileImageURIViaDispatcher?.txHash ? (
-          <IndexStatus
-            txHash={
-              writeData?.hash ??
-              broadcastData?.broadcast?.txHash ??
-              dispatcherData?.createSetProfileImageURIViaDispatcher?.txHash
-            }
-          />
-        ) : null}
+        {txHash ? <IndexStatus txHash={txHash} /> : null}
       </div>
     </>
   )

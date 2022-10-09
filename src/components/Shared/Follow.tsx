@@ -1,10 +1,9 @@
 import { LensHubProxy } from '@abis/LensHubProxy'
-import { ApolloCache, gql, useMutation } from '@apollo/client'
+import { ApolloCache, useMutation } from '@apollo/client'
 import { Button } from '@components/UI/Button'
 import { Spinner } from '@components/UI/Spinner'
 import useBroadcast from '@components/utils/hooks/useBroadcast'
-import { CreateFollowBroadcastItemResult, Mutation, Profile } from '@generated/types'
-import { PROXY_ACTION_MUTATION } from '@gql/ProxyAction'
+import { CreateFollowTypedDataDocument, Mutation, Profile, ProxyActionDocument } from '@generated/types'
 import { UserAddIcon } from '@heroicons/react/outline'
 import getSignature from '@lib/getSignature'
 import { Mixpanel } from '@lib/mixpanel'
@@ -16,35 +15,6 @@ import { LENSHUB_PROXY, RELAY_ON, SIGN_WALLET } from 'src/constants'
 import { useAppStore } from 'src/store/app'
 import { PROFILE } from 'src/tracking'
 import { useAccount, useContractWrite, useSignTypedData } from 'wagmi'
-
-const CREATE_FOLLOW_TYPED_DATA_MUTATION = gql`
-  mutation CreateFollowTypedData($options: TypedDataOptions, $request: FollowRequest!) {
-    createFollowTypedData(options: $options, request: $request) {
-      id
-      expiresAt
-      typedData {
-        domain {
-          name
-          chainId
-          version
-          verifyingContract
-        }
-        types {
-          FollowWithSig {
-            name
-            type
-          }
-        }
-        value {
-          nonce
-          deadline
-          profileIds
-          datas
-        }
-      }
-    }
-  }
-`
 
 interface Props {
   profile: Profile
@@ -86,20 +56,16 @@ const Follow: FC<Props> = ({ profile, showText = false, setFollowing }) => {
 
   const { broadcast, loading: broadcastLoading } = useBroadcast({ onCompleted })
   const [createFollowTypedData, { loading: typedDataLoading }] = useMutation<Mutation>(
-    CREATE_FOLLOW_TYPED_DATA_MUTATION,
+    CreateFollowTypedDataDocument,
     {
-      onCompleted: async ({
-        createFollowTypedData
-      }: {
-        createFollowTypedData: CreateFollowBroadcastItemResult
-      }) => {
+      onCompleted: async ({ createFollowTypedData }) => {
         const { id, typedData } = createFollowTypedData
-        const { deadline } = typedData?.value
+        const { deadline } = typedData.value
 
         try {
           const signature = await signTypedDataAsync(getSignature(typedData))
           setUserSigNonce(userSigNonce + 1)
-          const { profileIds, datas: followData } = typedData?.value
+          const { profileIds, datas: followData } = typedData.value
           const { v, r, s } = splitSignature(signature)
           const sig = { v, r, s, deadline }
           const inputStruct = {
@@ -126,7 +92,7 @@ const Follow: FC<Props> = ({ profile, showText = false, setFollowing }) => {
     }
   )
 
-  const [createFollowProxyAction, { loading: proxyActionLoading }] = useMutation(PROXY_ACTION_MUTATION, {
+  const [createFollowProxyAction, { loading: proxyActionLoading }] = useMutation(ProxyActionDocument, {
     onCompleted,
     onError,
     update: updateCache
@@ -145,7 +111,7 @@ const Follow: FC<Props> = ({ profile, showText = false, setFollowing }) => {
             follow: {
               profile: profile?.id,
               followModule:
-                profile?.followModule.__typename === 'ProfileFollowModuleSettings'
+                profile?.followModule?.__typename === 'ProfileFollowModuleSettings'
                   ? { profileFollowModule: { profileId: currentProfile?.id } }
                   : null
             }

@@ -1,12 +1,13 @@
+import NewPost from '@components/Composer/Post/New'
 import ExploreFeed from '@components/Explore/Feed'
-import { GridItemEight, GridItemFour, GridLayout } from '@components/GridLayout'
-import Announcement from '@components/Home/Announcement'
-import NewPost from '@components/Publication/New'
+import BetaWarning from '@components/Home/BetaWarning'
 import Footer from '@components/Shared/Footer'
-import Seo from '@components/utils/Seo'
+import { GridItemEight, GridItemFour, GridLayout } from '@components/UI/GridLayout'
+import MetaTags from '@components/utils/MetaTags'
+import isFeatureEnabled from '@lib/isFeatureEnabled'
 import { Mixpanel } from '@lib/mixpanel'
 import { NextPage } from 'next'
-import React, { useEffect } from 'react'
+import { useEffect } from 'react'
 import { useAppStore } from 'src/store/app'
 import { PAGEVIEW } from 'src/tracking'
 
@@ -27,7 +28,7 @@ const Home: NextPage = () => {
 
   return (
     <>
-      <Seo />
+      <MetaTags />
       {!currentProfile && <Hero />}
       <GridLayout>
         <GridItemEight className="space-y-5">
@@ -42,8 +43,8 @@ const Home: NextPage = () => {
         </GridItemEight>
         <GridItemFour>
           {currentProfile ? <EnableDispatcher /> : null}
-          <Announcement />
-          <Trending />
+          <BetaWarning />
+          {isFeatureEnabled('trending-widget', currentProfile?.id) && <Trending />}
           {currentProfile ? (
             <>
               <SetDefaultProfile />

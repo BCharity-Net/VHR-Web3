@@ -1,9 +1,9 @@
-import { gql, useQuery } from '@apollo/client'
-import { GridItemEight, GridItemFour, GridLayout } from '@components/GridLayout'
+import { useQuery } from '@apollo/client'
 import { Card } from '@components/UI/Card'
+import { GridItemEight, GridItemFour, GridLayout } from '@components/UI/GridLayout'
 import useStaffMode from '@components/utils/hooks/useStaffMode'
-import Seo from '@components/utils/Seo'
-import { Erc20Amount, GlobalProtocolStats } from '@generated/types'
+import MetaTags from '@components/utils/MetaTags'
+import { BCharityStatsDocument, Erc20Amount } from '@generated/types'
 import {
   CashIcon,
   ChatAlt2Icon,
@@ -18,37 +18,12 @@ import getTokenImage from '@lib/getTokenImage'
 import humanize from '@lib/humanize'
 import { Mixpanel } from '@lib/mixpanel'
 import { NextPage } from 'next'
-import React, { FC, ReactNode, useEffect } from 'react'
+import { FC, ReactNode, useEffect } from 'react'
 import { APP_NAME, ERROR_MESSAGE } from 'src/constants'
 import Custom404 from 'src/pages/404'
 import { PAGEVIEW } from 'src/tracking'
 
 import Sidebar from '../Sidebar'
-
-const LENSTER_STATS_QUERY = gql`
-  query LensterStats {
-    globalProtocolStats(request: { sources: ${APP_NAME} }) {
-      totalProfiles
-      totalPosts
-      totalBurntProfiles
-      totalMirrors
-      totalComments
-      totalCollects
-      totalFollows
-      totalRevenue {
-        asset {
-          symbol
-        }
-        value
-      }
-    }
-    fundraiseStats: globalProtocolStats(
-      request: { sources: "${APP_NAME} Fundraise" }
-    ) {
-      totalPosts
-    }
-  }
-`
 
 interface StatBoxProps {
   icon: ReactNode
@@ -73,7 +48,7 @@ const Stats: NextPage = () => {
     Mixpanel.track('Pageview', { path: PAGEVIEW.STAFFTOOLS.STATS })
   }, [])
 
-  const { data, loading, error } = useQuery(LENSTER_STATS_QUERY, {
+  const { data, loading, error } = useQuery(BCharityStatsDocument, {
     pollInterval: 1000
   })
 
@@ -81,12 +56,12 @@ const Stats: NextPage = () => {
     return <Custom404 />
   }
 
-  const stats: GlobalProtocolStats = data?.globalProtocolStats
-  const crowdfundStats: GlobalProtocolStats = data?.crowdfundStats
+  const stats: any = data?.globalProtocolStats
+  const fundraiseStats: any = data?.fundraiseStats
 
   return (
     <GridLayout>
-      <Seo title={`Stafftools • ${APP_NAME}`} />
+      <MetaTags title={`Stafftools • ${APP_NAME}`} />
       <GridItemFour>
         <Sidebar />
       </GridItemFour>
@@ -130,7 +105,7 @@ const Stats: NextPage = () => {
                   />
                   <StatBox
                     icon={<CashIcon className="w-4 h-4" />}
-                    value={crowdfundStats?.totalPosts}
+                    value={fundraiseStats?.totalPosts}
                     title="total fundraises"
                   />
                 </div>

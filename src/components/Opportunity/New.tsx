@@ -1,6 +1,5 @@
 import { LensHubProxy } from '@abis/LensHubProxy'
 import { gql, useMutation } from '@apollo/client'
-import { GridItemEight, GridItemFour, GridLayout } from '@components/GridLayout'
 import ChooseFiles from '@components/Shared/ChooseFiles'
 import Pending from '@components/Shared/Pending'
 import SettingsHelper from '@components/Shared/SettingsHelper'
@@ -8,13 +7,13 @@ import Autosuggest from '@components/UI/Autosuggest'
 import { Button } from '@components/UI/Button'
 import { Card } from '@components/UI/Card'
 import { Form, useZodForm } from '@components/UI/Form'
+import { GridItemEight, GridItemFour, GridLayout } from '@components/UI/GridLayout'
 import { Input } from '@components/UI/Input'
 import { Spinner } from '@components/UI/Spinner'
 import { TextArea } from '@components/UI/TextArea'
 import useBroadcast from '@components/utils/hooks/useBroadcast'
-import Seo from '@components/utils/Seo'
-import { CreatePostBroadcastItemResult, Profile } from '@generated/types'
-import { CREATE_POST_TYPED_DATA_MUTATION } from '@gql/TypedAndDispatcherData/CreatePost'
+import MetaTags from '@components/utils/MetaTags'
+import { CreatePostBroadcastItemResult, CreatePostTypedDataDocument, Profile } from '@generated/types'
 import { PlusIcon } from '@heroicons/react/outline'
 import getIPFSLink from '@lib/getIPFSLink'
 import getSignature from '@lib/getSignature'
@@ -26,7 +25,7 @@ import splitSignature from '@lib/splitSignature'
 import uploadMediaToIPFS from '@lib/uploadMediaToIPFS'
 import uploadToArweave from '@lib/uploadToArweave'
 import { NextPage } from 'next'
-import React, { ChangeEvent, FC, useState } from 'react'
+import { ChangeEvent, FC, useState } from 'react'
 import { Controller } from 'react-hook-form'
 import toast from 'react-hot-toast'
 import { useTranslation } from 'react-i18next'
@@ -37,15 +36,6 @@ import { OPPOS } from 'src/tracking'
 import { v4 as uuid } from 'uuid'
 import { useContractWrite, useSignTypedData } from 'wagmi'
 import { object, string } from 'zod'
-
-export const PROFILE_QUERY = gql`
-  query Profile($request: SingleProfileQueryRequest!) {
-    profile(request: $request) {
-      id
-      ownedBy
-    }
-  }
-`
 
 const newOpportunitySchema = object({
   program: string()
@@ -178,7 +168,7 @@ const Opportunity: NextPage = () => {
   }
 
   const { broadcast, data: broadcastData, loading: broadcastLoading } = useBroadcast({ onCompleted })
-  const [createPostTypedData, { loading: typedDataLoading }] = useMutation(CREATE_POST_TYPED_DATA_MUTATION, {
+  const [createPostTypedData, { loading: typedDataLoading }] = useMutation(CreatePostTypedDataDocument, {
     onCompleted: async ({ createPostTypedData }: { createPostTypedData: CreatePostBroadcastItemResult }) => {
       try {
         const { id, typedData } = createPostTypedData
@@ -328,7 +318,7 @@ const Opportunity: NextPage = () => {
 
   return (
     <GridLayout>
-      <Seo title={`Create Volunteering Opportunities • ${APP_NAME}`} />
+      <MetaTags title={`Create Volunteering Opportunities • ${APP_NAME}`} />
       <GridItemFour>
         <SettingsHelper
           heading={t('Create Volunteering Opportunities')}

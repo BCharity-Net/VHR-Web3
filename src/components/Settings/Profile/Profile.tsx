@@ -3,7 +3,7 @@ import { useMutation } from '@apollo/client'
 import ChooseFile from '@components/Shared/ChooseFile'
 import IndexStatus from '@components/Shared/IndexStatus'
 import { Button } from '@components/UI/Button'
-import { Card, CardBody } from '@components/UI/Card'
+import { Card } from '@components/UI/Card'
 import { ErrorMessage } from '@components/UI/ErrorMessage'
 import { Form, useZodForm } from '@components/UI/Form'
 import { Input } from '@components/UI/Input'
@@ -11,11 +11,13 @@ import { Spinner } from '@components/UI/Spinner'
 import { TextArea } from '@components/UI/TextArea'
 import { Toggle } from '@components/UI/Toggle'
 import useBroadcast from '@components/utils/hooks/useBroadcast'
-import { CreateSetProfileMetadataUriBroadcastItemResult, MediaSet, Mutation, Profile } from '@generated/types'
 import {
-  CREATE_SET_PROFILE_METADATA_TYPED_DATA_MUTATION,
-  CREATE_SET_PROFILE_METADATA_VIA_DISPATHCER_MUTATION
-} from '@gql/TypedAndDispatcherData/CreateSetProfileMetadata'
+  CreateSetProfileMetadataTypedDataDocument,
+  CreateSetProfileMetadataViaDispatcherDocument,
+  MediaSet,
+  Mutation,
+  Profile
+} from '@generated/types'
 import { PencilIcon } from '@heroicons/react/outline'
 import getAttribute from '@lib/getAttribute'
 import getIPFSLink from '@lib/getIPFSLink'
@@ -27,7 +29,7 @@ import onError from '@lib/onError'
 import splitSignature from '@lib/splitSignature'
 import uploadMediaToIPFS from '@lib/uploadMediaToIPFS'
 import uploadToArweave from '@lib/uploadToArweave'
-import React, { ChangeEvent, FC, useEffect, useState } from 'react'
+import { ChangeEvent, FC, useEffect, useState } from 'react'
 import toast from 'react-hot-toast'
 import { useTranslation } from 'react-i18next'
 import { APP_NAME, LENS_PERIPHERY, RELAY_ON, SIGN_WALLET } from 'src/constants'
@@ -74,19 +76,15 @@ const Profile: FC<Props> = ({ profile }) => {
 
   const { broadcast, data: broadcastData, loading: broadcastLoading } = useBroadcast({ onCompleted })
   const [createSetProfileMetadataTypedData, { loading: typedDataLoading }] = useMutation<Mutation>(
-    CREATE_SET_PROFILE_METADATA_TYPED_DATA_MUTATION,
+    CreateSetProfileMetadataTypedDataDocument,
     {
-      onCompleted: async ({
-        createSetProfileMetadataTypedData
-      }: {
-        createSetProfileMetadataTypedData: CreateSetProfileMetadataUriBroadcastItemResult
-      }) => {
+      onCompleted: async ({ createSetProfileMetadataTypedData }) => {
         const { id, typedData } = createSetProfileMetadataTypedData
         const { deadline } = typedData?.value
 
         try {
           const { id, typedData } = createSetProfileMetadataTypedData
-          const { profileId, metadata, deadline } = typedData?.value
+          const { profileId, metadata, deadline } = typedData.value
           const signature = await signTypedDataAsync(getSignature(typedData))
           const { v, r, s } = splitSignature(signature)
           const sig = { v, r, s, deadline }
@@ -116,7 +114,7 @@ const Profile: FC<Props> = ({ profile }) => {
   )
 
   const [createSetProfileMetadataViaDispatcher, { data: dispatcherData, loading: dispatcherLoading }] =
-    useMutation(CREATE_SET_PROFILE_METADATA_VIA_DISPATHCER_MUTATION, {
+    useMutation(CreateSetProfileMetadataViaDispatcherDocument, {
       onCompleted,
       onError
     })
@@ -233,87 +231,82 @@ const Profile: FC<Props> = ({ profile }) => {
 
   const isLoading =
     isUploading || typedDataLoading || dispatcherLoading || signLoading || writeLoading || broadcastLoading
+  const txHash =
+    writeData?.hash ??
+    broadcastData?.broadcast?.txHash ??
+    (dispatcherData?.createSetProfileMetadataViaDispatcher.__typename === 'RelayerResult' &&
+      dispatcherData?.createSetProfileMetadataViaDispatcher.txHash)
 
   return (
-    <Card>
-      <CardBody>
-        <Form
-          form={form}
-          className="space-y-4"
-          onSubmit={({ name, location, website, twitter, bio }) => {
-            editProfile(name, location, website, twitter, bio)
-          }}
-        >
-          {error && <ErrorMessage className="mb-3" title={t('Transaction Failed!')} error={error} />}
-          <Input label={t('Profile Id')} type="text" value={currentProfile?.id} disabled />
-          <Input label={t('Name')} type="text" placeholder="Gavin" {...form.register('name')} />
-          <Input label={t('Location')} type="text" placeholder="Miami" {...form.register('location')} />
-          <Input
-            label={t('Website')}
-            type="text"
-            placeholder="https://hooli.com"
-            {...form.register('website')}
-          />
-          <Input
-            label="Twitter"
-            type="text"
-            prefix="https://twitter.com"
-            placeholder="gavin"
-            {...form.register('twitter')}
-          />
-          <TextArea label={t('Bio')} placeholder={t('Bio placeholder')} {...form.register('bio')} />
-          <div className="space-y-1.5">
-            <div className="label">{t('Cover')}</div>
-            <div className="space-y-3">
-              {cover && (
-                <div>
-                  <img
-                    className="object-cover w-full h-60 rounded-lg"
-                    src={imagekitURL(getIPFSLink(cover), 'cover')}
-                    alt={cover}
-                  />
-                </div>
-              )}
-              <div className="flex items-center space-x-3">
-                <ChooseFile id="cover" onChange={(evt: ChangeEvent<HTMLInputElement>) => handleUpload(evt)} />
-                {uploading && <Spinner size="sm" />}
+    <Card className="p-5">
+      <Form
+        form={form}
+        className="space-y-4"
+        onSubmit={({ name, location, website, twitter, bio }) => {
+          editProfile(name, location, website, twitter, bio)
+        }}
+      >
+        {error && <ErrorMessage className="mb-3" title={t('Transaction Failed!')} error={error} />}
+        <Input label={t('Profile Id')} type="text" value={currentProfile?.id} disabled />
+        <Input label={t('Name')} type="text" placeholder="Gavin" {...form.register('name')} />
+        <Input label={t('Location')} type="text" placeholder="Miami" {...form.register('location')} />
+        <Input
+          label={t('Website')}
+          type="text"
+          placeholder="https://hooli.com"
+          {...form.register('website')}
+        />
+        <Input
+          label="Twitter"
+          type="text"
+          prefix="https://twitter.com"
+          placeholder="gavin"
+          {...form.register('twitter')}
+        />
+        <TextArea label={t('Bio')} placeholder="Tell us something about you!" {...form.register('bio')} />
+        <div className="space-y-1.5">
+          <div className="label">{t('Cover')}</div>
+          <div className="space-y-3">
+            {cover && (
+              <div>
+                <img
+                  className="object-cover w-full h-60 rounded-lg"
+                  src={imagekitURL(getIPFSLink(cover), 'cover')}
+                  alt={cover}
+                />
               </div>
+            )}
+            <div className="flex items-center space-x-3">
+              <ChooseFile id="cover" onChange={(evt: ChangeEvent<HTMLInputElement>) => handleUpload(evt)} />
+              {uploading && <Spinner size="sm" />}
             </div>
           </div>
-          <div className="pt-4 space-y-2">
-            <div className="flex items-center space-x-2 label">
-              <img className="w-5 h-5" src="/pride.svg" alt="Pride Logo" />
-              <span>{t('Celebrate pride')}</span>
-            </div>
-            <div className="flex items-center space-x-2">
-              <Toggle on={pride} setOn={setPride} />
-              <div>{t('Pride switch')}</div>
+        </div>
+        <div className="pt-4 space-y-2">
+          <div className="flex items-center space-x-2 label">
+            <img className="w-5 h-5" src="/pride.svg" alt="Pride Logo" />
+            <span>{t('Celebrate pride')}</span>
+          </div>
+          <div className="flex items-center space-x-2">
+            <Toggle on={pride} setOn={setPride} />
+            <div>
+              {APP_NAME} {t('Pride switch')}
             </div>
           </div>
-          <div className="flex flex-col space-y-2">
-            <Button
-              className="ml-auto"
-              type="submit"
-              disabled={isLoading}
-              icon={isLoading ? <Spinner size="xs" /> : <PencilIcon className="w-4 h-4" />}
-            >
-              {' '}
-              {t('Save')}
-            </Button>
-            {writeData?.hash ??
-            broadcastData?.broadcast?.txHash ??
-            dispatcherData?.createSetProfileMetadataViaDispatcher?.txHash ? (
-              <IndexStatus
-                txHash={
-                  writeData?.hash ??
-                  broadcastData?.broadcast?.txHash ??
-                  dispatcherData?.createSetProfileMetadataViaDispatcher?.txHash
-                }
-              />
-            ) : null}
-          </div>
-        </Form>
-      </CardBody>
+        </div>
+        <div className="flex flex-col space-y-2">
+          <Button
+            className="ml-auto"
+            type="submit"
+            disabled={isLoading}
+            icon={isLoading ? <Spinner size="xs" /> : <PencilIcon className="w-4 h-4" />}
+          >
+            {' '}
+            {t('Save')}
+          </Button>
+          {txHash ? <IndexStatus txHash={txHash} /> : null}
+        </div>
+      </Form>
     </Card>
   )
 }

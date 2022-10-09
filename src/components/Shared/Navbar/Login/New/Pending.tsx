@@ -1,9 +1,9 @@
 import { useQuery } from '@apollo/client'
 import { Button } from '@components/UI/Button'
 import { Spinner } from '@components/UI/Spinner'
-import { TX_STATUS_QUERY } from '@gql/HasTxHashBeenIndexed'
+import { HasTxHashBeenIndexedDocument } from '@generated/types'
 import { ArrowRightIcon } from '@heroicons/react/outline'
-import React, { FC } from 'react'
+import { FC } from 'react'
 import { useTranslation } from 'react-i18next'
 import { IS_MAINNET } from 'src/constants'
 
@@ -14,7 +14,7 @@ interface Props {
 
 const Pending: FC<Props> = ({ handle, txHash }) => {
   const { t } = useTranslation('common')
-  const { data, loading } = useQuery(TX_STATUS_QUERY, {
+  const { data, loading } = useQuery(HasTxHashBeenIndexedDocument, {
     variables: {
       request: { txHash }
     },
@@ -23,7 +23,9 @@ const Pending: FC<Props> = ({ handle, txHash }) => {
 
   return (
     <div className="p-5 font-bold text-center">
-      {loading || !data?.hasTxHashBeenIndexed?.indexed ? (
+      {loading ||
+      (data?.hasTxHashBeenIndexed.__typename === 'TransactionIndexedResult' &&
+        !data?.hasTxHashBeenIndexed.indexed) ? (
         <div className="space-y-3">
           <Spinner className="mx-auto" />
           <div>{t('Account creation')}</div>

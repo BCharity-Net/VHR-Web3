@@ -3,14 +3,12 @@ import Loader from '@components/Shared/Loader'
 import UserProfile from '@components/Shared/UserProfile'
 import { EmptyState } from '@components/UI/EmptyState'
 import { ErrorMessage } from '@components/UI/ErrorMessage'
-import { Profile } from '@generated/types'
+import { Profile, RecommendedProfilesDocument } from '@generated/types'
 import { UsersIcon } from '@heroicons/react/outline'
 import { FC } from 'react'
 
-import { RECOMMENDED_PROFILES_QUERY } from './RecommendedProfiles'
-
 const Suggested: FC = () => {
-  const { data, loading, error } = useQuery(RECOMMENDED_PROFILES_QUERY)
+  const { data, loading, error } = useQuery(RecommendedProfilesDocument)
 
   if (loading) {
     return <Loader message="Loading suggested" />
@@ -24,12 +22,17 @@ const Suggested: FC = () => {
 
   return (
     <div className="overflow-y-auto max-h-[80vh]">
-      <ErrorMessage className="m-5" title="Failed to load following" error={error} />
+      <ErrorMessage title="Failed to load recommendations" error={error} />
       <div className="space-y-3">
         <div className="divide-y dark:divide-gray-700">
-          {data?.recommendedProfiles?.map((profile: Profile) => (
+          {data?.recommendedProfiles?.map((profile) => (
             <div className="p-5" key={profile?.id}>
-              <UserProfile profile={profile} showBio showFollow isFollowing={profile?.isFollowedByMe} />
+              <UserProfile
+                profile={profile as Profile}
+                showBio
+                showFollow
+                isFollowing={profile?.isFollowedByMe}
+              />
             </div>
           ))}
         </div>

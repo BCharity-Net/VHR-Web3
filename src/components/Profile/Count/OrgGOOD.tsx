@@ -3,7 +3,7 @@ import { gql, useQuery } from '@apollo/client'
 import { BCharityPublication } from '@generated/bcharitytypes'
 import { PaginatedResultInfo, Profile } from '@generated/types'
 import { ethers } from 'ethers'
-import React, { FC, useMemo, useState } from 'react'
+import { FC, useMemo, useState } from 'react'
 import { useFilters, useTable } from 'react-table'
 import { getGoodSent } from 'src/good'
 import { useAppStore } from 'src/store/app'
@@ -250,23 +250,23 @@ const OrgGOOD: FC<Props> = ({ profile, callback }) => {
                     }
                   })
                   if (good.length !== 0 && goodTxnData[index] != good[0]) {
-                      getGoodSent(good[0], (value: number) => {
-                        if (tableData[index].totalGood.value !== value) {
-                          tableData[index].totalGood.value = value
-                          setTableData([...tableData])
-                        }
-                      })
-                      let result = 0
-                      for (const item of tableData) {
-                        result += item.totalGood.value
+                    getGoodSent(good[0], (value: number) => {
+                      if (tableData[index].totalGood.value !== value) {
+                        tableData[index].totalGood.value = value
+                        setTableData([...tableData])
                       }
-                      if (callback) {
-                        callback(result)
-                      }
-                      goodTxnData[index] = good[0]
-                      setGoodTxnData(goodTxnData)
-                      setTableData([...tableData])
+                    })
+                    let result = 0
+                    for (const item of tableData) {
+                      result += item.totalGood.value
                     }
+                    if (callback) {
+                      callback(result)
+                    }
+                    goodTxnData[index] = good[0]
+                    setGoodTxnData(goodTxnData)
+                    setTableData([...tableData])
+                  }
                 }}
               />
             )

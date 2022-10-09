@@ -1,15 +1,14 @@
 import { useLazyQuery } from '@apollo/client'
-import { SEARCH_USERS_QUERY } from '@components/Shared/Navbar/Search'
 import Slug from '@components/Shared/Slug'
 import { UserSuggestion } from '@generated/bcharitytypes'
-import { MediaSet, NftImage, Profile } from '@generated/types'
+import { MediaSet, NftImage, Profile, SearchProfilesDocument, SearchRequestTypes } from '@generated/types'
 import { BadgeCheckIcon } from '@heroicons/react/solid'
 import getIPFSLink from '@lib/getIPFSLink'
 import getStampFyiURL from '@lib/getStampFyiURL'
 import imagekitURL from '@lib/imagekitURL'
 import isVerified from '@lib/isVerified'
 import clsx from 'clsx'
-import { Dispatch, FC } from 'react'
+import { Dispatch, FC, useEffect, useRef } from 'react'
 import { Mention, MentionsInput } from 'react-mentions'
 import { usePublicationStore } from 'src/store/publication'
 
@@ -43,12 +42,28 @@ interface Props {
   error: string
   setError: Dispatch<string>
   placeholder?: string
+  hideBorder?: boolean
+  autoFocus?: boolean
 }
 
-export const MentionTextArea: FC<Props> = ({ error, setError, placeholder = '' }) => {
+export const MentionTextArea: FC<Props> = ({
+  error,
+  setError,
+  placeholder = '',
+  hideBorder = false,
+  autoFocus = false
+}) => {
   const publicationContent = usePublicationStore((state) => state.publicationContent)
   const setPublicationContent = usePublicationStore((state) => state.setPublicationContent)
-  const [searchUsers] = useLazyQuery(SEARCH_USERS_QUERY)
+  const [searchUsers] = useLazyQuery(SearchProfilesDocument)
+  const inputRef = useRef<HTMLTextAreaElement>(null)
+
+  useEffect(() => {
+    if (autoFocus && inputRef?.current) {
+      inputRef.current?.focus()
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
 
   const fetchUsers = (query: string, callback: any) => {
     if (!query) {
@@ -56,26 +71,29 @@ export const MentionTextArea: FC<Props> = ({ error, setError, placeholder = '' }
     }
 
     searchUsers({
-      variables: { request: { type: 'PROFILE', query, limit: 5 } }
+      variables: { request: { type: SearchRequestTypes.Profile, query, limit: 5 } }
     })
-      .then(({ data }) =>
-        data?.search?.items?.map((user: Profile & { picture: MediaSet & NftImage }) => ({
+      .then(({ data }) => {
+        // @ts-ignore
+        const profiles = data?.search?.items ?? []
+        return profiles.map((user: Profile & { picture: MediaSet & NftImage }) => ({
           uid: user.id,
           id: user.handle,
           display: user.handle,
           name: user?.name ?? user?.handle,
           picture: user?.picture?.original?.url ?? user?.picture?.uri ?? getStampFyiURL(user?.ownedBy)
         }))
-      )
+      })
       .then(callback)
   }
 
   return (
     <div className="mb-2">
       <MentionsInput
-        className="mention-input"
+        className={clsx(hideBorder ? 'mention-input-borderless' : 'mention-input')}
         value={publicationContent}
         placeholder={placeholder}
+        inputRef={inputRef}
         onChange={(e) => {
           setPublicationContent(e.target.value)
           setError('')

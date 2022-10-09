@@ -1,27 +1,12 @@
 /* eslint-disable react/jsx-key */
-import { gql } from '@apollo/client'
-import { Profile } from '@generated/types'
-import React, { FC, useMemo } from 'react'
+import { Profile, ProfileNftFeedDocument } from '@generated/types'
+import { FC, useMemo } from 'react'
 import { CHAIN_ID, IS_MAINNET } from 'src/constants'
 import { chain } from 'wagmi'
 
 import { PostCell, ProfileCell } from './FundraiseTable/Cells'
 import { DateSearch, FuzzySearch, fuzzyTextFilterFn, NoFilter } from './FundraiseTable/Filters'
 import FundraiseTable from './FundraiseTable/Individual'
-
-const PROFILE_NFT_FEED_QUERY = gql`
-  query ProfileNFTFeed($request: NFTsRequest!) {
-    nfts(request: $request) {
-      items {
-        contentURI
-      }
-      pageInfo {
-        next
-        totalCount
-      }
-    }
-  }
-`
 
 interface Props {
   profile: Profile
@@ -90,7 +75,7 @@ const FundraiseFeed: FC<Props> = ({ profile }) => {
       getColumns={() => {
         return columns
       }}
-      query={PROFILE_NFT_FEED_QUERY}
+      query={ProfileNftFeedDocument}
       request={{
         chainIds: [CHAIN_ID, IS_MAINNET ? chain.mainnet.id : chain.kovan.id],
         ownerAddress: profile?.ownedBy,

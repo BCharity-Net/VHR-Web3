@@ -1,8 +1,8 @@
 import NotificationIcon from '@components/Notification/Icon'
 import useStaffMode from '@components/utils/hooks/useStaffMode'
 import { Disclosure } from '@headlessui/react'
-import { MenuIcon, ShieldCheckIcon, XIcon } from '@heroicons/react/outline'
-import isGardener from '@lib/isGardener'
+import { MailIcon, MenuIcon, XIcon } from '@heroicons/react/outline'
+import isFeatureEnabled from '@lib/isFeatureEnabled'
 import clsx from 'clsx'
 import Link from 'next/link'
 import { useRouter } from 'next/router'
@@ -10,7 +10,6 @@ import { FC } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useAppStore } from 'src/store/app'
 
-import NewPostModal from '../../Publication/New/NewPostModal'
 import TranslateButton from '../TranslateButton'
 import MenuItems from './MenuItems'
 import MoreNavItems from './MoreNavItems'
@@ -104,12 +103,11 @@ const Navbar: FC = () => {
               <div className="flex gap-8 items-center">
                 {currentProfile ? (
                   <>
-                    {isGardener(currentProfile?.id) && (
-                      <Link href="/mod">
-                        <ShieldCheckIcon className="w-5 h-5 sm:w-6 sm:h-6" />
+                    {isFeatureEnabled('messages', currentProfile?.id) && (
+                      <Link href="/messages">
+                        <MailIcon className="w-5 h-5 sm:w-6 sm:h-6" />
                       </Link>
                     )}
-                    <NewPostModal />
                     <NotificationIcon />
                   </>
                 ) : null}

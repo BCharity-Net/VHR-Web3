@@ -1,5 +1,5 @@
 import { matchSorter } from 'match-sorter'
-import React, { FC, ReactNode, useState } from 'react'
+import { FC, ReactNode, useState } from 'react'
 import AutoSuggest from 'react-autosuggest'
 
 interface Props {
@@ -45,7 +45,9 @@ const Autocomplete: FC<Props> = ({ lang, label, error, onChange, placeholder, on
           setSuggestions(matchSorter(lang, value))
         }}
         onSuggestionSelected={(_, { suggestionValue }) => {
-          if (onAdd) {onAdd(suggestionValue)}
+          if (onAdd) {
+            onAdd(suggestionValue)
+          }
         }}
         getSuggestionValue={(suggestion) => suggestion}
         renderSuggestion={(suggestion) => <span>{suggestion}</span>}
@@ -53,7 +55,9 @@ const Autocomplete: FC<Props> = ({ lang, label, error, onChange, placeholder, on
           placeholder: placeholder,
           value: value,
           onChange: (_, { newValue }) => {
-            if (onChange) {onChange(newValue)}
+            if (onChange) {
+              onChange(newValue)
+            }
             setValue(newValue)
           }
         }}

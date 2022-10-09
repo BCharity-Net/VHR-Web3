@@ -2,7 +2,7 @@ import { Card } from '@components/UI/Card'
 import { BCharityPublication } from '@generated/bcharitytypes'
 import getIPFSLink from '@lib/getIPFSLink'
 import imagekitURL from '@lib/imagekitURL'
-import React, { FC, useState } from 'react'
+import { FC, useState } from 'react'
 
 interface Props {
   publication: BCharityPublication

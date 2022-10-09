@@ -1,10 +1,6 @@
 /* eslint-disable react/jsx-key */
-import { gql } from '@apollo/client'
-import { Profile } from '@generated/types'
-import { CommentFields } from '@gql/CommentFields'
-import { MirrorFields } from '@gql/MirrorFields'
-import { PostFields } from '@gql/PostFields'
-import React, { FC, useMemo, useState } from 'react'
+import { Profile, ProfileFeedDocument, PublicationTypes } from '@generated/types'
+import { FC, useMemo, useState } from 'react'
 
 import { ProfileCell, StatusCell } from './OpportunitiesTable/Cells'
 import {
@@ -17,35 +13,6 @@ import {
   SelectColumnFilter
 } from './OpportunitiesTable/Filters'
 import OpportunitiesTable from './OpportunitiesTable/Individual'
-
-const PROFILE_FEED_QUERY = gql`
-  query ProfileFeed(
-    $request: PublicationsQueryRequest!
-    $reactionRequest: ReactionFieldResolverRequest
-    $profileId: ProfileId
-  ) {
-    publications(request: $request) {
-      items {
-        ... on Post {
-          ...PostFields
-        }
-        ... on Comment {
-          ...CommentFields
-        }
-        ... on Mirror {
-          ...MirrorFields
-        }
-      }
-      pageInfo {
-        totalCount
-        next
-      }
-    }
-  }
-  ${PostFields}
-  ${CommentFields}
-  ${MirrorFields}
-`
 
 interface Props {
   profile: Profile
@@ -133,9 +100,9 @@ const OpportunitiesFeed: FC<Props> = ({ profile }) => {
         setAddressData(add)
         return columns
       }}
-      query={PROFILE_FEED_QUERY}
+      query={ProfileFeedDocument}
       request={{
-        publicationTypes: 'COMMENT',
+        publicationTypes: [PublicationTypes.Comment],
         profileId: profile?.id,
         limit: tableLimit
       }}

@@ -1,43 +1,10 @@
 /* eslint-disable react/jsx-key */
-import { gql } from '@apollo/client'
-import { Profile } from '@generated/types'
-import { CommentFields } from '@gql/CommentFields'
-import { MirrorFields } from '@gql/MirrorFields'
-import { PostFields } from '@gql/PostFields'
-import React, { FC, useMemo } from 'react'
+import { Profile, ProfileFeedDocument, PublicationTypes } from '@generated/types'
+import { FC, useMemo } from 'react'
 
 import FundraiseTable from './FundraiseTable'
 import { FundsCell, PostCell } from './FundraiseTable/Cells'
 import { DateSearch, FuzzySearch, fuzzyTextFilterFn, NoFilter } from './FundraiseTable/Filters'
-
-const PROFILE_FEED_QUERY = gql`
-  query ProfileFeed(
-    $request: PublicationsQueryRequest!
-    $reactionRequest: ReactionFieldResolverRequest
-    $profileId: ProfileId
-  ) {
-    publications(request: $request) {
-      items {
-        ... on Post {
-          ...PostFields
-        }
-        ... on Comment {
-          ...CommentFields
-        }
-        ... on Mirror {
-          ...MirrorFields
-        }
-      }
-      pageInfo {
-        totalCount
-        next
-      }
-    }
-  }
-  ${PostFields}
-  ${CommentFields}
-  ${MirrorFields}
-`
 
 interface Props {
   profile: Profile
@@ -110,9 +77,9 @@ const FundraiseOrgFeed: FC<Props> = ({ profile }) => {
       getColumns={() => {
         return columns
       }}
-      query={PROFILE_FEED_QUERY}
+      query={ProfileFeedDocument}
       request={{
-        publicationTypes: 'POST',
+        publicationTypes: [PublicationTypes.Post],
         profileId: profile?.id,
         limit: tableLimit
       }}

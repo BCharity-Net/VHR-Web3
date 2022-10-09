@@ -1,7 +1,6 @@
 /* eslint-disable react/jsx-key */
-import { gql } from '@apollo/client'
-import { Profile } from '@generated/types'
-import React, { FC, useMemo, useState } from 'react'
+import { NotificationsDocument, Profile } from '@generated/types'
+import { FC, useMemo, useState } from 'react'
 
 import VHRTable from './VHRTable'
 import { ProfileCell, StatusCell, TotalGoodCell, TotalHoursCell } from './VHRTable/Cells'
@@ -15,45 +14,6 @@ import {
   NoFilter,
   SelectColumnFilter
 } from './VHRTable/Filters'
-
-const NOTIFICATIONS_QUERY = gql`
-  query Notifications($request: NotificationRequest!) {
-    notifications(request: $request) {
-      items {
-        ... on NewMentionNotification {
-          mentionPublication {
-            ... on Post {
-              id
-              collectNftAddress
-              metadata {
-                name
-                description
-                content
-                media {
-                  original {
-                    url
-                    mimeType
-                  }
-                }
-                attributes {
-                  value
-                }
-              }
-              profile {
-                handle
-              }
-              hidden
-            }
-          }
-        }
-      }
-      pageInfo {
-        totalCount
-        next
-      }
-    }
-  }
-`
 
 interface Props {
   profile: Profile
@@ -152,7 +112,7 @@ const OrganizationFeed: FC<Props> = ({ profile }) => {
         setAddressData(add)
         return columns
       }}
-      query={NOTIFICATIONS_QUERY}
+      query={NotificationsDocument}
       request={{
         profileId: profile?.id,
         limit: tableLimit

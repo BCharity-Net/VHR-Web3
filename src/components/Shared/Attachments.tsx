@@ -1,4 +1,5 @@
 import { Button } from '@components/UI/Button'
+import { LightBox } from '@components/UI/LightBox'
 import { BCharityAttachment } from '@generated/bcharitytypes'
 import { MediaSet } from '@generated/types'
 import { ExternalLinkIcon, XIcon } from '@heroicons/react/outline'
@@ -6,7 +7,7 @@ import getIPFSLink from '@lib/getIPFSLink'
 import imagekitURL from '@lib/imagekitURL'
 import clsx from 'clsx'
 import dynamic from 'next/dynamic'
-import React, { FC } from 'react'
+import { FC, useState } from 'react'
 
 const Video = dynamic(() => import('./Video'), {
   loading: () => <div className="rounded-lg aspect-w-16 aspect-h-12 shimmer" />
@@ -39,6 +40,8 @@ interface Props {
 }
 
 const Attachments: FC<Props> = ({ attachments, setAttachments, isNew = false, hideDelete = false }) => {
+  const [expanedImage, setExpandedImage] = useState<string | null>(null)
+
   const removeAttachment = (attachment: any) => {
     const arr = attachments
     setAttachments(
@@ -55,56 +58,59 @@ const Attachments: FC<Props> = ({ attachments, setAttachments, isNew = false, hi
     : attachments?.slice(0, 4)
 
   return slicedAttachments?.length !== 0 ? (
-    <div className={clsx(getClass(slicedAttachments?.length)?.row, 'grid grid-flow-col gap-2 pt-3')}>
-      {slicedAttachments?.map((attachment: BCharityAttachment & MediaSet) => {
-        const type = isNew ? attachment.type : attachment.original.mimeType
-        const url = isNew ? getIPFSLink(attachment.item) : getIPFSLink(attachment.original.url)
+    <>
+      <div className={clsx(getClass(slicedAttachments?.length)?.row, 'grid grid-flow-col gap-2 pt-3')}>
+        {slicedAttachments?.map((attachment: BCharityAttachment & MediaSet) => {
+          const type = isNew ? attachment.type : attachment.original.mimeType
+          const url = isNew ? getIPFSLink(attachment.item) : getIPFSLink(attachment.original.url)
 
-        return (
-          <div
-            className={clsx(type === 'video/mp4' ? '' : getClass(slicedAttachments?.length)?.aspect)}
-            key={url}
-            onClick={(event) => {
-              event.stopPropagation()
-            }}
-          >
-            {type === 'image/svg+xml' ? (
-              <Button
-                className="text-sm"
-                variant="primary"
-                icon={<ExternalLinkIcon className="h-4 w-4" />}
-                onClick={() => {
-                  window.open(url, '_blank')
-                }}
-              >
-                <span>Open Image in new tab</span>
-              </Button>
-            ) : type === 'video/mp4' ? (
-              <Video src={url} />
-            ) : (
-              <img
-                className="object-cover bg-gray-100 rounded-lg border cursor-pointer dark:bg-gray-800 dark:border-gray-700/80"
-                loading="lazy"
-                onClick={() => window.open(url, '_blank')}
-                src={imagekitURL(url, 'attachment')}
-                alt={imagekitURL(url, 'attachment')}
-              />
-            )}
-            {isNew && !hideDelete && (
-              <div className="m-3">
-                <button
-                  type="button"
-                  className="p-1.5 bg-gray-900 rounded-full opacity-75"
-                  onClick={() => removeAttachment(attachment)}
+          return (
+            <div
+              className={clsx(type === 'video/mp4' ? '' : getClass(slicedAttachments?.length)?.aspect)}
+              key={url}
+              onClick={(event) => {
+                event.stopPropagation()
+              }}
+            >
+              {type === 'image/svg+xml' ? (
+                <Button
+                  className="text-sm"
+                  variant="primary"
+                  icon={<ExternalLinkIcon className="h-4 w-4" />}
+                  onClick={() => {
+                    window.open(url, '_blank')
+                  }}
                 >
-                  <XIcon className="w-4 h-4 text-white" />
-                </button>
-              </div>
-            )}
-          </div>
-        )
-      })}
-    </div>
+                  <span>Open Image in new tab</span>
+                </Button>
+              ) : type === 'video/mp4' ? (
+                <Video src={url} />
+              ) : (
+                <img
+                  className="object-cover bg-gray-100 rounded-lg border cursor-pointer dark:bg-gray-800 dark:border-gray-700/80"
+                  loading="lazy"
+                  onClick={() => setExpandedImage(url)}
+                  src={imagekitURL(url, 'attachment')}
+                  alt={imagekitURL(url, 'attachment')}
+                />
+              )}
+              {isNew && !hideDelete && (
+                <div className="m-3">
+                  <button
+                    type="button"
+                    className="p-1.5 bg-gray-900 rounded-full opacity-75"
+                    onClick={() => removeAttachment(attachment)}
+                  >
+                    <XIcon className="w-4 h-4 text-white" />
+                  </button>
+                </div>
+              )}
+            </div>
+          )
+        })}
+      </div>
+      <LightBox show={!!expanedImage} url={expanedImage} onClose={() => setExpandedImage(null)} />
+    </>
   ) : null
 }
 

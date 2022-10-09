@@ -2,7 +2,7 @@
 import { gql, useQuery } from '@apollo/client'
 import { BCharityPublication } from '@generated/bcharitytypes'
 import { PaginatedResultInfo, Profile } from '@generated/types'
-import React, { FC, useMemo, useState } from 'react'
+import { FC, useMemo, useState } from 'react'
 import { Row, useFilters, useTable } from 'react-table'
 import { useAppStore } from 'src/store/app'
 
@@ -209,12 +209,11 @@ const OrgVerifiedHours: FC<Props> = ({ profile, callback }) => {
 
   const computeHours = (rows: Row<Data>[]) => {
     let result = 0
-    for (const row of rows
-      .filter((row) => {
-        return row.values.verified.value === 'Verified'
-      })) {
-        result += row.values.totalHours.value * 1
-      }
+    for (const row of rows.filter((row) => {
+      return row.values.verified.value === 'Verified'
+    })) {
+      result += row.values.totalHours.value * 1
+    }
     return result
   }
 

@@ -5,7 +5,7 @@ import { PaginatedResultInfo, Profile } from '@generated/types'
 import { CommentFields } from '@gql/CommentFields'
 import { MirrorFields } from '@gql/MirrorFields'
 import { PostFields } from '@gql/PostFields'
-import React, { FC, useState } from 'react'
+import { FC, useState } from 'react'
 import { useAppStore } from 'src/store/app'
 
 import TotalDonors from '../FundraiseTable/TotalDonors'

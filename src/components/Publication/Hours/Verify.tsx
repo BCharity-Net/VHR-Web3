@@ -19,7 +19,6 @@ import {
   CREATE_COMMENT_VIA_DISPATHCER_MUTATION
 } from '@gql/TypedAndDispatcherData/CreateComment'
 import { CheckCircleIcon } from '@heroicons/react/outline'
-import { defaultFeeData, defaultModuleData, FEE_DATA_TYPE, getModule } from '@lib/getModule'
 import getSignature from '@lib/getSignature'
 import Logger from '@lib/logger'
 import { Mixpanel } from '@lib/mixpanel'
@@ -27,7 +26,7 @@ import splitSignature from '@lib/splitSignature'
 import trimify from '@lib/trimify'
 import uploadToArweave from '@lib/uploadToArweave'
 import { ethers } from 'ethers'
-import React, { FC, useEffect, useState } from 'react'
+import { FC, useEffect, useState } from 'react'
 import toast from 'react-hot-toast'
 import {
   APP_NAME,
@@ -43,6 +42,7 @@ import {
   VHR_TOKEN
 } from 'src/constants'
 import { useAppStore } from 'src/store/app'
+import { useCollectModuleStore } from 'src/store/collectmodule'
 import { v4 as uuid } from 'uuid'
 import { useAccount, useBalance, useContractRead, useContractWrite, useSignTypedData } from 'wagmi'
 
@@ -109,8 +109,8 @@ const Verify: FC<Props> = ({ publication }) => {
   const setUserSigNonce = useAppStore((state) => state.setUserSigNonce)
   const currentProfile = useAppStore((state) => state.currentProfile)
   const { address } = useAccount()
-  const [selectedModule, setSelectedModule] = useState<EnabledModule>(defaultModuleData)
-  const [feeData, setFeeData] = useState<FEE_DATA_TYPE>(defaultFeeData)
+  const resetCollectSettings = useCollectModuleStore((state) => state.reset)
+  const payload = useCollectModuleStore((state) => state.payload)
   const [txnData, setTxnData] = useState('')
   const [hasVhrTxn, setHasVrhTxn] = useState(false)
   const { isLoading: signLoading, signTypedDataAsync } = useSignTypedData({
@@ -228,8 +228,7 @@ const Verify: FC<Props> = ({ publication }) => {
     functionName: 'commentWithSig',
     mode: 'recklesslyUnprepared',
     onSuccess: () => {
-      setSelectedModule(defaultModuleData)
-      setFeeData(defaultFeeData)
+      resetCollectSettings()
     },
     onError: (error: any) => {
       if (txnData) {
@@ -336,11 +335,7 @@ const Verify: FC<Props> = ({ publication }) => {
           profileId: currentProfile?.id,
           publicationId: publication?.__typename === 'Mirror' ? publication?.mirrorOf?.id : publication?.id,
           contentURI: `https://arweave.net/${id}`,
-          collectModule: feeData.recipient
-            ? {
-                [getModule(selectedModule.moduleName).config]: feeData
-              }
-            : getModule(selectedModule.moduleName).config,
+          collectModule: payload,
           referenceModule: {
             followerOnlyReferenceModule: false
           }

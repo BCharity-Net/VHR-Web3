@@ -1,27 +1,21 @@
-import { gql, useMutation } from '@apollo/client'
+import { useMutation } from '@apollo/client'
 import { Button } from '@components/UI/Button'
-import { CardBody } from '@components/UI/Card'
 import { EmptyState } from '@components/UI/EmptyState'
 import { ErrorMessage } from '@components/UI/ErrorMessage'
 import { Form, useZodForm } from '@components/UI/Form'
 import { Spinner } from '@components/UI/Spinner'
 import { TextArea } from '@components/UI/TextArea'
 import { BCharityPublication } from '@generated/bcharitytypes'
+import { ReportPublicationDocument } from '@generated/types'
 import { PencilAltIcon } from '@heroicons/react/outline'
 import { CheckCircleIcon } from '@heroicons/react/solid'
 import { Mixpanel } from '@lib/mixpanel'
-import React, { FC, useState } from 'react'
+import { FC, useState } from 'react'
 import { useGlobalModalStateStore } from 'src/store/modals'
 import { PUBLICATION } from 'src/tracking'
 import { object, string } from 'zod'
 
 import Reason from './Reason'
-
-export const CREATE_REPORT_PUBLICATION_MUTATION = gql`
-  mutation ReportPublication($request: ReportPublicationRequest!) {
-    reportPublication(request: $request)
-  }
-`
 
 const newReportSchema = object({
   additionalComments: string().max(260, {
@@ -39,7 +33,7 @@ const Report: FC<Props> = ({ publication }) => {
   const [subReason, setSubReason] = useState(reportConfig?.subReason ?? '')
 
   const [createReport, { data: submitData, loading: submitLoading, error: submitError }] = useMutation(
-    CREATE_REPORT_PUBLICATION_MUTATION,
+    ReportPublicationDocument,
     {
       onCompleted: () => {
         Mixpanel.track(PUBLICATION.REPORT)
@@ -77,7 +71,7 @@ const Report: FC<Props> = ({ publication }) => {
           hideCard
         />
       ) : publication ? (
-        <CardBody>
+        <div className="p-5">
           <Form
             form={form}
             className="space-y-4"
@@ -106,7 +100,7 @@ const Report: FC<Props> = ({ publication }) => {
               </>
             )}
           </Form>
-        </CardBody>
+        </div>
       ) : null}
     </div>
   )

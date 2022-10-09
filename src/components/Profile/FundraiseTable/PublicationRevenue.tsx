@@ -1,32 +1,10 @@
 /* eslint-disable react/jsx-no-useless-fragment */
-import { gql, useQuery } from '@apollo/client'
-import { CommentValue, PUBLICATION_REVENUE_QUERY } from '@components/Publication/Fundraise'
-import { CommentFields } from '@gql/CommentFields'
+import { useQuery } from '@apollo/client'
+import { CommentValue } from '@components/Publication/Fundraise'
+import { CommentFeedDocument, PublicationRevenueDocument } from '@generated/types'
 import Logger from '@lib/logger'
 import { FC, useEffect, useState } from 'react'
 import { useAppStore } from 'src/store/app'
-
-const COMMENT_FEED_QUERY = gql`
-  query CommentFeed(
-    $request: PublicationsQueryRequest!
-    $reactionRequest: ReactionFieldResolverRequest
-    $profileId: ProfileId
-  ) {
-    publications(request: $request) {
-      items {
-        ... on Comment {
-          ...CommentFields
-        }
-      }
-      pageInfo {
-        totalCount
-        next
-      }
-    }
-  }
-  ${CommentFields}
-`
-
 interface Props {
   pubId: string
   callback?: Function
@@ -38,7 +16,7 @@ const PublicationRevenue: FC<Props> = ({ pubId, callback }) => {
 
   let commentValue = 0
 
-  const { data: revenueData, loading: revenueLoading } = useQuery(PUBLICATION_REVENUE_QUERY, {
+  const { data: revenueData, loading: revenueLoading } = useQuery(PublicationRevenueDocument, {
     variables: {
       request: {
         publicationId: pubId
@@ -49,7 +27,7 @@ const PublicationRevenue: FC<Props> = ({ pubId, callback }) => {
     }
   })
 
-  const { data, loading } = useQuery(COMMENT_FEED_QUERY, {
+  const { data, loading } = useQuery(CommentFeedDocument, {
     variables: {
       request: { commentsOf: pubId },
       reactionRequest: currentProfile ? { profileId: currentProfile?.id } : null,
@@ -59,7 +37,7 @@ const PublicationRevenue: FC<Props> = ({ pubId, callback }) => {
   })
 
   useEffect(() => {
-    setRevenue(parseFloat(revenueData?.publicationRevenue?.revenue?.total?.value ?? 0))
+    setRevenue(parseFloat((revenueData?.publicationRevenue?.revenue?.total?.value as any) ?? 0))
   }, [revenueData])
 
   return (

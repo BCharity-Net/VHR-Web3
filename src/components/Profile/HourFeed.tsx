@@ -1,10 +1,6 @@
 /* eslint-disable react/jsx-key */
-import { gql } from '@apollo/client'
-import { Profile } from '@generated/types'
-import { CommentFields } from '@gql/CommentFields'
-import { MirrorFields } from '@gql/MirrorFields'
-import { PostFields } from '@gql/PostFields'
-import React, { FC, useMemo, useState } from 'react'
+import { Profile, ProfileFeedDocument, PublicationTypes } from '@generated/types'
+import { FC, useMemo, useState } from 'react'
 
 import VHRTable from './VHRTable'
 import { ProfileCell, StatusCell, TotalGoodCell, TotalHoursCell } from './VHRTable/Cells'
@@ -18,35 +14,6 @@ import {
   NoFilter,
   SelectColumnFilter
 } from './VHRTable/Filters'
-
-const PROFILE_FEED_QUERY = gql`
-  query ProfileFeed(
-    $request: PublicationsQueryRequest!
-    $reactionRequest: ReactionFieldResolverRequest
-    $profileId: ProfileId
-  ) {
-    publications(request: $request) {
-      items {
-        ... on Post {
-          ...PostFields
-        }
-        ... on Comment {
-          ...CommentFields
-        }
-        ... on Mirror {
-          ...MirrorFields
-        }
-      }
-      pageInfo {
-        totalCount
-        next
-      }
-    }
-  }
-  ${PostFields}
-  ${CommentFields}
-  ${MirrorFields}
-`
 
 interface Props {
   profile: Profile
@@ -137,9 +104,9 @@ const HourFeed: FC<Props> = ({ profile }) => {
         setAddressData(add)
         return columns
       }}
-      query={PROFILE_FEED_QUERY}
+      query={ProfileFeedDocument}
       request={{
-        publicationTypes: 'POST',
+        publicationTypes: [PublicationTypes.Post],
         profileId: profile?.id,
         limit: tableLimit
       }}

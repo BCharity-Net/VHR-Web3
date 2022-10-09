@@ -1,6 +1,6 @@
 import { Menu, Transition } from '@headlessui/react'
 import clsx from 'clsx'
-import React, { FC } from 'react'
+import { FC } from 'react'
 import { Fragment } from 'react'
 
 import i18n from '../../i18n'

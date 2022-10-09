@@ -12,7 +12,7 @@ import { PaginatedResultInfo, Profile } from '@generated/types'
 import { CollectionIcon } from '@heroicons/react/outline'
 import Logger from '@lib/logger'
 import { ethers } from 'ethers'
-import React, { FC, useState } from 'react'
+import { FC, useState } from 'react'
 import { useInView } from 'react-cool-inview'
 import { Row, useFilters, useTable } from 'react-table'
 import { DAI_TOKEN, GIVE_DAI_LP, GOOD_TOKEN, VHR_TO_DAI_PRICE } from 'src/constants'
@@ -337,10 +337,10 @@ const VHRTable: FC<Props> = ({ profile, handleQueryComplete, getColumns, query, 
                       return ethers.utils.isHexString(i.metadata.content)
                     })
                     if (publications.length !== 0 && vhrTxnData[index] != publications[0].metadata.content) {
-                        vhrTxnData[index] = publications[0].metadata.content
-                        setVhrTxnData(vhrTxnData)
-                        setTableData([...tableData])
-                      }
+                      vhrTxnData[index] = publications[0].metadata.content
+                      setVhrTxnData(vhrTxnData)
+                      setTableData([...tableData])
+                    }
 
                     const good: string[] = []
                     data.publications.items.forEach((i: any) => {
@@ -350,10 +350,10 @@ const VHRTable: FC<Props> = ({ profile, handleQueryComplete, getColumns, query, 
                       }
                     })
                     if (good.length !== 0 && goodTxnData[index] != good[0]) {
-                        goodTxnData[index] = good[0]
-                        setGoodTxnData(goodTxnData)
-                        setTableData([...tableData])
-                      }
+                      goodTxnData[index] = good[0]
+                      setGoodTxnData(goodTxnData)
+                      setTableData([...tableData])
+                    }
                   }}
                 />
                 <NFTDetails

@@ -1,9 +1,9 @@
 import { useQuery } from '@apollo/client'
 import { Spinner } from '@components/UI/Spinner'
-import { TX_STATUS_QUERY } from '@gql/HasTxHashBeenIndexed'
+import { HasTxHashBeenIndexedDocument } from '@generated/types'
 import { CheckCircleIcon } from '@heroicons/react/solid'
 import clsx from 'clsx'
-import React, { FC, useState } from 'react'
+import { FC, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { POLYGONSCAN_URL } from 'src/constants'
 
@@ -17,13 +17,16 @@ const IndexStatus: FC<Props> = ({ type = 'Transaction', txHash, reload = false }
   const { t } = useTranslation('common')
   const [hide, setHide] = useState(false)
   const [pollInterval, setPollInterval] = useState(500)
-  const { data, loading } = useQuery(TX_STATUS_QUERY, {
+  const { data, loading } = useQuery(HasTxHashBeenIndexedDocument, {
     variables: {
       request: { txHash }
     },
     pollInterval,
     onCompleted: (data) => {
-      if (data?.hasTxHashBeenIndexed?.indexed) {
+      if (
+        data.hasTxHashBeenIndexed.__typename === 'TransactionIndexedResult' &&
+        data?.hasTxHashBeenIndexed?.indexed
+      ) {
         setPollInterval(0)
         if (reload) {
           location.reload()
@@ -42,7 +45,9 @@ const IndexStatus: FC<Props> = ({ type = 'Transaction', txHash, reload = false }
       target="_blank"
       rel="noreferrer noopener"
     >
-      {loading || !data?.hasTxHashBeenIndexed?.indexed ? (
+      {loading ||
+      (data?.hasTxHashBeenIndexed.__typename === 'TransactionIndexedResult' &&
+        !data?.hasTxHashBeenIndexed.indexed) ? (
         <div className="flex items-center space-x-1.5">
           <Spinner size="xs" />
           <div>

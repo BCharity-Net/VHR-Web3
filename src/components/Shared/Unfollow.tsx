@@ -1,8 +1,8 @@
 import { FollowNFT } from '@abis/FollowNFT'
-import { gql, useMutation } from '@apollo/client'
+import { useMutation } from '@apollo/client'
 import { Button } from '@components/UI/Button'
 import { Spinner } from '@components/UI/Spinner'
-import { CreateUnfollowBroadcastItemResult, Mutation, Profile } from '@generated/types'
+import { CreateUnfollowTypedDataDocument, Mutation, Profile } from '@generated/types'
 import { UserRemoveIcon } from '@heroicons/react/outline'
 import getSignature from '@lib/getSignature'
 import { Mixpanel } from '@lib/mixpanel'
@@ -16,34 +16,6 @@ import { SIGN_WALLET } from 'src/constants'
 import { useAppStore } from 'src/store/app'
 import { PROFILE } from 'src/tracking'
 import { useSigner, useSignTypedData } from 'wagmi'
-
-const CREATE_UNFOLLOW_TYPED_DATA_MUTATION = gql`
-  mutation CreateUnfollowTypedData($request: UnfollowRequest!) {
-    createUnfollowTypedData(request: $request) {
-      id
-      expiresAt
-      typedData {
-        domain {
-          name
-          chainId
-          version
-          verifyingContract
-        }
-        types {
-          BurnWithSig {
-            name
-            type
-          }
-        }
-        value {
-          nonce
-          deadline
-          tokenId
-        }
-      }
-    }
-  }
-`
 
 interface Props {
   profile: Profile
@@ -59,16 +31,12 @@ const Unfollow: FC<Props> = ({ profile, showText = false, setFollowing }) => {
   const { t } = useTranslation('common')
 
   const [createUnfollowTypedData, { loading: typedDataLoading }] = useMutation<Mutation>(
-    CREATE_UNFOLLOW_TYPED_DATA_MUTATION,
+    CreateUnfollowTypedDataDocument,
     {
-      onCompleted: async ({
-        createUnfollowTypedData
-      }: {
-        createUnfollowTypedData: CreateUnfollowBroadcastItemResult
-      }) => {
+      onCompleted: async ({ createUnfollowTypedData }) => {
         try {
           const { typedData } = createUnfollowTypedData
-          const { tokenId, deadline } = typedData?.value
+          const { tokenId, deadline } = typedData.value
           const signature = await signTypedDataAsync(getSignature(typedData))
           const { v, r, s } = splitSignature(signature)
           const sig = { v, r, s, deadline }

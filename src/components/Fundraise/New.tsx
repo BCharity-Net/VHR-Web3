@@ -1,6 +1,5 @@
 import { LensHubProxy } from '@abis/LensHubProxy'
-import { gql, useMutation, useQuery } from '@apollo/client'
-import { GridItemEight, GridItemFour, GridLayout } from '@components/GridLayout'
+import { useMutation, useQuery } from '@apollo/client'
 import ChooseFile from '@components/Shared/ChooseFile'
 import Pending from '@components/Shared/Pending'
 import SettingsHelper from '@components/Shared/SettingsHelper'
@@ -8,17 +7,22 @@ import Autosuggest from '@components/UI/Autosuggest'
 import { Button } from '@components/UI/Button'
 import { Card } from '@components/UI/Card'
 import { Form, useZodForm } from '@components/UI/Form'
+import { GridItemEight, GridItemFour, GridLayout } from '@components/UI/GridLayout'
 import { Input } from '@components/UI/Input'
 import { PageLoading } from '@components/UI/PageLoading'
 import { Spinner } from '@components/UI/Spinner'
 import { TextArea } from '@components/UI/TextArea'
 import useBroadcast from '@components/utils/hooks/useBroadcast'
-import Seo from '@components/utils/Seo'
-import { CreatePostBroadcastItemResult, Erc20, Mutation, PublicationMainFocus } from '@generated/types'
+import MetaTags from '@components/utils/MetaTags'
 import {
-  CREATE_POST_TYPED_DATA_MUTATION,
-  CREATE_POST_VIA_DISPATHCER_MUTATION
-} from '@gql/TypedAndDispatcherData/CreatePost'
+  CreatePostBroadcastItemResult,
+  CreatePostTypedDataDocument,
+  CreatePostViaDispatcherDocument,
+  EnabledCurrencyModulesDocument,
+  Erc20,
+  Mutation,
+  PublicationMainFocus
+} from '@generated/types'
 import { PlusIcon } from '@heroicons/react/outline'
 import getIPFSLink from '@lib/getIPFSLink'
 import getSignature from '@lib/getSignature'
@@ -31,7 +35,7 @@ import splitSignature from '@lib/splitSignature'
 import uploadMediaToIPFS from '@lib/uploadMediaToIPFS'
 import uploadToArweave from '@lib/uploadToArweave'
 import { NextPage } from 'next'
-import React, { ChangeEvent, useEffect, useState } from 'react'
+import { ChangeEvent, useEffect, useState } from 'react'
 import { Controller } from 'react-hook-form'
 import toast from 'react-hot-toast'
 import { useTranslation } from 'react-i18next'
@@ -50,17 +54,6 @@ import { v4 as uuid } from 'uuid'
 import { useContractWrite, useSignTypedData } from 'wagmi'
 import { object, string } from 'zod'
 
-const MODULES_CURRENCY_QUERY = gql`
-  query EnabledCurrencyModules {
-    enabledModuleCurrencies {
-      name
-      symbol
-      decimals
-      address
-    }
-  }
-`
-
 const NewFundraise: NextPage = () => {
   const { t } = useTranslation('common')
   const userSigNonce = useAppStore((state) => state.userSigNonce)
@@ -73,7 +66,7 @@ const NewFundraise: NextPage = () => {
   const [selectedCurrency, setSelectedCurrency] = useState(DEFAULT_COLLECT_TOKEN)
   const [selectedCurrencySymobol, setSelectedCurrencySymobol] = useState('WMATIC')
   const { isLoading: signLoading, signTypedDataAsync } = useSignTypedData({ onError })
-  const { data: currencyData, loading } = useQuery(MODULES_CURRENCY_QUERY)
+  const { data: currencyData, loading } = useQuery(EnabledCurrencyModulesDocument)
 
   const newFundraiseSchema = object({
     title: string()
@@ -136,7 +129,7 @@ const NewFundraise: NextPage = () => {
 
   const { broadcast, data: broadcastData, loading: broadcastLoading } = useBroadcast({ onCompleted })
   const [createFundraiseTypedData, { loading: typedDataLoading }] = useMutation<Mutation>(
-    CREATE_POST_TYPED_DATA_MUTATION,
+    CreatePostTypedDataDocument,
     {
       onCompleted: async ({
         createPostTypedData
@@ -185,7 +178,7 @@ const NewFundraise: NextPage = () => {
   )
 
   const [createFundraiseViaDispatcher, { data: dispatcherData, loading: dispatcherLoading }] = useMutation(
-    CREATE_POST_VIA_DISPATHCER_MUTATION,
+    CreatePostViaDispatcherDocument,
     { onCompleted, onError }
   )
 
@@ -286,24 +279,23 @@ const NewFundraise: NextPage = () => {
 
   const isLoading =
     typedDataLoading || dispatcherLoading || isUploading || signLoading || writeLoading || broadcastLoading
+  const txHash =
+    data?.hash ??
+    broadcastData?.broadcast?.txHash ??
+    (dispatcherData?.createPostViaDispatcher.__typename === 'RelayerResult' &&
+      dispatcherData?.createPostViaDispatcher.txHash)
 
   return (
     <GridLayout>
-      <Seo title={`Create Fundraise • ${APP_NAME}`} />
+      <MetaTags title={`Create Fundraise • ${APP_NAME}`} />
       <GridItemFour>
         <SettingsHelper heading={t('Create fundraise')} description={t('Create fundraise description')} />
       </GridItemFour>
       <GridItemEight>
         <Card>
-          {data?.hash ??
-          broadcastData?.broadcast?.txHash ??
-          dispatcherData?.createPostViaDispatcher?.txHash ? (
+          {txHash ? (
             <Pending
-              txHash={
-                data?.hash ??
-                broadcastData?.broadcast?.txHash ??
-                dispatcherData?.createPostViaDispatcher?.txHash
-              }
+              txHash={txHash}
               indexing={t('Fundraise creation')}
               indexed={t('Fundraise created successfully')}
               type="fundraise"

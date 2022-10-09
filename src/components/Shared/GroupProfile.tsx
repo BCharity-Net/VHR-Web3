@@ -4,7 +4,7 @@ import getIPFSLink from '@lib/getIPFSLink'
 import humanize from '@lib/humanize'
 import imagekitURL from '@lib/imagekitURL'
 import Link from 'next/link'
-import React, { FC } from 'react'
+import { FC } from 'react'
 
 interface Props {
   group: Group

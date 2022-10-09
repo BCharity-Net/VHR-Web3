@@ -1,6 +1,24 @@
-import { useQuery } from '@apollo/client'
-import { USER_PROFILES_QUERY } from '@components/Layout'
+import { gql, useQuery } from '@apollo/client'
+import { ProfileFields } from '@gql/ProfileFields'
 import { FC } from 'react'
+
+export const USER_PROFILES_QUERY = gql`
+  query UserProfiles($ownedBy: [EthereumAddress!]) {
+    profiles(request: { ownedBy: $ownedBy }) {
+      items {
+        ...ProfileFields
+        isDefault
+        dispatcher {
+          canUseRelay
+        }
+      }
+    }
+    userSigNonces {
+      lensHubOnChainSigNonce
+    }
+  }
+  ${ProfileFields}
+`
 
 interface Props {
   address: string

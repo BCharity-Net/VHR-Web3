@@ -1,8 +1,8 @@
-import { useLazyQuery } from '@apollo/client'
-import { SEARCH_USERS_QUERY } from '@components/Shared/Navbar/Search'
+import { gql, useLazyQuery } from '@apollo/client'
 import Slug from '@components/Shared/Slug'
 import { UserSuggestion } from '@generated/bcharitytypes'
 import { MediaSet, NftImage, Profile } from '@generated/types'
+import { ProfileFields } from '@gql/ProfileFields'
 import { BadgeCheckIcon } from '@heroicons/react/solid'
 import imagekitURL from '@lib/imagekitURL'
 import isVerified from '@lib/isVerified'
@@ -10,6 +10,19 @@ import Logger from '@lib/logger'
 import clsx from 'clsx'
 import { FC } from 'react'
 import { Mention, MentionsInput } from 'react-mentions'
+
+export const SEARCH_USERS_QUERY = gql`
+  query SearchUsers($request: SearchQueryRequest!) {
+    search(request: $request) {
+      ... on ProfileSearchResult {
+        items {
+          ...ProfileFields
+        }
+      }
+    }
+  }
+  ${ProfileFields}
+`
 
 interface UserProps {
   suggestion: UserSuggestion

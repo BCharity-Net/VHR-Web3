@@ -11,7 +11,7 @@ import { BCharityPublication } from '@generated/bcharitytypes'
 import { PaginatedResultInfo, Profile } from '@generated/types'
 import { CollectionIcon } from '@heroicons/react/outline'
 import Logger from '@lib/logger'
-import React, { FC, useEffect, useState } from 'react'
+import { FC, useEffect, useState } from 'react'
 import { useInView } from 'react-cool-inview'
 import { useFilters, useTable } from 'react-table'
 import {

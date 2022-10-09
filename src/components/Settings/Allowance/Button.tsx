@@ -1,31 +1,21 @@
-import { gql, useLazyQuery } from '@apollo/client'
+import { useLazyQuery } from '@apollo/client'
 import { Button } from '@components/UI/Button'
 import { Modal } from '@components/UI/Modal'
 import { Spinner } from '@components/UI/Spinner'
 import { WarningMessage } from '@components/UI/WarningMessage'
-import { ApprovedAllowanceAmount } from '@generated/types'
+import { GenerateModuleCurrencyApprovalDataDocument } from '@generated/types'
 import { ExclamationIcon, MinusIcon, PlusIcon } from '@heroicons/react/outline'
 import { getModule } from '@lib/getModule'
 import { Mixpanel } from '@lib/mixpanel'
 import onError from '@lib/onError'
-import React, { Dispatch, FC, useState } from 'react'
+import { Dispatch, FC, useState } from 'react'
 import toast from 'react-hot-toast'
 import { useTranslation } from 'react-i18next'
 import { usePrepareSendTransaction, useSendTransaction, useWaitForTransaction } from 'wagmi'
 
-const GENERATE_ALLOWANCE_QUERY = gql`
-  query GenerateModuleCurrencyApprovalData($request: GenerateModuleCurrencyApprovalDataRequest!) {
-    generateModuleCurrencyApprovalData(request: $request) {
-      to
-      from
-      data
-    }
-  }
-`
-
 interface Props {
   title?: string
-  module: ApprovedAllowanceAmount
+  module: any
   allowed: boolean
   setAllowed: Dispatch<boolean>
 }
@@ -33,7 +23,9 @@ interface Props {
 const AllowanceButton: FC<Props> = ({ title = 'Allow', module, allowed, setAllowed }) => {
   const { t } = useTranslation('common')
   const [showWarningModal, setShowWarninModal] = useState(false)
-  const [generateAllowanceQuery, { loading: queryLoading }] = useLazyQuery(GENERATE_ALLOWANCE_QUERY)
+  const [generateAllowanceQuery, { loading: queryLoading }] = useLazyQuery(
+    GenerateModuleCurrencyApprovalDataDocument
+  )
 
   const { config } = usePrepareSendTransaction({
     request: {}
@@ -65,7 +57,7 @@ const AllowanceButton: FC<Props> = ({ title = 'Allow', module, allowed, setAllow
         request: {
           currency: currencies,
           value: value,
-          [getModule(module.module).type]: selectedModule
+          [getModule(module.module).field]: selectedModule
         }
       }
     }).then((res) => {

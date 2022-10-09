@@ -1,12 +1,11 @@
-import { gql, useQuery } from '@apollo/client'
+import { useQuery } from '@apollo/client'
 import Loader from '@components/Shared/Loader'
 import UserProfile from '@components/Shared/UserProfile'
 import WalletProfile from '@components/Shared/WalletProfile'
 import { EmptyState } from '@components/UI/EmptyState'
 import { ErrorMessage } from '@components/UI/ErrorMessage'
 import { Spinner } from '@components/UI/Spinner'
-import { Follower, Profile } from '@generated/types'
-import { ProfileFields } from '@gql/ProfileFields'
+import { FollowersDocument, Profile, Wallet } from '@generated/types'
 import { UsersIcon } from '@heroicons/react/outline'
 import { Mixpanel } from '@lib/mixpanel'
 import { FC } from 'react'
@@ -14,28 +13,6 @@ import { useInView } from 'react-cool-inview'
 import { useTranslation } from 'react-i18next'
 import { PAGINATION_ROOT_MARGIN } from 'src/constants'
 import { PAGINATION } from 'src/tracking'
-
-const FOLLOWERS_QUERY = gql`
-  query Followers($request: FollowersRequest!) {
-    followers(request: $request) {
-      items {
-        wallet {
-          address
-          defaultProfile {
-            ...ProfileFields
-            isFollowedByMe
-          }
-        }
-        totalAmountOfTimesFollowed
-      }
-      pageInfo {
-        next
-        totalCount
-      }
-    }
-  }
-  ${ProfileFields}
-`
 
 interface Props {
   profile: Profile
@@ -46,7 +23,7 @@ const Followers: FC<Props> = ({ profile }) => {
   // Variables
   const request = { profileId: profile?.id, limit: 10 }
 
-  const { data, loading, error, fetchMore } = useQuery(FOLLOWERS_QUERY, {
+  const { data, loading, error, fetchMore } = useQuery(FollowersDocument, {
     variables: { request },
     skip: !profile?.id
   })
@@ -92,17 +69,17 @@ const Followers: FC<Props> = ({ profile }) => {
       <ErrorMessage className="m-5" title="Failed to load followers" error={error} />
       <div className="space-y-3">
         <div className="divide-y dark:divide-gray-700">
-          {followers?.map((follower: Follower) => (
+          {followers?.map((follower) => (
             <div className="p-5" key={follower?.wallet?.defaultProfile?.id}>
               {follower?.wallet?.defaultProfile ? (
                 <UserProfile
-                  profile={follower?.wallet?.defaultProfile}
+                  profile={follower?.wallet?.defaultProfile as Profile}
                   showBio
                   showFollow
                   isFollowing={follower?.wallet?.defaultProfile?.isFollowedByMe}
                 />
               ) : (
-                <WalletProfile wallet={follower?.wallet} />
+                <WalletProfile wallet={follower?.wallet as Wallet} />
               )}
             </div>
           ))}

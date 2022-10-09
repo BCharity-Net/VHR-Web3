@@ -1,28 +1,7 @@
-import { gql, useQuery } from '@apollo/client'
-import { CommentFields } from '@gql/CommentFields'
+import { useQuery } from '@apollo/client'
+import { CommentFeedDocument } from '@generated/types'
 import { FC } from 'react'
 import { useAppStore } from 'src/store/app'
-
-const COMMENT_FEED_QUERY = gql`
-  query CommentFeed(
-    $request: PublicationsQueryRequest!
-    $reactionRequest: ReactionFieldResolverRequest
-    $profileId: ProfileId
-  ) {
-    publications(request: $request) {
-      items {
-        ... on Comment {
-          ...CommentFields
-        }
-      }
-      pageInfo {
-        totalCount
-        next
-      }
-    }
-  }
-  ${CommentFields}
-`
 
 interface Props {
   pubId: string
@@ -31,7 +10,7 @@ interface Props {
 
 const VHRToken: FC<Props> = ({ pubId, callback }) => {
   const currentProfile = useAppStore((state) => state.currentProfile)
-  useQuery(COMMENT_FEED_QUERY, {
+  useQuery(CommentFeedDocument, {
     variables: {
       request: { commentsOf: pubId },
       reactionRequest: currentProfile ? { profileId: currentProfile?.id } : null,

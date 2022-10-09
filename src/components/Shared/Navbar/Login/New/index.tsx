@@ -1,30 +1,21 @@
-import { gql, useMutation } from '@apollo/client'
+import { useMutation } from '@apollo/client'
 import ChooseFile from '@components/Shared/ChooseFile'
 import { Button } from '@components/UI/Button'
 import { ErrorMessage } from '@components/UI/ErrorMessage'
 import { Form, useZodForm } from '@components/UI/Form'
 import { Input } from '@components/UI/Input'
 import { Spinner } from '@components/UI/Spinner'
-import { RelayerResultFields } from '@gql/RelayerResultFields'
+import { CreateProfileDocument } from '@generated/types'
 import { PlusIcon } from '@heroicons/react/outline'
 import getStampFyiURL from '@lib/getStampFyiURL'
 import uploadMediaToIPFS from '@lib/uploadMediaToIPFS'
-import React, { ChangeEvent, FC, useState } from 'react'
+import { ChangeEvent, FC, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { APP_NAME, HANDLE_REGEX, ZERO_ADDRESS } from 'src/constants'
 import { useAccount } from 'wagmi'
 import { object, string } from 'zod'
 
 import Pending from './Pending'
-
-const CREATE_PROFILE_MUTATION = gql`
-  mutation CreateProfile($request: CreateProfileRequest!) {
-    createProfile(request: $request) {
-      ...RelayerResultFields
-    }
-  }
-  ${RelayerResultFields}
-`
 
 interface Props {
   isModal?: boolean
@@ -35,7 +26,7 @@ const NewProfile: FC<Props> = ({ isModal = false }) => {
   const [avatar, setAvatar] = useState('')
   const [uploading, setUploading] = useState(false)
   const { address } = useAccount()
-  const [createProfile, { data, loading }] = useMutation(CREATE_PROFILE_MUTATION)
+  const [createProfile, { data, loading }] = useMutation(CreateProfileDocument)
 
   const newUserSchema = object({
     handle: string()
@@ -63,7 +54,7 @@ const NewProfile: FC<Props> = ({ isModal = false }) => {
     }
   }
 
-  return data?.createProfile?.txHash ? (
+  return data?.createProfile.__typename === 'RelayerResult' && data?.createProfile.txHash ? (
     <Pending handle={form.getValues('handle')} txHash={data?.createProfile?.txHash} />
   ) : (
     <Form
@@ -81,7 +72,7 @@ const NewProfile: FC<Props> = ({ isModal = false }) => {
         })
       }}
     >
-      {data?.createProfile?.reason && (
+      {data?.createProfile.__typename === 'RelayError' && data?.createProfile.reason && (
         <ErrorMessage
           className="mb-3"
           title="Create profile failed!"

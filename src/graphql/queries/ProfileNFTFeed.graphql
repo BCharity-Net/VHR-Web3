@@ -1,0 +1,11 @@
+ query ProfileNFTFeed($request: NFTsRequest!) {
+    nfts(request: $request) {
+      items {
+        contentURI
+      }
+      pageInfo {
+        next
+        totalCount
+      }
+    }
+  }

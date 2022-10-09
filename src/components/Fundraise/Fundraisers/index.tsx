@@ -1,13 +1,13 @@
 import { gql, useQuery } from '@apollo/client'
-import { GridItemFour, GridLayout } from '@components/GridLayout'
 import Like from '@components/Publication/Actions/Like'
 import Share from '@components/Publication/Actions/Share'
 import Markup from '@components/Shared/Markup'
 import { Button } from '@components/UI/Button'
 import { Card } from '@components/UI/Card'
+import { GridItemFour, GridLayout } from '@components/UI/GridLayout'
 import { Spinner } from '@components/UI/Spinner'
 import { Tooltip } from '@components/UI/Tooltip'
-import Seo from '@components/utils/Seo'
+import MetaTags from '@components/utils/MetaTags'
 import { BCharityPublication } from '@generated/bcharitytypes'
 import { PaginatedResultInfo } from '@generated/types'
 import { CommentFields } from '@gql/CommentFields'
@@ -16,7 +16,7 @@ import { PostFields } from '@gql/PostFields'
 import getTokenImage from '@lib/getTokenImage'
 import imagekitURL from '@lib/imagekitURL'
 import Logger from '@lib/logger'
-import React, { FC, useState } from 'react'
+import { FC, useState } from 'react'
 import { useInView } from 'react-cool-inview'
 import { useTranslation } from 'react-i18next'
 import { APP_NAME, STATIC_ASSETS } from 'src/constants'
@@ -138,7 +138,7 @@ const Fundraisers: FC<Props> = ({ publication, isFullPublication = false }) => {
 
   return (
     <GridLayout>
-      <Seo title={`Fundraisers • ${APP_NAME}`} />
+      <MetaTags title={`Fundraisers • ${APP_NAME}`} />
       {publications?.map(
         (publication: BCharityPublication, index: number) => (
           (cover = publication?.metadata?.cover?.original?.url),

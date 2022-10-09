@@ -1,11 +1,10 @@
-import { gql, useQuery } from '@apollo/client'
+import { useQuery } from '@apollo/client'
 import UserProfile from '@components/Shared/UserProfile'
 import WalletProfile from '@components/Shared/WalletProfile'
 import { EmptyState } from '@components/UI/EmptyState'
 import { ErrorMessage } from '@components/UI/ErrorMessage'
 import { Spinner } from '@components/UI/Spinner'
-import { Wallet } from '@generated/types'
-import { ProfileFields } from '@gql/ProfileFields'
+import { CollectorsDocument, Profile, Wallet } from '@generated/types'
 import { CollectionIcon } from '@heroicons/react/outline'
 import { Mixpanel } from '@lib/mixpanel'
 import { FC } from 'react'
@@ -15,25 +14,6 @@ import { PAGINATION_ROOT_MARGIN } from 'src/constants'
 import { PAGINATION } from 'src/tracking'
 
 import Loader from '../Loader'
-
-const COLLECTORS_QUERY = gql`
-  query Collectors($request: WhoCollectedPublicationRequest!) {
-    whoCollectedPublication(request: $request) {
-      items {
-        address
-        defaultProfile {
-          ...ProfileFields
-          isFollowedByMe
-        }
-      }
-      pageInfo {
-        next
-        totalCount
-      }
-    }
-  }
-  ${ProfileFields}
-`
 
 interface Props {
   publicationId: string
@@ -45,7 +25,7 @@ const Collectors: FC<Props> = ({ publicationId }) => {
   // Variables
   const request = { publicationId: publicationId, limit: 10 }
 
-  const { data, loading, error, fetchMore } = useQuery(COLLECTORS_QUERY, {
+  const { data, loading, error, fetchMore } = useQuery(CollectorsDocument, {
     variables: { request },
     skip: !publicationId
   })
@@ -88,17 +68,17 @@ const Collectors: FC<Props> = ({ publicationId }) => {
       <ErrorMessage className="m-5" title="Failed to load collectors" error={error} />
       <div className="space-y-3">
         <div className="divide-y dark:divide-gray-700">
-          {profiles?.map((wallet: Wallet) => (
+          {profiles?.map((wallet) => (
             <div className="p-5" key={wallet?.address}>
               {wallet?.defaultProfile ? (
                 <UserProfile
-                  profile={wallet?.defaultProfile}
+                  profile={wallet?.defaultProfile as Profile}
                   showBio
                   showFollow
                   isFollowing={wallet?.defaultProfile?.isFollowedByMe}
                 />
               ) : (
-                <WalletProfile wallet={wallet} />
+                <WalletProfile wallet={wallet as Wallet} />
               )}
             </div>
           ))}

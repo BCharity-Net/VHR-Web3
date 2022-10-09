@@ -1,5 +1,5 @@
 import { matchSorter } from 'match-sorter'
-import React, { useMemo, useState } from 'react'
+import { useMemo, useState } from 'react'
 import { Row } from 'react-table'
 
 import { Data } from './index'

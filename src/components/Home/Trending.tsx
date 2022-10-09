@@ -1,25 +1,14 @@
-import { gql, useQuery } from '@apollo/client'
+import { useQuery } from '@apollo/client'
 import TrendingTagShimmer from '@components/Shared/Shimmer/TrendingTagShimmer'
-import { Card, CardBody } from '@components/UI/Card'
+import { Card } from '@components/UI/Card'
 import { ErrorMessage } from '@components/UI/ErrorMessage'
-import { TagResult, TagSortCriteria } from '@generated/types'
+import { TagResult, TagSortCriteria, TrendingDocument } from '@generated/types'
 import { TrendingUpIcon } from '@heroicons/react/solid'
 import { Mixpanel } from '@lib/mixpanel'
 import nFormatter from '@lib/nFormatter'
 import Link from 'next/link'
-import React, { FC } from 'react'
+import { FC } from 'react'
 import { MISCELLANEOUS } from 'src/tracking'
-
-export const TRENDING_QUERY = gql`
-  query Trending($request: AllPublicationsTagsRequest!) {
-    allPublicationsTags(request: $request) {
-      items {
-        tag
-        total
-      }
-    }
-  }
-`
 
 const Title = () => {
   return (
@@ -31,7 +20,7 @@ const Title = () => {
 }
 
 const Trending: FC = () => {
-  const { data, loading, error } = useQuery(TRENDING_QUERY, {
+  const { data, loading, error } = useQuery(TrendingDocument, {
     variables: {
       request: { limit: 7, sort: TagSortCriteria.MostPopular }
     },
@@ -42,15 +31,13 @@ const Trending: FC = () => {
     return (
       <>
         <Title />
-        <Card className="mb-4">
-          <CardBody className="space-y-4">
-            <TrendingTagShimmer />
-            <TrendingTagShimmer />
-            <TrendingTagShimmer />
-            <TrendingTagShimmer />
-            <TrendingTagShimmer />
-            <TrendingTagShimmer />
-          </CardBody>
+        <Card className="mb-4 space-y-4 p-5">
+          <TrendingTagShimmer />
+          <TrendingTagShimmer />
+          <TrendingTagShimmer />
+          <TrendingTagShimmer />
+          <TrendingTagShimmer />
+          <TrendingTagShimmer />
         </Card>
       </>
     )
@@ -59,23 +46,21 @@ const Trending: FC = () => {
   return (
     <>
       <Title />
-      <Card as="aside" className="mb-4">
-        <CardBody className="space-y-4">
-          <ErrorMessage title="Failed to load recommendations" error={error} />
-          {data?.allPublicationsTags?.items?.map((tag: TagResult) =>
-            tag?.tag !== '{}' ? (
-              <div key={tag?.tag}>
-                <Link
-                  href={`/search?q=${tag?.tag}&type=pubs`}
-                  onClick={() => Mixpanel.track(MISCELLANEOUS.OPEN_TRENDING_TAG)}
-                >
-                  <div className="font-bold">{tag?.tag}</div>
-                  <div className="text-[12px] text-gray-500">{nFormatter(tag?.total)} Publications</div>
-                </Link>
-              </div>
-            ) : null
-          )}
-        </CardBody>
+      <Card as="aside" className="mb-4 space-y-4 p-5">
+        <ErrorMessage title="Failed to load trending" error={error} />
+        {data?.allPublicationsTags?.items?.map((tag: TagResult) =>
+          tag?.tag !== '{}' ? (
+            <div key={tag?.tag}>
+              <Link
+                href={`/search?q=${tag?.tag}&type=pubs`}
+                onClick={() => Mixpanel.track(MISCELLANEOUS.OPEN_TRENDING_TAG)}
+              >
+                <div className="font-bold">{tag?.tag}</div>
+                <div className="text-[12px] text-gray-500">{nFormatter(tag?.total)} Publications</div>
+              </Link>
+            </div>
+          ) : null
+        )}
       </Card>
     </>
   )

@@ -4,11 +4,7 @@ import { Spinner } from '@components/UI/Spinner'
 import { Tooltip } from '@components/UI/Tooltip'
 import useBroadcast from '@components/utils/hooks/useBroadcast'
 import { BCharityPublication } from '@generated/bcharitytypes'
-import { CreateMirrorBroadcastItemResult, Mutation } from '@generated/types'
-import {
-  CREATE_MIRROR_TYPED_DATA_MUTATION,
-  CREATE_MIRROR_VIA_DISPATHCER_MUTATION
-} from '@gql/TypedAndDispatcherData/CreateMirror'
+import { CreateMirrorTypedDataDocument, CreateMirrorViaDispatcherDocument, Mutation } from '@generated/types'
 import { SwitchHorizontalIcon } from '@heroicons/react/outline'
 import getSignature from '@lib/getSignature'
 import humanize from '@lib/humanize'
@@ -72,13 +68,9 @@ const Mirror: FC<Props> = ({ publication, isFullPublication }) => {
 
   const { broadcast, loading: broadcastLoading } = useBroadcast({ onCompleted })
   const [createMirrorTypedData, { loading: typedDataLoading }] = useMutation<Mutation>(
-    CREATE_MIRROR_TYPED_DATA_MUTATION,
+    CreateMirrorTypedDataDocument,
     {
-      onCompleted: async ({
-        createMirrorTypedData
-      }: {
-        createMirrorTypedData: CreateMirrorBroadcastItemResult
-      }) => {
+      onCompleted: async ({ createMirrorTypedData }) => {
         try {
           const { id, typedData } = createMirrorTypedData
           const {
@@ -89,7 +81,7 @@ const Mirror: FC<Props> = ({ publication, isFullPublication }) => {
             referenceModuleData,
             referenceModuleInitData,
             deadline
-          } = typedData?.value
+          } = typedData.value
           const signature = await signTypedDataAsync(getSignature(typedData))
           const { v, r, s } = splitSignature(signature)
           const sig = { v, r, s, deadline }
@@ -122,7 +114,7 @@ const Mirror: FC<Props> = ({ publication, isFullPublication }) => {
   )
 
   const [createMirrorViaDispatcher, { loading: dispatcherLoading }] = useMutation(
-    CREATE_MIRROR_VIA_DISPATHCER_MUTATION,
+    CreateMirrorViaDispatcherDocument,
     { onCompleted, onError }
   )
 

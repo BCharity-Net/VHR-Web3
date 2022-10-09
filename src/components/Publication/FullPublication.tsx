@@ -3,7 +3,7 @@ import { BCharityPublication } from '@generated/bcharitytypes'
 import getAppName from '@lib/getAppName'
 import dayjs from 'dayjs'
 import relativeTime from 'dayjs/plugin/relativeTime'
-import React, { FC } from 'react'
+import { FC } from 'react'
 
 import PublicationActions from './Actions'
 import HiddenPublication from './HiddenPublication'

@@ -1,25 +1,12 @@
-import { gql, useQuery } from '@apollo/client'
+import { useQuery } from '@apollo/client'
 import UserProfileShimmer from '@components/Shared/Shimmer/UserProfileShimmer'
 import UserProfile from '@components/Shared/UserProfile'
-import { Card, CardBody } from '@components/UI/Card'
+import { Card } from '@components/UI/Card'
 import { ErrorMessage } from '@components/UI/ErrorMessage'
 import { BCharityPublication } from '@generated/bcharitytypes'
-import { Profile } from '@generated/types'
-import { ProfileFields } from '@gql/ProfileFields'
-import React, { FC } from 'react'
+import { Profile, RelevantPeopleDocument } from '@generated/types'
+import { FC } from 'react'
 import { ALL_HANDLES_REGEX, HANDLE_SANITIZE_REGEX } from 'src/constants'
-
-const RELEVANT_PEOPLE_QUERY = gql`
-  query RelevantPeople($request: ProfileQueryRequest!) {
-    profiles(request: $request) {
-      items {
-        ...ProfileFields
-        isFollowedByMe
-      }
-    }
-  }
-  ${ProfileFields}
-`
 
 interface Props {
   publication: BCharityPublication
@@ -43,20 +30,18 @@ const RelevantPeople: FC<Props> = ({ publication }) => {
 
   const cleanedMentions = [...new Set(processedMentions)]
 
-  const { data, loading, error } = useQuery(RELEVANT_PEOPLE_QUERY, {
+  const { data, loading, error } = useQuery(RelevantPeopleDocument, {
     variables: { request: { handles: cleanedMentions.slice(0, 5) } }
   })
 
   if (loading) {
     return (
-      <Card as="aside">
-        <CardBody className="space-y-4">
-          <UserProfileShimmer showFollow />
-          <UserProfileShimmer showFollow />
-          <UserProfileShimmer showFollow />
-          <UserProfileShimmer showFollow />
-          <UserProfileShimmer showFollow />
-        </CardBody>
+      <Card as="aside" className="space-y-4 p-5">
+        <UserProfileShimmer showFollow />
+        <UserProfileShimmer showFollow />
+        <UserProfileShimmer showFollow />
+        <UserProfileShimmer showFollow />
+        <UserProfileShimmer showFollow />
       </Card>
     )
   }
@@ -66,15 +51,13 @@ const RelevantPeople: FC<Props> = ({ publication }) => {
   }
 
   return (
-    <Card as="aside">
-      <CardBody className="space-y-4">
-        <ErrorMessage title="Failed to load relevant people" error={error} />
-        {data?.profiles?.items?.map((profile: Profile) => (
-          <div key={profile?.id} className="truncate">
-            <UserProfile profile={profile} isFollowing={profile.isFollowedByMe} showFollow />
-          </div>
-        ))}
-      </CardBody>
+    <Card as="aside" className="space-y-4 p-5">
+      <ErrorMessage title="Failed to load relevant people" error={error} />
+      {data?.profiles?.items?.map((profile) => (
+        <div key={profile?.id} className="truncate">
+          <UserProfile profile={profile as Profile} isFollowing={profile.isFollowedByMe} showFollow />
+        </div>
+      ))}
     </Card>
   )
 }

@@ -2,7 +2,7 @@ import Slug from '@components/Shared/Slug'
 import { BCharityPublication } from '@generated/bcharitytypes'
 import { UsersIcon } from '@heroicons/react/outline'
 import Link from 'next/link'
-import React, { FC } from 'react'
+import { FC } from 'react'
 import { useTranslation } from 'react-i18next'
 
 interface Props {

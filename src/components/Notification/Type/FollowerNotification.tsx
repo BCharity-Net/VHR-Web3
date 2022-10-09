@@ -1,9 +1,8 @@
-import { BCharityNotification } from '@generated/bcharitytypes'
 import { NewFollowerNotification } from '@generated/types'
 import { UserAddIcon } from '@heroicons/react/solid'
 import dayjs from 'dayjs'
 import relativeTime from 'dayjs/plugin/relativeTime'
-import React, { FC } from 'react'
+import { FC } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useAppStore } from 'src/store/app'
 
@@ -13,7 +12,7 @@ import { NotificationWalletProfileAvatar, NotificationWalletProfileName } from '
 dayjs.extend(relativeTime)
 
 interface Props {
-  notification: NewFollowerNotification & BCharityNotification
+  notification: NewFollowerNotification
 }
 
 const FollowerNotification: FC<Props> = ({ notification }) => {

@@ -1,12 +1,18 @@
-import { gql, useQuery } from '@apollo/client'
+import { useQuery } from '@apollo/client'
 import { Card } from '@components/UI/Card'
 import { EmptyState } from '@components/UI/EmptyState'
 import { ErrorMessage } from '@components/UI/ErrorMessage'
 import { Spinner } from '@components/UI/Spinner'
-import { CustomFiltersTypes, Notification } from '@generated/types'
-import { CollectModuleFields } from '@gql/CollectModuleFields'
-import { MetadataFields } from '@gql/MetadataFields'
-import { ProfileFields } from '@gql/ProfileFields'
+import {
+  CustomFiltersTypes,
+  NewCollectNotification,
+  NewCommentNotification,
+  NewFollowerNotification,
+  NewMentionNotification,
+  NewMirrorNotification,
+  NewReactionNotification,
+  NotificationsDocument
+} from '@generated/types'
 import { MailIcon } from '@heroicons/react/outline'
 import { Mixpanel } from '@lib/mixpanel'
 import { FC } from 'react'
@@ -24,165 +30,6 @@ import LikeNotification from './Type/LikeNotification'
 import MentionNotification from './Type/MentionNotification'
 import MirrorNotification from './Type/MirrorNotification'
 
-const NOTIFICATIONS_QUERY = gql`
-  query Notifications($request: NotificationRequest!) {
-    notifications(request: $request) {
-      items {
-        ... on NewFollowerNotification {
-          notificationId
-          wallet {
-            address
-            defaultProfile {
-              ...ProfileFields
-            }
-          }
-          createdAt
-        }
-        ... on NewMentionNotification {
-          notificationId
-          mentionPublication {
-            ... on Post {
-              id
-              profile {
-                ...ProfileFields
-              }
-              metadata {
-                content
-              }
-            }
-            ... on Comment {
-              id
-              profile {
-                ...ProfileFields
-              }
-              metadata {
-                content
-              }
-            }
-          }
-          createdAt
-        }
-        ... on NewReactionNotification {
-          notificationId
-          profile {
-            ...ProfileFields
-          }
-          publication {
-            ... on Post {
-              id
-              metadata {
-                content
-              }
-            }
-            ... on Comment {
-              id
-              metadata {
-                content
-              }
-            }
-            ... on Mirror {
-              id
-              metadata {
-                content
-              }
-            }
-          }
-          createdAt
-        }
-        ... on NewCommentNotification {
-          notificationId
-          profile {
-            ...ProfileFields
-          }
-          comment {
-            id
-            metadata {
-              content
-            }
-            commentOn {
-              ... on Post {
-                id
-              }
-              ... on Comment {
-                id
-              }
-              ... on Mirror {
-                id
-              }
-            }
-          }
-          createdAt
-        }
-        ... on NewMirrorNotification {
-          notificationId
-          profile {
-            ...ProfileFields
-          }
-          publication {
-            ... on Post {
-              id
-              metadata {
-                name
-                content
-                attributes {
-                  value
-                }
-              }
-            }
-            ... on Comment {
-              id
-              metadata {
-                name
-                content
-                attributes {
-                  value
-                }
-              }
-            }
-          }
-          createdAt
-        }
-        ... on NewCollectNotification {
-          notificationId
-          wallet {
-            address
-            defaultProfile {
-              ...ProfileFields
-            }
-          }
-          collectedPublication {
-            ... on Post {
-              id
-              metadata {
-                ...MetadataFields
-              }
-              collectModule {
-                ...CollectModuleFields
-              }
-            }
-            ... on Comment {
-              id
-              metadata {
-                ...MetadataFields
-              }
-              collectModule {
-                ...CollectModuleFields
-              }
-            }
-          }
-          createdAt
-        }
-      }
-      pageInfo {
-        next
-      }
-    }
-  }
-  ${ProfileFields}
-  ${CollectModuleFields}
-  ${MetadataFields}
-`
-
 const List: FC = () => {
   const { t } = useTranslation('common')
   const currentProfile = useAppStore((state) => state.currentProfile)
@@ -194,7 +41,7 @@ const List: FC = () => {
     limit: 10
   }
 
-  const { data, loading, error, fetchMore } = useQuery(NOTIFICATIONS_QUERY, {
+  const { data, loading, error, fetchMore } = useQuery(NotificationsDocument, {
     variables: { request }
   })
 
@@ -246,25 +93,25 @@ const List: FC = () => {
 
   return (
     <Card className="divide-y dark:divide-gray-700">
-      {notifications?.map((notification: Notification, index: number) => (
+      {notifications?.map((notification, index: number) => (
         <div key={`${notification?.notificationId}_${index}`} className="p-5">
           {notification.__typename === 'NewFollowerNotification' && (
-            <FollowerNotification notification={notification as any} />
+            <FollowerNotification notification={notification as NewFollowerNotification} />
           )}
           {notification.__typename === 'NewMentionNotification' && (
-            <MentionNotification notification={notification as any} />
+            <MentionNotification notification={notification as NewMentionNotification} />
           )}
           {notification.__typename === 'NewReactionNotification' && (
-            <LikeNotification notification={notification} />
+            <LikeNotification notification={notification as NewReactionNotification} />
           )}
           {notification.__typename === 'NewCommentNotification' && (
-            <CommentNotification notification={notification} />
+            <CommentNotification notification={notification as NewCommentNotification} />
           )}
           {notification.__typename === 'NewMirrorNotification' && (
-            <MirrorNotification notification={notification} />
+            <MirrorNotification notification={notification as NewMirrorNotification} />
           )}
           {notification.__typename === 'NewCollectNotification' && (
-            <CollectNotification notification={notification as any} />
+            <CollectNotification notification={notification as NewCollectNotification} />
           )}
         </div>
       ))}

@@ -1,5 +1,5 @@
 import { LensHubProxy } from '@abis/LensHubProxy'
-import { gql, useMutation } from '@apollo/client'
+import { useMutation } from '@apollo/client'
 import ChooseFiles from '@components/Shared/ChooseFiles'
 import Pending from '@components/Shared/Pending'
 import SettingsHelper from '@components/Shared/SettingsHelper'
@@ -13,7 +13,12 @@ import { Spinner } from '@components/UI/Spinner'
 import { TextArea } from '@components/UI/TextArea'
 import useBroadcast from '@components/utils/hooks/useBroadcast'
 import MetaTags from '@components/utils/MetaTags'
-import { CreatePostBroadcastItemResult, CreatePostTypedDataDocument, Profile } from '@generated/types'
+import {
+  CreatePostBroadcastItemResult,
+  CreatePostTypedDataDocument,
+  CreatePostViaDispatcherDocument,
+  Profile
+} from '@generated/types'
 import { PlusIcon } from '@heroicons/react/outline'
 import getIPFSLink from '@lib/getIPFSLink'
 import getSignature from '@lib/getSignature'
@@ -142,9 +147,8 @@ const Opportunity: NextPage = () => {
     contractInterface: LensHubProxy,
     functionName: 'postWithSig',
     mode: 'recklesslyUnprepared',
-    onError: (error: any) => {
-      toast.error(error?.data?.message ?? error?.message)
-    }
+    onSuccess: onCompleted,
+    onError
   })
 
   const form = useZodForm({
@@ -168,50 +172,62 @@ const Opportunity: NextPage = () => {
   }
 
   const { broadcast, data: broadcastData, loading: broadcastLoading } = useBroadcast({ onCompleted })
-  const [createPostTypedData, { loading: typedDataLoading }] = useMutation(CreatePostTypedDataDocument, {
-    onCompleted: async ({ createPostTypedData }: { createPostTypedData: CreatePostBroadcastItemResult }) => {
-      try {
-        const { id, typedData } = createPostTypedData
-        const {
-          profileId,
-          contentURI,
-          collectModule,
-          collectModuleInitData,
-          referenceModule,
-          referenceModuleInitData,
-          deadline
-        } = typedData?.value
-        const signature = await signTypedDataAsync(getSignature(typedData))
-        const { v, r, s } = splitSignature(signature)
-        const sig = { v, r, s, deadline }
-        const inputStruct = {
-          profileId,
-          contentURI,
-          collectModule,
-          collectModuleInitData,
-          referenceModule,
-          referenceModuleInitData,
-          sig
-        }
-
-        setUserSigNonce(userSigNonce + 1)
-        if (RELAY_ON) {
+  const [createOpportunityTypedData, { loading: typedDataLoading }] = useMutation(
+    CreatePostTypedDataDocument,
+    {
+      onCompleted: async ({
+        createPostTypedData
+      }: {
+        createPostTypedData: CreatePostBroadcastItemResult
+      }) => {
+        try {
+          const { id, typedData } = createPostTypedData
           const {
-            data: { broadcast: result }
-          } = await broadcast({ request: { id, signature } })
+            profileId,
+            contentURI,
+            collectModule,
+            collectModuleInitData,
+            referenceModule,
+            referenceModuleInitData,
+            deadline
+          } = typedData?.value
+          const signature = await signTypedDataAsync(getSignature(typedData))
+          const { v, r, s } = splitSignature(signature)
+          const sig = { v, r, s, deadline }
+          const inputStruct = {
+            profileId,
+            contentURI,
+            collectModule,
+            collectModuleInitData,
+            referenceModule,
+            referenceModuleInitData,
+            sig
+          }
 
-          if ('reason' in result) {
+          setUserSigNonce(userSigNonce + 1)
+          if (RELAY_ON) {
+            const {
+              data: { broadcast: result }
+            } = await broadcast({ request: { id, signature } })
+
+            if ('reason' in result) {
+              write?.({ recklesslySetUnpreparedArgs: inputStruct })
+            }
+          } else {
             write?.({ recklesslySetUnpreparedArgs: inputStruct })
           }
-        } else {
-          write?.({ recklesslySetUnpreparedArgs: inputStruct })
-        }
-      } catch {}
-    },
-    onError
-  })
+        } catch {}
+      },
+      onError
+    }
+  )
 
-  const createOpportunities = async (
+  const [createOpportunityViaDispatcher, { data: dispatcherData, loading: dispatcherLoading }] = useMutation(
+    CreatePostViaDispatcherDocument,
+    { onCompleted, onError }
+  )
+
+  const createOpportunity = async (
     program: string,
     position: string,
     volunteers: string,
@@ -228,7 +244,7 @@ const Opportunity: NextPage = () => {
     }
     setIsUploading(true)
     const id = await uploadToArweave({
-      version: '1.0.0',
+      version: '2.0.0',
       metadata_id: uuid(),
       description: description,
       content: `@${currentProfile?.handle} Volunteer opportunities`,
@@ -294,24 +310,31 @@ const Opportunity: NextPage = () => {
       appId: `${APP_NAME} Hours`
     }).finally(() => setIsUploading(false))
 
-    createPostTypedData({
-      variables: {
-        options: { overrideSigNonce: userSigNonce },
-        request: {
-          profileId: currentProfile?.id,
-          contentURI: `https://arweave.net/${id}`,
-          collectModule: {
-            freeCollectModule: {
-              followerOnly: false
-            }
-          },
-          referenceModule: {
-            followerOnlyReferenceModule: false
-          }
+    const request = {
+      profileId: currentProfile?.id,
+      contentURI: `https://arweave.net/${id}`,
+      collectModule: {
+        freeCollectModule: {
+          followerOnly: false
         }
+      },
+      referenceModule: {
+        followerOnlyReferenceModule: false
       }
-    })
+    }
+
+    if (currentProfile?.dispatcher?.canUseRelay) {
+      createOpportunityViaDispatcher({ variables: { request } })
+    } else {
+      createOpportunityTypedData({
+        variables: {
+          options: { overrideSigNonce: userSigNonce },
+          request
+        }
+      })
+    }
   }
+
   if (!currentProfile) {
     return <Custom404 />
   }
@@ -350,7 +373,7 @@ const Opportunity: NextPage = () => {
                 totalHours,
                 description
               }) => {
-                createOpportunities(
+                createOpportunity(
                   program,
                   position,
                   volunteers,

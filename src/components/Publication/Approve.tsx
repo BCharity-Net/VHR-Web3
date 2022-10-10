@@ -1,10 +1,10 @@
 import { LensHubProxy } from '@abis/LensHubProxy'
-import { gql, useMutation } from '@apollo/client'
+import { useMutation } from '@apollo/client'
 import { Button } from '@components/UI/Button'
 import { Spinner } from '@components/UI/Spinner'
+import useBroadcast from '@components/utils/hooks/useBroadcast'
 import { BCharityPublication } from '@generated/bcharitytypes'
-import { CreateCollectBroadcastItemResult, Mutation } from '@generated/types'
-import { BROADCAST_MUTATION } from '@gql/BroadcastMutation'
+import { CreateCollectBroadcastItemResult, CreateCollectTypedDataDocument, Mutation } from '@generated/types'
 import { CheckCircleIcon } from '@heroicons/react/outline'
 import getSignature from '@lib/getSignature'
 import Logger from '@lib/logger'
@@ -15,36 +15,6 @@ import IndexStatus from 'src/components/Shared/IndexStatus'
 import { ERROR_MESSAGE, ERRORS, LENSHUB_PROXY, RELAY_ON, SIGN_WALLET } from 'src/constants'
 import { useAppStore } from 'src/store/app'
 import { useAccount, useContractWrite, useSignTypedData } from 'wagmi'
-
-const CREATE_COLLECT_TYPED_DATA_MUTATION = gql`
-  mutation CreateCollectTypedData($options: TypedDataOptions, $request: CreateCollectRequest!) {
-    createCollectTypedData(options: $options, request: $request) {
-      id
-      expiresAt
-      typedData {
-        types {
-          CollectWithSig {
-            name
-            type
-          }
-        }
-        domain {
-          name
-          chainId
-          version
-          verifyingContract
-        }
-        value {
-          nonce
-          deadline
-          profileId
-          pubId
-          data
-        }
-      }
-    }
-  }
-`
 
 interface Props {
   publication: BCharityPublication
@@ -84,21 +54,27 @@ const Approve: FC<Props> = ({ publication }) => {
     }
   })
 
-  const [collectBroadcast, { data: collectBroadcastData, loading: collectBroadcastLoading }] = useMutation(
-    BROADCAST_MUTATION,
-    {
-      onCompleted,
-      onError: (error) => {
-        if (error.message === ERRORS.notMined) {
-          toast.error(error.message)
-        }
-        Logger.error('[Relay Error]', error.message)
-      }
-    }
-  )
+  // const [collectBroadcast, { data: collectBroadcastData, loading: collectBroadcastLoading }] = useMutation(
+  //   BroadcastDocument,
+  //   {
+  //     onCompleted,
+  //     onError: (error) => {
+  //       if (error.message === ERRORS.notMined) {
+  //         toast.error(error.message)
+  //       }
+  //       Logger.error('[Relay Error]', error.message)
+  //     }
+  //   }
+  // )
+
+  const {
+    broadcast: collectBroadcast,
+    data: collectBroadcastData,
+    loading: collectBroadcastLoading
+  } = useBroadcast({ onCompleted })
 
   const [createCollectTypedData, { loading: typedDataLoading }] = useMutation<Mutation>(
-    CREATE_COLLECT_TYPED_DATA_MUTATION,
+    CreateCollectTypedDataDocument,
     {
       onCompleted: async ({
         createCollectTypedData
@@ -123,13 +99,11 @@ const Approve: FC<Props> = ({ publication }) => {
 
           setUserSigNonce(userSigNonce + 1)
           if (RELAY_ON) {
-            const {
-              data: { broadcast: result }
-            } = await collectBroadcast({
+            const { data } = await collectBroadcast({
               variables: { request: { id, signature } }
             })
 
-            if ('reason' in result) {
+            if ('reason') {
               collectWrite?.({ recklesslySetUnpreparedArgs: inputStruct })
             }
           } else {

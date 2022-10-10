@@ -1,24 +1,7 @@
-import { gql, useQuery } from '@apollo/client'
+import { useQuery } from '@apollo/client'
+import { UserProfilesDocument } from '@generated/types'
 import { ProfileFields } from '@gql/ProfileFields'
 import { FC } from 'react'
-
-export const USER_PROFILES_QUERY = gql`
-  query UserProfiles($ownedBy: [EthereumAddress!]) {
-    profiles(request: { ownedBy: $ownedBy }) {
-      items {
-        ...ProfileFields
-        isDefault
-        dispatcher {
-          canUseRelay
-        }
-      }
-    }
-    userSigNonces {
-      lensHubOnChainSigNonce
-    }
-  }
-  ${ProfileFields}
-`
 
 interface Props {
   address: string
@@ -26,7 +9,7 @@ interface Props {
 }
 
 const QueryHandle: FC<Props> = ({ address, callback }) => {
-  useQuery(USER_PROFILES_QUERY, {
+  useQuery(UserProfilesDocument, {
     variables: {
       ownedBy: address
     },

@@ -2,22 +2,20 @@ import { DAI_ABI } from '@abis/DAI_ABI'
 import { GOOD_ABI } from '@abis/GOOD_ABI'
 import { LensHubProxy } from '@abis/LensHubProxy'
 import { VHR_ABI } from '@abis/VHR_ABI'
-import { gql, useMutation, useQuery } from '@apollo/client'
+import { useMutation, useQuery } from '@apollo/client'
 import { Button } from '@components/UI/Button'
 import { Spinner } from '@components/UI/Spinner'
+import useBroadcast from '@components/utils/hooks/useBroadcast'
 import { BCharityPublication } from '@generated/bcharitytypes'
 import {
+  BroadcastDocument,
+  CommentFeedDocument,
   CreateCollectBroadcastItemResult,
+  CreateCollectTypedDataDocument,
   CreateCommentBroadcastItemResult,
-  EnabledModule,
+  CreateCommentTypedDataDocument,
   Mutation
 } from '@generated/types'
-import { BROADCAST_MUTATION } from '@gql/BroadcastMutation'
-import { CommentFields } from '@gql/CommentFields'
-import {
-  CREATE_COMMENT_TYPED_DATA_MUTATION,
-  CREATE_COMMENT_VIA_DISPATHCER_MUTATION
-} from '@gql/TypedAndDispatcherData/CreateComment'
 import { CheckCircleIcon } from '@heroicons/react/outline'
 import getSignature from '@lib/getSignature'
 import Logger from '@lib/logger'
@@ -48,57 +46,6 @@ import { useAccount, useBalance, useContractRead, useContractWrite, useSignTyped
 
 import IndexStatus from '../../Shared/IndexStatus'
 
-const CREATE_COLLECT_TYPED_DATA_MUTATION = gql`
-  mutation CreateCollectTypedData($options: TypedDataOptions, $request: CreateCollectRequest!) {
-    createCollectTypedData(options: $options, request: $request) {
-      id
-      expiresAt
-      typedData {
-        types {
-          CollectWithSig {
-            name
-            type
-          }
-        }
-        domain {
-          name
-          chainId
-          version
-          verifyingContract
-        }
-        value {
-          nonce
-          deadline
-          profileId
-          pubId
-          data
-        }
-      }
-    }
-  }
-`
-
-const COMMENT_FEED_QUERY = gql`
-  query CommentFeed(
-    $request: PublicationsQueryRequest!
-    $reactionRequest: ReactionFieldResolverRequest
-    $profileId: ProfileId
-  ) {
-    publications(request: $request) {
-      items {
-        ... on Comment {
-          ...CommentFields
-        }
-      }
-      pageInfo {
-        totalCount
-        next
-      }
-    }
-  }
-  ${CommentFields}
-`
-
 interface Props {
   publication: BCharityPublication
 }
@@ -123,7 +70,7 @@ const Verify: FC<Props> = ({ publication }) => {
   const [goodBalance, setGoodBalance] = useState('')
   const [goodTransferAmount, setGoodTransferAmount] = useState(0)
 
-  useQuery(COMMENT_FEED_QUERY, {
+  useQuery(CommentFeedDocument, {
     variables: {
       request: { commentsOf: publication.id },
       reactionRequest: currentProfile ? { profileId: currentProfile?.id } : null,
@@ -238,7 +185,7 @@ const Verify: FC<Props> = ({ publication }) => {
     }
   })
 
-  const [commentBroadcast, { loading: commentBroadcastLoading }] = useMutation(BROADCAST_MUTATION, {
+  const [commentBroadcast, { loading: commentBroadcastLoading }] = useMutation(BroadcastDocument, {
     onError: (error) => {
       if (error.message === ERRORS.notMined) {
         toast.error(error.message)
@@ -246,7 +193,7 @@ const Verify: FC<Props> = ({ publication }) => {
       Logger.error('[Relay Error]', error.message)
     }
   })
-  const [createCommentTypedData] = useMutation<Mutation>(CREATE_COMMENT_TYPED_DATA_MUTATION, {
+  const [createCommentTypedData] = useMutation<Mutation>(CreateCommentTypedDataDocument, {
     onCompleted: async ({
       createCommentTypedData
     }: {
@@ -289,13 +236,11 @@ const Verify: FC<Props> = ({ publication }) => {
           return commentWrite?.({ recklesslySetUnpreparedArgs: inputStruct })
         }
 
-        const {
-          data: { broadcast: result }
-        } = await commentBroadcast({
+        const { data } = await commentBroadcast({
           variables: { request: { id, signature } }
         })
 
-        if ('reason' in result) {
+        if ('reason') {
           commentWrite?.({ recklesslySetUnpreparedArgs: inputStruct })
         }
       } catch {}
@@ -365,20 +310,25 @@ const Verify: FC<Props> = ({ publication }) => {
       toast.error(error?.data?.message ?? error?.message)
     }
   })
-  const [collectBroadcast, { data: collectBroadcastData, loading: collectBroadcastLoading }] = useMutation(
-    BROADCAST_MUTATION,
-    {
-      onCompleted,
-      onError: (error) => {
-        if (error.message === ERRORS.notMined) {
-          toast.error(error.message)
-        }
-        Logger.error('[Relay Error]', error.message)
-      }
-    }
-  )
+  const {
+    broadcast: collectBroadcast,
+    data: collectBroadcastData,
+    loading: collectBroadcastLoading
+  } = useBroadcast({ onCompleted })
+
+  //   BroadcastDocument,
+  //   {
+  //     onCompleted,
+  //     onError: (error) => {
+  //       if (error.message === ERRORS.notMined) {
+  //         toast.error(error.message)
+  //       }
+  //       Logger.error('[Relay Error]', error.message)
+  //     }
+  //   }
+  // )
   const [createCollectTypedData, { loading: typedDataLoading }] = useMutation<Mutation>(
-    CREATE_COLLECT_TYPED_DATA_MUTATION,
+    CreateCollectTypedDataDocument,
     {
       onCompleted: async ({
         createCollectTypedData
@@ -403,13 +353,11 @@ const Verify: FC<Props> = ({ publication }) => {
 
           setUserSigNonce(userSigNonce + 1)
           if (RELAY_ON) {
-            const {
-              data: { broadcast: result }
-            } = await collectBroadcast({
+            const { data } = await collectBroadcast({
               variables: { request: { id, signature } }
             })
 
-            if ('reason' in result) {
+            if ('reason') {
               collectWrite?.({ recklesslySetUnpreparedArgs: inputStruct })
             }
           } else {

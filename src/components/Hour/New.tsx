@@ -1,5 +1,5 @@
 import { LensHubProxy } from '@abis/LensHubProxy'
-import { gql, useLazyQuery, useMutation } from '@apollo/client'
+import { useLazyQuery, useMutation } from '@apollo/client'
 import ChooseFiles from '@components/Shared/ChooseFiles'
 import Pending from '@components/Shared/Pending'
 import SettingsHelper from '@components/Shared/SettingsHelper'
@@ -14,7 +14,12 @@ import { Spinner } from '@components/UI/Spinner'
 import { TextArea } from '@components/UI/TextArea'
 import useBroadcast from '@components/utils/hooks/useBroadcast'
 import MetaTags from '@components/utils/MetaTags'
-import { CreatePostBroadcastItemResult, CreatePostTypedDataDocument } from '@generated/types'
+import {
+  CreatePostBroadcastItemResult,
+  CreatePostTypedDataDocument,
+  CreatePostViaDispatcherDocument,
+  ProfileDocument
+} from '@generated/types'
 import { PlusIcon } from '@heroicons/react/outline'
 import getIPFSLink from '@lib/getIPFSLink'
 import getSignature from '@lib/getSignature'
@@ -36,15 +41,6 @@ import { HOURS } from 'src/tracking'
 import { v4 as uuid } from 'uuid'
 import { useContractWrite, useSignTypedData } from 'wagmi'
 import { object, string } from 'zod'
-
-export const PROFILE_QUERY = gql`
-  query Profile($request: SingleProfileQueryRequest!) {
-    profile(request: $request) {
-      id
-      ownedBy
-    }
-  }
-`
 
 const newHourSchema = object({
   orgName: string()
@@ -120,7 +116,7 @@ const Media: FC<Props> = ({ media }) => {
   )
 }
 
-const NewHours: NextPage = () => {
+const NewHour: NextPage = () => {
   const { t } = useTranslation('common')
   const [cover, setCover] = useState('')
   const [singleDay, setSingleDay] = useState(true)
@@ -133,14 +129,14 @@ const NewHours: NextPage = () => {
   const [media, setMedia] = useState('')
   const { isLoading: signLoading, signTypedDataAsync } = useSignTypedData({ onError })
 
-  const [getWalletAddress] = useLazyQuery(PROFILE_QUERY)
+  const [getWalletAddress] = useLazyQuery(ProfileDocument)
   const fetchWalletAddress = (username: string) =>
     getWalletAddress({
       variables: {
         request: { handle: username }
       }
     }).then(({ data }) => {
-      return data.profile.ownedBy
+      return data?.profile?.ownedBy
     })
 
   const onCompleted = () => {
@@ -156,9 +152,8 @@ const NewHours: NextPage = () => {
     contractInterface: LensHubProxy,
     functionName: 'postWithSig',
     mode: 'recklesslyUnprepared',
-    onError: (error: any) => {
-      toast.error(error?.data?.message ?? error?.message)
-    }
+    onSuccess: onCompleted,
+    onError
   })
 
   const form = useZodForm({
@@ -182,7 +177,7 @@ const NewHours: NextPage = () => {
   }
 
   const { broadcast, data: broadcastData, loading: broadcastLoading } = useBroadcast({ onCompleted })
-  const [createPostTypedData, { loading: typedDataLoading }] = useMutation(CreatePostTypedDataDocument, {
+  const [createHourTypedData, { loading: typedDataLoading }] = useMutation(CreatePostTypedDataDocument, {
     onCompleted: async ({ createPostTypedData }: { createPostTypedData: CreatePostBroadcastItemResult }) => {
       try {
         const { id, typedData } = createPostTypedData
@@ -225,7 +220,12 @@ const NewHours: NextPage = () => {
     onError
   })
 
-  const createHours = async (
+  const [createHourViaDispatcher, { data: dispatcherData, loading: dispatcherLoading }] = useMutation(
+    CreatePostViaDispatcherDocument,
+    { onCompleted, onError }
+  )
+
+  const createHour = async (
     orgName: string,
     orgWalletAddress: string,
     startDate: string,
@@ -242,7 +242,7 @@ const NewHours: NextPage = () => {
 
     setIsUploading(true)
     const id = await uploadToArweave({
-      version: '1.0.0',
+      version: '2.0.0',
       metadata_id: uuid(),
       description: description,
       content: `@${orgName} VHR submission`,
@@ -300,27 +300,34 @@ const NewHours: NextPage = () => {
       ],
       media: [],
       createdOn: new Date(),
-      appId: `${APP_NAME} Hours`
+      appId: `${APP_NAME} Hour`
     }).finally(() => setIsUploading(false))
 
-    createPostTypedData({
-      variables: {
-        options: { overrideSigNonce: userSigNonce },
-        request: {
-          profileId: currentProfile?.id,
-          contentURI: `https://arweave.net/${id}`,
-          collectModule: {
-            freeCollectModule: {
-              followerOnly: false
-            }
-          },
-          referenceModule: {
-            followerOnlyReferenceModule: false
-          }
+    const request = {
+      profileId: currentProfile?.id,
+      contentURI: `https://arweave.net/${id}`,
+      collectModule: {
+        freeCollectModule: {
+          followerOnly: false
         }
+      },
+      referenceModule: {
+        followerOnlyReferenceModule: false
       }
-    })
+    }
+
+    if (currentProfile?.dispatcher?.canUseRelay) {
+      createHourViaDispatcher({ variables: { request } })
+    } else {
+      createHourTypedData({
+        variables: {
+          options: { overrideSigNonce: userSigNonce },
+          request
+        }
+      })
+    }
   }
+
   if (!currentProfile) {
     return <Custom404 />
   }
@@ -356,7 +363,7 @@ const NewHours: NextPage = () => {
                 category,
                 description
               }) => {
-                createHours(
+                createHour(
                   orgName,
                   orgWalletAddress,
                   startDate,
@@ -502,4 +509,4 @@ const NewHours: NextPage = () => {
   )
 }
 
-export default NewHours
+export default NewHour

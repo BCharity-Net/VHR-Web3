@@ -1,24 +1,23 @@
 import { LensHubProxy } from '@abis/LensHubProxy'
 import { VHR_ABI } from '@abis/VHR_ABI'
-import { gql, useMutation, useQuery } from '@apollo/client'
+import { useMutation, useQuery } from '@apollo/client'
 import { Button } from '@components/UI/Button'
 import { Spinner } from '@components/UI/Spinner'
+import useBroadcast from '@components/utils/hooks/useBroadcast'
 import { BCharityPublication } from '@generated/bcharitytypes'
 import {
+  BroadcastDocument,
+  CollectModuleDocument,
+  CommentFeedDocument,
   CreateCollectBroadcastItemResult,
+  CreateCollectTypedDataDocument,
   CreateCommentBroadcastItemResult,
-  EnabledModule,
+  CreateCommentTypedDataDocument,
   Mutation
 } from '@generated/types'
-import { BROADCAST_MUTATION } from '@gql/BroadcastMutation'
 import { CollectModuleFields } from '@gql/CollectModuleFields'
 import { CommentFields } from '@gql/CommentFields'
-import {
-  CREATE_COMMENT_TYPED_DATA_MUTATION,
-  CREATE_COMMENT_VIA_DISPATHCER_MUTATION
-} from '@gql/TypedAndDispatcherData/CreateComment'
 import { CheckCircleIcon } from '@heroicons/react/outline'
-import { defaultFeeData, defaultModuleData, FEE_DATA_TYPE, getModule } from '@lib/getModule'
 import getSignature from '@lib/getSignature'
 import Logger from '@lib/logger'
 import { Mixpanel } from '@lib/mixpanel'
@@ -43,83 +42,6 @@ import { useAccount, useContractWrite, useSignTypedData } from 'wagmi'
 
 import IndexStatus from '../../Shared/IndexStatus'
 
-export const COLLECT_QUERY = gql`
-  query CollectModule($request: PublicationQueryRequest!) {
-    publication(request: $request) {
-      ... on Post {
-        collectNftAddress
-        collectModule {
-          ...CollectModuleFields
-        }
-      }
-      ... on Comment {
-        collectNftAddress
-        collectModule {
-          ...CollectModuleFields
-        }
-      }
-      ... on Mirror {
-        collectNftAddress
-        collectModule {
-          ...CollectModuleFields
-        }
-      }
-    }
-  }
-  ${CollectModuleFields}
-`
-
-const CREATE_COLLECT_TYPED_DATA_MUTATION = gql`
-  mutation CreateCollectTypedData($options: TypedDataOptions, $request: CreateCollectRequest!) {
-    createCollectTypedData(options: $options, request: $request) {
-      id
-      expiresAt
-      typedData {
-        types {
-          CollectWithSig {
-            name
-            type
-          }
-        }
-        domain {
-          name
-          chainId
-          version
-          verifyingContract
-        }
-        value {
-          nonce
-          deadline
-          profileId
-          pubId
-          data
-        }
-      }
-    }
-  }
-`
-
-const COMMENT_FEED_QUERY = gql`
-  query CommentFeed(
-    $request: PublicationsQueryRequest!
-    $reactionRequest: ReactionFieldResolverRequest
-    $profileId: ProfileId
-  ) {
-    publications(request: $request) {
-      items {
-        ... on Comment {
-          ...CommentFields
-        }
-      }
-      pageInfo {
-        totalCount
-        next
-      }
-    }
-  }
-  ${CommentFields}
-`
-
 interface Props {
   publication: BCharityPublication
 }
@@ -141,7 +63,7 @@ const Apply: FC<Props> = ({ publication }) => {
     }
   })
 
-  useQuery(COMMENT_FEED_QUERY, {
+  useQuery(CommentFeedDocument, {
     variables: {
       request: { commentsOf: publication.id },
       reactionRequest: currentProfile ? { profileId: currentProfile?.id } : null,
@@ -158,7 +80,7 @@ const Apply: FC<Props> = ({ publication }) => {
     }
   })
 
-  useQuery(COLLECT_QUERY, {
+  useQuery(CollectModuleDocument, {
     variables: { request: { publicationId: publication?.id } },
     onCompleted: () => {
       if (
@@ -202,7 +124,7 @@ const Apply: FC<Props> = ({ publication }) => {
     }
   })
 
-  const [commentBroadcast, { loading: commentBroadcastLoading }] = useMutation(BROADCAST_MUTATION, {
+  const [commentBroadcast, { loading: commentBroadcastLoading }] = useMutation(BroadcastDocument, {
     onError: (error) => {
       if (error.message === ERRORS.notMined) {
         toast.error(error.message)
@@ -210,7 +132,8 @@ const Apply: FC<Props> = ({ publication }) => {
       Logger.error('[Relay Error]', error.message)
     }
   })
-  const [createCommentTypedData] = useMutation<Mutation>(CREATE_COMMENT_TYPED_DATA_MUTATION, {
+
+  const [createCommentTypedData] = useMutation<Mutation>(CreateCommentTypedDataDocument, {
     onCompleted: async ({
       createCommentTypedData
     }: {
@@ -253,13 +176,11 @@ const Apply: FC<Props> = ({ publication }) => {
           return commentWrite?.({ recklesslySetUnpreparedArgs: inputStruct })
         }
 
-        const {
-          data: { broadcast: result }
-        } = await commentBroadcast({
+        const { data } = await commentBroadcast({
           variables: { request: { id, signature } }
         })
 
-        if ('reason' in result) {
+        if ('reason') {
           commentWrite?.({ recklesslySetUnpreparedArgs: inputStruct })
         }
       } catch {}
@@ -329,20 +250,25 @@ const Apply: FC<Props> = ({ publication }) => {
       toast.error(error?.data?.message ?? error?.message)
     }
   })
-  const [collectBroadcast, { data: collectBroadcastData, loading: collectBroadcastLoading }] = useMutation(
-    BROADCAST_MUTATION,
-    {
-      onCompleted,
-      onError: (error) => {
-        if (error.message === ERRORS.notMined) {
-          toast.error(error.message)
-        }
-        Logger.error('[Relay Error]', error.message)
-      }
-    }
-  )
+  const {
+    broadcast: collectBroadcast,
+    data: collectBroadcastData,
+    loading: collectBroadcastLoading
+  } = useBroadcast({ onCompleted })
+  // const [ broadcast: collectBroadcast, {data: collectBroadcastData, loading: collectBroadcastLoading}] = useMutation(
+  //   BroadcastDocument,
+  //   {
+  //     onCompleted,
+  //     onError: (error) => {
+  //       if (error.message === ERRORS.notMined) {
+  //         toast.error(error.message)
+  //       }
+  //       Logger.error('[Relay Error]', error.message)
+  //     }
+  //   }
+  // )
   const [createCollectTypedData, { loading: typedDataLoading }] = useMutation<Mutation>(
-    CREATE_COLLECT_TYPED_DATA_MUTATION,
+    CreateCollectTypedDataDocument,
     {
       onCompleted: async ({
         createCollectTypedData
@@ -367,13 +293,11 @@ const Apply: FC<Props> = ({ publication }) => {
 
           setUserSigNonce(userSigNonce + 1)
           if (RELAY_ON) {
-            const {
-              data: { broadcast: result }
-            } = await collectBroadcast({
+            const { data } = await collectBroadcast({
               variables: { request: { id, signature } }
             })
 
-            if ('reason' in result) {
+            if ('reason') {
               collectWrite?.({ recklesslySetUnpreparedArgs: inputStruct })
             }
           } else {

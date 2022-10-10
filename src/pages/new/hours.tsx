@@ -1,3 +1,3 @@
-import NewHours from '@components/Hours/New'
+import NewHour from '@components/Hour/New'
 
-export default NewHours
+export default NewHour

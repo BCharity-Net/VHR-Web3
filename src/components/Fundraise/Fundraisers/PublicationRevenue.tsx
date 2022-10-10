@@ -1,4 +1,5 @@
-import { gql, useQuery } from '@apollo/client'
+import { useQuery } from '@apollo/client'
+import { PublicationRevenueDocument } from '@generated/types'
 import Logger from '@lib/logger'
 import { FC } from 'react'
 
@@ -7,19 +8,8 @@ interface Props {
   callback?: Function
 }
 
-const PUBLICATION_REVENUE_QUERY = gql`
-  query PublicationRevenue($request: PublicationRevenueQueryRequest!) {
-    publicationRevenue(request: $request) {
-      revenue {
-        total {
-          value
-        }
-      }
-    }
-  }
-`
 const RevenueDetails: FC<Props> = ({ fund, callback }) => {
-  useQuery(PUBLICATION_REVENUE_QUERY, {
+  useQuery(PublicationRevenueDocument, {
     variables: {
       request: {
         publicationId: fund?.__typename === 'Mirror' ? fund?.mirrorOf?.id : fund?.id

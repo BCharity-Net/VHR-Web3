@@ -12,7 +12,12 @@ import { Spinner } from '@components/UI/Spinner'
 import { TextArea } from '@components/UI/TextArea'
 import useBroadcast from '@components/utils/hooks/useBroadcast'
 import MetaTags from '@components/utils/MetaTags'
-import { CreatePostBroadcastItemResult, CreatePostTypedDataDocument, Mutation } from '@generated/types'
+import {
+  CreatePostBroadcastItemResult,
+  CreatePostTypedDataDocument,
+  CreatePostViaDispatcherDocument,
+  Mutation
+} from '@generated/types'
 import { PlusIcon } from '@heroicons/react/outline'
 import getSignature from '@lib/getSignature'
 import { Mixpanel } from '@lib/mixpanel'
@@ -92,7 +97,7 @@ const NewGroup: NextPage = () => {
   }
 
   const { broadcast, data: broadcastData, loading: broadcastLoading } = useBroadcast({ onCompleted })
-  const [createPostTypedData, { loading: typedDataLoading }] = useMutation<Mutation>(
+  const [createGroupTypedData, { loading: typedDataLoading }] = useMutation<Mutation>(
     CreatePostTypedDataDocument,
     {
       onCompleted: async ({
@@ -141,6 +146,11 @@ const NewGroup: NextPage = () => {
     }
   )
 
+  const [createGroupViaDispatcher, { data: dispatcherData, loading: dispatcherLoading }] = useMutation(
+    CreatePostViaDispatcherDocument,
+    { onCompleted, onError }
+  )
+
   const createGroup = async (name: string, description: string | null) => {
     if (!currentProfile) {
       return toast.error(SIGN_WALLET)
@@ -170,23 +180,29 @@ const NewGroup: NextPage = () => {
       appId: `${APP_NAME} Group`
     }).finally(() => setIsUploading(false))
 
-    createPostTypedData({
-      variables: {
-        options: { overrideSigNonce: userSigNonce },
-        request: {
-          profileId: currentProfile?.id,
-          contentURI: `https://arweave.net/${id}`,
-          collectModule: {
-            freeCollectModule: {
-              followerOnly: false
-            }
-          },
-          referenceModule: {
-            followerOnlyReferenceModule: false
-          }
+    const request = {
+      profileId: currentProfile?.id,
+      contentURI: `https://arweave.net/${id}`,
+      collectModule: {
+        freeCollectModule: {
+          followerOnly: false
         }
+      },
+      referenceModule: {
+        followerOnlyReferenceModule: false
       }
-    })
+    }
+
+    if (currentProfile?.dispatcher?.canUseRelay) {
+      createGroupViaDispatcher({ variables: { request } })
+    } else {
+      createGroupTypedData({
+        variables: {
+          options: { overrideSigNonce: userSigNonce },
+          request
+        }
+      })
+    }
   }
 
   if (!currentProfile) {

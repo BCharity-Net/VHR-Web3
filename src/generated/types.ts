@@ -15927,6 +15927,14 @@ export const MetadataFieldsFragmentDoc = {
           { kind: 'Field', name: { kind: 'Name', value: 'content' } },
           {
             kind: 'Field',
+            name: { kind: 'Name', value: 'attributes' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [{ kind: 'Field', name: { kind: 'Name', value: 'value' } }]
+            }
+          },
+          {
+            kind: 'Field',
             name: { kind: 'Name', value: 'cover' },
             selectionSet: {
               kind: 'SelectionSet',

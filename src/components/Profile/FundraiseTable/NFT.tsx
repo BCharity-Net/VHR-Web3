@@ -1,6 +1,6 @@
 import { useQuery } from '@apollo/client'
 import { ProfileDocument, ProfileFeedDocument, PublicationTypes } from '@generated/types'
-import { FC } from 'react'
+import type { FC } from 'react'
 import { useAppStore } from 'src/store/app'
 
 import { Data } from './Individual'

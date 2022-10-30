@@ -1,12 +1,10 @@
-import { BCharityPublication } from '@generated/bcharitytypes'
+import type { BCharityPublication } from '@generated/bcharitytypes'
 import { Menu } from '@headlessui/react'
 import { ClipboardCopyIcon } from '@heroicons/react/outline'
-import { Mixpanel } from '@lib/mixpanel'
 import clsx from 'clsx'
-import { FC } from 'react'
+import type { FC } from 'react'
 import { CopyToClipboard } from 'react-copy-to-clipboard'
 import toast from 'react-hot-toast'
-import { PUBLICATION } from 'src/tracking'
 
 interface Props {
   publication: BCharityPublication
@@ -18,12 +16,11 @@ const Permalink: FC<Props> = ({ publication }) => {
       text={`${location.origin}/posts/${publication?.id}`}
       onCopy={() => {
         toast.success('Copied to clipboard!')
-        Mixpanel.track(PUBLICATION.PERMALINK)
       }}
     >
       <Menu.Item
         as="div"
-        className={({ active }: { active: boolean }) =>
+        className={({ active }) =>
           clsx({ 'dropdown-active': active }, 'block px-4 py-1.5 text-sm m-2 rounded-lg cursor-pointer')
         }
         onClick={() => {}}

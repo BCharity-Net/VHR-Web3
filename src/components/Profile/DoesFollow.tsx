@@ -1,5 +1,5 @@
-import { DoesFollowResponse } from '@generated/types'
-import { FC } from 'react'
+import type { DoesFollowResponse } from '@generated/types'
+import type { FC } from 'react'
 import { useTranslation } from 'react-i18next'
 
 interface Props {

@@ -14,7 +14,7 @@ import { publicationKeyFields } from '@lib/keyFields'
 import parseJwt from '@lib/parseJwt'
 import axios from 'axios'
 
-import { API_URL } from './constants'
+import { API_URL, LS_KEYS } from './constants'
 
 const REFRESH_AUTHENTICATION_MUTATION = `
   mutation Refresh($request: RefreshRequest!) {
@@ -45,8 +45,8 @@ const retryLink = new RetryLink({
 const clearStorage = () => {
   localStorage.removeItem('accessToken')
   localStorage.removeItem('refreshToken')
-  localStorage.removeItem('lenster.store')
-  localStorage.removeItem('transaction.store')
+  localStorage.removeItem(LS_KEYS.BCHARITY_STORE)
+  localStorage.removeItem(LS_KEYS.TRANSACTION_STORE)
 }
 
 const authLink = new ApolloLink((operation, forward) => {
@@ -110,10 +110,12 @@ const cache = new InMemoryCache({
     Query: {
       fields: {
         timeline: cursorBasedPagination(['request', ['profileId']]),
-        explorePublications: cursorBasedPagination(['request', ['sortCriteria']]),
+        feed: cursorBasedPagination(['request', ['profileId', 'feedEventItemTypes']]),
+        feedHighlights: cursorBasedPagination(['request', ['profileId']]),
+        explorePublications: cursorBasedPagination(['request', ['sortCriteria', 'metadata']]),
         publications: cursorBasedPagination(['request', ['profileId', 'commentsOf', 'publicationTypes']]),
         nfts: cursorBasedPagination(['request', ['ownerAddress', 'chainIds']]),
-        notifications: cursorBasedPagination(['request', ['profileId']]),
+        notifications: cursorBasedPagination(['request', ['profileId', 'notificationTypes']]),
         followers: cursorBasedPagination(['request', ['profileId']]),
         following: cursorBasedPagination(['request', ['address']]),
         search: cursorBasedPagination(['request', ['query', 'type']]),
@@ -123,7 +125,10 @@ const cache = new InMemoryCache({
         ]),
         whoCollectedPublication: cursorBasedPagination(['request', ['publicationId']]),
         whoReactedPublication: cursorBasedPagination(['request', ['publicationId']]),
-        mutualFollowersProfiles: cursorBasedPagination(['request', ['viewingProfileId', 'yourProfileId']])
+        mutualFollowersProfiles: cursorBasedPagination([
+          'request',
+          ['viewingProfileId', 'yourProfileId', 'limit']
+        ])
       }
     }
   }

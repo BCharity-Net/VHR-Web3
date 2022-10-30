@@ -14,8 +14,8 @@ import { Spinner } from '@components/UI/Spinner'
 import { TextArea } from '@components/UI/TextArea'
 import useBroadcast from '@components/utils/hooks/useBroadcast'
 import MetaTags from '@components/utils/MetaTags'
+import type { CreatePostBroadcastItemResult } from '@generated/types'
 import {
-  CreatePostBroadcastItemResult,
   CreatePostTypedDataDocument,
   CreatePostViaDispatcherDocument,
   ProfileDocument
@@ -23,21 +23,20 @@ import {
 import { PlusIcon } from '@heroicons/react/outline'
 import getIPFSLink from '@lib/getIPFSLink'
 import getSignature from '@lib/getSignature'
-import imagekitURL from '@lib/imagekitURL'
-import { Mixpanel } from '@lib/mixpanel'
+import imageProxy from '@lib/imageProxy'
 import onError from '@lib/onError'
 import splitSignature from '@lib/splitSignature'
 import uploadMediaToIPFS from '@lib/uploadMediaToIPFS'
 import uploadToArweave from '@lib/uploadToArweave'
-import { NextPage } from 'next'
-import { ChangeEvent, FC, useState } from 'react'
+import type { NextPage } from 'next'
+import type { ChangeEvent, FC } from 'react'
+import { useState } from 'react'
 import { Controller } from 'react-hook-form'
 import toast from 'react-hot-toast'
 import { useTranslation } from 'react-i18next'
 import { APP_NAME, CATEGORIES, LENSHUB_PROXY, RELAY_ON, SIGN_WALLET } from 'src/constants'
 import Custom404 from 'src/pages/404'
 import { useAppStore } from 'src/store/app'
-import { HOURS } from 'src/tracking'
 import { v4 as uuid } from 'uuid'
 import { useContractWrite, useSignTypedData } from 'wagmi'
 import { object, string } from 'zod'
@@ -108,7 +107,7 @@ const Media: FC<Props> = ({ media }) => {
             key="attachment"
             className="object-cover w-full h-60 rounded-lg"
             height={240}
-            src={imagekitURL(getIPFSLink(i.item), 'attachment')}
+            src={imageProxy(getIPFSLink(i.item), 'attachment')}
             alt={i.item}
           />
         ))}
@@ -139,17 +138,15 @@ const NewHour: NextPage = () => {
       return data?.profile?.ownedBy
     })
 
-  const onCompleted = () => {
-    Mixpanel.track(HOURS.NEW)
-  }
+  const onCompleted = () => {}
 
   const {
     data,
     isLoading: writeLoading,
     write
   } = useContractWrite({
-    addressOrName: LENSHUB_PROXY,
-    contractInterface: LensHubProxy,
+    address: LENSHUB_PROXY,
+    abi: LensHubProxy,
     functionName: 'postWithSig',
     mode: 'recklesslyUnprepared',
     onSuccess: onCompleted,
@@ -210,10 +207,10 @@ const NewHour: NextPage = () => {
           } = await broadcast({ request: { id, signature } })
 
           if ('reason' in result) {
-            write?.({ recklesslySetUnpreparedArgs: inputStruct })
+            write?.({ recklesslySetUnpreparedArgs: [inputStruct] })
           }
         } else {
-          write?.({ recklesslySetUnpreparedArgs: inputStruct })
+          write?.({ recklesslySetUnpreparedArgs: [inputStruct] })
         }
       } catch {}
     },

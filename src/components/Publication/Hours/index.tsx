@@ -2,11 +2,12 @@ import Collectors from '@components/Shared/Modal/Collectors'
 import { Button } from '@components/UI/Button'
 import { Card } from '@components/UI/Card'
 import { Modal } from '@components/UI/Modal'
-import { BCharityPublication } from '@generated/bcharitytypes'
+import type { BCharityPublication } from '@generated/bcharitytypes'
 import { ClockIcon } from '@heroicons/react/outline'
 import getIPFSLink from '@lib/getIPFSLink'
-import imagekitURL from '@lib/imagekitURL'
-import { FC, useState } from 'react'
+import imageProxy from '@lib/imageProxy'
+import type { FC } from 'react'
+import { useState } from 'react'
 import { useAppStore } from 'src/store/app'
 
 import Verify from './Verify'
@@ -34,7 +35,7 @@ const Media: FC<MediaProps> = ({ media }) => {
               key="attachment"
               className="object-cover h-full rounded-lg border-[3px] border-black margin"
               // height={60}
-              src={imagekitURL(getIPFSLink(attachments[activeIndex].item), 'attachment')}
+              src={imageProxy(getIPFSLink(attachments[activeIndex].item), 'attachment')}
               alt={attachments[activeIndex].item}
             />
           </div>
@@ -44,7 +45,7 @@ const Media: FC<MediaProps> = ({ media }) => {
                 <img
                   key="attachment"
                   className="object-cover w-[200px] h-[100px] rounded-lg inline-block mr-[20px] border-[3px] border-black"
-                  src={imagekitURL(getIPFSLink(i.item), 'attachment')}
+                  src={imageProxy(getIPFSLink(i.item), 'attachment')}
                   alt={i.item}
                   onClick={() => {
                     setActiveIndex(index)
@@ -54,7 +55,7 @@ const Media: FC<MediaProps> = ({ media }) => {
                 <img
                   key="attachment"
                   className="object-cover w-[200px] h-[100px] rounded-lg inline-block mr-[20px] cursor-pointer blur-[1px] border-[3px] border-gray-300"
-                  src={imagekitURL(getIPFSLink(i.item), 'attachment')}
+                  src={imageProxy(getIPFSLink(i.item), 'attachment')}
                   alt={i.item}
                   onClick={() => {
                     setActiveIndex(index)

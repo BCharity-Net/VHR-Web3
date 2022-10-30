@@ -1,5 +1,6 @@
 import useStaffMode from '@components/utils/hooks/useStaffMode'
-import { Profile } from '@generated/types'
+import { useDisconnectXmtp } from '@components/utils/hooks/useXmtpClient'
+import type { Profile } from '@generated/types'
 import { Menu, Transition } from '@headlessui/react'
 import {
   CheckCircleIcon,
@@ -15,14 +16,12 @@ import {
 import getAvatar from '@lib/getAvatar'
 import isGardener from '@lib/isGardener'
 import isStaff from '@lib/isStaff'
-import { Mixpanel } from '@lib/mixpanel'
 import resetAuthData from '@lib/resetAuthData'
 import clsx from 'clsx'
 import { useTheme } from 'next-themes'
-import { FC, Fragment } from 'react'
-import { useTranslation } from 'react-i18next'
+import type { FC } from 'react'
+import { Fragment } from 'react'
 import { useAppPersistStore, useAppStore } from 'src/store/app'
-import { PROFILE, STAFFTOOLS, SYSTEM } from 'src/tracking'
 import { useDisconnect } from 'wagmi'
 
 import pkg from '../../../../package.json'
@@ -30,19 +29,19 @@ import Slug from '../Slug'
 import { NextLink } from './MenuItems'
 
 const SignedUser: FC = () => {
-  const { t } = useTranslation('common')
   const profiles = useAppStore((state) => state.profiles)
   const currentProfile = useAppStore((state) => state.currentProfile)
   const setCurrentProfile = useAppStore((state) => state.setCurrentProfile)
   const setProfileId = useAppPersistStore((state) => state.setProfileId)
+  const setHandle = useAppPersistStore((state) => state.setHandle)
   const setStaffMode = useAppPersistStore((state) => state.setStaffMode)
   const { allowed: staffMode } = useStaffMode()
   const { theme, setTheme } = useTheme()
   const { disconnect } = useDisconnect()
+  const disconnectXmtp = useDisconnectXmtp()
 
   const toggleStaffMode = () => {
     setStaffMode(!staffMode)
-    Mixpanel.track(STAFFTOOLS.TOGGLE_MODE)
   }
 
   return (
@@ -76,7 +75,7 @@ const SignedUser: FC = () => {
                   clsx({ 'dropdown-active': active }, 'menu-item')
                 }
               >
-                <div>{t('Logged in as')}</div>
+                <div>Logged in as</div>
                 <div className="truncate">
                   <Slug className="font-bold" slug={currentProfile?.handle} prefix="@" />
                 </div>
@@ -91,7 +90,7 @@ const SignedUser: FC = () => {
               >
                 <div className="flex items-center space-x-1.5">
                   <UserIcon className="w-4 h-4" />
-                  <div>{t('Your Profile')}</div>
+                  <div>Your Profile</div>
                 </div>
               </Menu.Item>
               <Menu.Item
@@ -103,7 +102,7 @@ const SignedUser: FC = () => {
               >
                 <div className="flex items-center space-x-1.5">
                   <CogIcon className="w-4 h-4" />
-                  <div>{t('Settings')}</div>
+                  <div>Settings</div>
                 </div>
               </Menu.Item>
               {isGardener(currentProfile?.id) && (
@@ -123,19 +122,18 @@ const SignedUser: FC = () => {
               <Menu.Item
                 as="a"
                 onClick={() => {
-                  Mixpanel.track(PROFILE.LOGOUT)
+                  disconnectXmtp()
                   setCurrentProfile(null)
                   setProfileId(null)
+                  setHandle(null)
                   resetAuthData()
                   disconnect?.()
                 }}
-                className={({ active }: { active: boolean }) =>
-                  clsx({ 'dropdown-active': active }, 'menu-item')
-                }
+                className={({ active }) => clsx({ 'dropdown-active': active }, 'menu-item')}
               >
                 <div className="flex items-center space-x-1.5">
                   <LogoutIcon className="w-4 h-4" />
-                  <div>{t('Logout')}</div>
+                  <div>Logout</div>
                 </div>
               </Menu.Item>
               {profiles?.length > 1 && (
@@ -144,7 +142,7 @@ const SignedUser: FC = () => {
                   <div className="overflow-auto m-2 max-h-36 no-scrollbar">
                     <div className="flex items-center px-4 pt-1 pb-2 space-x-1.5 text-sm font-bold text-gray-500">
                       <SwitchHorizontalIcon className="w-4 h-4" />
-                      <div>{t('Switch')}</div>
+                      <div>Switch to</div>
                     </div>
                     {profiles.map((profile: Profile, index: number) => (
                       <div
@@ -158,7 +156,7 @@ const SignedUser: FC = () => {
                             const selectedProfile = profiles[index]
                             setCurrentProfile(selectedProfile)
                             setProfileId(selectedProfile.id)
-                            Mixpanel.track(PROFILE.SWITCH_PROFILE)
+                            setHandle(selectedProfile.handle)
                           }}
                         >
                           {currentProfile?.id === profile?.id && (
@@ -183,22 +181,19 @@ const SignedUser: FC = () => {
                 as="a"
                 onClick={() => {
                   setTheme(theme === 'light' ? 'dark' : 'light')
-                  Mixpanel.track(theme === 'light' ? SYSTEM.SWITCH_DARK_THEME : SYSTEM.SWITCH_LIGHT_THEME)
                 }}
-                className={({ active }: { active: boolean }) =>
-                  clsx({ 'dropdown-active': active }, 'menu-item')
-                }
+                className={({ active }) => clsx({ 'dropdown-active': active }, 'menu-item')}
               >
                 <div className="flex items-center space-x-1.5">
                   {theme === 'light' ? (
                     <>
                       <MoonIcon className="w-4 h-4" />
-                      <div>{t('Dark mode')}</div>
+                      <div>Dark mode</div>
                     </>
                   ) : (
                     <>
                       <SunIcon className="w-4 h-4" />
-                      <div>{t('Light mode')}</div>
+                      <div>Light mode</div>
                     </>
                   )}
                 </div>
@@ -208,7 +203,7 @@ const SignedUser: FC = () => {
                   <div className="divider" />
                   <div className="py-3 px-6 text-xs">
                     <a
-                      href={`https://gitlab.com/bcharity/bcharity/releases/tag/v${pkg.version}`}
+                      href={`https://github.com/lensterxyz/lenster/releases/tag/v${pkg.version}`}
                       className="font-mono"
                       target="_blank"
                       rel="noreferrer noopener"
@@ -224,18 +219,18 @@ const SignedUser: FC = () => {
                   <Menu.Item
                     as="div"
                     onClick={toggleStaffMode}
-                    className={({ active }: { active: boolean }) =>
+                    className={({ active }) =>
                       clsx({ 'bg-yellow-100 dark:bg-yellow-800': active }, 'menu-item')
                     }
                   >
                     {staffMode ? (
                       <div className="flex items-center space-x-1.5">
-                        <div>{t('Disable staff mode')}</div>
+                        <div>Disable staff mode</div>
                         <ShieldExclamationIcon className="w-4 h-4 text-green-600" />
                       </div>
                     ) : (
                       <div className="flex items-center space-x-1.5">
-                        <div>{t('Enable staff mode')}</div>
+                        <div>Enable staff mode</div>
                         <ShieldCheckIcon className="w-4 h-4 text-red-500" />
                       </div>
                     )}

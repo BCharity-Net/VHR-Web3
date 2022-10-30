@@ -1,5 +1,8 @@
-import imagekitURL from '@lib/imagekitURL'
-import { FC, useEffect, useState } from 'react'
+import imageProxy from '@lib/imageProxy'
+import axios from 'axios'
+import type { FC } from 'react'
+import { useEffect, useState } from 'react'
+import { ATTACHMENT } from 'src/constants'
 
 import Embed from './Embed'
 import Player from './Player'
@@ -12,15 +15,15 @@ const IFramely: FC<Props> = ({ url }) => {
   const [error, setError] = useState(false)
   const [isLoaded, setIsLoaded] = useState(false)
   const [data, setData] = useState<any>()
+  const allowedSites = ['YouTube', 'Spotify', 'SoundCloud']
 
   useEffect(() => {
     if (url) {
-      fetch(`https://iframe.ly/api/iframely?api_key=258c8580bd477c9b886b49&url=${url}`)
-        .then((res) => res.json())
-        .then((res) => {
+      axios(`https://iframe.ly/api/iframely?api_key=258c8580bd477c9b886b49&url=${url}`)
+        .then(({ data }) => {
           setIsLoaded(true)
-          if (!res.error) {
-            setData(res)
+          if (data) {
+            setData(data)
           } else {
             setError(true)
           }
@@ -48,7 +51,7 @@ const IFramely: FC<Props> = ({ url }) => {
     site: data?.meta?.site,
     url: data?.url,
     favicon: `https://www.google.com/s2/favicons?domain=${url}`,
-    thumbnail: data?.links?.thumbnail && imagekitURL(data?.links?.thumbnail[0]?.href, 'attachment'),
+    thumbnail: data?.links?.thumbnail && imageProxy(data?.links?.thumbnail[0]?.href, ATTACHMENT),
     isSquare:
       data?.links?.thumbnail &&
       data?.links?.thumbnail[0]?.media?.width === data?.links?.thumbnail[0]?.media?.height,
@@ -59,7 +62,7 @@ const IFramely: FC<Props> = ({ url }) => {
     return null
   }
 
-  return og.html ? <Player og={og} /> : <Embed og={og} />
+  return og.html && allowedSites.includes(og.site) ? <Player og={og} /> : <Embed og={og} />
 }
 
 export default IFramely

@@ -2,14 +2,14 @@ import { useQuery } from '@apollo/client'
 import UserProfile from '@components/Shared/UserProfile'
 import { EmptyState } from '@components/UI/EmptyState'
 import { ErrorMessage } from '@components/UI/ErrorMessage'
-import { Spinner } from '@components/UI/Spinner'
-import { MirrorsDocument, Profile } from '@generated/types'
+import InfiniteLoader from '@components/UI/InfiniteLoader'
+import type { Profile } from '@generated/types'
+import { MirrorsDocument } from '@generated/types'
 import { SwitchHorizontalIcon } from '@heroicons/react/outline'
-import { Mixpanel } from '@lib/mixpanel'
-import { FC } from 'react'
+import type { FC } from 'react'
 import { useInView } from 'react-cool-inview'
-import { PAGINATION_ROOT_MARGIN } from 'src/constants'
-import { PAGINATION } from 'src/tracking'
+import InfiniteScroll from 'react-infinite-scroll-component'
+import { SCROLL_THRESHOLD } from 'src/constants'
 
 import Loader from '../Loader'
 
@@ -28,20 +28,13 @@ const Mirrors: FC<Props> = ({ publicationId }) => {
 
   const profiles = data?.profiles?.items
   const pageInfo = data?.profiles?.pageInfo
+  const hasMore = pageInfo?.next && profiles?.length !== pageInfo.totalCount
 
-  const { observe } = useInView({
-    onChange: async ({ inView }) => {
-      if (!inView) {
-        return
-      }
-
-      await fetchMore({
-        variables: { request: { ...request, cursor: pageInfo?.next } }
-      })
-      Mixpanel.track(PAGINATION.MIRRORS)
-    },
-    rootMargin: PAGINATION_ROOT_MARGIN
-  })
+  const loadMore = async () => {
+    await fetchMore({
+      variables: { request: { ...request, cursor: pageInfo?.next } }
+    })
+  }
 
   if (loading) {
     return <Loader message="Loading mirrors" />
@@ -62,7 +55,14 @@ const Mirrors: FC<Props> = ({ publicationId }) => {
   return (
     <div className="overflow-y-auto max-h-[80vh]">
       <ErrorMessage className="m-5" title="Failed to load mirrors" error={error} />
-      <div className="space-y-3">
+      <InfiniteScroll
+        dataLength={profiles?.length ?? 0}
+        scrollThreshold={SCROLL_THRESHOLD}
+        hasMore={hasMore}
+        next={loadMore}
+        loader={<InfiniteLoader />}
+        scrollableTarget="scrollableDiv"
+      >
         <div className="divide-y dark:divide-gray-700">
           {profiles?.map((profile) => (
             <div className="p-5" key={profile?.id}>
@@ -75,12 +75,7 @@ const Mirrors: FC<Props> = ({ publicationId }) => {
             </div>
           ))}
         </div>
-        {pageInfo?.next && profiles?.length !== pageInfo?.totalCount && (
-          <span ref={observe} className="flex justify-center p-5">
-            <Spinner size="md" />
-          </span>
-        )}
-      </div>
+      </InfiniteScroll>
     </div>
   )
 }

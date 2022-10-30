@@ -8,7 +8,7 @@ import {
   VideoCameraIcon
 } from '@heroicons/react/outline'
 import getAvatar from '@lib/getAvatar'
-import { FC, ReactNode } from 'react'
+import type { FC, ReactNode } from 'react'
 import { useAppStore } from 'src/store/app'
 
 interface ActionProps {

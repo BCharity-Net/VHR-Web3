@@ -1,7 +1,7 @@
 import { useQuery } from '@apollo/client'
 import { PublicationRevenueDocument } from '@generated/types'
 import Logger from '@lib/logger'
-import { FC } from 'react'
+import type { FC } from 'react'
 
 interface Props {
   fund: any

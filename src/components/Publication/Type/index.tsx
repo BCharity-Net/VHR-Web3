@@ -1,6 +1,6 @@
-import { BCharityPublication } from '@generated/bcharitytypes'
+import type { BCharityPublication } from '@generated/bcharitytypes'
 import { useRouter } from 'next/router'
-import { FC } from 'react'
+import type { FC } from 'react'
 
 import Collected from './Collected'
 import Commented from './Commented'

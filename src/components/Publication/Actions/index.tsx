@@ -1,6 +1,7 @@
-import { BCharityPublication } from '@generated/bcharitytypes'
+import type { BCharityPublication } from '@generated/bcharitytypes'
+import type { ElectedMirror } from '@generated/types'
 import clsx from 'clsx'
-import { FC } from 'react'
+import type { FC } from 'react'
 import { useAppStore } from 'src/store/app'
 
 import Collect from './Collect'
@@ -12,9 +13,10 @@ import Mirror from './Mirror'
 interface Props {
   publication: BCharityPublication
   isFullPublication?: boolean
+  electedMirror?: ElectedMirror
 }
 
-const PublicationActions: FC<Props> = ({ publication, isFullPublication = false }) => {
+const PublicationActions: FC<Props> = ({ publication, electedMirror, isFullPublication = false }) => {
   const currentProfile = useAppStore((state) => state.currentProfile)
   const publicationType = publication?.metadata?.attributes[0]?.value
   const collectModuleType = publication?.collectModule.__typename
@@ -22,13 +24,13 @@ const PublicationActions: FC<Props> = ({ publication, isFullPublication = false 
 
   return (
     <span
-      onClick={(event) => {
-        event.stopPropagation()
-      }}
       className={clsx(
         { 'justify-between': isFullPublication },
         'flex gap-6 items-center pt-3 -ml-2 text-gray-500 sm:gap-8'
       )}
+      onClick={(event) => {
+        event.stopPropagation()
+      }}
     >
       <Comment publication={publication} isFullPublication={isFullPublication} />
       {canMirror && <Mirror publication={publication} isFullPublication={isFullPublication} />}
@@ -38,7 +40,11 @@ const PublicationActions: FC<Props> = ({ publication, isFullPublication = false 
         publicationType !== 'fundraise' &&
         publicationType !== 'fundraise-comment' &&
         publicationType !== 'hours' && (
-          <Collect publication={publication} isFullPublication={isFullPublication} />
+          <Collect
+            electedMirror={electedMirror}
+            publication={publication}
+            isFullPublication={isFullPublication}
+          />
         )}
       <PublicationMenu publication={publication} isFullPublication={isFullPublication} />
     </span>

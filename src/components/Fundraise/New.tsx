@@ -14,28 +14,27 @@ import { Spinner } from '@components/UI/Spinner'
 import { TextArea } from '@components/UI/TextArea'
 import useBroadcast from '@components/utils/hooks/useBroadcast'
 import MetaTags from '@components/utils/MetaTags'
+import type { Erc20, Mutation } from '@generated/types'
 import {
   CreatePostBroadcastItemResult,
   CreatePostTypedDataDocument,
   CreatePostViaDispatcherDocument,
   EnabledCurrencyModulesDocument,
-  Erc20,
-  Mutation,
   PublicationMainFocus
 } from '@generated/types'
 import { PlusIcon } from '@heroicons/react/outline'
 import getIPFSLink from '@lib/getIPFSLink'
 import getSignature from '@lib/getSignature'
 import getTokenImage from '@lib/getTokenImage'
-import imagekitURL from '@lib/imagekitURL'
+import imageProxy from '@lib/imageProxy'
 import isVerified from '@lib/isVerified'
-import { Mixpanel } from '@lib/mixpanel'
 import onError from '@lib/onError'
 import splitSignature from '@lib/splitSignature'
 import uploadMediaToIPFS from '@lib/uploadMediaToIPFS'
 import uploadToArweave from '@lib/uploadToArweave'
-import { NextPage } from 'next'
-import { ChangeEvent, useEffect, useState } from 'react'
+import type { NextPage } from 'next'
+import type { ChangeEvent } from 'react'
+import { useState } from 'react'
 import { Controller } from 'react-hook-form'
 import toast from 'react-hot-toast'
 import { useTranslation } from 'react-i18next'
@@ -49,7 +48,6 @@ import {
 } from 'src/constants'
 import Custom404 from 'src/pages/404'
 import { useAppStore } from 'src/store/app'
-import { FUNDRAISE, PAGEVIEW } from 'src/tracking'
 import { v4 as uuid } from 'uuid'
 import { useContractWrite, useSignTypedData } from 'wagmi'
 import { object, string } from 'zod'
@@ -85,21 +83,15 @@ const NewFundraise: NextPage = () => {
     })
   })
 
-  useEffect(() => {
-    Mixpanel.track('Pageview', { path: PAGEVIEW.CREATE_FUNDRAISE })
-  }, [])
-
-  const onCompleted = () => {
-    Mixpanel.track(FUNDRAISE.NEW)
-  }
+  const onCompleted = () => {}
 
   const {
     data,
     isLoading: writeLoading,
     write
   } = useContractWrite({
-    addressOrName: LENSHUB_PROXY,
-    contractInterface: LensHubProxy,
+    address: LENSHUB_PROXY,
+    abi: LensHubProxy,
     functionName: 'postWithSig',
     mode: 'recklesslyUnprepared',
     onSuccess: onCompleted,
@@ -166,10 +158,10 @@ const NewFundraise: NextPage = () => {
               data: { broadcast: result }
             } = await broadcast({ request: { id, signature } })
             if ('reason' in result) {
-              write?.({ recklesslySetUnpreparedArgs: inputStruct })
+              write?.({ recklesslySetUnpreparedArgs: [inputStruct] })
             }
           } else {
-            write?.({ recklesslySetUnpreparedArgs: inputStruct })
+            write?.({ recklesslySetUnpreparedArgs: [inputStruct] })
           }
         } catch {}
       },
@@ -403,7 +395,7 @@ const NewFundraise: NextPage = () => {
                     <img
                       className="object-cover w-full h-60 rounded-lg"
                       height={240}
-                      src={imagekitURL(getIPFSLink(cover), 'attachment')}
+                      src={imageProxy(getIPFSLink(cover), 'attachment')}
                       alt={cover}
                     />
                   )}

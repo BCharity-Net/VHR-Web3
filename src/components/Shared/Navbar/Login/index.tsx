@@ -1,5 +1,6 @@
 import WalletSelector from '@components/Shared/Navbar/Login/WalletSelector'
-import { FC, useState } from 'react'
+import type { FC } from 'react'
+import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { IS_MAINNET, STATIC_ASSETS } from 'src/constants'
 

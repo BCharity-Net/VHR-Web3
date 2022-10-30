@@ -1,19 +1,19 @@
 import { LensHubProxy } from '@abis/LensHubProxy'
-import { ApolloCache, useMutation } from '@apollo/client'
+import type { ApolloCache } from '@apollo/client'
+import { useMutation } from '@apollo/client'
 import { Button } from '@components/UI/Button'
 import { Spinner } from '@components/UI/Spinner'
 import useBroadcast from '@components/utils/hooks/useBroadcast'
-import { CreateFollowTypedDataDocument, Mutation, Profile, ProxyActionDocument } from '@generated/types'
+import type { Mutation, Profile } from '@generated/types'
+import { CreateFollowTypedDataDocument, ProxyActionDocument } from '@generated/types'
 import { UserAddIcon } from '@heroicons/react/outline'
 import getSignature from '@lib/getSignature'
-import { Mixpanel } from '@lib/mixpanel'
 import onError from '@lib/onError'
 import splitSignature from '@lib/splitSignature'
-import { Dispatch, FC } from 'react'
+import type { Dispatch, FC } from 'react'
 import toast from 'react-hot-toast'
 import { LENSHUB_PROXY, RELAY_ON, SIGN_WALLET } from 'src/constants'
 import { useAppStore } from 'src/store/app'
-import { PROFILE } from 'src/tracking'
 import { useAccount, useContractWrite, useSignTypedData } from 'wagmi'
 
 interface Props {
@@ -33,7 +33,6 @@ const Follow: FC<Props> = ({ profile, showText = false, setFollowing }) => {
   const onCompleted = () => {
     setFollowing(true)
     toast.success('Followed successfully!')
-    Mixpanel.track(PROFILE.FOLLOW)
   }
 
   const updateCache = (cache: ApolloCache<any>) => {
@@ -46,8 +45,8 @@ const Follow: FC<Props> = ({ profile, showText = false, setFollowing }) => {
   }
 
   const { isLoading: writeLoading, write } = useContractWrite({
-    addressOrName: LENSHUB_PROXY,
-    contractInterface: LensHubProxy,
+    address: LENSHUB_PROXY,
+    abi: LensHubProxy,
     functionName: 'followWithSig',
     mode: 'recklesslyUnprepared',
     onSuccess: onCompleted,
@@ -63,7 +62,8 @@ const Follow: FC<Props> = ({ profile, showText = false, setFollowing }) => {
         const { deadline } = typedData.value
 
         try {
-          const signature = await signTypedDataAsync(getSignature(typedData))
+          // TODO: Replace deep clone with right helper
+          const signature = await signTypedDataAsync(getSignature(JSON.parse(JSON.stringify(typedData))))
           setUserSigNonce(userSigNonce + 1)
           const { profileIds, datas: followData } = typedData.value
           const { v, r, s } = splitSignature(signature)
@@ -75,7 +75,7 @@ const Follow: FC<Props> = ({ profile, showText = false, setFollowing }) => {
             sig
           }
           if (!RELAY_ON) {
-            return write?.({ recklesslySetUnpreparedArgs: inputStruct })
+            return write?.({ recklesslySetUnpreparedArgs: [inputStruct] })
           }
 
           const {
@@ -83,7 +83,7 @@ const Follow: FC<Props> = ({ profile, showText = false, setFollowing }) => {
           } = await broadcast({ request: { id, signature } })
 
           if ('reason' in result) {
-            write?.({ recklesslySetUnpreparedArgs: inputStruct })
+            write?.({ recklesslySetUnpreparedArgs: [inputStruct] })
           }
         } catch {}
       },
@@ -97,6 +97,20 @@ const Follow: FC<Props> = ({ profile, showText = false, setFollowing }) => {
     onError,
     update: updateCache
   })
+
+  const createViaProxyAction = async (variables: any) => {
+    const { data } = await createFollowProxyAction({
+      variables
+    })
+    if (!data?.proxyAction) {
+      createFollowTypedData({
+        variables: {
+          request: { follow: { profile: profile?.id } },
+          options: { overrideSigNonce: userSigNonce }
+        }
+      })
+    }
+  }
 
   const createFollow = () => {
     if (!currentProfile) {
@@ -119,13 +133,11 @@ const Follow: FC<Props> = ({ profile, showText = false, setFollowing }) => {
         }
       })
     } else {
-      createFollowProxyAction({
-        variables: {
-          request: {
-            follow: {
-              freeFollow: {
-                profileId: profile?.id
-              }
+      createViaProxyAction({
+        request: {
+          follow: {
+            freeFollow: {
+              profileId: profile?.id
             }
           }
         }

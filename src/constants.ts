@@ -18,6 +18,10 @@ export const DEFAULT_COLLECT_TOKEN = getEnvConfig().defaultCollectToken
 
 export const IS_MAINNET = API_URL === MAINNET_API_URL
 
+// XMTP
+export const XMTP_ENV = IS_MAINNET ? 'production' : 'dev'
+export const XMTP_PREFIX = 'lens.dev/dm'
+
 // Application
 
 export const APP_NAME = 'BCharity'
@@ -31,8 +35,6 @@ export const GIT_COMMIT_SHA = process.env.NEXT_PUBLIC_VERCEL_GIT_COMMIT_SHA?.sli
 // Misc
 export const CONTACT_EMAIL = 'admin@bcharity.net'
 export const RELAY_ON = process.env.NEXT_PUBLIC_RELAY_ON === 'true'
-export const MIXPANEL_TOKEN = process.env.NEXT_PUBLIC_MIXPANEL_TOKEN ?? ''
-export const MIXPANEL_API_HOST = 'https://utils.lenster.xyz/collect'
 export const ZERO_ADDRESS = '0x0000000000000000000000000000000000000000'
 
 export const CATEGORIES = [
@@ -70,8 +72,9 @@ export const VHR_TOP_HOLDERS_URL =
   'https://mumbai.polygonscan.com/token/tokenholderchart/0x28ee241ab245699968f2980d3d1b1d23120ab8be'
 export const RARIBLE_URL = IS_MAINNET ? 'https://rarible.com' : 'https://rinkeby.rarible.com'
 export const ARWEAVE_GATEWAY = 'https://arweave.net'
-export const IMAGEKIT_URL = `https://ik.imagekit.io/${process.env.NEXT_PUBLIC_IMAGEKIT_ID}`
+export const IMAGEKIT_URL = `https://ik.imagekit.io/${IS_PRODUCTION ? 'bcharityimg' : 'bcharitydev'}`
 export const IPFS_GATEWAY = 'https://lens.infura-ipfs.io/ipfs/'
+export const EVER_API = 'https://endpoint.4everland.co'
 
 // Web3
 export const ALCHEMY_KEY = process.env.NEXT_PUBLIC_ALCHEMY_KEY
@@ -123,11 +126,35 @@ export const ALL_HANDLES_REGEX = /([\s+])@(\S+)/g
 export const HANDLE_SANITIZE_REGEX = /[^\d .A-Za-z]/g
 
 // Utils
-export const ALLOWED_MEDIA_TYPES = ['video/mp4', 'image/jpeg', 'image/png', 'image/webp', 'image/gif']
+export const ALLOWED_IMAGE_TYPES = ['image/jpeg', 'image/png', 'image/webp', 'image/gif']
+export const ALLOWED_AUDIO_TYPES = [
+  'audio/mpeg',
+  'audio/wav',
+  'audio/mp4',
+  'audio/aac',
+  'audio/ogg',
+  'audio/webm',
+  'audio/flac'
+]
+export const ALLOWED_VIDEO_TYPES = ['video/mp4', 'video/mpeg', 'video/ogg', 'video/webm', 'video/quicktime']
+export const ALLOWED_MEDIA_TYPES = [...ALLOWED_VIDEO_TYPES, ...ALLOWED_IMAGE_TYPES, ...ALLOWED_AUDIO_TYPES]
 
 // Bundlr
 export const BUNDLR_CURRENCY = 'matic'
 export const BUNDLR_NODE_URL = IS_MAINNET ? 'https://node2.bundlr.network' : 'https://devnet.bundlr.network'
 
 // UI
-export const PAGINATION_ROOT_MARGIN = '300% 0px'
+export const MESSAGE_PAGE_LIMIT = 15
+export const SCROLL_THRESHOLD = 0.5
+
+// Named transforms
+export const AVATAR = 'avatar'
+export const COVER = 'cover'
+export const ATTACHMENT = 'attachment'
+
+// Localstorage keys
+export const LS_KEYS = {
+  BCHARITY_STORE: 'bcharity.store',
+  TRANSACTION_STORE: 'transaction.store',
+  TIMELINE_STORE: 'timeline.store'
+}

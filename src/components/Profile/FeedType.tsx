@@ -1,4 +1,5 @@
-import { Profile, ProfileStats } from '@generated/types'
+import TabButton from '@components/UI/TabButton'
+import type { Profile, ProfileStats } from '@generated/types'
 import {
   CashIcon,
   ChatAlt2Icon,
@@ -9,10 +10,8 @@ import {
   PhotographIcon
 } from '@heroicons/react/outline'
 import isVerified from '@lib/isVerified'
-import { Mixpanel } from '@lib/mixpanel'
-import nFormatter from '@lib/nFormatter'
-import clsx from 'clsx'
-import { Dispatch, FC, ReactNode, useEffect, useState } from 'react'
+import type { Dispatch, FC } from 'react'
+import { useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { getTotalVHRSent } from 'src/alchemy'
 import { VHR_TOKEN } from 'src/constants'
@@ -49,38 +48,6 @@ const FeedType: FC<Props> = ({ stats, address, id, setFeedType, feedType, profil
     })
   })
 
-  interface FeedLinkProps {
-    name: string
-    icon: ReactNode
-    type: string
-    count?: number
-  }
-
-  const FeedLink: FC<FeedLinkProps> = ({ name, icon, type, count = 0 }) => (
-    <button
-      type="button"
-      onClick={() => {
-        setFeedType(type)
-        Mixpanel.track(`Switch to ${type.toLowerCase()} tab in explore`)
-      }}
-      className={clsx(
-        {
-          'text-brand bg-brand-100 dark:bg-opacity-20 bg-opacity-100 font-bold': feedType === type
-        },
-        'flex items-center space-x-2 rounded-lg px-4 sm:px-3 py-2 sm:py-1 text-brand hover:bg-brand-100 dark:hover:bg-opacity-20 hover:bg-opacity-100'
-      )}
-      aria-label={name}
-    >
-      {icon}
-      <span className="hidden sm:block">{name}</span>
-      {count ? (
-        <span className="px-2 text-xs font-medium rounded-full bg-brand-200 dark:bg-brand-800">
-          {nFormatter(count)}
-        </span>
-      ) : null}
-    </button>
-  )
-
   interface FeedLabelProps {
     name: string
   }
@@ -88,9 +55,9 @@ const FeedType: FC<Props> = ({ stats, address, id, setFeedType, feedType, profil
   const FeedLabel: FC<FeedLabelProps> = ({ name }) => (
     <button
       type="button"
-      className={clsx(
+      className={
         'flex rounded-lg px-4 sm:px-3 py-2 sm:py-1 text-brand hover:bg-brand-100 dark:hover:bg-opacity-20 hover:bg-opacity-100'
-      )}
+      }
       aria-label={name}
     >
       <div className="hidden sm:block">{name}</div>
@@ -122,46 +89,96 @@ const FeedType: FC<Props> = ({ stats, address, id, setFeedType, feedType, profil
         </>
       )}
       <div className="w-[600px] flex flex-wrap gap-3 px-5 pb-2 mt-3 sm:px-0 sm:mt-0 md:pb-0">
-        <FeedLink
+        <TabButton
           name={t('Posts')}
           icon={<PencilAltIcon className="w-4 h-4" />}
-          type="FEED"
+          active={feedType === 'FEED'}
           count={stats?.totalPosts + stats?.totalMirrors}
+          onClick={() => setFeedType('FEED')}
         />
-        <FeedLink
+        <TabButton
           name={t('Comments')}
           icon={<ChatAlt2Icon className="w-4 h-4" />}
-          type="REPLIES"
+          active={feedType === 'REPLIES'}
           count={stats?.totalComments}
+          onClick={() => setFeedType('REPLIES')}
         />
-        <FeedLink name="Media" icon={<FilmIcon className="w-4 h-4" />} type="MEDIA" />
-        <FeedLink name="NFTs" icon={<PhotographIcon className="w-4 h-4" />} type="NFT" />
+        <TabButton
+          name="Media"
+          icon={<FilmIcon className="w-4 h-4" />}
+          active={feedType === 'MEDIA'}
+          onClick={() => {
+            setFeedType('MEDIA')
+          }}
+        />
+        <TabButton
+          name="NFTs"
+          icon={<PhotographIcon className="w-4 h-4" />}
+          active={feedType === 'NFT'}
+          onClick={() => {
+            setFeedType('NFT')
+          }}
+        />
       </div>
       <div className="w-[800px] flex flex-wrap gap-3 px-5 pb-2 mt-3 sm:px-0 sm:mt-0 md:pb-0">
         {isVerified(id) ? (
           <>
-            <FeedLink name="OrgFunds" icon={<CashIcon className="w-4 h-4" />} type="funds-org" />
-            <FeedLink
+            <TabButton
+              name="OrgFunds"
+              icon={<CashIcon className="w-4 h-4" />}
+              active={feedType === 'funds-org'}
+              onClick={() => {
+                setFeedType('funds-org')
+              }}
+            />
+            <TabButton
               name="OrgVHR"
               icon={<ClockIcon className="w-4 h-4" />}
-              type="org"
+              active={feedType === 'org'}
               count={orgVerifiedHours}
+              onClick={() => {
+                setFeedType('org')
+              }}
             />
-            <FeedLink name="OrgOpp" icon={<ClipboardListIcon className="w-4 h-4" />} type="org-opp" />
+            <TabButton
+              name="OrgOpp"
+              icon={<ClipboardListIcon className="w-4 h-4" />}
+              active={feedType === 'org-opp'}
+              onClick={() => {
+                setFeedType('org-opp')
+              }}
+            />
             <FeedLabel name={`Org Donors: ${orgDonors?.toString() ?? ''}`} />
             <FeedLabel name={`Org Volunteers: ${orgVolunteers?.toString() ?? ''}`} />
             <FeedLabel name={`Org GOOD: ${orgGood?.toFixed(2)?.toString() ?? ''}`} />
           </>
         ) : (
           <>
-            <FeedLink name="Funds" icon={<CashIcon className="w-4 h-4" />} type="funds" />
-            <FeedLink
+            <TabButton
+              name="Funds"
+              icon={<CashIcon className="w-4 h-4" />}
+              active={feedType === 'funds'}
+              onClick={() => {
+                setFeedType('funds')
+              }}
+            />
+            <TabButton
               name="VHR"
               icon={<ClockIcon className="w-4 h-4" />}
-              type="vhr"
+              active={feedType === 'vhr'}
               count={vhrBalance !== undefined ? vhrBalance.value.toNumber() : 0}
+              onClick={() => {
+                setFeedType('vhr')
+              }}
             />
-            <FeedLink name="Opportunities" icon={<ClipboardListIcon className="w-4 h-4" />} type="opp" />
+            <TabButton
+              name="Opportunities"
+              icon={<ClipboardListIcon className="w-4 h-4" />}
+              active={feedType === 'opp'}
+              onClick={() => {
+                setFeedType('opp')
+              }}
+            />
           </>
         )}
       </div>

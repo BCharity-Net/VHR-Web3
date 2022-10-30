@@ -1,12 +1,11 @@
 import { Button } from '@components/UI/Button'
 import { Modal } from '@components/UI/Modal'
-import { Profile } from '@generated/types'
+import type { Profile } from '@generated/types'
 import { StarIcon } from '@heroicons/react/outline'
-import { Mixpanel } from '@lib/mixpanel'
 import dynamic from 'next/dynamic'
-import { Dispatch, FC, useState } from 'react'
+import type { Dispatch, FC } from 'react'
+import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { PROFILE } from 'src/tracking'
 
 import Loader from '../Loader'
 import Slug from '../Slug'
@@ -34,7 +33,6 @@ const SuperFollow: FC<Props> = ({ profile, setFollowing, showText = false, again
         outline
         onClick={() => {
           setShowFollowModal(!showFollowModal)
-          Mixpanel.track(PROFILE.OPEN_SUPER_FOLLOW)
         }}
         aria-label={t('Super follow')}
         icon={<StarIcon className="w-4 h-4" />}

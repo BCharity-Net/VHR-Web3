@@ -1,15 +1,18 @@
 import { useLazyQuery } from '@apollo/client'
 import Slug from '@components/Shared/Slug'
-import { UserSuggestion } from '@generated/bcharitytypes'
-import { MediaSet, NftImage, Profile, SearchProfilesDocument, SearchRequestTypes } from '@generated/types'
+import type { UserSuggestion } from '@generated/bcharitytypes'
+import type { MediaSet, NftImage, Profile } from '@generated/types'
+import { SearchProfilesDocument, SearchRequestTypes } from '@generated/types'
 import { BadgeCheckIcon } from '@heroicons/react/solid'
 import getIPFSLink from '@lib/getIPFSLink'
 import getStampFyiURL from '@lib/getStampFyiURL'
-import imagekitURL from '@lib/imagekitURL'
+import imageProxy from '@lib/imageProxy'
 import isVerified from '@lib/isVerified'
 import clsx from 'clsx'
-import { Dispatch, FC, useEffect, useRef } from 'react'
+import type { Dispatch, FC } from 'react'
+import { useEffect, useRef } from 'react'
 import { Mention, MentionsInput } from 'react-mentions'
+import { AVATAR } from 'src/constants'
 import { usePublicationStore } from 'src/store/publication'
 
 interface UserProps {
@@ -25,7 +28,7 @@ const User: FC<UserProps> = ({ suggestion, focused }) => (
       className="w-7 h-7 rounded-full"
       height={32}
       width={32}
-      src={imagekitURL(getIPFSLink(suggestion.picture), 'avatar')}
+      src={imageProxy(getIPFSLink(suggestion.picture), AVATAR)}
       alt={suggestion.id}
     />
     <div className="flex flex-col truncate">
@@ -110,7 +113,7 @@ export const MentionTextArea: FC<Props> = ({
           data={fetchUsers}
         />
       </MentionsInput>
-      {error && <div className="mt-1 text-sm font-bold text-red-500">{error}</div>}
+      {error && <div className="mt-1 px-5 text-sm font-bold text-red-500">{error}</div>}
     </div>
   )
 }

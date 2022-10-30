@@ -7,11 +7,12 @@ import { Card } from '@components/UI/Card'
 import { EmptyState } from '@components/UI/EmptyState'
 import { ErrorMessage } from '@components/UI/ErrorMessage'
 import { Spinner } from '@components/UI/Spinner'
-import { BCharityPublication } from '@generated/bcharitytypes'
+import type { BCharityPublication } from '@generated/bcharitytypes'
 import { PaginatedResultInfo, Profile } from '@generated/types'
 import { CollectionIcon } from '@heroicons/react/outline'
 import Logger from '@lib/logger'
-import { FC, useEffect, useState } from 'react'
+import type { FC } from 'react'
+import React, { useEffect, useState } from 'react'
 import { useInView } from 'react-cool-inview'
 import { useFilters, useTable } from 'react-table'
 import {
@@ -51,8 +52,8 @@ const FundraiseTable: FC<Props> = ({ profile, getColumns, query, request }) => {
   const [tableData, setTableData] = useState<Data[]>([])
 
   const bal = useContractRead({
-    addressOrName: GOOD_TOKEN,
-    contractInterface: GOOD_ABI,
+    address: GOOD_TOKEN,
+    abi: GOOD_ABI,
     functionName: 'balanceOf',
     watch: true,
     chainId: 80001,
@@ -66,8 +67,8 @@ const FundraiseTable: FC<Props> = ({ profile, getColumns, query, request }) => {
   })
 
   const balQ = useContractRead({
-    addressOrName: WMATIC_TOKEN,
-    contractInterface: WMATIC_ABI,
+    address: WMATIC_TOKEN,
+    abi: WMATIC_ABI,
     functionName: 'balanceOf',
     watch: true,
     chainId: 80001,
@@ -75,8 +76,8 @@ const FundraiseTable: FC<Props> = ({ profile, getColumns, query, request }) => {
   })
 
   const decs = useContractRead({
-    addressOrName: GOOD_TOKEN,
-    contractInterface: GOOD_ABI,
+    address: GOOD_TOKEN,
+    abi: GOOD_ABI,
     functionName: 'decimals',
     chainId: 80001,
     watch: true

@@ -1,18 +1,20 @@
 /* eslint-disable react/jsx-key */
 import { DAI_ABI } from '@abis/DAI_ABI'
 import { GOOD_ABI } from '@abis/GOOD_ABI'
-import { DocumentNode, useQuery } from '@apollo/client'
+import type { DocumentNode } from '@apollo/client'
+import { useQuery } from '@apollo/client'
 import PublicationsShimmer from '@components/Shared/Shimmer/PublicationsShimmer'
 import { Card } from '@components/UI/Card'
 import { EmptyState } from '@components/UI/EmptyState'
 import { ErrorMessage } from '@components/UI/ErrorMessage'
 import { Spinner } from '@components/UI/Spinner'
-import { BCharityPublication } from '@generated/bcharitytypes'
+import type { BCharityPublication } from '@generated/bcharitytypes'
 import { PaginatedResultInfo, Profile } from '@generated/types'
 import { CollectionIcon } from '@heroicons/react/outline'
 import Logger from '@lib/logger'
 import { ethers } from 'ethers'
-import { FC, useState } from 'react'
+import type { FC } from 'react'
+import { useState } from 'react'
 import { useInView } from 'react-cool-inview'
 import { Row, useFilters, useTable } from 'react-table'
 import { DAI_TOKEN, GIVE_DAI_LP, GOOD_TOKEN, VHR_TO_DAI_PRICE } from 'src/constants'
@@ -69,8 +71,8 @@ const VHRTable: FC<Props> = ({ profile, handleQueryComplete, getColumns, query, 
   const [decimals, setDecimals] = useState(0)
 
   useContractRead({
-    addressOrName: GOOD_TOKEN,
-    contractInterface: GOOD_ABI,
+    address: GOOD_TOKEN,
+    abi: GOOD_ABI,
     functionName: 'balanceOf',
     watch: true,
     args: [GIVE_DAI_LP],
@@ -83,8 +85,8 @@ const VHRTable: FC<Props> = ({ profile, handleQueryComplete, getColumns, query, 
   })
 
   useContractRead({
-    addressOrName: DAI_TOKEN,
-    contractInterface: DAI_ABI,
+    address: DAI_TOKEN,
+    abi: DAI_ABI,
     functionName: 'balanceOf',
     watch: true,
     args: [GIVE_DAI_LP],
@@ -97,8 +99,8 @@ const VHRTable: FC<Props> = ({ profile, handleQueryComplete, getColumns, query, 
   })
 
   useContractRead({
-    addressOrName: GOOD_TOKEN,
-    contractInterface: GOOD_ABI,
+    address: GOOD_TOKEN,
+    abi: GOOD_ABI,
     functionName: 'decimals',
     watch: true,
     onSuccess(data) {

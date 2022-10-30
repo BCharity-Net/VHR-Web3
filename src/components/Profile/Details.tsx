@@ -6,11 +6,14 @@ import SuperFollow from '@components/Shared/SuperFollow'
 import Unfollow from '@components/Shared/Unfollow'
 import ProfileStaffTool from '@components/StaffTools/Panels/Profile'
 import { Button } from '@components/UI/Button'
+import { Modal } from '@components/UI/Modal'
 import { Tooltip } from '@components/UI/Tooltip'
 import useStaffMode from '@components/utils/hooks/useStaffMode'
-import { Profile } from '@generated/types'
-import { CogIcon, HashtagIcon, LocationMarkerIcon } from '@heroicons/react/outline'
+import type { Profile } from '@generated/types'
+import { CogIcon, HashtagIcon, LocationMarkerIcon, UsersIcon } from '@heroicons/react/outline'
 import { BadgeCheckIcon } from '@heroicons/react/solid'
+import buildConversationId from '@lib/buildConversationId'
+import { buildConversationKey } from '@lib/conversationKey'
 import formatAddress from '@lib/formatAddress'
 import getAttribute from '@lib/getAttribute'
 import getAvatar from '@lib/getAvatar'
@@ -18,15 +21,19 @@ import isFeatureEnabled from '@lib/isFeatureEnabled'
 import isStaff from '@lib/isStaff'
 import isVerified from '@lib/isVerified'
 import Link from 'next/link'
+import { useRouter } from 'next/router'
 import { useTheme } from 'next-themes'
-import { FC, ReactElement, useState } from 'react'
+import type { FC, ReactElement } from 'react'
+import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { STATIC_ASSETS } from 'src/constants'
 import { useAppStore } from 'src/store/app'
+import { useMessageStore } from 'src/store/message'
 
 import Badges from './Badges'
 import Followerings from './Followerings'
 import MutualFollowers from './MutualFollowers'
+import MutualFollowersList from './MutualFollowers/List'
 
 interface Props {
   profile: Profile
@@ -36,8 +43,23 @@ const Details: FC<Props> = ({ profile }) => {
   const { t } = useTranslation('common')
   const currentProfile = useAppStore((state) => state.currentProfile)
   const [following, setFollowing] = useState(profile?.isFollowedByMe)
+  const [showMutualFollowersModal, setShowMutualFollowersModal] = useState(false)
   const { allowed: staffMode } = useStaffMode()
   const { resolvedTheme } = useTheme()
+  const router = useRouter()
+  const messageProfiles = useMessageStore((state) => state.messageProfiles)
+  const setMessageProfiles = useMessageStore((state) => state.setMessageProfiles)
+
+  const onMessageClick = () => {
+    if (!currentProfile) {
+      return
+    }
+    const conversationId = buildConversationId(currentProfile.id, profile.id)
+    const conversationKey = buildConversationKey(profile.ownedBy, conversationId)
+    messageProfiles.set(conversationKey, profile)
+    setMessageProfiles(new Map(messageProfiles))
+    router.push(`/messages/${conversationKey}`)
+  }
 
   const hasOnChainIdentity = profile?.onChainIdentity?.proofOfHumanity || profile?.onChainIdentity?.ens?.name
 
@@ -72,9 +94,9 @@ const Details: FC<Props> = ({ profile }) => {
         </div>
         <div className="flex items-center space-x-3">
           {profile?.name ? (
-            <Slug className="!text-sm sm:!text-base" slug={profile?.handle} prefix="@" />
+            <Slug className="text-sm sm:text-base" slug={profile?.handle} prefix="@" />
           ) : (
-            <Slug className="!text-sm sm:!text-base" slug={formatAddress(profile?.ownedBy)} />
+            <Slug className="text-sm sm:text-base" slug={formatAddress(profile?.ownedBy)} />
           )}
           {currentProfile && currentProfile?.id !== profile?.id && profile?.isFollowing && (
             <div className="py-0.5 px-2 text-xs bg-gray-200 rounded-full dark:bg-gray-700">
@@ -99,17 +121,17 @@ const Details: FC<Props> = ({ profile }) => {
                 {followType === 'FeeFollowModuleSettings' && (
                   <SuperFollow profile={profile} setFollowing={setFollowing} again />
                 )}
-                {isFeatureEnabled('messages', currentProfile?.id) && <Message profile={profile} />}
+                {isFeatureEnabled('messages', currentProfile?.id) && <Message onClick={onMessageClick} />}
               </div>
             ) : followType === 'FeeFollowModuleSettings' ? (
               <div className="flex space-x-2">
                 <SuperFollow profile={profile} setFollowing={setFollowing} showText />
-                {isFeatureEnabled('messages', currentProfile?.id) && <Message profile={profile} />}
+                {isFeatureEnabled('messages', currentProfile?.id) && <Message onClick={onMessageClick} />}
               </div>
             ) : (
               <div className="flex space-x-2">
                 <Follow profile={profile} setFollowing={setFollowing} showText />
-                {isFeatureEnabled('messages', currentProfile?.id) && <Message profile={profile} />}
+                {isFeatureEnabled('messages', currentProfile?.id) && <Message onClick={onMessageClick} />}
               </div>
             )
           ) : null}
@@ -119,7 +141,19 @@ const Details: FC<Props> = ({ profile }) => {
             <Markup>{profile?.bio}</Markup>
           </div>
         )}
-        {currentProfile?.id !== profile?.id && <MutualFollowers profile={profile} />}
+        {currentProfile?.id !== profile?.id && (
+          <>
+            <MutualFollowers setShowMutualFollowersModal={setShowMutualFollowersModal} profile={profile} />
+            <Modal
+              title="Followers you know"
+              icon={<UsersIcon className="w-5 h-5 text-brand" />}
+              show={showMutualFollowersModal}
+              onClose={() => setShowMutualFollowersModal(false)}
+            >
+              <MutualFollowersList profileId={profile?.id} />
+            </Modal>
+          </>
+        )}
         <div className="w-full divider" />
         <div className="space-y-2">
           <MetaDetails icon={<HashtagIcon className="w-4 h-4" />}>

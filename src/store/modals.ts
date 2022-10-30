@@ -1,4 +1,4 @@
-import { BCharityPublication } from '@generated/bcharitytypes'
+import type { BCharityPublication } from '@generated/bcharitytypes'
 import create from 'zustand'
 
 interface GlobalModalState {

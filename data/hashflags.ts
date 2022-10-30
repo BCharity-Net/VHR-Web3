@@ -1,4 +1,4 @@
-export const hashflags: any = {
+export const hashflags: Record<string, string> = {
   bcharity: 'bcharity',
   lenster: 'lenster',
   lenstube: 'lenstube',

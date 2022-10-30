@@ -10,26 +10,25 @@ import { GridItemSix, GridLayout } from '@components/UI/GridLayout'
 import { Modal } from '@components/UI/Modal'
 import { Spinner } from '@components/UI/Spinner'
 import { Tooltip } from '@components/UI/Tooltip'
-import { BCharityPublication } from '@generated/bcharitytypes'
+import type { BCharityPublication } from '@generated/bcharitytypes'
+import type { CreateCommentBroadcastItemResult, Mutation } from '@generated/types'
 import {
   BroadcastDocument,
   CollectModuleDocument,
   CommentFeedDocument,
-  CreateCommentBroadcastItemResult,
   CreateCommentTypedDataDocument,
-  Mutation,
   PublicationRevenueDocument
 } from '@generated/types'
 import { CashIcon, CurrencyDollarIcon, UsersIcon } from '@heroicons/react/outline'
 import getIPFSLink from '@lib/getIPFSLink'
 import getSignature from '@lib/getSignature'
 import getTokenImage from '@lib/getTokenImage'
-import imagekitURL from '@lib/imagekitURL'
-import { Mixpanel } from '@lib/mixpanel'
+import imageProxy from '@lib/imageProxy'
 import uploadToArweave from '@lib/uploadToArweave'
 import clsx from 'clsx'
 import { splitSignature } from 'ethers/lib/utils'
-import { FC, ReactNode, useEffect, useState } from 'react'
+import type { FC, ReactNode } from 'react'
+import { useEffect, useState } from 'react'
 import toast from 'react-hot-toast'
 import { useTranslation } from 'react-i18next'
 import {
@@ -42,7 +41,6 @@ import {
   STATIC_ASSETS
 } from 'src/constants'
 import { useAppStore } from 'src/store/app'
-import { FUNDRAISE } from 'src/tracking'
 import { v4 as uuid } from 'uuid'
 import { useContractWrite, useSignTypedData } from 'wagmi'
 
@@ -140,8 +138,8 @@ const Fundraise: FC<Props> = ({ fund }) => {
   })
 
   const { isLoading: writeLoading, write: commentWrite } = useContractWrite({
-    addressOrName: LENSHUB_PROXY,
-    contractInterface: LensHubProxy,
+    address: LENSHUB_PROXY,
+    abi: LensHubProxy,
     functionName: 'commentWithSig',
     mode: 'recklesslyUnprepared',
     onError: (error: any) => {
@@ -194,10 +192,10 @@ const Fundraise: FC<Props> = ({ fund }) => {
             })
 
             if ('reason') {
-              commentWrite?.({ recklesslySetUnpreparedArgs: inputStruct })
+              commentWrite?.({ recklesslySetUnpreparedArgs: [inputStruct] })
             }
           } else {
-            commentWrite?.({ recklesslySetUnpreparedArgs: inputStruct })
+            commentWrite?.({ recklesslySetUnpreparedArgs: [inputStruct] })
           }
         } catch {}
       },
@@ -309,7 +307,7 @@ const Fundraise: FC<Props> = ({ fund }) => {
         className="h-40 rounded-t-xl border-b sm:h-52 dark:border-b-gray-700/80"
         style={{
           backgroundImage: `url(${
-            cover ? imagekitURL(getIPFSLink(cover), 'attachment') : `${STATIC_ASSETS}/patterns/2.svg`
+            cover ? imageProxy(getIPFSLink(cover), 'attachment') : `${STATIC_ASSETS}/patterns/2.svg`
           })`,
           backgroundColor: '#8b5cf6',
           backgroundSize: cover ? 'cover' : '30%',
@@ -332,7 +330,6 @@ const Fundraise: FC<Props> = ({ fund }) => {
                     className="text-sm"
                     onClick={() => {
                       setShowFundersModal(!showFundersModal)
-                      Mixpanel.track(FUNDRAISE.OPEN_FUNDERS)
                     }}
                   >
                     <Badge

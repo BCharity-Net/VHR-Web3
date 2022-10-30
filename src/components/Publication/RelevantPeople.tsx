@@ -3,9 +3,10 @@ import UserProfileShimmer from '@components/Shared/Shimmer/UserProfileShimmer'
 import UserProfile from '@components/Shared/UserProfile'
 import { Card } from '@components/UI/Card'
 import { ErrorMessage } from '@components/UI/ErrorMessage'
-import { BCharityPublication } from '@generated/bcharitytypes'
-import { Profile, RelevantPeopleDocument } from '@generated/types'
-import { FC } from 'react'
+import type { BCharityPublication } from '@generated/bcharitytypes'
+import type { Profile } from '@generated/types'
+import { RelevantPeopleDocument } from '@generated/types'
+import type { FC } from 'react'
 import { ALL_HANDLES_REGEX, HANDLE_SANITIZE_REGEX } from 'src/constants'
 
 interface Props {

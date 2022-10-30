@@ -1,4 +1,5 @@
-import { ChildrenNode, Matcher } from 'interweave'
+import type { ChildrenNode } from 'interweave'
+import { Matcher } from 'interweave'
 import React from 'react'
 
 export class MDCodeMatcher extends Matcher {

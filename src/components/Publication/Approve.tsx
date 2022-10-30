@@ -3,13 +3,14 @@ import { useMutation } from '@apollo/client'
 import { Button } from '@components/UI/Button'
 import { Spinner } from '@components/UI/Spinner'
 import useBroadcast from '@components/utils/hooks/useBroadcast'
-import { BCharityPublication } from '@generated/bcharitytypes'
-import { CreateCollectBroadcastItemResult, CreateCollectTypedDataDocument, Mutation } from '@generated/types'
+import type { BCharityPublication } from '@generated/bcharitytypes'
+import type { CreateCollectBroadcastItemResult, Mutation } from '@generated/types'
+import { CreateCollectTypedDataDocument } from '@generated/types'
 import { CheckCircleIcon } from '@heroicons/react/outline'
 import getSignature from '@lib/getSignature'
 import Logger from '@lib/logger'
 import splitSignature from '@lib/splitSignature'
-import { FC } from 'react'
+import type { FC } from 'react'
 import toast from 'react-hot-toast'
 import IndexStatus from 'src/components/Shared/IndexStatus'
 import { ERROR_MESSAGE, ERRORS, LENSHUB_PROXY, RELAY_ON, SIGN_WALLET } from 'src/constants'
@@ -41,8 +42,8 @@ const Approve: FC<Props> = ({ publication }) => {
     isLoading: collectWriteLoading,
     write: collectWrite
   } = useContractWrite({
-    addressOrName: LENSHUB_PROXY,
-    contractInterface: LensHubProxy,
+    address: LENSHUB_PROXY,
+    abi: LensHubProxy,
     functionName: 'collectWithSig',
     mode: 'recklesslyUnprepared',
     onSuccess: () => {
@@ -104,10 +105,10 @@ const Approve: FC<Props> = ({ publication }) => {
             })
 
             if ('reason') {
-              collectWrite?.({ recklesslySetUnpreparedArgs: inputStruct })
+              collectWrite?.({ recklesslySetUnpreparedArgs: [inputStruct] })
             }
           } else {
-            collectWrite?.({ recklesslySetUnpreparedArgs: inputStruct })
+            collectWrite?.({ recklesslySetUnpreparedArgs: [inputStruct] })
           }
         } catch {}
       },

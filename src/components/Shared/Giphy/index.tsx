@@ -1,13 +1,12 @@
 import { Modal } from '@components/UI/Modal'
 import { Tooltip } from '@components/UI/Tooltip'
-import { IGif } from '@giphy/js-types'
+import type { IGif } from '@giphy/js-types'
 import { PhotographIcon } from '@heroicons/react/outline'
-import { Mixpanel } from '@lib/mixpanel'
 import { motion } from 'framer-motion'
 import dynamic from 'next/dynamic'
-import { FC, useState } from 'react'
+import type { FC } from 'react'
+import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { PUBLICATION } from 'src/tracking'
 
 import Loader from '../Loader'
 
@@ -31,7 +30,6 @@ const Giphy: FC<Props> = ({ setGifAttachment }) => {
           type="button"
           onClick={() => {
             setShowModal(!showModal)
-            Mixpanel.track(PUBLICATION.NEW.OPEN_GIF)
           }}
           aria-label={t('Choose gifs')}
         >

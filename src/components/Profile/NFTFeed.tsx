@@ -3,15 +3,14 @@ import SingleNFT from '@components/NFT/SingleNFT'
 import NFTSShimmer from '@components/Shared/Shimmer/NFTSShimmer'
 import { EmptyState } from '@components/UI/EmptyState'
 import { ErrorMessage } from '@components/UI/ErrorMessage'
-import { Spinner } from '@components/UI/Spinner'
-import { Nft, NftFeedDocument, Profile } from '@generated/types'
+import InfiniteLoader from '@components/UI/InfiniteLoader'
+import type { Nft, Profile } from '@generated/types'
+import { NftFeedDocument } from '@generated/types'
 import { CollectionIcon } from '@heroicons/react/outline'
-import { Mixpanel } from '@lib/mixpanel'
-import { FC } from 'react'
-import { useInView } from 'react-cool-inview'
+import type { FC } from 'react'
 import { useTranslation } from 'react-i18next'
-import { CHAIN_ID, IS_MAINNET, PAGINATION_ROOT_MARGIN } from 'src/constants'
-import { PAGINATION } from 'src/tracking'
+import InfiniteScroll from 'react-infinite-scroll-component'
+import { CHAIN_ID, IS_MAINNET, SCROLL_THRESHOLD } from 'src/constants'
 import { chain } from 'wagmi'
 
 interface Props {
@@ -35,22 +34,13 @@ const NFTFeed: FC<Props> = ({ profile }) => {
 
   const nfts = data?.nfts?.items
   const pageInfo = data?.nfts?.pageInfo
+  const hasMore = pageInfo?.next && nfts?.length !== pageInfo.totalCount
 
-  const { observe } = useInView({
-    onChange: async ({ inView }) => {
-      if (!inView) {
-        return
-      }
-
-      await fetchMore({
-        variables: {
-          variables: { request: { ...request, cursor: pageInfo?.next } }
-        }
-      })
-      Mixpanel.track(PAGINATION.NFT_FEED)
-    },
-    rootMargin: PAGINATION_ROOT_MARGIN
-  })
+  const loadMore = async () => {
+    await fetchMore({
+      variables: { request: { ...request, cursor: pageInfo?.next } }
+    })
+  }
 
   if (loading) {
     return <NFTSShimmer />
@@ -75,7 +65,13 @@ const NFTFeed: FC<Props> = ({ profile }) => {
   }
 
   return (
-    <>
+    <InfiniteScroll
+      dataLength={nfts?.length ?? 0}
+      scrollThreshold={SCROLL_THRESHOLD}
+      hasMore={hasMore}
+      next={loadMore}
+      loader={<InfiniteLoader />}
+    >
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
         {nfts?.map((nft) => (
           <div key={`${nft?.chainId}_${nft?.contractAddress}_${nft?.tokenId}`}>
@@ -83,12 +79,7 @@ const NFTFeed: FC<Props> = ({ profile }) => {
           </div>
         ))}
       </div>
-      {pageInfo?.next && nfts?.length !== pageInfo.totalCount && (
-        <span ref={observe} className="flex justify-center p-5">
-          <Spinner size="sm" />
-        </span>
-      )}
-    </>
+    </InfiniteScroll>
   )
 }
 

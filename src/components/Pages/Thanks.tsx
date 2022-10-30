@@ -1,11 +1,9 @@
 import Footer from '@components/Shared/Footer'
 import MetaTags from '@components/utils/MetaTags'
 import { HeartIcon } from '@heroicons/react/outline'
-import { Mixpanel } from '@lib/mixpanel'
 import { useTheme } from 'next-themes'
-import { FC, ReactNode, useEffect } from 'react'
+import type { FC, ReactNode } from 'react'
 import { APP_NAME, STATIC_ASSETS } from 'src/constants'
-import { PAGEVIEW } from 'src/tracking'
 
 interface Props {
   name: string
@@ -37,16 +35,12 @@ const Brand: FC<Props> = ({ name, logo, url, size, children }) => {
 }
 
 const Thanks: FC = () => {
-  useEffect(() => {
-    Mixpanel.track('Pageview', { path: PAGEVIEW.THANKS })
-  }, [])
-
   return (
     <>
       <MetaTags title={`Thanks • ${APP_NAME}`} />
       <div className="flex justify-center items-center w-full h-48 bg-brand-400">
         <div className="relative text-center">
-          <div className="flex items-center space-x-2 text-3xl font-semibold text-white md:text-4xl">
+          <div className="flex items-center space-x-2 text-3xl font-bold text-white md:text-4xl">
             <div>Thank you!</div>
             <HeartIcon className="w-7 h-7 text-pink-600" />
           </div>

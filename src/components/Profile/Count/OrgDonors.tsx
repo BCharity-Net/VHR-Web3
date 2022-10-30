@@ -1,11 +1,12 @@
 /* eslint-disable react/jsx-key */
 import { gql, useQuery } from '@apollo/client'
-import { BCharityPublication } from '@generated/bcharitytypes'
+import type { BCharityPublication } from '@generated/bcharitytypes'
 import { PaginatedResultInfo, Profile } from '@generated/types'
 import { CommentFields } from '@gql/CommentFields'
 import { MirrorFields } from '@gql/MirrorFields'
 import { PostFields } from '@gql/PostFields'
-import { FC, useState } from 'react'
+import type { FC } from 'react'
+import { useState } from 'react'
 import { useAppStore } from 'src/store/app'
 
 import TotalDonors from '../FundraiseTable/TotalDonors'

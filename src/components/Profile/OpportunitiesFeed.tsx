@@ -1,6 +1,8 @@
 /* eslint-disable react/jsx-key */
-import { Profile, ProfileFeedDocument, PublicationTypes } from '@generated/types'
-import { FC, useMemo, useState } from 'react'
+import type { Profile } from '@generated/types'
+import { ProfileFeedDocument, PublicationTypes } from '@generated/types'
+import type { FC } from 'react'
+import { useMemo, useState } from 'react'
 
 import { ProfileCell, StatusCell } from './OpportunitiesTable/Cells'
 import {

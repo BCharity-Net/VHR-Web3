@@ -1,10 +1,17 @@
 import UserProfile from '@components/Shared/UserProfile'
-import { Profile } from '@generated/types'
-import { ChipIcon, ExclamationIcon, FingerPrintIcon, ShareIcon, UserIcon } from '@heroicons/react/outline'
+import type { Profile } from '@generated/types'
+import {
+  ChipIcon,
+  ExclamationIcon,
+  FingerPrintIcon,
+  ShareIcon,
+  SparklesIcon,
+  UserIcon
+} from '@heroicons/react/outline'
 import clsx from 'clsx'
 import Link from 'next/link'
 import { useRouter } from 'next/router'
-import { FC, ReactNode } from 'react'
+import type { FC, ReactNode } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useAppStore } from 'src/store/app'
 
@@ -51,6 +58,10 @@ const Sidebar: FC = () => {
       <Menu current={pathname == '/settings/allowance'} url="/settings/allowance">
         <ShareIcon className="w-4 h-4" />
         <div>{t('Allowance')}</div>
+      </Menu>
+      <Menu current={pathname == '/settings/cleanup'} url="/settings/cleanup">
+        <SparklesIcon className="w-4 h-4" />
+        <div>Cleanup</div>
       </Menu>
       <Menu current={pathname == '/settings/delete'} url="/settings/delete">
         <ExclamationIcon className="w-4 h-4 text-red-500" />

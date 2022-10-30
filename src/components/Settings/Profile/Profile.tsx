@@ -11,11 +11,10 @@ import { Spinner } from '@components/UI/Spinner'
 import { TextArea } from '@components/UI/TextArea'
 import { Toggle } from '@components/UI/Toggle'
 import useBroadcast from '@components/utils/hooks/useBroadcast'
+import type { CreatePublicSetProfileMetadataUriRequest, MediaSet, Mutation } from '@generated/types'
 import {
   CreateSetProfileMetadataTypedDataDocument,
   CreateSetProfileMetadataViaDispatcherDocument,
-  MediaSet,
-  Mutation,
   Profile
 } from '@generated/types'
 import { PencilIcon } from '@heroicons/react/outline'
@@ -23,18 +22,17 @@ import getAttribute from '@lib/getAttribute'
 import getIPFSLink from '@lib/getIPFSLink'
 import getSignature from '@lib/getSignature'
 import hasPrideLogo from '@lib/hasPrideLogo'
-import imagekitURL from '@lib/imagekitURL'
-import { Mixpanel } from '@lib/mixpanel'
+import imageProxy from '@lib/imageProxy'
 import onError from '@lib/onError'
 import splitSignature from '@lib/splitSignature'
-import uploadMediaToIPFS from '@lib/uploadMediaToIPFS'
 import uploadToArweave from '@lib/uploadToArweave'
-import { ChangeEvent, FC, useEffect, useState } from 'react'
+import uploadToIPFS from '@lib/uploadToIPFS'
+import type { ChangeEvent, FC } from 'react'
+import { useEffect, useState } from 'react'
 import toast from 'react-hot-toast'
 import { useTranslation } from 'react-i18next'
-import { APP_NAME, LENS_PERIPHERY, RELAY_ON, SIGN_WALLET } from 'src/constants'
+import { APP_NAME, COVER, LENS_PERIPHERY, RELAY_ON, SIGN_WALLET } from 'src/constants'
 import { useAppStore } from 'src/store/app'
-import { SETTINGS } from 'src/tracking'
 import { v4 as uuid } from 'uuid'
 import { useContractWrite, useSignTypedData } from 'wagmi'
 import { object, optional, string } from 'zod'
@@ -55,7 +53,6 @@ const Profile: FC<Props> = ({ profile }) => {
 
   const onCompleted = () => {
     toast.success('Profile updated successfully!')
-    Mixpanel.track(SETTINGS.PROFILE.UPDATE)
   }
 
   const { isLoading: signLoading, signTypedDataAsync } = useSignTypedData({ onError })
@@ -66,8 +63,8 @@ const Profile: FC<Props> = ({ profile }) => {
     error,
     write
   } = useContractWrite({
-    addressOrName: LENS_PERIPHERY,
-    contractInterface: LensPeriphery,
+    address: LENS_PERIPHERY,
+    abi: LensPeriphery,
     functionName: 'setProfileMetadataURIWithSig',
     mode: 'recklesslyUnprepared',
     onSuccess: onCompleted,
@@ -97,7 +94,7 @@ const Profile: FC<Props> = ({ profile }) => {
 
           setUserSigNonce(userSigNonce + 1)
           if (!RELAY_ON) {
-            return write?.({ recklesslySetUnpreparedArgs: inputStruct })
+            return write?.({ recklesslySetUnpreparedArgs: [inputStruct] })
           }
 
           const {
@@ -105,7 +102,7 @@ const Profile: FC<Props> = ({ profile }) => {
           } = await broadcast({ request: { id, signature } })
 
           if ('reason' in result) {
-            write?.({ recklesslySetUnpreparedArgs: inputStruct })
+            write?.({ recklesslySetUnpreparedArgs: [inputStruct] })
           }
         } catch {}
       },
@@ -119,6 +116,20 @@ const Profile: FC<Props> = ({ profile }) => {
       onError
     })
 
+  const createViaDispatcher = async (request: CreatePublicSetProfileMetadataUriRequest) => {
+    const { data } = await createSetProfileMetadataViaDispatcher({
+      variables: { request }
+    })
+    if (data?.createSetProfileMetadataViaDispatcher?.__typename === 'RelayError') {
+      createSetProfileMetadataTypedData({
+        variables: {
+          options: { overrideSigNonce: userSigNonce },
+          request
+        }
+      })
+    }
+  }
+
   useEffect(() => {
     if (profile?.coverPicture?.original?.url) {
       setCover(profile?.coverPicture?.original?.url)
@@ -130,7 +141,7 @@ const Profile: FC<Props> = ({ profile }) => {
     evt.preventDefault()
     setUploading(true)
     try {
-      const attachment = await uploadMediaToIPFS(evt.target.files)
+      const attachment = await uploadToIPFS(evt.target.files)
       if (attachment[0]?.item) {
         setCover(attachment[0].item)
       }
@@ -218,7 +229,7 @@ const Profile: FC<Props> = ({ profile }) => {
     }
 
     if (currentProfile?.dispatcher?.canUseRelay) {
-      createSetProfileMetadataViaDispatcher({ variables: { request } })
+      createViaDispatcher(request)
     } else {
       createSetProfileMetadataTypedData({
         variables: {
@@ -271,7 +282,7 @@ const Profile: FC<Props> = ({ profile }) => {
               <div>
                 <img
                   className="object-cover w-full h-60 rounded-lg"
-                  src={imagekitURL(getIPFSLink(cover), 'cover')}
+                  src={imageProxy(getIPFSLink(cover), COVER)}
                   alt={cover}
                 />
               </div>

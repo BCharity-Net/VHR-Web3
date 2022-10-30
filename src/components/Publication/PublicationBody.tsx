@@ -5,17 +5,19 @@ import Collectors from '@components/Shared/Modal/Collectors'
 import FundraiseShimmer from '@components/Shared/Shimmer/FundraiseShimmer'
 import { Button } from '@components/UI/Button'
 import { Modal } from '@components/UI/Modal'
-import { BCharityPublication } from '@generated/bcharitytypes'
+import type { BCharityPublication } from '@generated/bcharitytypes'
 import { UserAddIcon, UsersIcon } from '@heroicons/react/outline'
 import getIPFSLink from '@lib/getIPFSLink'
 import getURLs from '@lib/getURLs'
-import imagekitURL from '@lib/imagekitURL'
+import imageProxy from '@lib/imageProxy'
 import clsx from 'clsx'
 import dynamic from 'next/dynamic'
 import Link from 'next/link'
 import { useRouter } from 'next/router'
-import { FC, useState } from 'react'
+import type { FC } from 'react'
+import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
+import { AVATAR } from 'src/constants'
 import { useAppStore } from 'src/store/app'
 
 import Approve from './Approve'
@@ -55,13 +57,13 @@ const PublicationBody: FC<Props> = ({ publication }) => {
           <Link href={`/groups/${publication?.id}`}>
             <a href={`/groups/${publication?.id}`} className="flex items-center space-x-1.5 font-bold">
               <img
-                src={imagekitURL(
+                src={imageProxy(
                   getIPFSLink(
                     publication?.metadata?.cover?.original?.url
                       ? publication?.metadata?.cover?.original?.url
                       : `https://avatar.tobi.sh/${publication?.id}.png`
                   ),
-                  'avatar'
+                  AVATAR
                 )}
                 className="bg-gray-200 rounded ring-2 ring-gray-50 dark:bg-gray-700 dark:ring-black w-[19px] h-[19px]"
                 height={19}
@@ -82,16 +84,14 @@ const PublicationBody: FC<Props> = ({ publication }) => {
         <Opportunity publication={publication} />
       ) : (
         <>
-          <div
-            className={clsx({
-              'line-clamp-5 text-transparent bg-clip-text bg-gradient-to-b from-black dark:from-white to-gray-400 dark:to-gray-900':
-                showMore && pathname !== '/posts/[id]'
-            })}
+          <Markup
+            className={clsx(
+              { 'line-clamp-5': showMore },
+              'whitespace-pre-wrap break-words leading-md linkify text-md'
+            )}
           >
-            <div className="whitespace-pre-wrap break-words leading-md linkify text-md">
-              <Markup>{publication?.metadata?.content}</Markup>
-            </div>
-          </div>
+            {publication?.metadata?.content}
+          </Markup>
           {showMore && pathname !== '/posts/[id]' && (
             <button type="button" className="mt-2 text-sm font-bold" onClick={() => setShowMore(!showMore)}>
               {t('Show more')}
@@ -100,7 +100,7 @@ const PublicationBody: FC<Props> = ({ publication }) => {
         </>
       )}
       {publication?.metadata?.media?.length > 0 ? (
-        <Attachments attachments={publication?.metadata?.media} />
+        <Attachments attachments={publication?.metadata?.media} publication={publication} />
       ) : (
         publication?.metadata?.content &&
         publicationType !== 'fundraise' &&

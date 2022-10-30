@@ -1,15 +1,16 @@
 import { gql, useLazyQuery } from '@apollo/client'
 import Slug from '@components/Shared/Slug'
-import { UserSuggestion } from '@generated/bcharitytypes'
+import type { UserSuggestion } from '@generated/bcharitytypes'
 import { MediaSet, NftImage, Profile } from '@generated/types'
 import { ProfileFields } from '@gql/ProfileFields'
 import { BadgeCheckIcon } from '@heroicons/react/solid'
-import imagekitURL from '@lib/imagekitURL'
+import imageProxy from '@lib/imageProxy'
 import isVerified from '@lib/isVerified'
 import Logger from '@lib/logger'
 import clsx from 'clsx'
-import { FC } from 'react'
+import type { FC } from 'react'
 import { Mention, MentionsInput } from 'react-mentions'
+import { AVATAR } from 'src/constants'
 
 export const SEARCH_USERS_QUERY = gql`
   query SearchUsers($request: SearchQueryRequest!) {
@@ -37,7 +38,7 @@ const User: FC<UserProps> = ({ suggestion, focused }) => (
       className="w-7 h-7 rounded-full"
       height={32}
       width={32}
-      src={imagekitURL(suggestion.picture, 'avatar')}
+      src={imageProxy(suggestion.picture, AVATAR)}
       alt={suggestion.id}
     />
     <div className="flex flex-col truncate">

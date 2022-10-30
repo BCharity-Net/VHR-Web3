@@ -3,7 +3,8 @@ import { useQuery } from '@apollo/client'
 import { CommentValue } from '@components/Publication/Fundraise'
 import { CommentFeedDocument, PublicationRevenueDocument } from '@generated/types'
 import Logger from '@lib/logger'
-import { FC, useEffect, useState } from 'react'
+import type { FC } from 'react'
+import { useEffect, useState } from 'react'
 import { useAppStore } from 'src/store/app'
 interface Props {
   pubId: string

@@ -1,5 +1,6 @@
 import { matchSorter } from 'match-sorter'
-import { FC, ReactNode, useState } from 'react'
+import type { FC, ReactNode } from 'react'
+import { useState } from 'react'
 import AutoSuggest from 'react-autosuggest'
 
 interface Props {

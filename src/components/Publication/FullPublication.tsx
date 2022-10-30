@@ -1,9 +1,9 @@
 import UserProfile from '@components/Shared/UserProfile'
-import { BCharityPublication } from '@generated/bcharitytypes'
+import type { BCharityPublication } from '@generated/bcharitytypes'
 import getAppName from '@lib/getAppName'
 import dayjs from 'dayjs'
 import relativeTime from 'dayjs/plugin/relativeTime'
-import { FC } from 'react'
+import type { FC } from 'react'
 
 import PublicationActions from './Actions'
 import HiddenPublication from './HiddenPublication'

@@ -5,21 +5,18 @@ import PublicationsShimmer from '@components/Shared/Shimmer/PublicationsShimmer'
 import { Card } from '@components/UI/Card'
 import { EmptyState } from '@components/UI/EmptyState'
 import { ErrorMessage } from '@components/UI/ErrorMessage'
-import { Spinner } from '@components/UI/Spinner'
-import { BCharityPublication } from '@generated/bcharitytypes'
-import { HomeFeedDocument } from '@generated/types'
+import InfiniteLoader from '@components/UI/InfiniteLoader'
+import type { BCharityPublication } from '@generated/bcharitytypes'
+import { FeedHighlightsDocument } from '@generated/types'
 import { CollectionIcon } from '@heroicons/react/outline'
-import { Mixpanel } from '@lib/mixpanel'
-import { FC } from 'react'
+import type { FC } from 'react'
 import { useInView } from 'react-cool-inview'
-import { useTranslation } from 'react-i18next'
-import { PAGINATION_ROOT_MARGIN } from 'src/constants'
+import InfiniteScroll from 'react-infinite-scroll-component'
+import { SCROLL_THRESHOLD } from 'src/constants'
 import { useAppStore } from 'src/store/app'
 import { useTransactionPersistStore } from 'src/store/transaction'
-import { PAGINATION } from 'src/tracking'
 
-const Feed: FC = () => {
-  const { t } = useTranslation('common')
+const Highlights: FC = () => {
   const currentProfile = useAppStore((state) => state.currentProfile)
   const txnQueue = useTransactionPersistStore((state) => state.txnQueue)
 
@@ -28,26 +25,19 @@ const Feed: FC = () => {
   const reactionRequest = currentProfile ? { profileId: currentProfile?.id } : null
   const profileId = currentProfile?.id ?? null
 
-  const { data, loading, error, fetchMore } = useQuery(HomeFeedDocument, {
+  const { data, loading, error, fetchMore } = useQuery(FeedHighlightsDocument, {
     variables: { request, reactionRequest, profileId }
   })
 
-  const pageInfo = data?.timeline?.pageInfo
-  const publications = data?.timeline?.items
+  const publications = data?.feedHighlights?.items
+  const pageInfo = data?.feedHighlights?.pageInfo
+  const hasMore = pageInfo?.next && publications?.length !== pageInfo.totalCount
 
-  const { observe } = useInView({
-    onChange: async ({ inView }) => {
-      if (!inView) {
-        return
-      }
-
-      await fetchMore({
-        variables: { request: { ...request, cursor: pageInfo?.next }, reactionRequest, profileId }
-      })
-      Mixpanel.track(PAGINATION.HOME_FEED)
-    },
-    rootMargin: PAGINATION_ROOT_MARGIN
-  })
+  const loadMore = async () => {
+    await fetchMore({
+      variables: { request: { ...request, cursor: pageInfo?.next }, reactionRequest, profileId }
+    })
+  }
 
   if (loading) {
     return <PublicationsShimmer />
@@ -63,11 +53,17 @@ const Feed: FC = () => {
   }
 
   if (error) {
-    return <ErrorMessage title="Failed to load home feed" error={error} />
+    return <ErrorMessage title="Failed to load highlights" error={error} />
   }
 
   return (
-    <>
+    <InfiniteScroll
+      dataLength={publications?.length ?? 0}
+      scrollThreshold={SCROLL_THRESHOLD}
+      hasMore={hasMore}
+      next={loadMore}
+      loader={<InfiniteLoader />}
+    >
       <Card className="divide-y-[1px] dark:divide-gray-700/80">
         {txnQueue.map(
           (txn) =>
@@ -84,13 +80,8 @@ const Feed: FC = () => {
           />
         ))}
       </Card>
-      {pageInfo?.next && publications?.length !== pageInfo.totalCount && (
-        <span ref={observe} className="flex justify-center p-5">
-          <Spinner size="sm" />
-        </span>
-      )}
-    </>
+    </InfiniteScroll>
   )
 }
 
-export default Feed
+export default Highlights

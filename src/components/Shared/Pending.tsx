@@ -3,7 +3,7 @@ import { Button } from '@components/UI/Button'
 import { Spinner } from '@components/UI/Spinner'
 import { ArrowRightIcon } from '@heroicons/react/outline'
 import Link from 'next/link'
-import { FC } from 'react'
+import type { FC } from 'react'
 import { useTranslation } from 'react-i18next'
 
 const HAS_PUBLICATION_INDEXED_QUERY = gql`

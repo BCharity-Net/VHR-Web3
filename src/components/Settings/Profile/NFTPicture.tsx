@@ -7,25 +7,22 @@ import { Form, useZodForm } from '@components/UI/Form'
 import { Input } from '@components/UI/Input'
 import { Spinner } from '@components/UI/Spinner'
 import useBroadcast from '@components/utils/hooks/useBroadcast'
+import type { Mutation, NftImage, Profile, UpdateProfileImageRequest } from '@generated/types'
 import {
   CreateSetProfileImageUriTypedDataDocument,
   CreateSetProfileImageUriViaDispatcherDocument,
-  Mutation,
-  NftChallengeDocument,
-  NftImage,
-  Profile
+  NftChallengeDocument
 } from '@generated/types'
 import { PencilIcon } from '@heroicons/react/outline'
 import getSignature from '@lib/getSignature'
-import { Mixpanel } from '@lib/mixpanel'
 import onError from '@lib/onError'
 import splitSignature from '@lib/splitSignature'
-import { FC, useState } from 'react'
+import type { FC } from 'react'
+import { useState } from 'react'
 import toast from 'react-hot-toast'
 import { useTranslation } from 'react-i18next'
 import { ADDRESS_REGEX, IS_MAINNET, LENSHUB_PROXY, RELAY_ON, SIGN_WALLET } from 'src/constants'
 import { useAppStore } from 'src/store/app'
-import { SETTINGS } from 'src/tracking'
 import { chain, useContractWrite, useSignMessage, useSignTypedData } from 'wagmi'
 import { object, string } from 'zod'
 
@@ -52,7 +49,6 @@ const NFTPicture: FC<Props> = ({ profile }) => {
 
   const onCompleted = () => {
     toast.success('Avatar updated successfully!')
-    Mixpanel.track(SETTINGS.PROFILE.SET_NFT_PICTURE)
   }
 
   const form = useZodForm({
@@ -69,8 +65,8 @@ const NFTPicture: FC<Props> = ({ profile }) => {
     error,
     write
   } = useContractWrite({
-    addressOrName: LENSHUB_PROXY,
-    contractInterface: LensHubProxy,
+    address: LENSHUB_PROXY,
+    abi: LensHubProxy,
     functionName: 'setProfileImageURIWithSig',
     mode: 'recklesslyUnprepared',
     onSuccess: onCompleted,
@@ -98,7 +94,7 @@ const NFTPicture: FC<Props> = ({ profile }) => {
 
           setUserSigNonce(userSigNonce + 1)
           if (!RELAY_ON) {
-            return write?.({ recklesslySetUnpreparedArgs: inputStruct })
+            return write?.({ recklesslySetUnpreparedArgs: [inputStruct] })
           }
 
           const {
@@ -106,7 +102,7 @@ const NFTPicture: FC<Props> = ({ profile }) => {
           } = await broadcast({ request: { id, signature } })
 
           if ('reason' in result) {
-            write?.({ recklesslySetUnpreparedArgs: inputStruct })
+            write?.({ recklesslySetUnpreparedArgs: [inputStruct] })
           }
         } catch {}
       },
@@ -116,6 +112,20 @@ const NFTPicture: FC<Props> = ({ profile }) => {
 
   const [createSetProfileImageURIViaDispatcher, { data: dispatcherData, loading: dispatcherLoading }] =
     useMutation(CreateSetProfileImageUriViaDispatcherDocument, { onCompleted, onError })
+
+  const createViaDispatcher = async (request: UpdateProfileImageRequest) => {
+    const { data } = await createSetProfileImageURIViaDispatcher({
+      variables: { request }
+    })
+    if (data?.createSetProfileImageURIViaDispatcher?.__typename === 'RelayError') {
+      createSetProfileImageURITypedData({
+        variables: {
+          options: { overrideSigNonce: userSigNonce },
+          request
+        }
+      })
+    }
+  }
 
   const setAvatar = async (contractAddress: string, tokenId: string) => {
     if (!currentProfile) {
@@ -147,7 +157,7 @@ const NFTPicture: FC<Props> = ({ profile }) => {
     }
 
     if (currentProfile?.dispatcher?.canUseRelay) {
-      createSetProfileImageURIViaDispatcher({ variables: { request } })
+      createViaDispatcher(request)
     } else {
       createSetProfileImageURITypedData({
         variables: {

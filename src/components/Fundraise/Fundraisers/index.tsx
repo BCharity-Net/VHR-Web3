@@ -8,15 +8,16 @@ import { GridItemFour, GridLayout } from '@components/UI/GridLayout'
 import { Spinner } from '@components/UI/Spinner'
 import { Tooltip } from '@components/UI/Tooltip'
 import MetaTags from '@components/utils/MetaTags'
-import { BCharityPublication } from '@generated/bcharitytypes'
+import type { BCharityPublication } from '@generated/bcharitytypes'
 import { PaginatedResultInfo } from '@generated/types'
 import { CommentFields } from '@gql/CommentFields'
 import { MirrorFields } from '@gql/MirrorFields'
 import { PostFields } from '@gql/PostFields'
 import getTokenImage from '@lib/getTokenImage'
-import imagekitURL from '@lib/imagekitURL'
+import imageProxy from '@lib/imageProxy'
 import Logger from '@lib/logger'
-import { FC, useState } from 'react'
+import type { FC } from 'react'
+import { useState } from 'react'
 import { useInView } from 'react-cool-inview'
 import { useTranslation } from 'react-i18next'
 import { APP_NAME, STATIC_ASSETS } from 'src/constants'
@@ -151,7 +152,7 @@ const Fundraisers: FC<Props> = ({ publication, isFullPublication = false }) => {
                   className="h-40 rounded-t-xl border-b sm:h-52 dark:border-b-gray-700/80"
                   style={{
                     backgroundImage: `url(${
-                      cover ? imagekitURL(cover, 'attachment') : `${STATIC_ASSETS}/patterns/2.svg`
+                      cover ? imageProxy(cover, 'attachment') : `${STATIC_ASSETS}/patterns/2.svg`
                     })`,
                     backgroundColor: '#8b5cf6',
                     backgroundSize: cover ? 'cover' : '30%',

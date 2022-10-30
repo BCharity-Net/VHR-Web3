@@ -1,4 +1,4 @@
-import { ChangeEventHandler, FC } from 'react'
+import type { ChangeEventHandler, FC } from 'react'
 import { useTranslation } from 'react-i18next'
 
 interface Props {

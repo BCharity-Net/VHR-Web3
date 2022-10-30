@@ -80,7 +80,7 @@ export const getModule = (
   }
 }
 
-export type FEE_DATA_TYPE = {
+export interface FEE_DATA_TYPE {
   amount: { currency: string; value: string }
   collectLimit: string | null
   recipient: string

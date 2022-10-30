@@ -1,9 +1,9 @@
 import GroupProfile from '@components/Shared/GroupProfile'
 import { Card } from '@components/UI/Card'
 import { EmptyState } from '@components/UI/EmptyState'
-import { Group } from '@generated/bcharitytypes'
+import type { Group } from '@generated/bcharitytypes'
 import { UsersIcon } from '@heroicons/react/outline'
-import { FC } from 'react'
+import type { FC } from 'react'
 import { useTranslation } from 'react-i18next'
 
 interface Props {

@@ -1,7 +1,7 @@
-import { FieldPolicy, StoreValue } from '@apollo/client/core'
-import { PaginatedResultInfo } from '@generated/types'
+import type { FieldPolicy, StoreValue } from '@apollo/client/core'
+import type { PaginatedResultInfo } from '@generated/types'
 
-type CursorBasedPagination<T = StoreValue> = {
+interface CursorBasedPagination<T = StoreValue> {
   items: T[]
   pageInfo: PaginatedResultInfo
 }
@@ -23,6 +23,7 @@ export function cursorBasedPagination<T extends CursorBasedPagination>(
 
       // items that are not in the cache anymore (for .e.g deleted publication)
       const danglingItems = items?.filter((item) => !canRead(item))
+      const totalCount = pageInfo?.totalCount ?? 0
 
       return {
         ...existing,
@@ -31,7 +32,7 @@ export function cursorBasedPagination<T extends CursorBasedPagination>(
           ...pageInfo,
           // reduce total count by excluding dangling items so it won't cause a new page query
           // after item was removed from the cache (for .e.g deleted publication)
-          totalCount: pageInfo?.totalCount - danglingItems?.length
+          totalCount: totalCount - danglingItems?.length
         }
       } as SafeReadonly<T>
     },

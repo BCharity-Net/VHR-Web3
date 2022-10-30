@@ -1,6 +1,8 @@
 /* eslint-disable react/jsx-key */
-import { NotificationsDocument, Profile } from '@generated/types'
-import { FC, useMemo, useState } from 'react'
+import type { Profile } from '@generated/types'
+import { NotificationsDocument } from '@generated/types'
+import type { FC } from 'react'
+import { useMemo, useState } from 'react'
 
 import VHRTable from './VHRTable'
 import { ProfileCell, StatusCell, TotalGoodCell, TotalHoursCell } from './VHRTable/Cells'

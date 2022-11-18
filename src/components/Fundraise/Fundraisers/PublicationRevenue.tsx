@@ -7,7 +7,7 @@ interface Props {
   fund: any
   callback?: Function
 }
-
+//test
 const RevenueDetails: FC<Props> = ({ fund, callback }) => {
   useQuery(PublicationRevenueDocument, {
     variables: {

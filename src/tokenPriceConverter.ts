@@ -12,7 +12,7 @@ import {
 import { useContractRead } from 'wagmi'
 
 export const VhrToGoodRate = () => {
-  const bal = useContractRead({
+  const bal: any = useContractRead({
     address: GOOD_TOKEN,
     abi: GOOD_ABI,
     functionName: 'balanceOf',
@@ -20,7 +20,7 @@ export const VhrToGoodRate = () => {
     args: [GIVE_DAI_LP]
   })
 
-  const balQ = useContractRead({
+  const balQ: any = useContractRead({
     address: DAI_TOKEN,
     abi: DAI_ABI,
     functionName: 'balanceOf',
@@ -28,7 +28,7 @@ export const VhrToGoodRate = () => {
     args: [GIVE_DAI_LP]
   })
 
-  const decs = useContractRead({
+  const decs: any = useContractRead({
     address: GOOD_TOKEN,
     abi: GOOD_ABI,
     functionName: 'decimals',
@@ -48,7 +48,7 @@ export const VhrToGoodRate = () => {
 }
 
 export const WmaticToGoodRate = () => {
-  const bal = useContractRead({
+  const bal: any = useContractRead({
     address: GOOD_TOKEN,
     abi: GOOD_ABI,
     functionName: 'balanceOf',
@@ -56,7 +56,7 @@ export const WmaticToGoodRate = () => {
     args: [WMATIC_GOOD_LP]
   })
 
-  const balQ = useContractRead({
+  const balQ: any = useContractRead({
     address: WMATIC_TOKEN,
     abi: WMATIC_ABI,
     functionName: 'balanceOf',
@@ -64,7 +64,7 @@ export const WmaticToGoodRate = () => {
     args: [WMATIC_GOOD_LP]
   })
 
-  const decs = useContractRead({
+  const decs: any = useContractRead({
     address: GOOD_TOKEN,
     abi: GOOD_ABI,
     functionName: 'decimals',

@@ -6,15 +6,14 @@ import useIsMounted from '@components/utils/hooks/useIsMounted'
 import { AuthenticateDocument, ChallengeDocument, UserProfilesDocument } from '@generated/types'
 import { XCircleIcon } from '@heroicons/react/solid'
 import getWalletLogo from '@lib/getWalletLogo'
-import { Mixpanel } from '@lib/mixpanel'
 import onError from '@lib/onError'
 import clsx from 'clsx'
-import { Dispatch, FC } from 'react'
+import type { Dispatch, FC } from 'react'
 import toast from 'react-hot-toast'
 import { CHAIN_ID, ERROR_MESSAGE } from 'src/constants'
 import { useAppPersistStore, useAppStore } from 'src/store/app'
-import { USER } from 'src/tracking'
-import { Connector, useAccount, useConnect, useNetwork, useSignMessage } from 'wagmi'
+import type { Connector } from 'wagmi'
+import { useAccount, useConnect, useNetwork, useSignMessage } from 'wagmi'
 
 interface Props {
   setHasConnected: Dispatch<boolean>
@@ -25,6 +24,7 @@ const WalletSelector: FC<Props> = ({ setHasConnected, setHasProfile }) => {
   const setProfiles = useAppStore((state) => state.setProfiles)
   const setCurrentProfile = useAppStore((state) => state.setCurrentProfile)
   const setProfileId = useAppPersistStore((state) => state.setProfileId)
+  const setHandle = useAppPersistStore((state) => state.setHandle)
 
   const { mounted } = useIsMounted()
   const { chain } = useNetwork()
@@ -44,7 +44,6 @@ const WalletSelector: FC<Props> = ({ setHasConnected, setHasProfile }) => {
       if (account) {
         setHasConnected(true)
       }
-      Mixpanel.track(`Connect with ${connector.name.toLowerCase()}`)
     } catch {}
   }
 
@@ -87,8 +86,8 @@ const WalletSelector: FC<Props> = ({ setHasConnected, setHasProfile }) => {
         setProfiles(profiles)
         setCurrentProfile(currentProfile)
         setProfileId(currentProfile.id)
+        setHandle(currentProfile.handle)
       }
-      Mixpanel.track(USER.SIWL)
     } catch {}
   }
 

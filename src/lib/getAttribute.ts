@@ -1,6 +1,6 @@
-import { Maybe } from '@generated/types'
+import type { Maybe } from '@generated/types'
 
-type Attribute = {
+interface Attribute {
   key: string
   value: string
 }

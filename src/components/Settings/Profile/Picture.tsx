@@ -6,28 +6,24 @@ import { Button } from '@components/UI/Button'
 import { ErrorMessage } from '@components/UI/ErrorMessage'
 import { Spinner } from '@components/UI/Spinner'
 import useBroadcast from '@components/utils/hooks/useBroadcast'
+import type { MediaSet, Mutation, NftImage, Profile, UpdateProfileImageRequest } from '@generated/types'
 import {
   CreateSetProfileImageUriTypedDataDocument,
-  CreateSetProfileImageUriViaDispatcherDocument,
-  MediaSet,
-  Mutation,
-  NftImage,
-  Profile
+  CreateSetProfileImageUriViaDispatcherDocument
 } from '@generated/types'
 import { PencilIcon } from '@heroicons/react/outline'
 import getIPFSLink from '@lib/getIPFSLink'
 import getSignature from '@lib/getSignature'
-import imagekitURL from '@lib/imagekitURL'
-import { Mixpanel } from '@lib/mixpanel'
+import imageProxy from '@lib/imageProxy'
 import onError from '@lib/onError'
 import splitSignature from '@lib/splitSignature'
-import uploadMediaToIPFS from '@lib/uploadMediaToIPFS'
-import { ChangeEvent, FC, useEffect, useState } from 'react'
+import uploadToIPFS from '@lib/uploadToIPFS'
+import type { ChangeEvent, FC } from 'react'
+import { useEffect, useState } from 'react'
 import toast from 'react-hot-toast'
 import { useTranslation } from 'react-i18next'
-import { LENSHUB_PROXY, RELAY_ON, SIGN_WALLET } from 'src/constants'
+import { AVATAR, LENSHUB_PROXY, RELAY_ON, SIGN_WALLET } from 'src/constants'
 import { useAppStore } from 'src/store/app'
-import { SETTINGS } from 'src/tracking'
 import { useContractWrite, useSignTypedData } from 'wagmi'
 
 interface Props {
@@ -45,7 +41,6 @@ const Picture: FC<Props> = ({ profile }) => {
 
   const onCompleted = () => {
     toast.success('Avatar updated successfully!')
-    Mixpanel.track(SETTINGS.PROFILE.SET_PICTURE)
   }
 
   const {
@@ -54,8 +49,8 @@ const Picture: FC<Props> = ({ profile }) => {
     error,
     write
   } = useContractWrite({
-    addressOrName: LENSHUB_PROXY,
-    contractInterface: LensHubProxy,
+    address: LENSHUB_PROXY,
+    abi: LensHubProxy,
     functionName: 'setProfileImageURIWithSig',
     mode: 'recklesslyUnprepared',
     onSuccess: onCompleted,
@@ -88,7 +83,7 @@ const Picture: FC<Props> = ({ profile }) => {
 
           setUserSigNonce(userSigNonce + 1)
           if (!RELAY_ON) {
-            return write?.({ recklesslySetUnpreparedArgs: inputStruct })
+            return write?.({ recklesslySetUnpreparedArgs: [inputStruct] })
           }
 
           const {
@@ -96,7 +91,7 @@ const Picture: FC<Props> = ({ profile }) => {
           } = await broadcast({ request: { id, signature } })
 
           if ('reason' in result) {
-            write?.({ recklesslySetUnpreparedArgs: inputStruct })
+            write?.({ recklesslySetUnpreparedArgs: [inputStruct] })
           }
         } catch {}
       },
@@ -107,11 +102,25 @@ const Picture: FC<Props> = ({ profile }) => {
   const [createSetProfileImageURIViaDispatcher, { data: dispatcherData, loading: dispatcherLoading }] =
     useMutation(CreateSetProfileImageUriViaDispatcherDocument, { onCompleted, onError })
 
+  const createViaDispatcher = async (request: UpdateProfileImageRequest) => {
+    const { data } = await createSetProfileImageURIViaDispatcher({
+      variables: { request }
+    })
+    if (data?.createSetProfileImageURIViaDispatcher?.__typename === 'RelayError') {
+      createSetProfileImageURITypedData({
+        variables: {
+          options: { overrideSigNonce: userSigNonce },
+          request
+        }
+      })
+    }
+  }
+
   const handleUpload = async (evt: ChangeEvent<HTMLInputElement>) => {
     evt.preventDefault()
     setUploading(true)
     try {
-      const attachment = await uploadMediaToIPFS(evt.target.files)
+      const attachment = await uploadToIPFS(evt.target.files)
       if (attachment[0]?.item) {
         setAvatar(attachment[0].item)
       }
@@ -134,7 +143,7 @@ const Picture: FC<Props> = ({ profile }) => {
     }
 
     if (currentProfile?.dispatcher?.canUseRelay) {
-      createSetProfileImageURIViaDispatcher({ variables: { request } })
+      createViaDispatcher(request)
     } else {
       createSetProfileImageURITypedData({
         variables: {
@@ -163,7 +172,7 @@ const Picture: FC<Props> = ({ profile }) => {
                 className="w-60 h-60 rounded-lg"
                 height={240}
                 width={240}
-                src={imagekitURL(getIPFSLink(avatar), 'avatar')}
+                src={imageProxy(getIPFSLink(avatar), AVATAR)}
                 alt={avatar}
               />
             </div>

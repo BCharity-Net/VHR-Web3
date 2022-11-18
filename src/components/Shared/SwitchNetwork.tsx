@@ -1,11 +1,9 @@
 import { Button } from '@components/UI/Button'
 import { SwitchHorizontalIcon } from '@heroicons/react/outline'
-import { Mixpanel } from '@lib/mixpanel'
-import { FC } from 'react'
+import type { FC } from 'react'
 import toast from 'react-hot-toast'
 import { useTranslation } from 'react-i18next'
 import { CHAIN_ID } from 'src/constants'
-import { SYSTEM } from 'src/tracking'
 import { useSwitchNetwork } from 'wagmi'
 
 interface Props {
@@ -28,7 +26,6 @@ const SwitchNetwork: FC<Props> = ({ className = '' }) => {
         } else {
           toast.error(t('Change wallet'))
         }
-        Mixpanel.track(SYSTEM.SWITCH_NETWORK)
       }}
     >
       {t('Switch network')}

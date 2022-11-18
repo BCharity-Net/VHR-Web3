@@ -1,7 +1,8 @@
-import { FC } from 'react'
+import type { OG } from '@generated/bcharitytypes'
+import type { FC } from 'react'
 
 interface Props {
-  og: any
+  og: OG
 }
 
 const Player: FC<Props> = ({ og }) => {

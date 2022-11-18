@@ -14,13 +14,13 @@ import { Spinner } from '@components/UI/Spinner'
 import { Tooltip } from '@components/UI/Tooltip'
 import { WarningMessage } from '@components/UI/WarningMessage'
 import useBroadcast from '@components/utils/hooks/useBroadcast'
-import { BCharityPublication } from '@generated/bcharitytypes'
+import type { BCharityPublication } from '@generated/bcharitytypes'
+import type { ElectedMirror, Mutation } from '@generated/types'
 import {
   ApprovedModuleAllowanceAmountDocument,
   CollectModuleDocument,
   CollectModules,
   CreateCollectTypedDataDocument,
-  Mutation,
   ProxyActionDocument,
   PublicationRevenueDocument
 } from '@generated/types'
@@ -39,25 +39,25 @@ import formatAddress from '@lib/formatAddress'
 import getSignature from '@lib/getSignature'
 import getTokenImage from '@lib/getTokenImage'
 import humanize from '@lib/humanize'
-import { Mixpanel } from '@lib/mixpanel'
 import onError from '@lib/onError'
 import splitSignature from '@lib/splitSignature'
 import dayjs from 'dayjs'
-import { Dispatch, FC, useEffect, useState } from 'react'
+import type { Dispatch, FC } from 'react'
+import { useEffect, useState } from 'react'
 import toast from 'react-hot-toast'
 import { useTranslation } from 'react-i18next'
 import { LENSHUB_PROXY, POLYGONSCAN_URL, RELAY_ON, SIGN_WALLET } from 'src/constants'
 import { useAppStore } from 'src/store/app'
-import { PUBLICATION } from 'src/tracking'
 import { useAccount, useBalance, useContractWrite, useSignTypedData } from 'wagmi'
 
 interface Props {
   count: number
   setCount: Dispatch<number>
   publication: BCharityPublication
+  electedMirror?: ElectedMirror
 }
 
-const CollectModule: FC<Props> = ({ count, setCount, publication }) => {
+const CollectModule: FC<Props> = ({ count, setCount, publication, electedMirror }) => {
   const { t } = useTranslation('common')
   const userSigNonce = useAppStore((state) => state.userSigNonce)
   const setUserSigNonce = useAppStore((state) => state.setUserSigNonce)
@@ -70,13 +70,13 @@ const CollectModule: FC<Props> = ({ count, setCount, publication }) => {
 
   const { address } = useAccount()
   const { isLoading: signLoading, signTypedDataAsync } = useSignTypedData({ onError })
+  const isMirror = electedMirror ? false : publication.__typename === 'Mirror'
 
   const onCompleted = () => {
     setRevenue(revenue + parseFloat(collectModule?.amount?.value))
     setCount(count + 1)
     setHasCollectedByMe(true)
     toast.success('Transaction submitted successfully!')
-    Mixpanel.track(PUBLICATION.COLLECT_MODULE.COLLECT)
   }
 
   const {
@@ -84,8 +84,8 @@ const CollectModule: FC<Props> = ({ count, setCount, publication }) => {
     isLoading: writeLoading,
     write
   } = useContractWrite({
-    addressOrName: LENSHUB_PROXY,
-    contractInterface: LensHubProxy,
+    address: LENSHUB_PROXY,
+    abi: LensHubProxy,
     functionName: 'collectWithSig',
     mode: 'recklesslyUnprepared',
     onSuccess: onCompleted,
@@ -170,7 +170,7 @@ const CollectModule: FC<Props> = ({ count, setCount, publication }) => {
 
           setUserSigNonce(userSigNonce + 1)
           if (!RELAY_ON) {
-            return write?.({ recklesslySetUnpreparedArgs: inputStruct })
+            return write?.({ recklesslySetUnpreparedArgs: [inputStruct] })
           }
 
           const {
@@ -178,7 +178,7 @@ const CollectModule: FC<Props> = ({ count, setCount, publication }) => {
           } = await broadcast({ request: { id, signature } })
 
           if ('reason' in result) {
-            write?.({ recklesslySetUnpreparedArgs: inputStruct })
+            write?.({ recklesslySetUnpreparedArgs: [inputStruct] })
           }
         } catch {}
       },
@@ -191,22 +191,34 @@ const CollectModule: FC<Props> = ({ count, setCount, publication }) => {
     onError
   })
 
+  const createViaProxyAction = async (variables: any) => {
+    const { data } = await createCollectProxyAction({
+      variables
+    })
+    if (!data?.proxyAction) {
+      createCollectTypedData({
+        variables: {
+          request: { publicationId: publication?.id },
+          options: { overrideSigNonce: userSigNonce }
+        }
+      })
+    }
+  }
+
   const createCollect = () => {
     if (!currentProfile) {
       return toast.error(SIGN_WALLET)
     }
 
     if (collectModule?.type === CollectModules.FreeCollectModule) {
-      createCollectProxyAction({
-        variables: {
-          request: { collect: { freeCollect: { publicationId: publication?.id } } }
-        }
+      createViaProxyAction({
+        request: { collect: { freeCollect: { publicationId: publication?.id } } }
       })
     } else {
       createCollectTypedData({
         variables: {
           options: { overrideSigNonce: userSigNonce },
-          request: { publicationId: publication?.id }
+          request: { publicationId: electedMirror ? electedMirror.mirrorId : publication?.id }
         }
       })
     }
@@ -239,11 +251,11 @@ const CollectModule: FC<Props> = ({ count, setCount, publication }) => {
         )}
         <div className="pb-2 space-y-1.5">
           <div className="flex items-center space-x-2">
-            {publication.__typename === 'Mirror' && (
+            {(electedMirror || isMirror) && (
               <Tooltip
-                content={`Mirror of ${publication?.mirrorOf?.__typename?.toLowerCase()} by ${
-                  publication?.mirrorOf?.profile?.handle
-                }`}
+                content={`Mirror of ${
+                  electedMirror ? publication.__typename : publication?.mirrorOf.__typename?.toLowerCase()
+                } by ${isMirror ? publication?.mirrorOf?.profile?.handle : publication.profile.handle}`}
               >
                 <SwitchHorizontalIcon className="w-5 h-5 text-brand" />
               </Tooltip>
@@ -253,11 +265,13 @@ const CollectModule: FC<Props> = ({ count, setCount, publication }) => {
             )}
           </div>
           {publication?.metadata?.description && (
-            <div className="text-gray-500 line-clamp-2">
-              <Markup>{publication?.metadata?.description}</Markup>
-            </div>
+            <Markup className="text-gray-500 line-clamp-2">{publication?.metadata?.description}</Markup>
           )}
-          <ReferralAlert mirror={publication} referralFee={collectModule?.referralFee} />
+          <ReferralAlert
+            electedMirror={electedMirror}
+            mirror={publication}
+            referralFee={collectModule?.referralFee}
+          />
         </div>
         {collectModule?.amount && (
           <div className="flex items-center py-2 space-x-1.5">
@@ -284,7 +298,6 @@ const CollectModule: FC<Props> = ({ count, setCount, publication }) => {
                 type="button"
                 onClick={() => {
                   setShowCollectorsModal(!showCollectorsModal)
-                  Mixpanel.track(PUBLICATION.COLLECT_MODULE.OPEN_COLLECTORS)
                 }}
               >
                 {humanize(count)} {t('Collectors')}

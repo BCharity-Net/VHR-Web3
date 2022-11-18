@@ -1,9 +1,10 @@
 import Markup from '@components/Shared/Markup'
-import { NewCollectNotification } from '@generated/types'
+import type { NewCollectNotification } from '@generated/types'
 import getIPFSLink from '@lib/getIPFSLink'
-import imagekitURL from '@lib/imagekitURL'
+import imageProxy from '@lib/imageProxy'
 import Link from 'next/link'
-import { FC } from 'react'
+import type { FC } from 'react'
+import { AVATAR } from 'src/constants'
 
 interface Props {
   notification: NewCollectNotification
@@ -23,13 +24,13 @@ const CollectedContent: FC<Props> = ({ notification }) => {
             className="flex items-center space-x-1.5 font-bold"
           >
             <img
-              src={imagekitURL(
+              src={imageProxy(
                 getIPFSLink(
                   notification?.collectedPublication?.metadata?.cover?.original?.url
                     ? notification?.collectedPublication?.metadata?.cover?.original?.url
                     : `https://avatar.tobi.sh/${notification?.collectedPublication?.id}.png`
                 ),
-                'avatar'
+                AVATAR
               )}
               className="w-4 h-4 bg-gray-200 rounded ring-2 ring-gray-50 dark:bg-gray-700 dark:ring-black"
               height={16}

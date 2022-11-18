@@ -1,8 +1,8 @@
-import { BCharityPublication } from '@generated/bcharitytypes'
+import type { BCharityPublication } from '@generated/bcharitytypes'
 import { Menu } from '@headlessui/react'
 import { ShieldExclamationIcon } from '@heroicons/react/outline'
 import clsx from 'clsx'
-import { FC } from 'react'
+import type { FC } from 'react'
 import { useGlobalModalStateStore } from 'src/store/modals'
 
 interface Props {
@@ -15,7 +15,7 @@ const Report: FC<Props> = ({ publication }) => {
   return (
     <Menu.Item
       as="div"
-      className={({ active }: { active: boolean }) =>
+      className={({ active }) =>
         clsx(
           { 'dropdown-active': active },
           'block px-4 py-1.5 text-sm text-red-500 m-2 rounded-lg cursor-pointer'

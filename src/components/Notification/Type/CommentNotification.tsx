@@ -1,10 +1,10 @@
 import Markup from '@components/Shared/Markup'
-import { NewCommentNotification } from '@generated/types'
+import type { NewCommentNotification } from '@generated/types'
 import { ChatAlt2Icon } from '@heroicons/react/solid'
 import dayjs from 'dayjs'
 import relativeTime from 'dayjs/plugin/relativeTime'
 import Link from 'next/link'
-import { FC } from 'react'
+import type { FC } from 'react'
 import { useTranslation } from 'react-i18next'
 
 import { NotificationProfileAvatar, NotificationProfileName } from '../Profile'

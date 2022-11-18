@@ -2,13 +2,12 @@ import { useQuery } from '@apollo/client'
 import TrendingTagShimmer from '@components/Shared/Shimmer/TrendingTagShimmer'
 import { Card } from '@components/UI/Card'
 import { ErrorMessage } from '@components/UI/ErrorMessage'
-import { TagResult, TagSortCriteria, TrendingDocument } from '@generated/types'
+import type { TagResult } from '@generated/types'
+import { TagSortCriteria, TrendingDocument } from '@generated/types'
 import { TrendingUpIcon } from '@heroicons/react/solid'
-import { Mixpanel } from '@lib/mixpanel'
 import nFormatter from '@lib/nFormatter'
 import Link from 'next/link'
-import { FC } from 'react'
-import { MISCELLANEOUS } from 'src/tracking'
+import type { FC } from 'react'
 
 const Title = () => {
   return (
@@ -21,10 +20,7 @@ const Title = () => {
 
 const Trending: FC = () => {
   const { data, loading, error } = useQuery(TrendingDocument, {
-    variables: {
-      request: { limit: 7, sort: TagSortCriteria.MostPopular }
-    },
-    pollInterval: 10000
+    variables: { request: { limit: 7, sort: TagSortCriteria.MostPopular } }
   })
 
   if (loading) {
@@ -51,10 +47,7 @@ const Trending: FC = () => {
         {data?.allPublicationsTags?.items?.map((tag: TagResult) =>
           tag?.tag !== '{}' ? (
             <div key={tag?.tag}>
-              <Link
-                href={`/search?q=${tag?.tag}&type=pubs`}
-                onClick={() => Mixpanel.track(MISCELLANEOUS.OPEN_TRENDING_TAG)}
-              >
+              <Link href={`/search?q=${tag?.tag}&type=pubs`}>
                 <div className="font-bold">{tag?.tag}</div>
                 <div className="text-[12px] text-gray-500">{nFormatter(tag?.total)} Publications</div>
               </Link>

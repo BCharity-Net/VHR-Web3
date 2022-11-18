@@ -1,8 +1,8 @@
 import Report from '@components/Shared/Modal/Report'
 import { Modal } from '@components/UI/Modal'
-import { BCharityPublication } from '@generated/bcharitytypes'
+import type { BCharityPublication } from '@generated/bcharitytypes'
 import { ShieldCheckIcon } from '@heroicons/react/outline'
-import { FC } from 'react'
+import type { FC } from 'react'
 import { useGlobalModalStateStore } from 'src/store/modals'
 
 const GlobalModals: FC = () => {

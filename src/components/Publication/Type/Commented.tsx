@@ -1,5 +1,5 @@
-import { BCharityPublication } from '@generated/bcharitytypes'
-import { FC } from 'react'
+import type { BCharityPublication } from '@generated/bcharitytypes'
+import type { FC } from 'react'
 
 import ThreadBody from '../ThreadBody'
 
@@ -13,10 +13,10 @@ const Commented: FC<Props> = ({ publication }) => {
   const publicationType = mainPost?.metadata?.attributes[0]?.value
 
   return (
-    <div>
+    <>
       {mainPost && publicationType !== 'group' ? <ThreadBody publication={mainPost} /> : null}
       <ThreadBody publication={commentOn} />
-    </div>
+    </>
   )
 }
 

@@ -4,23 +4,23 @@ import PublicationsShimmer from '@components/Shared/Shimmer/PublicationsShimmer'
 import { Card } from '@components/UI/Card'
 import { EmptyState } from '@components/UI/EmptyState'
 import { ErrorMessage } from '@components/UI/ErrorMessage'
-import { Spinner } from '@components/UI/Spinner'
-import { BCharityPublication } from '@generated/bcharitytypes'
+import InfiniteLoader from '@components/UI/InfiniteLoader'
+import type { BCharityPublication } from '@generated/bcharitytypes'
 import { CustomFiltersTypes, ExploreFeedDocument, PublicationSortCriteria } from '@generated/types'
 import { CollectionIcon } from '@heroicons/react/outline'
-import { Mixpanel } from '@lib/mixpanel'
-import { FC } from 'react'
+import type { FC } from 'react'
 import { useInView } from 'react-cool-inview'
 import { useTranslation } from 'react-i18next'
-import { PAGINATION_ROOT_MARGIN } from 'src/constants'
+import InfiniteScroll from 'react-infinite-scroll-component'
+import { SCROLL_THRESHOLD } from 'src/constants'
 import { useAppStore } from 'src/store/app'
-import { PAGINATION } from 'src/tracking'
 
 interface Props {
+  focus?: any
   feedType?: PublicationSortCriteria
 }
 
-const Feed: FC<Props> = ({ feedType = PublicationSortCriteria.CuratedProfiles }) => {
+const Feed: FC<Props> = ({ focus, feedType = PublicationSortCriteria.CuratedProfiles }) => {
   const { t } = useTranslation('common')
   const currentProfile = useAppStore((state) => state.currentProfile)
 
@@ -29,6 +29,7 @@ const Feed: FC<Props> = ({ feedType = PublicationSortCriteria.CuratedProfiles })
     sortCriteria: feedType,
     noRandomize: feedType === 'LATEST',
     customFilters: [CustomFiltersTypes.Gardeners],
+    metadata: focus ? { mainContentFocus: focus } : null,
     limit: 10
   }
   const reactionRequest = currentProfile ? { profileId: currentProfile?.id } : null
@@ -40,20 +41,13 @@ const Feed: FC<Props> = ({ feedType = PublicationSortCriteria.CuratedProfiles })
 
   const pageInfo = data?.explorePublications?.pageInfo
   const publications = data?.explorePublications?.items
+  const hasMore = pageInfo?.next && publications?.length !== pageInfo.totalCount
 
-  const { observe } = useInView({
-    onChange: async ({ inView }) => {
-      if (!inView) {
-        return
-      }
-
-      await fetchMore({
-        variables: { request: { ...request, cursor: pageInfo?.next }, reactionRequest, profileId }
-      })
-      Mixpanel.track(PAGINATION.EXPLORE_FEED)
-    },
-    rootMargin: PAGINATION_ROOT_MARGIN
-  })
+  const loadMore = async () => {
+    await fetchMore({
+      variables: { request: { ...request, cursor: pageInfo?.next }, reactionRequest, profileId }
+    })
+  }
 
   if (loading) {
     return <PublicationsShimmer />
@@ -73,7 +67,13 @@ const Feed: FC<Props> = ({ feedType = PublicationSortCriteria.CuratedProfiles })
   }
 
   return (
-    <>
+    <InfiniteScroll
+      dataLength={publications?.length ?? 0}
+      scrollThreshold={SCROLL_THRESHOLD}
+      hasMore={hasMore}
+      next={loadMore}
+      loader={<InfiniteLoader />}
+    >
       <Card className="divide-y-[1px] dark:divide-gray-700/80">
         {publications?.map((publication, index: number) => (
           <SinglePublication
@@ -82,12 +82,7 @@ const Feed: FC<Props> = ({ feedType = PublicationSortCriteria.CuratedProfiles })
           />
         ))}
       </Card>
-      {pageInfo?.next && publications?.length !== pageInfo.totalCount && (
-        <span ref={observe} className="flex justify-center p-5">
-          <Spinner size="sm" />
-        </span>
-      )}
-    </>
+    </InfiniteScroll>
   )
 }
 

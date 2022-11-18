@@ -3,7 +3,7 @@ import { BCharityPublication } from '@generated/bcharitytypes'
 import { CollectionIcon } from '@heroicons/react/outline'
 import formatAddress from '@lib/formatAddress'
 import Link from 'next/link'
-import { FC } from 'react'
+import React, { FC } from 'react'
 import { POLYGONSCAN_URL } from 'src/constants'
 
 interface Props {

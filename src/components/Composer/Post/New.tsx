@@ -10,7 +10,9 @@ import {
 } from '@heroicons/react/outline'
 import getAvatar from '@lib/getAvatar'
 import isFeatureEnabled from '@lib/isFeatureEnabled'
-import { FC, ReactNode, useState } from 'react'
+import { useRouter } from 'next/router'
+import type { FC, ReactNode } from 'react'
+import { useEffect, useState } from 'react'
 import { useAppStore } from 'src/store/app'
 import { usePublicationStore } from 'src/store/publication'
 
@@ -26,22 +28,52 @@ interface ActionProps {
 
 const Action: FC<ActionProps> = ({ icon, text, onClick }) => (
   <Tooltip content={text} placement="top">
-    <button className="flex flex-col items-center text-gray-500 hover:text-brand-500" onClick={onClick}>
+    <button
+      className="flex flex-col items-center text-gray-500 hover:text-brand-500"
+      onClick={onClick}
+      type="button"
+    >
       {icon}
     </button>
   </Tooltip>
 )
 
 const NewPost: FC = () => {
+  const { query, isReady } = useRouter()
   const currentProfile = useAppStore((state) => state.currentProfile)
   const showNewPostModal = usePublicationStore((state) => state.showNewPostModal)
   const setShowNewPostModal = usePublicationStore((state) => state.setShowNewPostModal)
+  const setPublicationContent = usePublicationStore((state) => state.setPublicationContent)
+  const setPreviewPublication = usePublicationStore((state) => state.setPreviewPublication)
   const [selectedAction, setSelectedAction] = useState<Action>('update')
 
   const openModal = (action: Action) => {
     setSelectedAction(action)
     setShowNewPostModal(true)
   }
+
+  useEffect(() => {
+    if (isReady && query.text) {
+      const { text, url, via, hashtags, preview } = query
+      let processedHashtags
+
+      if (hashtags) {
+        processedHashtags = (hashtags as string)
+          .split(',')
+          .map((tag) => `#${tag} `)
+          .join('')
+      }
+
+      setShowNewPostModal(true)
+      setPublicationContent(
+        `${text}${processedHashtags ? ` ${processedHashtags} ` : ''}${url ? `\n\n${url}` : ''}${
+          via ? `\n\nvia @${via}` : ''
+        }`
+      )
+      setPreviewPublication(preview ? true : false)
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
 
   return (
     <Card className="p-5 space-y-3">
@@ -53,6 +85,7 @@ const NewPost: FC = () => {
         />
         <button
           className="w-full flex items-center space-x-2 bg-gray-100 dark:bg-gray-900 px-4 py-2 rounded-xl border border-gray-200 dark:border-gray-700"
+          type="button"
           onClick={() => openModal('update')}
         >
           <PencilAltIcon className="h-5 w-5" />

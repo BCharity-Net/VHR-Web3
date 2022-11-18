@@ -1,5 +1,5 @@
 import MetaTags from '@components/utils/MetaTags'
-import { FC } from 'react'
+import type { FC } from 'react'
 
 const Loading: FC = () => {
   return (

@@ -6,25 +6,27 @@ import { useMutation, useQuery } from '@apollo/client'
 import { Button } from '@components/UI/Button'
 import { Spinner } from '@components/UI/Spinner'
 import useBroadcast from '@components/utils/hooks/useBroadcast'
-import { BCharityPublication } from '@generated/bcharitytypes'
+import type { BCharityPublication } from '@generated/bcharitytypes'
+import type {
+  CreateCollectBroadcastItemResult,
+  CreateCommentBroadcastItemResult,
+  Mutation
+} from '@generated/types'
 import {
   BroadcastDocument,
   CommentFeedDocument,
-  CreateCollectBroadcastItemResult,
   CreateCollectTypedDataDocument,
-  CreateCommentBroadcastItemResult,
-  CreateCommentTypedDataDocument,
-  Mutation
+  CreateCommentTypedDataDocument
 } from '@generated/types'
 import { CheckCircleIcon } from '@heroicons/react/outline'
 import getSignature from '@lib/getSignature'
 import Logger from '@lib/logger'
-import { Mixpanel } from '@lib/mixpanel'
 import splitSignature from '@lib/splitSignature'
 import trimify from '@lib/trimify'
 import uploadToArweave from '@lib/uploadToArweave'
 import { ethers } from 'ethers'
-import { FC, useEffect, useState } from 'react'
+import type { FC } from 'react'
+import { useEffect, useState } from 'react'
 import toast from 'react-hot-toast'
 import {
   APP_NAME,
@@ -88,24 +90,24 @@ const Verify: FC<Props> = ({ publication }) => {
   })
 
   const bal = useContractRead({
-    addressOrName: GOOD_TOKEN,
-    contractInterface: GOOD_ABI,
+    address: GOOD_TOKEN,
+    abi: GOOD_ABI,
     functionName: 'balanceOf',
     watch: true,
     args: [GIVE_DAI_LP]
   })
 
   const balQ = useContractRead({
-    addressOrName: DAI_TOKEN,
-    contractInterface: DAI_ABI,
+    address: DAI_TOKEN,
+    abi: DAI_ABI,
     functionName: 'balanceOf',
     watch: true,
     args: [GIVE_DAI_LP]
   })
 
   const decs = useContractRead({
-    addressOrName: GOOD_TOKEN,
-    contractInterface: GOOD_ABI,
+    address: GOOD_TOKEN,
+    abi: GOOD_ABI,
     functionName: 'decimals',
     watch: true
   })
@@ -140,8 +142,8 @@ const Verify: FC<Props> = ({ publication }) => {
   }, [getVhrBalance.data, getGoodBalance.data, vhrToGoodPrice, publication.metadata.attributes])
 
   const { isLoading: vhrWriteLoading, write: writeVhrTransfer } = useContractWrite({
-    addressOrName: VHR_TOKEN,
-    contractInterface: VHR_ABI,
+    address: VHR_TOKEN,
+    abi: VHR_ABI,
     functionName: 'transfer',
     args: [publication.profile.ownedBy, publication.metadata.attributes[4].value],
     mode: 'recklesslyUnprepared',
@@ -155,8 +157,8 @@ const Verify: FC<Props> = ({ publication }) => {
   })
 
   const { isLoading: goodWriteLoading, write: writeGoodTransfer } = useContractWrite({
-    addressOrName: GOOD_TOKEN,
-    contractInterface: GOOD_ABI,
+    address: GOOD_TOKEN,
+    abi: GOOD_ABI,
     functionName: 'transfer',
     args: [publication.profile.ownedBy, (goodTransferAmount * 10 ** 18).toString()],
     mode: 'recklesslyUnprepared',
@@ -170,8 +172,8 @@ const Verify: FC<Props> = ({ publication }) => {
   })
 
   const { isLoading: commentWriteLoading, write: commentWrite } = useContractWrite({
-    addressOrName: LENSHUB_PROXY,
-    contractInterface: LensHubProxy,
+    address: LENSHUB_PROXY,
+    abi: LensHubProxy,
     functionName: 'commentWithSig',
     mode: 'recklesslyUnprepared',
     onSuccess: () => {
@@ -233,7 +235,7 @@ const Verify: FC<Props> = ({ publication }) => {
 
         setUserSigNonce(userSigNonce + 1)
         if (!RELAY_ON) {
-          return commentWrite?.({ recklesslySetUnpreparedArgs: inputStruct })
+          return commentWrite?.({ recklesslySetUnpreparedArgs: [inputStruct] })
         }
 
         const { data } = await commentBroadcast({
@@ -241,7 +243,7 @@ const Verify: FC<Props> = ({ publication }) => {
         })
 
         if ('reason') {
-          commentWrite?.({ recklesslySetUnpreparedArgs: inputStruct })
+          commentWrite?.({ recklesslySetUnpreparedArgs: [inputStruct] })
         }
       } catch {}
     },
@@ -291,15 +293,14 @@ const Verify: FC<Props> = ({ publication }) => {
 
   const onCompleted = () => {
     toast.success('Transaction submitted successfully!')
-    Mixpanel.track('hours.collect')
   }
   const {
     data: collectWriteData,
     isLoading: collectWriteLoading,
     write: collectWrite
   } = useContractWrite({
-    addressOrName: LENSHUB_PROXY,
-    contractInterface: LensHubProxy,
+    address: LENSHUB_PROXY,
+    abi: LensHubProxy,
     functionName: 'collectWithSig',
     mode: 'recklesslyUnprepared',
     onSuccess: () => {
@@ -358,10 +359,10 @@ const Verify: FC<Props> = ({ publication }) => {
             })
 
             if ('reason') {
-              collectWrite?.({ recklesslySetUnpreparedArgs: inputStruct })
+              collectWrite?.({ recklesslySetUnpreparedArgs: [inputStruct] })
             }
           } else {
-            collectWrite?.({ recklesslySetUnpreparedArgs: inputStruct })
+            collectWrite?.({ recklesslySetUnpreparedArgs: [inputStruct] })
           }
         } catch {}
       },
@@ -393,8 +394,8 @@ const Verify: FC<Props> = ({ publication }) => {
       toast.error('Not enough GOOD in wallet. (' + goodTransferAmount + ' needed)')
     } else {
       if (!hasVhrTxn) {
-        writeGoodTransfer()
-        writeVhrTransfer()
+        writeGoodTransfer?.()
+        writeVhrTransfer?.()
       }
       createCollect()
     }

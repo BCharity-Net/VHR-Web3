@@ -1,12 +1,13 @@
 import NotificationIcon from '@components/Notification/Icon'
 import useStaffMode from '@components/utils/hooks/useStaffMode'
+import type { Profile } from '@generated/types'
 import { Disclosure } from '@headlessui/react'
 import { MailIcon, MenuIcon, XIcon } from '@heroicons/react/outline'
 import isFeatureEnabled from '@lib/isFeatureEnabled'
 import clsx from 'clsx'
 import Link from 'next/link'
 import { useRouter } from 'next/router'
-import { FC } from 'react'
+import type { FC } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useAppStore } from 'src/store/app'
 
@@ -20,6 +21,11 @@ const Navbar: FC = () => {
   const { t } = useTranslation('common')
   const currentProfile = useAppStore((state) => state.currentProfile)
   const { allowed: staffMode } = useStaffMode()
+  const router = useRouter()
+
+  const onProfileSelected = (profile: Profile) => {
+    router.push(`/u/${profile?.handle}`)
+  }
 
   interface NavItemProps {
     url: string
@@ -32,7 +38,7 @@ const Navbar: FC = () => {
       <Link href={url} aria-current={current ? 'page' : undefined}>
         <Disclosure.Button
           className={clsx(
-            'w-full text-left px-2 md:px-3 py-1 rounded-md font-black cursor-pointer text-sm tracking-wide',
+            'w-full text-left px-2 md:px-3 py-1 rounded-md font-bold cursor-pointer text-sm tracking-wide',
             {
               'text-black dark:text-white bg-gray-200 dark:bg-gray-800': current,
               'text-gray-700 dark:text-gray-300 hover:text-black dark:hover:text-white hover:bg-gray-200 dark:hover:bg-gray-800':
@@ -94,7 +100,7 @@ const Navbar: FC = () => {
                 <div className="hidden sm:block sm:ml-6">
                   <div className="flex items-center space-x-4">
                     <div className="hidden lg:block">
-                      <Search />
+                      <Search onProfileSelected={onProfileSelected} />
                     </div>
                     <NavItems />
                   </div>
@@ -120,7 +126,7 @@ const Navbar: FC = () => {
           <Disclosure.Panel className="sm:hidden">
             <div className="flex flex-col p-3 space-y-2">
               <div className="mb-2">
-                <Search hideDrodown />
+                <Search hideDropdown onProfileSelected={onProfileSelected} />
               </div>
               <NavItems />
             </div>

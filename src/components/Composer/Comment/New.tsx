@@ -1,6 +1,7 @@
 import { LensHubProxy } from '@abis/LensHubProxy'
 import { useMutation } from '@apollo/client'
 import Attachments from '@components/Shared/Attachments'
+import { AudioPublicationSchema } from '@components/Shared/Audio'
 import Markup from '@components/Shared/Markup'
 import Preview from '@components/Shared/Preview'
 import { Button } from '@components/UI/Button'
@@ -9,35 +10,42 @@ import { ErrorMessage } from '@components/UI/ErrorMessage'
 import { MentionTextArea } from '@components/UI/MentionTextArea'
 import { Spinner } from '@components/UI/Spinner'
 import useBroadcast from '@components/utils/hooks/useBroadcast'
-import { BCharityAttachment, BCharityPublication } from '@generated/bcharitytypes'
+import type { BCharityAttachment, BCharityPublication } from '@generated/bcharitytypes'
+import type { CreatePublicCommentRequest, Mutation } from '@generated/types'
+import { PublicationMainFocus } from '@generated/types'
 import {
   CreateCommentTypedDataDocument,
   CreateCommentViaDispatcherDocument,
-  Mutation,
-  PublicationMainFocus,
   ReferenceModules
 } from '@generated/types'
-import { IGif } from '@giphy/js-types'
+import type { IGif } from '@giphy/js-types'
 import { ChatAlt2Icon, PencilAltIcon } from '@heroicons/react/outline'
 import getSignature from '@lib/getSignature'
 import getTags from '@lib/getTags'
 import getUserLocale from '@lib/getUserLocale'
-import { Mixpanel } from '@lib/mixpanel'
 import onError from '@lib/onError'
 import splitSignature from '@lib/splitSignature'
 import trimify from '@lib/trimify'
 import uploadToArweave from '@lib/uploadToArweave'
 import dynamic from 'next/dynamic'
-import { FC, useState } from 'react'
+import type { FC } from 'react'
+import { useEffect, useState } from 'react'
 import toast from 'react-hot-toast'
 import { useTranslation } from 'react-i18next'
-import { APP_NAME, LENSHUB_PROXY, RELAY_ON, SIGN_WALLET } from 'src/constants'
+import {
+  ALLOWED_AUDIO_TYPES,
+  ALLOWED_IMAGE_TYPES,
+  ALLOWED_VIDEO_TYPES,
+  APP_NAME,
+  LENSHUB_PROXY,
+  RELAY_ON,
+  SIGN_WALLET
+} from 'src/constants'
 import { useAppStore } from 'src/store/app'
 import { useCollectModuleStore } from 'src/store/collectmodule'
 import { usePublicationStore } from 'src/store/publication'
 import { useReferenceModuleStore } from 'src/store/referencemodule'
 import { useTransactionPersistStore } from 'src/store/transaction'
-import { COMMENT } from 'src/tracking'
 import { v4 as uuid } from 'uuid'
 import { useContractWrite, useSignTypedData } from 'wagmi'
 
@@ -72,6 +80,7 @@ const NewComment: FC<Props> = ({ publication, type }) => {
   const setPublicationContent = usePublicationStore((state) => state.setPublicationContent)
   const previewPublication = usePublicationStore((state) => state.previewPublication)
   const setPreviewPublication = usePublicationStore((state) => state.setPreviewPublication)
+  const audioPublication = usePublicationStore((state) => state.audioPublication)
 
   // Transaction persist store
   const txnQueue = useTransactionPersistStore((state) => state.txnQueue)
@@ -91,22 +100,31 @@ const NewComment: FC<Props> = ({ publication, type }) => {
   const [isUploading, setIsUploading] = useState(false)
   const [attachments, setAttachments] = useState<BCharityAttachment[]>([])
 
+  const isAudioComment = ALLOWED_AUDIO_TYPES.includes(attachments[0]?.type)
+
   const onCompleted = () => {
     setPreviewPublication(false)
     setPublicationContent('')
     setAttachments([])
     resetCollectSettings()
-    Mixpanel.track(COMMENT.NEW)
   }
 
-  const generateOptimisticComment = (txHash: string) => {
+  useEffect(() => {
+    setCommentContentError('')
+  }, [audioPublication])
+
+  const generateOptimisticComment = ({ txHash, txId }: { txHash?: string; txId?: string }) => {
     return {
       id: uuid(),
       parent: publication.id,
       type: 'NEW_COMMENT',
       txHash,
+      txId,
       content: publicationContent,
-      attachments
+      attachments,
+      title: audioPublication.title,
+      cover: audioPublication.cover,
+      author: audioPublication.author
     }
   }
 
@@ -117,13 +135,13 @@ const NewComment: FC<Props> = ({ publication, type }) => {
     isLoading: writeLoading,
     write
   } = useContractWrite({
-    addressOrName: LENSHUB_PROXY,
-    contractInterface: LensHubProxy,
+    address: LENSHUB_PROXY,
+    abi: LensHubProxy,
     functionName: 'commentWithSig',
     mode: 'recklesslyUnprepared',
     onSuccess: ({ hash }) => {
       onCompleted()
-      setTxnQueue([generateOptimisticComment(hash), ...txnQueue])
+      setTxnQueue([generateOptimisticComment({ txHash: hash }), ...txnQueue])
     },
     onError
   })
@@ -131,7 +149,7 @@ const NewComment: FC<Props> = ({ publication, type }) => {
   const { broadcast, loading: broadcastLoading } = useBroadcast({
     onCompleted: (data) => {
       onCompleted()
-      setTxnQueue([generateOptimisticComment(data?.broadcast?.txHash), ...txnQueue])
+      setTxnQueue([generateOptimisticComment({ txId: data?.broadcast?.txId }), ...txnQueue])
     }
   })
   const [createCommentTypedData, { loading: typedDataLoading }] = useMutation<Mutation>(
@@ -170,7 +188,7 @@ const NewComment: FC<Props> = ({ publication, type }) => {
 
           setUserSigNonce(userSigNonce + 1)
           if (!RELAY_ON) {
-            return write?.({ recklesslySetUnpreparedArgs: inputStruct })
+            return write?.({ recklesslySetUnpreparedArgs: [inputStruct] })
           }
 
           const {
@@ -178,7 +196,7 @@ const NewComment: FC<Props> = ({ publication, type }) => {
           } = await broadcast({ request: { id, signature } })
 
           if ('reason' in result) {
-            write?.({ recklesslySetUnpreparedArgs: inputStruct })
+            write?.({ recklesslySetUnpreparedArgs: [inputStruct] })
           }
         } catch {}
       },
@@ -192,47 +210,106 @@ const NewComment: FC<Props> = ({ publication, type }) => {
       onCompleted: (data) => {
         onCompleted()
         if (data.createCommentViaDispatcher.__typename === 'RelayerResult') {
-          setTxnQueue([generateOptimisticComment(data.createCommentViaDispatcher.txHash), ...txnQueue])
+          setTxnQueue([
+            generateOptimisticComment({ txId: data.createCommentViaDispatcher.txId }),
+            ...txnQueue
+          ])
         }
       },
       onError
     }
   )
 
+  const createViaDispatcher = async (request: CreatePublicCommentRequest) => {
+    const { data } = await createCommentViaDispatcher({
+      variables: { request }
+    })
+    if (data?.createCommentViaDispatcher?.__typename === 'RelayError') {
+      createCommentTypedData({
+        variables: {
+          options: { overrideSigNonce: userSigNonce },
+          request
+        }
+      })
+    }
+  }
+
+  const getMainContentFocus = () => {
+    if (attachments.length > 0) {
+      if (isAudioComment) {
+        return PublicationMainFocus.Audio
+      } else if (ALLOWED_IMAGE_TYPES.includes(attachments[0]?.type)) {
+        return PublicationMainFocus.Image
+      } else if (ALLOWED_VIDEO_TYPES.includes(attachments[0]?.type)) {
+        return PublicationMainFocus.Video
+      }
+    } else {
+      return PublicationMainFocus.TextOnly
+    }
+  }
+
+  const getAnimationUrl = () => {
+    if (attachments.length > 0 && (isAudioComment || ALLOWED_VIDEO_TYPES.includes(attachments[0]?.type))) {
+      return attachments[0]?.item
+    }
+    return null
+  }
+
   const createComment = async () => {
     if (!currentProfile) {
       return toast.error(SIGN_WALLET)
     }
+
+    if (isAudioComment) {
+      setCommentContentError('')
+      const parsedData = AudioPublicationSchema.safeParse(audioPublication)
+      if (!parsedData.success) {
+        const issue = parsedData.error.issues[0]
+        return setCommentContentError(issue.message)
+      }
+    }
+
     if (publicationContent.length === 0 && attachments.length === 0) {
       return setCommentContentError('Comment should not be empty!')
     }
 
     setCommentContentError('')
     setIsUploading(true)
+
+    const attributes = [
+      {
+        traitType: 'type',
+        displayType: 'string',
+        value: getMainContentFocus()?.toLowerCase()
+      }
+    ]
+    if (isAudioComment) {
+      attributes.push({
+        traitType: 'author',
+        displayType: 'string',
+        value: audioPublication.author
+      })
+    }
+
     const id = await uploadToArweave({
       version: '2.0.0',
       metadata_id: uuid(),
       description: trimify(publicationContent),
       content: trimify(publicationContent),
       external_url: `https://bcharity.vercel.app/u/${currentProfile?.handle}`,
-      image: attachments.length > 0 ? attachments[0]?.item : null,
-      imageMimeType: attachments.length > 0 ? attachments[0]?.type : null,
-      name: `Comment by @${currentProfile?.handle}`,
-      tags: getTags(publicationContent),
-      mainContentFocus:
+      image: attachments.length > 0 ? (isAudioComment ? audioPublication.cover : attachments[0]?.item) : null,
+      imageMimeType:
         attachments.length > 0
-          ? attachments[0]?.type === 'video/mp4'
-            ? PublicationMainFocus.Video
-            : PublicationMainFocus.Image
-          : PublicationMainFocus.TextOnly,
+          ? isAudioComment
+            ? audioPublication.coverMimeType
+            : attachments[0]?.type
+          : null,
+      name: isAudioComment ? audioPublication.title : `Comment by @${currentProfile?.handle}`,
+      tags: getTags(publicationContent),
+      animation_url: getAnimationUrl(),
+      mainContentFocus: getMainContentFocus(),
       contentWarning: null, // TODO
-      attributes: [
-        {
-          traitType: 'string',
-          key: 'type',
-          value: type
-        }
-      ],
+      attributes,
       media: attachments,
       locale: getUserLocale(),
       createdOn: new Date(),
@@ -257,7 +334,7 @@ const NewComment: FC<Props> = ({ publication, type }) => {
     }
 
     if (currentProfile?.dispatcher?.canUseRelay) {
-      createCommentViaDispatcher({ variables: { request } })
+      createViaDispatcher(request)
     } else {
       createCommentTypedData({
         variables: {

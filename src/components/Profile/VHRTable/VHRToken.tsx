@@ -1,6 +1,6 @@
 import { useQuery } from '@apollo/client'
 import { CommentFeedDocument } from '@generated/types'
-import { FC } from 'react'
+import type { FC } from 'react'
 import { useAppStore } from 'src/store/app'
 
 interface Props {

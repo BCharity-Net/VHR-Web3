@@ -1,5 +1,5 @@
 import { FollowNFT } from '@abis/FollowNFT'
-import { FC } from 'react'
+import type { FC } from 'react'
 import { useContractRead } from 'wagmi'
 
 interface Props {
@@ -9,12 +9,14 @@ interface Props {
 
 const NFTDetails: FC<Props> = ({ address, callback }) => {
   useContractRead({
-    addressOrName: address,
-    contractInterface: FollowNFT,
+    address: address,
+    abi: FollowNFT,
     functionName: 'tokenURI',
-    args: '1',
+    args: ['1'],
     onSuccess(data) {
-      if (!callback) {return}
+      if (!callback) {
+        return
+      }
       callback(data)
     }
   })

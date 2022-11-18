@@ -1,17 +1,11 @@
 import { Button } from '@components/UI/Button'
 import MetaTags from '@components/utils/MetaTags'
 import { HomeIcon } from '@heroicons/react/outline'
-import { Mixpanel } from '@lib/mixpanel'
 import Link from 'next/link'
-import { useEffect } from 'react'
 import { useTranslation } from 'react-i18next'
 import { APP_NAME, STATIC_ASSETS } from 'src/constants'
-import { PAGEVIEW } from 'src/tracking'
 
 export default function Custom404() {
-  useEffect(() => {
-    Mixpanel.track('Pageview', { path: PAGEVIEW.ERROR_404 })
-  }, [])
   const { t } = useTranslation('common')
   return (
     <div className="flex-col page-center">

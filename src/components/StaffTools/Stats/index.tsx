@@ -3,7 +3,8 @@ import { Card } from '@components/UI/Card'
 import { GridItemEight, GridItemFour, GridLayout } from '@components/UI/GridLayout'
 import useStaffMode from '@components/utils/hooks/useStaffMode'
 import MetaTags from '@components/utils/MetaTags'
-import { BCharityStatsDocument, Erc20Amount } from '@generated/types'
+import type { Erc20Amount } from '@generated/types'
+import { BCharityStatsDocument } from '@generated/types'
 import {
   CashIcon,
   ChatAlt2Icon,
@@ -16,12 +17,11 @@ import {
 import { PencilAltIcon } from '@heroicons/react/solid'
 import getTokenImage from '@lib/getTokenImage'
 import humanize from '@lib/humanize'
-import { Mixpanel } from '@lib/mixpanel'
-import { NextPage } from 'next'
-import { FC, ReactNode, useEffect } from 'react'
+import type { NextPage } from 'next'
+import type { FC, ReactNode } from 'react'
+import { useEffect } from 'react'
 import { APP_NAME, ERROR_MESSAGE } from 'src/constants'
 import Custom404 from 'src/pages/404'
-import { PAGEVIEW } from 'src/tracking'
 
 import Sidebar from '../Sidebar'
 
@@ -43,10 +43,6 @@ const StatBox: FC<StatBoxProps> = ({ icon, value, title }) => (
 
 const Stats: NextPage = () => {
   const { allowed } = useStaffMode()
-
-  useEffect(() => {
-    Mixpanel.track('Pageview', { path: PAGEVIEW.STAFFTOOLS.STATS })
-  }, [])
 
   const { data, loading, error } = useQuery(BCharityStatsDocument, {
     pollInterval: 1000

@@ -1,10 +1,11 @@
-import { Group } from '@generated/bcharitytypes'
+import type { Group } from '@generated/bcharitytypes'
 import { UsersIcon } from '@heroicons/react/outline'
 import getIPFSLink from '@lib/getIPFSLink'
 import humanize from '@lib/humanize'
-import imagekitURL from '@lib/imagekitURL'
+import imageProxy from '@lib/imageProxy'
 import Link from 'next/link'
-import { FC } from 'react'
+import type { FC } from 'react'
+import { AVATAR } from 'src/constants'
 
 interface Props {
   group: Group
@@ -17,13 +18,13 @@ const GroupProfile: FC<Props> = ({ group }) => {
         <a href={`/groups/${group?.id}`}>
           <div className="flex items-center space-x-3">
             <img
-              src={imagekitURL(
+              src={imageProxy(
                 getIPFSLink(
                   group?.metadata?.cover?.original?.url
                     ? group?.metadata?.cover?.original?.url
                     : `https://avatar.tobi.sh/${group?.id}.png`
                 ),
-                'avatar'
+                AVATAR
               )}
               className="w-16 h-16 bg-gray-200 rounded-xl border dark:border-gray-700/80"
               height={64}

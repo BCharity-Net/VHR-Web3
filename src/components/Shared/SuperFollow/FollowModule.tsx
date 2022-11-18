@@ -5,28 +5,26 @@ import { Button } from '@components/UI/Button'
 import { Spinner } from '@components/UI/Spinner'
 import { WarningMessage } from '@components/UI/WarningMessage'
 import useBroadcast from '@components/utils/hooks/useBroadcast'
-import { BCharityFollowModule } from '@generated/bcharitytypes'
+import type { BCharityFollowModule } from '@generated/bcharitytypes'
+import type { Mutation, Profile } from '@generated/types'
 import {
   ApprovedModuleAllowanceAmountDocument,
   CreateFollowTypedDataDocument,
   FollowModules,
-  Mutation,
-  Profile,
   SuperFollowDocument
 } from '@generated/types'
 import { StarIcon, UserIcon } from '@heroicons/react/outline'
 import formatAddress from '@lib/formatAddress'
 import getSignature from '@lib/getSignature'
 import getTokenImage from '@lib/getTokenImage'
-import { Mixpanel } from '@lib/mixpanel'
 import onError from '@lib/onError'
 import splitSignature from '@lib/splitSignature'
-import { Dispatch, FC, useState } from 'react'
+import type { Dispatch, FC } from 'react'
+import { useState } from 'react'
 import toast from 'react-hot-toast'
 import { useTranslation } from 'react-i18next'
 import { LENSHUB_PROXY, POLYGONSCAN_URL, RELAY_ON, SIGN_WALLET } from 'src/constants'
 import { useAppStore } from 'src/store/app'
-import { PROFILE } from 'src/tracking'
 import { useAccount, useBalance, useContractWrite, useSignTypedData } from 'wagmi'
 
 import Loader from '../Loader'
@@ -53,12 +51,11 @@ const FollowModule: FC<Props> = ({ profile, setFollowing, setShowFollowModal, ag
     setFollowing(true)
     setShowFollowModal(false)
     toast.success('Followed successfully!')
-    Mixpanel.track(PROFILE.SUPER_FOLLOW)
   }
 
   const { isLoading: writeLoading, write } = useContractWrite({
-    addressOrName: LENSHUB_PROXY,
-    contractInterface: LensHubProxy,
+    address: LENSHUB_PROXY,
+    abi: LensHubProxy,
     functionName: 'followWithSig',
     mode: 'recklesslyUnprepared',
     onSuccess: onCompleted,
@@ -121,7 +118,7 @@ const FollowModule: FC<Props> = ({ profile, setFollowing, setShowFollowModal, ag
 
           setUserSigNonce(userSigNonce + 1)
           if (!RELAY_ON) {
-            return write?.({ recklesslySetUnpreparedArgs: inputStruct })
+            return write?.({ recklesslySetUnpreparedArgs: [inputStruct] })
           }
 
           const {
@@ -129,7 +126,7 @@ const FollowModule: FC<Props> = ({ profile, setFollowing, setShowFollowModal, ag
           } = await broadcast({ request: { id, signature } })
 
           if ('reason' in result) {
-            write?.({ recklesslySetUnpreparedArgs: inputStruct })
+            write?.({ recklesslySetUnpreparedArgs: [inputStruct] })
           }
         } catch {}
       },

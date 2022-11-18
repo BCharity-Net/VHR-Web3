@@ -1,4 +1,5 @@
-import { Profile } from '@generated/types'
+import type { Profile } from '@generated/types'
+import { LS_KEYS } from 'src/constants'
 import create from 'zustand'
 import { persist } from 'zustand/middleware'
 
@@ -23,6 +24,8 @@ export const useAppStore = create<AppState>((set) => ({
 interface AppPersistState {
   profileId: string | null
   setProfileId: (profileId: string | null) => void
+  handle: string | null
+  setHandle: (handle: string | null) => void
   staffMode: boolean
   setStaffMode: (staffMode: boolean) => void
   notificationCount: number
@@ -34,11 +37,13 @@ export const useAppPersistStore = create(
     (set) => ({
       profileId: null,
       setProfileId: (profileId) => set(() => ({ profileId })),
+      handle: null,
+      setHandle: (handle) => set(() => ({ handle })),
       staffMode: false,
       setStaffMode: (staffMode) => set(() => ({ staffMode })),
       notificationCount: 0,
       setNotificationCount: (notificationCount) => set(() => ({ notificationCount }))
     }),
-    { name: 'bcharity.store' }
+    { name: LS_KEYS.BCHARITY_STORE }
   )
 )

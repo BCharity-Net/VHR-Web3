@@ -6,9 +6,9 @@ import { WarningMessage } from '@components/UI/WarningMessage'
 import { GenerateModuleCurrencyApprovalDataDocument } from '@generated/types'
 import { ExclamationIcon, MinusIcon, PlusIcon } from '@heroicons/react/outline'
 import { getModule } from '@lib/getModule'
-import { Mixpanel } from '@lib/mixpanel'
 import onError from '@lib/onError'
-import { Dispatch, FC, useState } from 'react'
+import type { Dispatch, FC } from 'react'
+import { useState } from 'react'
 import toast from 'react-hot-toast'
 import { useTranslation } from 'react-i18next'
 import { usePrepareSendTransaction, useSendTransaction, useWaitForTransaction } from 'wagmi'
@@ -27,16 +27,16 @@ const AllowanceButton: FC<Props> = ({ title = 'Allow', module, allowed, setAllow
     GenerateModuleCurrencyApprovalDataDocument
   )
 
-  const { config } = usePrepareSendTransaction({
-    request: {}
-  })
+  // const { config } = usePrepareSendTransaction({
+  //   request: {}
+  // })
 
   const {
     data: txData,
     isLoading: transactionLoading,
     sendTransaction
   } = useSendTransaction({
-    ...config,
+    // ...config,
     mode: 'recklesslyUnprepared',
     onError
   })
@@ -46,7 +46,6 @@ const AllowanceButton: FC<Props> = ({ title = 'Allow', module, allowed, setAllow
       toast.success(`Module ${allowed ? 'disabled' : 'enabled'} successfully!`)
       setShowWarninModal(false)
       setAllowed(!allowed)
-      Mixpanel.track(`Module ${allowed ? 'disabled' : 'enabled'}`)
     },
     onError
   })

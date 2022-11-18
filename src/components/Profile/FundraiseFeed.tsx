@@ -1,6 +1,8 @@
 /* eslint-disable react/jsx-key */
-import { Profile, ProfileNftFeedDocument } from '@generated/types'
-import { FC, useMemo } from 'react'
+import type { Profile } from '@generated/types'
+import { ProfileNftFeedDocument } from '@generated/types'
+import type { FC } from 'react'
+import { useMemo } from 'react'
 import { CHAIN_ID, IS_MAINNET } from 'src/constants'
 import { chain } from 'wagmi'
 

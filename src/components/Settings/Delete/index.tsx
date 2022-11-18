@@ -7,51 +7,51 @@ import { GridItemEight, GridItemFour, GridLayout } from '@components/UI/GridLayo
 import { Modal } from '@components/UI/Modal'
 import { Spinner } from '@components/UI/Spinner'
 import { WarningMessage } from '@components/UI/WarningMessage'
+import { useDisconnectXmtp } from '@components/utils/hooks/useXmtpClient'
 import MetaTags from '@components/utils/MetaTags'
-import { CreateBurnProfileTypedDataDocument, Mutation } from '@generated/types'
+import type { Mutation } from '@generated/types'
+import { CreateBurnProfileTypedDataDocument } from '@generated/types'
 import { ExclamationIcon, TrashIcon } from '@heroicons/react/outline'
 import getSignature from '@lib/getSignature'
-import { Mixpanel } from '@lib/mixpanel'
 import onError from '@lib/onError'
 import resetAuthData from '@lib/resetAuthData'
 import splitSignature from '@lib/splitSignature'
-import { FC, useEffect, useState } from 'react'
+import type { FC } from 'react'
+import { useState } from 'react'
 import toast from 'react-hot-toast'
 import { APP_NAME, LENSHUB_PROXY, SIGN_WALLET } from 'src/constants'
 import Custom404 from 'src/pages/404'
 import { useAppPersistStore, useAppStore } from 'src/store/app'
-import { PAGEVIEW, SETTINGS } from 'src/tracking'
 import { useContractWrite, useDisconnect, useSignTypedData } from 'wagmi'
 
 import Sidebar from '../Sidebar'
 
 const DeleteSettings: FC = () => {
-  useEffect(() => {
-    Mixpanel.track('Pageview', { path: PAGEVIEW.SETTINGS.DELETE })
-  }, [])
-
   const [showWarningModal, setShowWarningModal] = useState(false)
   const userSigNonce = useAppStore((state) => state.userSigNonce)
   const setUserSigNonce = useAppStore((state) => state.setUserSigNonce)
   const currentProfile = useAppStore((state) => state.currentProfile)
   const setCurrentProfile = useAppStore((state) => state.setCurrentProfile)
   const setProfileId = useAppPersistStore((state) => state.setProfileId)
+  const setHandle = useAppPersistStore((state) => state.setHandle)
+  const disconnectXmtp = useDisconnectXmtp()
 
   const { disconnect } = useDisconnect()
   const { isLoading: signLoading, signTypedDataAsync } = useSignTypedData({ onError })
 
   const onCompleted = () => {
-    Mixpanel.track(SETTINGS.DELETE)
     setCurrentProfile(null)
     setProfileId(null)
+    setHandle(null)
+    disconnectXmtp()
     resetAuthData()
     disconnect?.()
     location.href = '/'
   }
 
   const { isLoading: writeLoading, write } = useContractWrite({
-    addressOrName: LENSHUB_PROXY,
-    contractInterface: LensHubProxy,
+    address: LENSHUB_PROXY,
+    abi: LensHubProxy,
     functionName: 'burnWithSig',
     mode: 'recklesslyUnprepared',
     onSuccess: onCompleted,

@@ -2,19 +2,19 @@ import Markup from '@components/Shared/Markup'
 import Collectors from '@components/Shared/Modal/Collectors'
 import { Button } from '@components/UI/Button'
 import { Modal } from '@components/UI/Modal'
-import { BCharityPublication } from '@generated/bcharitytypes'
+import type { BCharityPublication } from '@generated/bcharitytypes'
 import { ClockIcon, CogIcon, HashtagIcon, PencilAltIcon, UsersIcon } from '@heroicons/react/outline'
 import getIPFSLink from '@lib/getIPFSLink'
-import imagekitURL from '@lib/imagekitURL'
-import { Mixpanel } from '@lib/mixpanel'
+import imageProxy from '@lib/imageProxy'
 import nFormatter from '@lib/nFormatter'
 import dayjs from 'dayjs'
 import relativeTime from 'dayjs/plugin/relativeTime'
 import dynamic from 'next/dynamic'
-import { FC, ReactNode, useState } from 'react'
+import type { FC, ReactNode } from 'react'
+import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
+import { AVATAR } from 'src/constants'
 import { useAppStore } from 'src/store/app'
-import { GROUP } from 'src/tracking'
 
 import Join from './Join'
 
@@ -46,13 +46,13 @@ const Details: FC<Props> = ({ group }) => {
     <div className="px-5 mb-4 space-y-5 sm:px-0">
       <div className="relative w-32 h-32 sm:w-72 sm:h-72">
         <img
-          src={imagekitURL(
+          src={imageProxy(
             getIPFSLink(
               group?.metadata?.cover?.original?.url
                 ? group?.metadata?.cover?.original?.url
                 : `https://avatar.tobi.sh/${group?.id}.png`
             ),
-            'avatar'
+            AVATAR
           )}
           className="w-32 h-32 bg-gray-200 rounded-xl ring-2 ring-gray-200 sm:w-72 sm:h-72 dark:bg-gray-700 dark:ring-gray-700/80"
           height={128}
@@ -85,7 +85,6 @@ const Details: FC<Props> = ({ group }) => {
                 icon={<PencilAltIcon className="w-5 h-5" />}
                 onClick={() => {
                   setShowSettingsModal(!showSettingsModal)
-                  Mixpanel.track(GROUP.SETTINGS.DELETE)
                 }}
               />
               <Modal
@@ -106,7 +105,6 @@ const Details: FC<Props> = ({ group }) => {
               <button
                 type="button"
                 onClick={() => {
-                  Mixpanel.track(GROUP.OPEN_MEMBERS)
                   setShowMembersModal(!showMembersModal)
                 }}
               >

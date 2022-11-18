@@ -1,9 +1,9 @@
-query HomeFeed(
-  $request: TimelineRequest!
+query FeedHighlights(
+  $request: FeedHighlightsRequest!
   $reactionRequest: ReactionFieldResolverRequest
   $profileId: ProfileId
 ) {
-  timeline(request: $request) {
+  feedHighlights(request: $request) {
     items {
       ... on Post {
         ...PostFields
@@ -16,8 +16,8 @@ query HomeFeed(
       }
     }
     pageInfo {
-      next
       totalCount
+      next
     }
   }
 }

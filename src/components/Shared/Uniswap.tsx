@@ -1,9 +1,7 @@
-import { BCharityCollectModule, BCharityFollowModule } from '@generated/bcharitytypes'
+import type { BCharityCollectModule, BCharityFollowModule } from '@generated/bcharitytypes'
 import getUniswapURL from '@lib/getUniswapURL'
-import { Mixpanel } from '@lib/mixpanel'
-import { FC } from 'react'
+import type { FC } from 'react'
 import { STATIC_ASSETS } from 'src/constants'
-import { PUBLICATION } from 'src/tracking'
 
 interface Props {
   module: BCharityCollectModule | BCharityFollowModule
@@ -17,9 +15,6 @@ const Uniswap: FC<Props> = ({ module }) => {
       </div>
       <a
         href={getUniswapURL(parseFloat(module?.amount?.value), module?.amount?.asset?.address)}
-        onClick={() => {
-          Mixpanel.track(PUBLICATION.COLLECT_MODULE.OPEN_UNISWAP)
-        }}
         className="flex items-center space-x-1.5 text-xs font-bold text-pink-500"
         target="_blank"
         rel="noreferrer noopener"

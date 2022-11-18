@@ -5,16 +5,14 @@ import { PageLoading } from '@components/UI/PageLoading'
 import MetaTags from '@components/utils/MetaTags'
 import { ProfileSettingsDocument } from '@generated/types'
 import { PhotographIcon } from '@heroicons/react/outline'
-import { Mixpanel } from '@lib/mixpanel'
 import clsx from 'clsx'
-import { NextPage } from 'next'
-import { FC, ReactNode, useEffect, useState } from 'react'
-import { useTranslation } from 'react-i18next'
+import type { NextPage } from 'next'
+import type { FC, ReactNode } from 'react'
+import { useState } from 'react'
 import { APP_NAME } from 'src/constants'
 import Custom404 from 'src/pages/404'
 import Custom500 from 'src/pages/500'
 import { useAppStore } from 'src/store/app'
-import { PAGEVIEW } from 'src/tracking'
 
 import Sidebar from '../Sidebar'
 import NFTPicture from './NFTPicture'
@@ -22,13 +20,8 @@ import Picture from './Picture'
 import Profile from './Profile'
 
 const ProfileSettings: NextPage = () => {
-  const { t } = useTranslation('common')
   const currentProfile = useAppStore((state) => state.currentProfile)
   const [settingsType, setSettingsType] = useState<'NFT' | 'AVATAR'>('AVATAR')
-
-  useEffect(() => {
-    Mixpanel.track('Pageview', { path: PAGEVIEW.SETTINGS.PROFILE })
-  }, [])
 
   const { data, loading, error } = useQuery(ProfileSettingsDocument, {
     variables: { request: { profileId: currentProfile?.id } },
@@ -62,9 +55,7 @@ const ProfileSettings: NextPage = () => {
   const TypeButton: FC<TypeButtonProps> = ({ name, icon, type }) => (
     <button
       type="button"
-      onClick={() => {
-        setSettingsType(type)
-      }}
+      onClick={() => setSettingsType(type)}
       className={clsx(
         {
           'text-brand bg-brand-100 dark:bg-opacity-20 bg-opacity-100 font-bold': settingsType === type
@@ -87,12 +78,8 @@ const ProfileSettings: NextPage = () => {
         <Profile profile={profile as any} />
         <Card className="space-y-5 p-5">
           <div className="flex items-center space-x-2">
-            <TypeButton
-              icon={<PhotographIcon className="w-5 h-5" />}
-              type="AVATAR"
-              name={t('Upload avatar')}
-            />
-            <TypeButton icon={<PhotographIcon className="w-5 h-5" />} type="NFT" name={t('NFT Avatar')} />
+            <TypeButton icon={<PhotographIcon className="w-5 h-5" />} type="AVATAR" name="Upload avatar" />
+            <TypeButton icon={<PhotographIcon className="w-5 h-5" />} type="NFT" name="NFT Avatar" />
           </div>
           {settingsType === 'NFT' ? (
             <NFTPicture profile={profile as any} />

@@ -1,10 +1,9 @@
 import { Card } from '@components/UI/Card'
-import { Mixpanel } from '@lib/mixpanel'
-import { FC } from 'react'
-import { PUBLICATION } from 'src/tracking'
+import type { OG } from '@generated/bcharitytypes'
+import type { FC } from 'react'
 
 interface Props {
-  og: any
+  og: OG
 }
 
 const Embed: FC<Props> = ({ og }) => {
@@ -14,7 +13,6 @@ const Embed: FC<Props> = ({ og }) => {
         href={og.url}
         onClick={(event) => {
           event.stopPropagation()
-          Mixpanel.track(PUBLICATION.OEMBED_CLICK)
         }}
         target="_blank"
         rel="noreferrer noopener"

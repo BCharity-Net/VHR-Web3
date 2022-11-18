@@ -1,6 +1,8 @@
 /* eslint-disable react/jsx-key */
-import { Profile, ProfileFeedDocument, PublicationTypes } from '@generated/types'
-import { FC, useMemo } from 'react'
+import type { Profile } from '@generated/types'
+import { ProfileFeedDocument, PublicationTypes } from '@generated/types'
+import type { FC } from 'react'
+import { useMemo } from 'react'
 
 import FundraiseTable from './FundraiseTable'
 import { FundsCell, PostCell } from './FundraiseTable/Cells'

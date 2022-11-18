@@ -5,26 +5,24 @@ import Footer from '@components/Shared/Footer'
 import { GridItemEight, GridItemFour, GridLayout } from '@components/UI/GridLayout'
 import MetaTags from '@components/utils/MetaTags'
 import isFeatureEnabled from '@lib/isFeatureEnabled'
-import { Mixpanel } from '@lib/mixpanel'
-import { NextPage } from 'next'
-import { useEffect } from 'react'
+import type { NextPage } from 'next'
+import { useState } from 'react'
 import { useAppStore } from 'src/store/app'
-import { PAGEVIEW } from 'src/tracking'
 
 import EnableDispatcher from './EnableDispatcher'
-import HomeFeed from './Feed'
+import EnableMessages from './EnableMessages'
+import FeedType from './FeedType'
 import Hero from './Hero'
+import Highlights from './Highlights'
 import RecommendedProfiles from './RecommendedProfiles'
 import SetDefaultProfile from './SetDefaultProfile'
 import SetProfile from './SetProfile'
+import Timeline from './Timeline'
 import Trending from './Trending'
 
 const Home: NextPage = () => {
-  useEffect(() => {
-    Mixpanel.track('Pageview', { path: PAGEVIEW.HOME })
-  }, [])
-
   const currentProfile = useAppStore((state) => state.currentProfile)
+  const [feedType, setFeedType] = useState<'TIMELINE' | 'HIGHLIGHTS'>('TIMELINE')
 
   return (
     <>
@@ -35,7 +33,8 @@ const Home: NextPage = () => {
           {currentProfile ? (
             <>
               <NewPost />
-              <HomeFeed />
+              <FeedType feedType={feedType} setFeedType={setFeedType} />
+              {feedType === 'TIMELINE' ? <Timeline /> : <Highlights />}
             </>
           ) : (
             <ExploreFeed />
@@ -43,6 +42,7 @@ const Home: NextPage = () => {
         </GridItemEight>
         <GridItemFour>
           {currentProfile ? <EnableDispatcher /> : null}
+          {isFeatureEnabled('messages', currentProfile?.id) && <EnableMessages />}
           <BetaWarning />
           {isFeatureEnabled('trending-widget', currentProfile?.id) && <Trending />}
           {currentProfile ? (

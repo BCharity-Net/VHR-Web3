@@ -1,8 +1,8 @@
 import Slug from '@components/Shared/Slug'
-import { BCharityPublication } from '@generated/bcharitytypes'
+import type { BCharityPublication } from '@generated/bcharitytypes'
 import { UsersIcon } from '@heroicons/react/outline'
 import Link from 'next/link'
-import { FC } from 'react'
+import type { FC } from 'react'
 import { useTranslation } from 'react-i18next'
 
 interface Props {

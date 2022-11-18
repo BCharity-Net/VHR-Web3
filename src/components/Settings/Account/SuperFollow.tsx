@@ -7,24 +7,22 @@ import { Form, useZodForm } from '@components/UI/Form'
 import { Input } from '@components/UI/Input'
 import { Spinner } from '@components/UI/Spinner'
 import useBroadcast from '@components/utils/hooks/useBroadcast'
+import type { Erc20, Mutation } from '@generated/types'
 import {
   CreateSetFollowModuleTypedDataDocument,
-  EnabledCurrencyModulesWithProfileDocument,
-  Erc20,
-  Mutation
+  EnabledCurrencyModulesWithProfileDocument
 } from '@generated/types'
 import { StarIcon, XIcon } from '@heroicons/react/outline'
 import getSignature from '@lib/getSignature'
 import getTokenImage from '@lib/getTokenImage'
-import { Mixpanel } from '@lib/mixpanel'
 import onError from '@lib/onError'
 import splitSignature from '@lib/splitSignature'
-import { FC, useState } from 'react'
+import type { FC } from 'react'
+import { useState } from 'react'
 import toast from 'react-hot-toast'
 import { useTranslation } from 'react-i18next'
 import { ADDRESS_REGEX, DEFAULT_COLLECT_TOKEN, LENSHUB_PROXY, RELAY_ON, SIGN_WALLET } from 'src/constants'
 import { useAppStore } from 'src/store/app'
-import { SETTINGS } from 'src/tracking'
 import { useContractWrite, useSignTypedData } from 'wagmi'
 import { object, string } from 'zod'
 
@@ -41,20 +39,15 @@ const SuperFollow: FC = () => {
     skip: !currentProfile?.id
   })
 
-  const onCompleted = () => {
-    Mixpanel.track(SETTINGS.ACCOUNT.SET_SUPER_FOLLOW)
-  }
-
   const {
     data: writeData,
     isLoading: writeLoading,
     write
   } = useContractWrite({
-    addressOrName: LENSHUB_PROXY,
-    contractInterface: LensHubProxy,
+    address: LENSHUB_PROXY,
+    abi: LensHubProxy,
     functionName: 'setFollowModuleWithSig',
     mode: 'recklesslyUnprepared',
-    onSuccess: onCompleted,
     onError
   })
 
@@ -72,7 +65,7 @@ const SuperFollow: FC = () => {
     }
   })
 
-  const { broadcast, data: broadcastData, loading: broadcastLoading } = useBroadcast({ onCompleted })
+  const { broadcast, data: broadcastData, loading: broadcastLoading } = useBroadcast({})
   const [createSetFollowModuleTypedData, { loading: typedDataLoading }] = useMutation<Mutation>(
     CreateSetFollowModuleTypedDataDocument,
     {
@@ -92,7 +85,7 @@ const SuperFollow: FC = () => {
 
           setUserSigNonce(userSigNonce + 1)
           if (!RELAY_ON) {
-            return write?.({ recklesslySetUnpreparedArgs: inputStruct })
+            return write?.({ recklesslySetUnpreparedArgs: [inputStruct] })
           }
 
           const {
@@ -100,7 +93,7 @@ const SuperFollow: FC = () => {
           } = await broadcast({ request: { id, signature } })
 
           if ('reason' in result) {
-            write?.({ recklesslySetUnpreparedArgs: inputStruct })
+            write?.({ recklesslySetUnpreparedArgs: [inputStruct] })
           }
         } catch {}
       },

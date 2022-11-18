@@ -1,14 +1,12 @@
 import { Card } from '@components/UI/Card'
 import { MinusCircleIcon, PencilAltIcon, PhotographIcon } from '@heroicons/react/outline'
 import { CheckCircleIcon } from '@heroicons/react/solid'
-import { Mixpanel } from '@lib/mixpanel'
 import clsx from 'clsx'
 import Link from 'next/link'
-import { FC } from 'react'
+import type { FC } from 'react'
 import { useTranslation } from 'react-i18next'
 import { APP_NAME } from 'src/constants'
 import { useAppStore } from 'src/store/app'
-import { MISCELLANEOUS } from 'src/tracking'
 
 interface StatusProps {
   finished: boolean
@@ -55,9 +53,7 @@ const SetProfile: FC = () => {
       </div>
       <div className="flex items-center space-x-1.5 text-sm font-bold">
         <PencilAltIcon className="w-4 h-4" />
-        <Link href="/settings" onClick={() => Mixpanel.track(MISCELLANEOUS.NAVIGATE_UPDATE_PROFILE)}>
-          {t('Update profile')}
-        </Link>
+        <Link href="/settings">{t('Update profile')}</Link>
       </div>
     </Card>
   )

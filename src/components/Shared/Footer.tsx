@@ -1,10 +1,7 @@
 import useStaffMode from '@components/utils/hooks/useStaffMode'
-import { Mixpanel } from '@lib/mixpanel'
 import Link from 'next/link'
-import { FC } from 'react'
+import type { FC } from 'react'
 import { useTranslation } from 'react-i18next'
-// import { APP_NAME } from 'src/constants'
-import { FOOTER } from 'src/tracking'
 
 const Footer: FC = () => {
   const { t } = useTranslation('common')
@@ -16,50 +13,25 @@ const Footer: FC = () => {
         staffMode ? 'top-28' : 'top-20'
       }`}
     >
-      <a
-        href="https://polygive.gitbook.io/bcharity/"
-        target="_blank"
-        rel="noreferrer noopener"
-        onClick={() => Mixpanel.track(FOOTER.ABOUT)}
-      >
+      <a href="https://polygive.gitbook.io/bcharity/" target="_blank" rel="noreferrer noopener">
         {t('About')}
       </a>
-      <a
-        href="https://discord.gg/4vKS59q5kV"
-        target="_blank"
-        rel="noreferrer noopener"
-        onClick={() => Mixpanel.track(FOOTER.DISCORD)}
-      >
+      <a href="https://discord.gg/4vKS59q5kV" target="_blank" rel="noreferrer noopener">
         Discord
       </a>
-      <a
-        href="https://twitter.com/BCharityFi"
-        target="_blank"
-        rel="noreferrer noopener"
-        onClick={() => Mixpanel.track(FOOTER.TWITTER)}
-      >
+      <a href="https://twitter.com/BCharityFi" target="_blank" rel="noreferrer noopener">
         {t('Twitter')}
       </a>
-      <a
-        href="https://t.me/BCharitynet"
-        target="_blank"
-        rel="noreferrer noopener"
-        onClick={() => Mixpanel.track(FOOTER.TELEGRAM)}
-      >
+      <a href="https://t.me/BCharitynet" target="_blank" rel="noreferrer noopener">
         {t('Telegram')}
       </a>
-      <a href="" target="_blank" rel="noreferrer noopener" onClick={() => Mixpanel.track(FOOTER.DONATE)}>
+      <a href="" target="_blank" rel="noreferrer noopener">
         {t('Donate')}
       </a>
-      <a href="" target="_blank" rel="noreferrer noopener" onClick={() => Mixpanel.track(FOOTER.STATUS)}>
+      <a href="" target="_blank" rel="noreferrer noopener">
         {t('Status')}
       </a>
-      <a
-        href="https://snapshot.org/#/igive.eth"
-        target="_blank"
-        rel="noreferrer noopener"
-        onClick={() => Mixpanel.track(FOOTER.VOTE)}
-      >
+      <a href="https://snapshot.org/#/igive.eth" target="_blank" rel="noreferrer noopener">
         {t('Vote')}
       </a>
       <a href="https://github.com/BCharity-Net/SocialFi" target="_blank" rel="noreferrer noopener">

@@ -8,8 +8,9 @@ import { Spinner } from '@components/UI/Spinner'
 import { CreateProfileDocument } from '@generated/types'
 import { PlusIcon } from '@heroicons/react/outline'
 import getStampFyiURL from '@lib/getStampFyiURL'
-import uploadMediaToIPFS from '@lib/uploadMediaToIPFS'
-import { ChangeEvent, FC, useState } from 'react'
+import uploadToIPFS from '@lib/uploadToIPFS'
+import type { ChangeEvent, FC } from 'react'
+import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { APP_NAME, HANDLE_REGEX, ZERO_ADDRESS } from 'src/constants'
 import { useAccount } from 'wagmi'
@@ -45,7 +46,7 @@ const NewProfile: FC<Props> = ({ isModal = false }) => {
     evt.preventDefault()
     setUploading(true)
     try {
-      const attachment = await uploadMediaToIPFS(evt.target.files)
+      const attachment = await uploadToIPFS(evt.target.files)
       if (attachment[0]?.item) {
         setAvatar(attachment[0].item)
       }

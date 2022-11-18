@@ -1,5 +1,6 @@
 /* eslint-disable react/jsx-no-useless-fragment */
-import { FC, useState } from 'react'
+import type { FC } from 'react'
+import { useState } from 'react'
 
 import PublicationDonors, { CollectDonors } from './PublicationDonors'
 
@@ -22,8 +23,9 @@ const TotalDonors: FC<Props> = ({ pubIdData, callback, from }) => {
               id={i}
               callback={(data: any) => {
                 data?.whoCollectedPublication?.items?.forEach((pub: any) => {
-                  if (pub?.defaultProfile?.handle)
-                    {setDonors((donors) => new Set(donors.add(pub?.defaultProfile?.handle)))}
+                  if (pub?.defaultProfile?.handle) {
+                    setDonors((donors) => new Set(donors.add(pub?.defaultProfile?.handle)))
+                  }
                 })
               }}
             />
@@ -32,7 +34,9 @@ const TotalDonors: FC<Props> = ({ pubIdData, callback, from }) => {
               pubId={i}
               callback={(data: any) => {
                 setDonors((donors) => new Set(donors.add(data)))
-                if (callback) {callback(donors.size)}
+                if (callback) {
+                  callback(donors.size)
+                }
               }}
             />
           </>

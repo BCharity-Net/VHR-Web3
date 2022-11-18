@@ -2,12 +2,11 @@ import Collectors from '@components/Shared/Modal/Collectors'
 import Likes from '@components/Shared/Modal/Likes'
 import Mirrors from '@components/Shared/Modal/Mirrors'
 import { Modal } from '@components/UI/Modal'
-import { BCharityPublication } from '@generated/bcharitytypes'
+import type { BCharityPublication } from '@generated/bcharitytypes'
 import { CollectionIcon, HeartIcon, SwitchHorizontalIcon } from '@heroicons/react/outline'
-import { Mixpanel } from '@lib/mixpanel'
 import nFormatter from '@lib/nFormatter'
-import { FC, useState } from 'react'
-import { PUBLICATION } from 'src/tracking'
+import type { FC } from 'react'
+import { useState } from 'react'
 
 interface Props {
   publication: BCharityPublication
@@ -34,12 +33,7 @@ const PublicationStats: FC<Props> = ({ publication }) => {
     <div className="flex flex-wrap gap-6 text-sm items-center py-3 text-gray-500 sm:gap-8">
       {mirrorCount > 0 && (
         <>
-          <button
-            onClick={() => {
-              setShowMirrorsModal(true)
-              Mixpanel.track(PUBLICATION.STATS.MIRRORED_BY)
-            }}
-          >
+          <button type="button" onClick={() => setShowMirrorsModal(true)}>
             <b className="text-black dark:text-white">{nFormatter(mirrorCount)}</b> Mirrors
           </button>
           <Modal
@@ -54,12 +48,7 @@ const PublicationStats: FC<Props> = ({ publication }) => {
       )}
       {reactionCount > 0 && (
         <>
-          <button
-            onClick={() => {
-              setShowLikesModal(true)
-              Mixpanel.track(PUBLICATION.STATS.LIKED_BY)
-            }}
-          >
+          <button type="button" onClick={() => setShowLikesModal(true)}>
             <b className="text-black dark:text-white">{nFormatter(reactionCount)}</b> Likes
           </button>
           <Modal
@@ -74,12 +63,7 @@ const PublicationStats: FC<Props> = ({ publication }) => {
       )}
       {collectCount > 0 && (
         <>
-          <button
-            onClick={() => {
-              setShowCollectorsModal(true)
-              Mixpanel.track(PUBLICATION.STATS.COLLECTED_BY)
-            }}
-          >
+          <button type="button" onClick={() => setShowCollectorsModal(true)}>
             <b className="text-black dark:text-white">{nFormatter(collectCount)}</b> Collects
           </button>
           <Modal

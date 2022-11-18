@@ -5,18 +5,17 @@ import PublicationsShimmer from '@components/Shared/Shimmer/PublicationsShimmer'
 import { Card } from '@components/UI/Card'
 import { EmptyState } from '@components/UI/EmptyState'
 import { ErrorMessage } from '@components/UI/ErrorMessage'
-import { Spinner } from '@components/UI/Spinner'
-import { BCharityPublication } from '@generated/bcharitytypes'
+import InfiniteLoader from '@components/UI/InfiniteLoader'
+import type { BCharityPublication } from '@generated/bcharitytypes'
 import { CommentFeedDocument, CustomFiltersTypes } from '@generated/types'
 import { CollectionIcon } from '@heroicons/react/outline'
-import { Mixpanel } from '@lib/mixpanel'
-import { FC } from 'react'
+import type { FC } from 'react'
 import { useInView } from 'react-cool-inview'
 import { useTranslation } from 'react-i18next'
-import { PAGINATION_ROOT_MARGIN } from 'src/constants'
+import InfiniteScroll from 'react-infinite-scroll-component'
+import { SCROLL_THRESHOLD } from 'src/constants'
 import { useAppStore } from 'src/store/app'
 import { useTransactionPersistStore } from 'src/store/transaction'
-import { PAGINATION } from 'src/tracking'
 
 import NewComment from '../Composer/Comment/New'
 import CommentWarning from '../Shared/CommentWarning'
@@ -44,24 +43,17 @@ const Feed: FC<Props> = ({ publication, type = 'comment' }) => {
 
   const comments = data?.publications?.items ?? []
   const pageInfo = data?.publications?.pageInfo
-
-  const { observe } = useInView({
-    onChange: async ({ inView }) => {
-      if (!inView) {
-        return
-      }
-
-      await fetchMore({
-        variables: { request: { ...request, cursor: pageInfo?.next }, reactionRequest, profileId }
-      })
-      Mixpanel.track(PAGINATION.COMMENT_FEED)
-    },
-    rootMargin: PAGINATION_ROOT_MARGIN
-  })
+  const hasMore = pageInfo?.next && comments?.length !== pageInfo.totalCount
 
   const queuedCount = txnQueue.filter((o) => o.type === 'NEW_COMMENT').length
   const totalComments = comments?.length + queuedCount
   const canComment = publication?.canComment?.result
+
+  const loadMore = async () => {
+    await fetchMore({
+      variables: { request: { ...request, cursor: pageInfo?.next }, reactionRequest, profileId }
+    })
+  }
 
   return (
     <>
@@ -73,7 +65,7 @@ const Feed: FC<Props> = ({ publication, type = 'comment' }) => {
         )
       ) : null}
       {loading && <PublicationsShimmer />}
-      {totalComments === 0 && (
+      {!loading && totalComments === 0 && (
         <EmptyState
           message={<span>{t('First comment')}</span>}
           icon={<CollectionIcon className="w-8 h-8 text-brand" />}
@@ -81,7 +73,13 @@ const Feed: FC<Props> = ({ publication, type = 'comment' }) => {
       )}
       <ErrorMessage title="Failed to load comment feed" error={error} />
       {!error && !loading && totalComments !== 0 && (
-        <>
+        <InfiniteScroll
+          dataLength={totalComments}
+          scrollThreshold={SCROLL_THRESHOLD}
+          hasMore={hasMore}
+          next={loadMore}
+          loader={<InfiniteLoader />}
+        >
           <Card className="divide-y-[1px] dark:divide-gray-700/80">
             {txnQueue.map(
               (txn) =>
@@ -100,12 +98,7 @@ const Feed: FC<Props> = ({ publication, type = 'comment' }) => {
               />
             ))}
           </Card>
-          {pageInfo?.next && comments?.length !== pageInfo.totalCount && (
-            <span ref={observe} className="flex justify-center p-5">
-              <Spinner size="sm" />
-            </span>
-          )}
-        </>
+        </InfiniteScroll>
       )}
     </>
   )

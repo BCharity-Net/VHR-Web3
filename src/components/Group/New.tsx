@@ -20,19 +20,17 @@ import {
 } from '@generated/types'
 import { PlusIcon } from '@heroicons/react/outline'
 import getSignature from '@lib/getSignature'
-import { Mixpanel } from '@lib/mixpanel'
 import onError from '@lib/onError'
 import splitSignature from '@lib/splitSignature'
 import uploadMediaToIPFS from '@lib/uploadMediaToIPFS'
 import uploadToArweave from '@lib/uploadToArweave'
-import { NextPage } from 'next'
+import type { NextPage } from 'next'
 import { ChangeEvent, useEffect, useState } from 'react'
 import toast from 'react-hot-toast'
 import { useTranslation } from 'react-i18next'
 import { APP_NAME, LENSHUB_PROXY, RELAY_ON, SIGN_WALLET } from 'src/constants'
 import Custom404 from 'src/pages/404'
 import { useAppStore } from 'src/store/app'
-import { GROUP, PAGEVIEW } from 'src/tracking'
 import { v4 as uuid } from 'uuid'
 import { useContractWrite, useSignTypedData } from 'wagmi'
 import { object, string } from 'zod'
@@ -57,21 +55,15 @@ const NewGroup: NextPage = () => {
     })
   })
 
-  useEffect(() => {
-    Mixpanel.track(PAGEVIEW.CREATE_GROUP)
-  }, [])
-
-  const onCompleted = () => {
-    Mixpanel.track(GROUP.NEW)
-  }
+  const onCompleted = () => {}
 
   const {
     data,
     isLoading: writeLoading,
     write
   } = useContractWrite({
-    addressOrName: LENSHUB_PROXY,
-    contractInterface: LensHubProxy,
+    address: LENSHUB_PROXY,
+    abi: LensHubProxy,
     functionName: 'postWithSig',
     mode: 'recklesslyUnprepared',
     onSuccess: onCompleted,
@@ -131,14 +123,14 @@ const NewGroup: NextPage = () => {
 
           setUserSigNonce(userSigNonce + 1)
           if (!RELAY_ON) {
-            return write?.({ recklesslySetUnpreparedArgs: inputStruct })
+            return write?.({ recklesslySetUnpreparedArgs: [inputStruct] })
           }
 
           const {
             data: { broadcast: result }
           } = await broadcast({ request: { id, signature } })
           if ('reason' in result) {
-            write?.({ recklesslySetUnpreparedArgs: inputStruct })
+            write?.({ recklesslySetUnpreparedArgs: [inputStruct] })
           }
         } catch {}
       },

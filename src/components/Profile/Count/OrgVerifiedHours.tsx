@@ -1,8 +1,10 @@
 /* eslint-disable react/jsx-key */
 import { gql, useQuery } from '@apollo/client'
-import { BCharityPublication } from '@generated/bcharitytypes'
-import { PaginatedResultInfo, Profile } from '@generated/types'
-import { FC, useMemo, useState } from 'react'
+import type { BCharityPublication } from '@generated/bcharitytypes'
+import type { Profile } from '@generated/types'
+import { PaginatedResultInfo } from '@generated/types'
+import type { FC } from 'react'
+import React, { useMemo, useState } from 'react'
 import { Row, useFilters, useTable } from 'react-table'
 import { useAppStore } from 'src/store/app'
 

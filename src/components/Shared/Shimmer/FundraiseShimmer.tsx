@@ -1,6 +1,6 @@
 import { Card } from '@components/UI/Card'
 import { GridItemSix, GridLayout } from '@components/UI/GridLayout'
-import { FC } from 'react'
+import type { FC } from 'react'
 
 const FundraiseShimmer: FC = () => {
   return (

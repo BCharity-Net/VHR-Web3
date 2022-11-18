@@ -1,10 +1,12 @@
 /** @type {import('next').NextConfig} */
 const { withSentryConfig } = require('@sentry/nextjs')
-const withTM = require('next-transpile-modules')(['plyr-react'])
+const withBundleAnalyzer = require('@next/bundle-analyzer')({
+  enabled: process.env.ANALYZE === 'true'
+})
 
 const headers = [{ key: 'Cache-Control', value: 'public, max-age=3600' }]
 
-module.exports = withTM(
+module.exports = withBundleAnalyzer(
   withSentryConfig(
     {
       sentry: {
@@ -13,6 +15,7 @@ module.exports = withTM(
       reactStrictMode: false,
       trailingSlash: false,
       experimental: {
+        scrollRestoration: true,
         newNextLinkBehavior: true
       },
       maximumFileSizeToCacheInBytes: 8000000,
@@ -25,10 +28,6 @@ module.exports = withTM(
           {
             source: '/sitemaps/:match*',
             destination: 'https://sitemap.bcharity.net/sitemaps/:match*'
-          },
-          {
-            source: '/collect/:match*',
-            destination: 'https://api-eu.mixpanel.com/:match*'
           }
         ]
       },
@@ -55,18 +54,7 @@ module.exports = withTM(
               { key: 'X-Frame-Options', value: 'DENY' },
               { key: 'X-XSS-Protection', value: '1; mode=block' },
               { key: 'Referrer-Policy', value: 'strict-origin' },
-              { key: 'Permissions-Policy', value: 'interest-cohort=()' },
-              { key: 'Access-Control-Allow-Credentials', value: 'true' },
-              { key: 'Access-Control-Allow-Origin', value: '*' },
-              {
-                key: 'Access-Control-Allow-Methods',
-                value: 'GET,OPTIONS,PATCH,DELETE,POST,PUT'
-              },
-              {
-                key: 'Access-Control-Allow-Headers',
-                value:
-                  'X-CSRF-Token, X-Requested-With, Accept, Accept-Version, Content-Length, Content-MD5, Content-Type, Date, X-Api-Version'
-              }
+              { key: 'Permissions-Policy', value: 'interest-cohort=()' }
             ]
           },
           { source: '/about', headers },

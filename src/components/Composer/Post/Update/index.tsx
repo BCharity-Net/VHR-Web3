@@ -1,41 +1,49 @@
 import { LensHubProxy } from '@abis/LensHubProxy'
 import { useMutation } from '@apollo/client'
 import Attachments from '@components/Shared/Attachments'
+import { AudioPublicationSchema } from '@components/Shared/Audio'
 import Markup from '@components/Shared/Markup'
 import { Button } from '@components/UI/Button'
 import { ErrorMessage } from '@components/UI/ErrorMessage'
 import { MentionTextArea } from '@components/UI/MentionTextArea'
 import { Spinner } from '@components/UI/Spinner'
 import useBroadcast from '@components/utils/hooks/useBroadcast'
-import { BCharityAttachment } from '@generated/bcharitytypes'
+import type { BCharityAttachment } from '@generated/bcharitytypes'
+import type { CreatePublicPostRequest, Mutation } from '@generated/types'
 import {
   CreatePostTypedDataDocument,
   CreatePostViaDispatcherDocument,
-  Mutation,
   PublicationMainFocus,
   ReferenceModules
 } from '@generated/types'
-import { IGif } from '@giphy/js-types'
+import type { IGif } from '@giphy/js-types'
 import { PencilAltIcon } from '@heroicons/react/outline'
 import getSignature from '@lib/getSignature'
 import getTags from '@lib/getTags'
 import getUserLocale from '@lib/getUserLocale'
-import { Mixpanel } from '@lib/mixpanel'
 import onError from '@lib/onError'
 import splitSignature from '@lib/splitSignature'
 import trimify from '@lib/trimify'
 import uploadToArweave from '@lib/uploadToArweave'
 import dynamic from 'next/dynamic'
-import { FC, useState } from 'react'
+import type { FC } from 'react'
+import { useEffect, useState } from 'react'
 import toast from 'react-hot-toast'
 import { useTranslation } from 'react-i18next'
-import { APP_NAME, LENSHUB_PROXY, RELAY_ON, SIGN_WALLET } from 'src/constants'
+import {
+  ALLOWED_AUDIO_TYPES,
+  ALLOWED_IMAGE_TYPES,
+  ALLOWED_VIDEO_TYPES,
+  APP_NAME,
+  LENSHUB_PROXY,
+  RELAY_ON,
+  SIGN_WALLET
+} from 'src/constants'
 import { useAppStore } from 'src/store/app'
 import { useCollectModuleStore } from 'src/store/collectmodule'
 import { usePublicationStore } from 'src/store/publication'
 import { useReferenceModuleStore } from 'src/store/referencemodule'
 import { useTransactionPersistStore } from 'src/store/transaction'
-import { POST } from 'src/tracking'
 import { v4 as uuid } from 'uuid'
 import { useContractWrite, useSignTypedData } from 'wagmi'
 
@@ -67,6 +75,7 @@ const NewUpdate: FC = () => {
   const publicationContent = usePublicationStore((state) => state.publicationContent)
   const setPublicationContent = usePublicationStore((state) => state.setPublicationContent)
   const previewPublication = usePublicationStore((state) => state.previewPublication)
+  const audioPublication = usePublicationStore((state) => state.audioPublication)
   const setPreviewPublication = usePublicationStore((state) => state.setPreviewPublication)
   const setShowNewPostModal = usePublicationStore((state) => state.setShowNewPostModal)
 
@@ -89,22 +98,30 @@ const NewUpdate: FC = () => {
   const [attachments, setAttachments] = useState<BCharityAttachment[]>([])
   const { isLoading: signLoading, signTypedDataAsync } = useSignTypedData({ onError })
 
+  const isAudioPost = ALLOWED_AUDIO_TYPES.includes(attachments[0]?.type)
+
   const onCompleted = () => {
     setPreviewPublication(false)
     setShowNewPostModal(false)
     setPublicationContent('')
     setAttachments([])
     resetCollectSettings()
-    Mixpanel.track(POST.NEW)
   }
 
-  const generateOptimisticPost = (txHash: string) => {
+  useEffect(() => {
+    setPostContentError('')
+  }, [audioPublication])
+
+  const generateOptimisticPost = ({ txHash, txId }: { txHash?: string; txId?: string }) => {
     return {
       id: uuid(),
       type: 'NEW_POST',
       txHash,
       content: publicationContent,
-      attachments
+      attachments,
+      title: audioPublication.title,
+      cover: audioPublication.cover,
+      author: audioPublication.author
     }
   }
 
@@ -113,13 +130,13 @@ const NewUpdate: FC = () => {
     isLoading: writeLoading,
     write
   } = useContractWrite({
-    addressOrName: LENSHUB_PROXY,
-    contractInterface: LensHubProxy,
+    address: LENSHUB_PROXY,
+    abi: LensHubProxy,
     functionName: 'postWithSig',
     mode: 'recklesslyUnprepared',
     onSuccess: ({ hash }) => {
       onCompleted()
-      setTxnQueue([generateOptimisticPost(hash), ...txnQueue])
+      setTxnQueue([generateOptimisticPost({ txHash: hash }), ...txnQueue])
     },
     onError
   })
@@ -127,7 +144,7 @@ const NewUpdate: FC = () => {
   const { broadcast, loading: broadcastLoading } = useBroadcast({
     onCompleted: (data) => {
       onCompleted()
-      setTxnQueue([generateOptimisticPost(data?.broadcast?.txHash), ...txnQueue])
+      setTxnQueue([generateOptimisticPost({ txId: data?.broadcast?.txId }), ...txnQueue])
     }
   })
   const [createPostTypedData, { loading: typedDataLoading }] = useMutation<Mutation>(
@@ -160,7 +177,7 @@ const NewUpdate: FC = () => {
 
           setUserSigNonce(userSigNonce + 1)
           if (!RELAY_ON) {
-            return write?.({ recklesslySetUnpreparedArgs: inputStruct })
+            return write?.({ recklesslySetUnpreparedArgs: [inputStruct] })
           }
 
           const {
@@ -168,7 +185,7 @@ const NewUpdate: FC = () => {
           } = await broadcast({ request: { id, signature } })
 
           if ('reason' in result) {
-            write?.({ recklesslySetUnpreparedArgs: inputStruct })
+            write?.({ recklesslySetUnpreparedArgs: [inputStruct] })
           }
         } catch {}
       },
@@ -182,47 +199,97 @@ const NewUpdate: FC = () => {
       onCompleted: (data) => {
         onCompleted()
         if (data.createPostViaDispatcher.__typename === 'RelayerResult') {
-          setTxnQueue([generateOptimisticPost(data.createPostViaDispatcher.txHash), ...txnQueue])
+          setTxnQueue([generateOptimisticPost({ txId: data.createPostViaDispatcher.txId }), ...txnQueue])
         }
       },
       onError
     }
   )
 
+  const getMainContentFocus = () => {
+    if (attachments.length > 0) {
+      if (isAudioPost) {
+        return PublicationMainFocus.Audio
+      } else if (ALLOWED_VIDEO_TYPES.includes(attachments[0]?.type)) {
+        return PublicationMainFocus.Image
+      } else if (attachments[0]?.type === 'video/mp4') {
+        return PublicationMainFocus.Video
+      }
+    } else {
+      return PublicationMainFocus.TextOnly
+    }
+  }
+
+  const getAnimationUrl = () => {
+    if (attachments.length > 0 && (isAudioPost || ALLOWED_VIDEO_TYPES.includes(attachments[0]?.type))) {
+      return attachments[0]?.item
+    }
+    return null
+  }
+
+  const createViaDispatcher = async (request: CreatePublicPostRequest) => {
+    const { data } = await createPostViaDispatcher({
+      variables: { request }
+    })
+    if (data?.createPostViaDispatcher?.__typename === 'RelayError') {
+      createPostTypedData({
+        variables: {
+          options: { overrideSigNonce: userSigNonce },
+          request
+        }
+      })
+    }
+  }
+
   const createPost = async () => {
     if (!currentProfile) {
       return toast.error(SIGN_WALLET)
     }
+
+    if (isAudioPost) {
+      setPostContentError('')
+      const parsedData = AudioPublicationSchema.safeParse(audioPublication)
+      if (!parsedData.success) {
+        const issue = parsedData.error.issues[0]
+        return setPostContentError(issue.message)
+      }
+    }
+
     if (publicationContent.length === 0 && attachments.length === 0) {
       return setPostContentError('Post should not be empty!')
     }
 
     setPostContentError('')
     setIsUploading(true)
+    const attributes = [
+      {
+        traitType: 'type',
+        displayType: 'string',
+        value: getMainContentFocus()?.toLowerCase()
+      }
+    ]
+    if (isAudioPost) {
+      attributes.push({
+        traitType: 'author',
+        displayType: 'string',
+        value: audioPublication.author
+      })
+    }
     const id = await uploadToArweave({
       version: '2.0.0',
       metadata_id: uuid(),
       description: trimify(publicationContent),
       content: trimify(publicationContent),
       external_url: `https://lenster.xyz/u/${currentProfile?.handle}`,
-      image: attachments.length > 0 ? attachments[0]?.item : null,
-      imageMimeType: attachments.length > 0 ? attachments[0]?.type : null,
-      name: `Post by @${currentProfile?.handle}`,
+      image: attachments.length > 0 ? (isAudioPost ? audioPublication.cover : attachments[0]?.item) : null,
+      imageMimeType:
+        attachments.length > 0 ? (isAudioPost ? audioPublication.coverMimeType : attachments[0]?.type) : null,
+      name: isAudioPost ? audioPublication.title : `Post by @${currentProfile?.handle}`,
       tags: getTags(publicationContent),
-      mainContentFocus:
-        attachments.length > 0
-          ? attachments[0]?.type === 'video/mp4'
-            ? PublicationMainFocus.Video
-            : PublicationMainFocus.Image
-          : PublicationMainFocus.TextOnly,
+      animation_url: getAnimationUrl(),
+      mainContentFocus: getMainContentFocus(),
       contentWarning: null, // TODO
-      attributes: [
-        {
-          traitType: 'string',
-          key: 'type',
-          value: 'post'
-        }
-      ],
+      attributes,
       media: attachments,
       locale: getUserLocale(),
       createdOn: new Date(),
@@ -246,9 +313,7 @@ const NewUpdate: FC = () => {
     }
 
     if (currentProfile?.dispatcher?.canUseRelay) {
-      createPostViaDispatcher({
-        variables: { request }
-      })
+      createViaDispatcher(request)
     } else {
       createPostTypedData({
         variables: {
@@ -275,7 +340,7 @@ const NewUpdate: FC = () => {
     <div className="py-3">
       {error && <ErrorMessage className="mb-3" title="Transaction failed!" error={error} />}
       {previewPublication ? (
-        <div className="pb-3 mb-2 border-b linkify dark:border-b-gray-700/80 break-words">
+        <div className="pb-3 mb-2 border-b linkify dark:border-b-gray-700/80 break-words px-5">
           <Markup>{publicationContent}</Markup>
         </div>
       ) : (
@@ -305,7 +370,9 @@ const NewUpdate: FC = () => {
           </Button>
         </div>
       </div>
-      <Attachments attachments={attachments} setAttachments={setAttachments} isNew />
+      <div className="px-5">
+        <Attachments attachments={attachments} setAttachments={setAttachments} isNew />
+      </div>
     </div>
   )
 }

@@ -1,10 +1,11 @@
 import { Modal } from '@components/UI/Modal'
 import { Tooltip } from '@components/UI/Tooltip'
-import { BCharityPublication } from '@generated/bcharitytypes'
+import type { BCharityPublication } from '@generated/bcharitytypes'
 import { ShareIcon } from '@heroicons/react/outline'
 import { ShareIcon as ShareIconSolid } from '@heroicons/react/solid'
 import { motion } from 'framer-motion'
-import { FC, useState } from 'react'
+import type { FC } from 'react'
+import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 interface Props {
   publication: BCharityPublication

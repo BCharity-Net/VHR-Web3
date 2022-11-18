@@ -4,27 +4,29 @@ import { useMutation, useQuery } from '@apollo/client'
 import { Button } from '@components/UI/Button'
 import { Spinner } from '@components/UI/Spinner'
 import useBroadcast from '@components/utils/hooks/useBroadcast'
-import { BCharityPublication } from '@generated/bcharitytypes'
+import type { BCharityPublication } from '@generated/bcharitytypes'
+import type {
+  CreateCollectBroadcastItemResult,
+  CreateCommentBroadcastItemResult,
+  Mutation
+} from '@generated/types'
 import {
   BroadcastDocument,
   CollectModuleDocument,
   CommentFeedDocument,
-  CreateCollectBroadcastItemResult,
   CreateCollectTypedDataDocument,
-  CreateCommentBroadcastItemResult,
-  CreateCommentTypedDataDocument,
-  Mutation
+  CreateCommentTypedDataDocument
 } from '@generated/types'
 import { CollectModuleFields } from '@gql/CollectModuleFields'
 import { CommentFields } from '@gql/CommentFields'
 import { CheckCircleIcon } from '@heroicons/react/outline'
 import getSignature from '@lib/getSignature'
 import Logger from '@lib/logger'
-import { Mixpanel } from '@lib/mixpanel'
 import splitSignature from '@lib/splitSignature'
 import uploadToArweave from '@lib/uploadToArweave'
 import { ethers } from 'ethers'
-import { FC, useState } from 'react'
+import type { FC } from 'react'
+import { useState } from 'react'
 import toast from 'react-hot-toast'
 import {
   APP_NAME,
@@ -94,8 +96,8 @@ const Apply: FC<Props> = ({ publication }) => {
   })
 
   const { isLoading: vhrWriteLoading, write: writeVhrTransfer } = useContractWrite({
-    addressOrName: VHR_TOKEN,
-    contractInterface: VHR_ABI,
+    address: VHR_TOKEN,
+    abi: VHR_ABI,
     functionName: 'transfer',
     args: [publication.profile.ownedBy, publication.metadata.attributes[4].value],
     mode: 'recklesslyUnprepared',
@@ -109,8 +111,8 @@ const Apply: FC<Props> = ({ publication }) => {
   })
 
   const { isLoading: commentWriteLoading, write: commentWrite } = useContractWrite({
-    addressOrName: LENSHUB_PROXY,
-    contractInterface: LensHubProxy,
+    address: LENSHUB_PROXY,
+    abi: LensHubProxy,
     functionName: 'commentWithSig',
     mode: 'recklesslyUnprepared',
     onSuccess: () => {
@@ -173,7 +175,7 @@ const Apply: FC<Props> = ({ publication }) => {
 
         setUserSigNonce(userSigNonce + 1)
         if (!RELAY_ON) {
-          return commentWrite?.({ recklesslySetUnpreparedArgs: inputStruct })
+          return commentWrite?.({ recklesslySetUnpreparedArgs: [inputStruct] })
         }
 
         const { data } = await commentBroadcast({
@@ -181,7 +183,7 @@ const Apply: FC<Props> = ({ publication }) => {
         })
 
         if ('reason') {
-          commentWrite?.({ recklesslySetUnpreparedArgs: inputStruct })
+          commentWrite?.({ recklesslySetUnpreparedArgs: [inputStruct] })
         }
       } catch {}
     },
@@ -231,15 +233,14 @@ const Apply: FC<Props> = ({ publication }) => {
 
   const onCompleted = () => {
     toast.success('Transaction submitted successfully!')
-    Mixpanel.track('oppos.collect')
   }
   const {
     data: collectWriteData,
     isLoading: collectWriteLoading,
     write: collectWrite
   } = useContractWrite({
-    addressOrName: LENSHUB_PROXY,
-    contractInterface: LensHubProxy,
+    address: LENSHUB_PROXY,
+    abi: LensHubProxy,
     functionName: 'collectWithSig',
     mode: 'recklesslyUnprepared',
     onSuccess: () => {
@@ -298,10 +299,10 @@ const Apply: FC<Props> = ({ publication }) => {
             })
 
             if ('reason') {
-              collectWrite?.({ recklesslySetUnpreparedArgs: inputStruct })
+              collectWrite?.({ recklesslySetUnpreparedArgs: [inputStruct] })
             }
           } else {
-            collectWrite?.({ recklesslySetUnpreparedArgs: inputStruct })
+            collectWrite?.({ recklesslySetUnpreparedArgs: [inputStruct] })
           }
         } catch {}
       },
@@ -332,7 +333,7 @@ const Apply: FC<Props> = ({ publication }) => {
             className="sm:mt-0 sm:ml-auto"
             onClick={() => {
               if (!hasVhrTxn) {
-                writeVhrTransfer()
+                writeVhrTransfer?.()
               }
               createCollect()
             }}

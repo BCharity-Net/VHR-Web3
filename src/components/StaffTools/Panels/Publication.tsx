@@ -1,9 +1,9 @@
 import { Card } from '@components/UI/Card'
-import { BCharityPublication } from '@generated/bcharitytypes'
+import type { BCharityPublication } from '@generated/bcharitytypes'
 import { CollectionIcon, GlobeAltIcon, HashtagIcon, LinkIcon } from '@heroicons/react/outline'
 import { ShieldCheckIcon } from '@heroicons/react/solid'
 import getIPFSLink from '@lib/getIPFSLink'
-import { FC } from 'react'
+import type { FC } from 'react'
 
 import MetaDetails from './MetaDetails'
 

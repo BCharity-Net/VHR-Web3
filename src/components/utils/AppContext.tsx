@@ -1,6 +1,7 @@
 import { ApolloError } from '@apollo/client'
-import { Profile } from '@generated/types'
-import { createContext, Dispatch } from 'react'
+import type { Profile } from '@generated/types'
+import type { Dispatch } from 'react'
+import { createContext } from 'react'
 
 export interface ContextType {
   userSigNonce: number

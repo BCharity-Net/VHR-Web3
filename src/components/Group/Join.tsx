@@ -4,17 +4,16 @@ import { Button } from '@components/UI/Button'
 import { Spinner } from '@components/UI/Spinner'
 import useBroadcast from '@components/utils/hooks/useBroadcast'
 import { Group } from '@generated/bcharitytypes'
-import { CreateCollectBroadcastItemResult, CreateCollectTypedDataDocument, Mutation } from '@generated/types'
+import type { Mutation } from '@generated/types'
+import { CreateCollectBroadcastItemResult, CreateCollectTypedDataDocument } from '@generated/types'
 import { PlusIcon } from '@heroicons/react/outline'
 import getSignature from '@lib/getSignature'
-import { Mixpanel } from '@lib/mixpanel'
 import onError from '@lib/onError'
 import splitSignature from '@lib/splitSignature'
-import { Dispatch, FC } from 'react'
+import type { Dispatch, FC } from 'react'
 import toast from 'react-hot-toast'
 import { LENSHUB_PROXY, RELAY_ON, SIGN_WALLET } from 'src/constants'
 import { useAppStore } from 'src/store/app'
-import { GROUP } from 'src/tracking'
 import { useAccount, useContractWrite, useSignTypedData } from 'wagmi'
 
 interface Props {
@@ -33,12 +32,11 @@ const Join: FC<Props> = ({ group, setJoined, showJoin = true }) => {
   const onCompleted = () => {
     setJoined(true)
     toast.success('Joined successfully!')
-    Mixpanel.track(GROUP.JOIN)
   }
 
   const { isLoading: writeLoading, write } = useContractWrite({
-    addressOrName: LENSHUB_PROXY,
-    contractInterface: LensHubProxy,
+    address: LENSHUB_PROXY,
+    abi: LensHubProxy,
     functionName: 'collectWithSig',
     mode: 'recklesslyUnprepared',
     onSuccess: onCompleted,
@@ -75,10 +73,10 @@ const Join: FC<Props> = ({ group, setJoined, showJoin = true }) => {
             } = await broadcast({ request: { id, signature } })
 
             if ('reason' in result) {
-              write?.({ recklesslySetUnpreparedArgs: inputStruct })
+              write?.({ recklesslySetUnpreparedArgs: [inputStruct] })
             }
           } else {
-            write?.({ recklesslySetUnpreparedArgs: inputStruct })
+            write?.({ recklesslySetUnpreparedArgs: [inputStruct] })
           }
         } catch {}
       },

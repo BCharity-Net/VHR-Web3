@@ -1,13 +1,12 @@
 import Beta from '@components/Shared/Beta'
 import { Card } from '@components/UI/Card'
 import { CheckCircleIcon, ExternalLinkIcon } from '@heroicons/react/outline'
-import { Mixpanel } from '@lib/mixpanel'
 import axios from 'axios'
-import { FC, useEffect, useState } from 'react'
+import type { FC } from 'react'
+import { useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { APP_NAME } from 'src/constants'
 import { useAppStore } from 'src/store/app'
-import { SETTINGS } from 'src/tracking'
 
 const REFLECT_URL = 'https://reflect.withlens.app'
 
@@ -50,11 +49,6 @@ const CrossPost: FC = () => {
           <a
             href={REFLECT_URL}
             className="flex items-center space-x-1.5"
-            onClick={() => {
-              Mixpanel.track(SETTINGS.ACCOUNT.OPEN_REFLECT, {
-                purpose: 'disable'
-              })
-            }}
             target="_blank"
             rel="noreferrer noopener"
           >
@@ -66,11 +60,6 @@ const CrossPost: FC = () => {
         <a
           href={REFLECT_URL}
           className="flex items-center space-x-1.5"
-          onClick={() => {
-            Mixpanel.track(SETTINGS.ACCOUNT.OPEN_REFLECT, {
-              purpose: 'enable'
-            })
-          }}
           target="_blank"
           rel="noreferrer noopener"
         >

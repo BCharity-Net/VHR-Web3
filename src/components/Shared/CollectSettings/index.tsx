@@ -3,12 +3,11 @@ import { Tooltip } from '@components/UI/Tooltip'
 import GetModuleIcon from '@components/utils/GetModuleIcon'
 import { CashIcon } from '@heroicons/react/outline'
 import { getModule } from '@lib/getModule'
-import { Mixpanel } from '@lib/mixpanel'
 import { motion } from 'framer-motion'
-import { FC, useState } from 'react'
+import type { FC } from 'react'
+import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useCollectModuleStore } from 'src/store/collectmodule'
-import { PUBLICATION } from 'src/tracking'
 
 import CollectForm from './CollectForm'
 
@@ -25,7 +24,6 @@ const CollectSettings: FC = () => {
           type="button"
           onClick={() => {
             setShowModal(!showModal)
-            Mixpanel.track(PUBLICATION.NEW.COLLECT_MODULE.OPEN_COLLECT_SETTINGS)
           }}
           aria-label={t('Choose collect module')}
         >

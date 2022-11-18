@@ -7,19 +7,19 @@ import { Card } from '@components/UI/Card'
 import { ErrorMessage } from '@components/UI/ErrorMessage'
 import { Spinner } from '@components/UI/Spinner'
 import useBroadcast from '@components/utils/hooks/useBroadcast'
-import { CreateSetDefaultProfileTypedDataDocument, Mutation, Profile } from '@generated/types'
+import type { Mutation, Profile } from '@generated/types'
+import { CreateSetDefaultProfileTypedDataDocument } from '@generated/types'
 import { ExclamationIcon, PencilIcon } from '@heroicons/react/outline'
 import getSignature from '@lib/getSignature'
-import { Mixpanel } from '@lib/mixpanel'
 import onError from '@lib/onError'
 import splitSignature from '@lib/splitSignature'
-import { FC, useEffect, useState } from 'react'
+import type { FC } from 'react'
+import { useEffect, useState } from 'react'
 import toast from 'react-hot-toast'
 import { useTranslation } from 'react-i18next'
 import { APP_NAME, LENSHUB_PROXY, RELAY_ON, SIGN_WALLET } from 'src/constants'
 import Custom404 from 'src/pages/404'
 import { useAppStore } from 'src/store/app'
-import { SETTINGS } from 'src/tracking'
 import { useAccount, useContractWrite, useSignTypedData } from 'wagmi'
 
 const SetProfile: FC = () => {
@@ -34,7 +34,6 @@ const SetProfile: FC = () => {
 
   const onCompleted = () => {
     toast.success('Default profile updated successfully!')
-    Mixpanel.track(SETTINGS.ACCOUNT.SET_DEFAULT_PROFILE)
   }
 
   const {
@@ -43,8 +42,8 @@ const SetProfile: FC = () => {
     error,
     write
   } = useContractWrite({
-    addressOrName: LENSHUB_PROXY,
-    contractInterface: LensHubProxy,
+    address: LENSHUB_PROXY,
+    abi: LensHubProxy,
     functionName: 'setDefaultProfileWithSig',
     mode: 'recklesslyUnprepared',
     onSuccess: onCompleted,
@@ -81,7 +80,7 @@ const SetProfile: FC = () => {
 
           setUserSigNonce(userSigNonce + 1)
           if (!RELAY_ON) {
-            return write?.({ recklesslySetUnpreparedArgs: inputStruct })
+            return write?.({ recklesslySetUnpreparedArgs: [inputStruct] })
           }
 
           const {
@@ -89,7 +88,7 @@ const SetProfile: FC = () => {
           } = await broadcast({ request: { id, signature } })
 
           if ('reason' in result) {
-            write?.({ recklesslySetUnpreparedArgs: inputStruct })
+            write?.({ recklesslySetUnpreparedArgs: [inputStruct] })
           }
         } catch {}
       },

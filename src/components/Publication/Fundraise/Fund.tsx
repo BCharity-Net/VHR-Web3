@@ -5,24 +5,19 @@ import Uniswap from '@components/Shared/Uniswap'
 import { Button } from '@components/UI/Button'
 import { Spinner } from '@components/UI/Spinner'
 import useBroadcast from '@components/utils/hooks/useBroadcast'
-import { BCharityPublication } from '@generated/bcharitytypes'
-import {
-  ApprovedModuleAllowanceAmountDocument,
-  CreateCollectBroadcastItemResult,
-  CreateCollectTypedDataDocument,
-  Mutation
-} from '@generated/types'
+import type { BCharityPublication } from '@generated/bcharitytypes'
+import type { CreateCollectBroadcastItemResult, Mutation } from '@generated/types'
+import { ApprovedModuleAllowanceAmountDocument, CreateCollectTypedDataDocument } from '@generated/types'
 import { CashIcon } from '@heroicons/react/outline'
 import getSignature from '@lib/getSignature'
-import { Mixpanel } from '@lib/mixpanel'
 import onError from '@lib/onError'
 import splitSignature from '@lib/splitSignature'
-import { Dispatch, FC, useState } from 'react'
+import type { Dispatch, FC } from 'react'
+import { useState } from 'react'
 import toast from 'react-hot-toast'
 import { useTranslation } from 'react-i18next'
 import { LENSHUB_PROXY, RELAY_ON, SIGN_WALLET } from 'src/constants'
 import { useAppStore } from 'src/store/app'
-import { FUNDRAISE } from 'src/tracking'
 import { useAccount, useBalance, useContractWrite, useSignTypedData } from 'wagmi'
 
 import IndexStatus from '../../Shared/IndexStatus'
@@ -74,7 +69,6 @@ const Fund: FC<Props> = ({ fund, collectModule, setRevenue, revenue }) => {
   const onCompleted = () => {
     setRevenue(revenue + parseFloat(collectModule?.amount?.value))
     toast.success('Transaction submitted successfully!')
-    Mixpanel.track(FUNDRAISE.FUND)
   }
 
   const {
@@ -82,8 +76,8 @@ const Fund: FC<Props> = ({ fund, collectModule, setRevenue, revenue }) => {
     isLoading: writeLoading,
     write
   } = useContractWrite({
-    addressOrName: LENSHUB_PROXY,
-    contractInterface: LensHubProxy,
+    address: LENSHUB_PROXY,
+    abi: LensHubProxy,
     functionName: 'collectWithSig',
     mode: 'recklesslyUnprepared',
     onSuccess: onCompleted,
@@ -115,7 +109,7 @@ const Fund: FC<Props> = ({ fund, collectModule, setRevenue, revenue }) => {
 
           setUserSigNonce(userSigNonce + 1)
           if (!RELAY_ON) {
-            return write?.({ recklesslySetUnpreparedArgs: inputStruct })
+            return write?.({ recklesslySetUnpreparedArgs: [inputStruct] })
           }
 
           const {
@@ -123,7 +117,7 @@ const Fund: FC<Props> = ({ fund, collectModule, setRevenue, revenue }) => {
           } = await broadcast({ request: { id, signature } })
 
           if ('reason' in result) {
-            write?.({ recklesslySetUnpreparedArgs: inputStruct })
+            write?.({ recklesslySetUnpreparedArgs: [inputStruct] })
           }
         } catch {}
       },

@@ -2,18 +2,18 @@ import Loader from '@components/Shared/Loader'
 import { Modal } from '@components/UI/Modal'
 import { Tooltip } from '@components/UI/Tooltip'
 import GetModuleIcon from '@components/utils/GetModuleIcon'
-import { BCharityPublication } from '@generated/bcharitytypes'
+import type { BCharityPublication } from '@generated/bcharitytypes'
+import type { ElectedMirror } from '@generated/types'
 import { CollectModules } from '@generated/types'
 import { CollectionIcon } from '@heroicons/react/outline'
 import { CollectionIcon as CollectionIconSolid } from '@heroicons/react/solid'
 import { getModule } from '@lib/getModule'
 import humanize from '@lib/humanize'
-import { Mixpanel } from '@lib/mixpanel'
 import nFormatter from '@lib/nFormatter'
 import { motion } from 'framer-motion'
 import dynamic from 'next/dynamic'
-import { FC, useEffect, useState } from 'react'
-import { PUBLICATION } from 'src/tracking'
+import type { FC } from 'react'
+import { useEffect, useState } from 'react'
 
 const CollectModule = dynamic(() => import('./CollectModule'), {
   loading: () => <Loader message="Loading collect" />
@@ -22,9 +22,10 @@ const CollectModule = dynamic(() => import('./CollectModule'), {
 interface Props {
   publication: BCharityPublication
   isFullPublication: boolean
+  electedMirror?: ElectedMirror
 }
 
-const Collect: FC<Props> = ({ publication, isFullPublication }) => {
+const Collect: FC<Props> = ({ publication, isFullPublication, electedMirror }) => {
   const [count, setCount] = useState(0)
   const [showCollectModal, setShowCollectModal] = useState(false)
   const isFreeCollect = publication?.collectModule.__typename === 'FreeCollectModuleSettings'
@@ -46,16 +47,9 @@ const Collect: FC<Props> = ({ publication, isFullPublication }) => {
 
   return (
     <>
-      <motion.button
-        whileTap={{ scale: 0.9 }}
-        onClick={() => {
-          setShowCollectModal(true)
-          Mixpanel.track(PUBLICATION.COLLECT_MODULE.OPEN_COLLECT)
-        }}
-        aria-label="Collect"
-      >
-        <div className="flex items-center space-x-1 text-red-500 hover:red-brand-400">
-          <div className="p-1.5 rounded-full hover:bg-red-300 hover:bg-opacity-20">
+      <motion.button whileTap={{ scale: 0.9 }} onClick={() => setShowCollectModal(true)} aria-label="Collect">
+        <span className="flex items-center space-x-1 text-red-500 hover:red-brand-400">
+          <span className="p-1.5 rounded-full hover:bg-red-300 hover:bg-opacity-20">
             <Tooltip
               placement="top"
               content={count > 0 ? `${humanize(count)} Collects` : 'Collect'}
@@ -67,11 +61,11 @@ const Collect: FC<Props> = ({ publication, isFullPublication }) => {
                 <CollectionIcon className={iconClassName} />
               )}
             </Tooltip>
-          </div>
+          </span>
           {count > 0 && !isFullPublication && (
-            <div className="text-[11px] sm:text-xs">{nFormatter(count)}</div>
+            <span className="text-[11px] sm:text-xs">{nFormatter(count)}</span>
           )}
-        </div>
+        </span>
       </motion.button>
       <Modal
         title={isFreeCollect ? 'Free Collect' : getModule(publication?.collectModule?.type).name}
@@ -86,7 +80,12 @@ const Collect: FC<Props> = ({ publication, isFullPublication }) => {
         show={showCollectModal}
         onClose={() => setShowCollectModal(false)}
       >
-        <CollectModule publication={publication} count={count} setCount={setCount} />
+        <CollectModule
+          electedMirror={electedMirror}
+          publication={publication}
+          count={count}
+          setCount={setCount}
+        />
       </Modal>
     </>
   )

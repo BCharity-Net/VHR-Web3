@@ -1,22 +1,17 @@
 import { useQuery } from '@apollo/client'
-import { Modal } from '@components/UI/Modal'
-import { MutualFollowersDocument, Profile } from '@generated/types'
-import { UsersIcon } from '@heroicons/react/outline'
+import type { Profile } from '@generated/types'
+import { MutualFollowersDocument } from '@generated/types'
 import getAvatar from '@lib/getAvatar'
-import { Mixpanel } from '@lib/mixpanel'
-import { FC, ReactNode, useState } from 'react'
+import type { Dispatch, FC, ReactNode } from 'react'
 import { useAppStore } from 'src/store/app'
-import { PROFILE } from 'src/tracking'
-
-import MutualFollowersList from './List'
 
 interface Props {
+  setShowMutualFollowersModal: Dispatch<boolean>
   profile: Profile
 }
 
-const MutualFollowers: FC<Props> = ({ profile }) => {
+const MutualFollowers: FC<Props> = ({ setShowMutualFollowersModal, profile }) => {
   const currentProfile = useAppStore((state) => state.currentProfile)
-  const [showMutualFollowersModal, setShowMutualFollowersModal] = useState(false)
 
   const { data, loading, error } = useQuery(MutualFollowersDocument, {
     variables: {
@@ -26,8 +21,7 @@ const MutualFollowers: FC<Props> = ({ profile }) => {
         limit: 3
       }
     },
-    skip: !profile?.id,
-    fetchPolicy: 'no-cache'
+    skip: !profile?.id
   })
 
   const profiles = data?.mutualFollowersProfiles?.items ?? []
@@ -38,7 +32,6 @@ const MutualFollowers: FC<Props> = ({ profile }) => {
       className="mr-0 sm:mr-10 text-sm text-gray-500 flex items-center space-x-2.5 cursor-pointer"
       onClick={() => {
         setShowMutualFollowersModal(true)
-        Mixpanel.track(PROFILE.OPEN_MUTUAL_FOLLOWERS)
       }}
     >
       <div className="contents -space-x-2">
@@ -55,14 +48,6 @@ const MutualFollowers: FC<Props> = ({ profile }) => {
         <span>Followed by </span>
         {children}
       </div>
-      <Modal
-        title="Followers you know"
-        icon={<UsersIcon className="w-5 h-5 text-brand" />}
-        show={showMutualFollowersModal}
-        onClose={() => setShowMutualFollowersModal(false)}
-      >
-        <MutualFollowersList profileId={profile?.id} />
-      </Modal>
     </div>
   )
 

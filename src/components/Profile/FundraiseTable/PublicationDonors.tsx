@@ -2,7 +2,7 @@
 import { useQuery } from '@apollo/client'
 import { CollectorsDocument, CommentFeedDocument } from '@generated/types'
 import Logger from '@lib/logger'
-import { FC } from 'react'
+import type { FC } from 'react'
 import { useAppStore } from 'src/store/app'
 
 interface Props {

@@ -14,5 +14,6 @@ export const MetadataFields = gql`
     attributes {
       value
     }
+    tags
   }
 `

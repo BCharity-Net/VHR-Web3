@@ -72,20 +72,18 @@ const Fundraisers: FC<Props> = ({ publication, isFullPublication = false }) => {
       request: {
         sortCriteria: feedType,
         limit: 50,
-        noRandomize: feedType === 'LATEST'
+        noRandomize: feedType === 'LATEST',
+        metadata: {
+          tags: {
+            oneOf: 'bcharity-fundraise'
+          }
+        }
       },
       reactionRequest: currentProfile ? { profileId: currentProfile?.id } : null,
       profileId: currentProfile?.id ?? null
     },
     onCompleted: (data) => {
-      const fundraise = data?.explorePublications?.items.filter((i: any) => {
-        return i?.metadata?.attributes[0]?.value == 'fundraise'
-      })
-      fundraise.map((i: any) => {
-        // if (!fundraise) {
-        revenueData.push(0)
-        // }
-      })
+      const fundraise = data?.explorePublications?.items
 
       setPageInfo(data?.explorePublications?.pageInfo)
       setPublications(fundraise)

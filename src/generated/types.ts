@@ -19251,6 +19251,10 @@ export const MetadataFieldsFragmentDoc = {
           },
           {
             kind: 'Field',
+            name: { kind: 'Name', value: 'tags' }
+          },
+          {
+            kind: 'Field',
             name: { kind: 'Name', value: 'cover' },
             selectionSet: {
               kind: 'SelectionSet',

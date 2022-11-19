@@ -1,5 +1,4 @@
 import { LensHubProxy } from '@abis/LensHubProxy'
-import { useMutation, useQuery } from '@apollo/client'
 import IndexStatus from '@components/Shared/IndexStatus'
 import { Button } from '@components/UI/Button'
 import { Card } from '@components/UI/Card'
@@ -7,14 +6,15 @@ import { Form, useZodForm } from '@components/UI/Form'
 import { Input } from '@components/UI/Input'
 import { Spinner } from '@components/UI/Spinner'
 import useBroadcast from '@components/utils/hooks/useBroadcast'
-import type { Erc20, Mutation } from '@generated/types'
+import type { Erc20 } from '@generated/types'
 import {
-  CreateSetFollowModuleTypedDataDocument,
-  EnabledCurrencyModulesWithProfileDocument
+  useCreateSetFollowModuleTypedDataMutation,
+  useEnabledCurrencyModulesWithProfileQuery
 } from '@generated/types'
 import { StarIcon, XIcon } from '@heroicons/react/outline'
 import getSignature from '@lib/getSignature'
 import getTokenImage from '@lib/getTokenImage'
+import { Leafwatch } from '@lib/leafwatch'
 import onError from '@lib/onError'
 import splitSignature from '@lib/splitSignature'
 import type { FC } from 'react'
@@ -23,6 +23,7 @@ import toast from 'react-hot-toast'
 import { useTranslation } from 'react-i18next'
 import { ADDRESS_REGEX, DEFAULT_COLLECT_TOKEN, LENSHUB_PROXY, RELAY_ON, SIGN_WALLET } from 'src/constants'
 import { useAppStore } from 'src/store/app'
+import { SETTINGS } from 'src/tracking'
 import { useContractWrite, useSignTypedData } from 'wagmi'
 import { object, string } from 'zod'
 
@@ -32,12 +33,16 @@ const SuperFollow: FC = () => {
   const currentProfile = useAppStore((state) => state.currentProfile)
   const { t } = useTranslation('common')
   const [selectedCurrency, setSelectedCurrency] = useState(DEFAULT_COLLECT_TOKEN)
-  const [selectedCurrencySymobol, setSelectedCurrencySymobol] = useState('WMATIC')
+  const [selectedCurrencySymbol, setSelectedCurrencySymbol] = useState('WMATIC')
   const { isLoading: signLoading, signTypedDataAsync } = useSignTypedData({ onError })
-  const { data: currencyData, loading } = useQuery(EnabledCurrencyModulesWithProfileDocument, {
+  const { data: currencyData, loading } = useEnabledCurrencyModulesWithProfileQuery({
     variables: { request: { profileId: currentProfile?.id } },
     skip: !currentProfile?.id
   })
+
+  const onCompleted = () => {
+    Leafwatch.track(SETTINGS.ACCOUNT.SET_SUPER_FOLLOW)
+  }
 
   const {
     data: writeData,
@@ -48,6 +53,7 @@ const SuperFollow: FC = () => {
     abi: LensHubProxy,
     functionName: 'setFollowModuleWithSig',
     mode: 'recklesslyUnprepared',
+    onSuccess: onCompleted,
     onError
   })
 
@@ -65,10 +71,9 @@ const SuperFollow: FC = () => {
     }
   })
 
-  const { broadcast, data: broadcastData, loading: broadcastLoading } = useBroadcast({})
-  const [createSetFollowModuleTypedData, { loading: typedDataLoading }] = useMutation<Mutation>(
-    CreateSetFollowModuleTypedDataDocument,
-    {
+  const { broadcast, data: broadcastData, loading: broadcastLoading } = useBroadcast({ onCompleted })
+  const [createSetFollowModuleTypedData, { loading: typedDataLoading }] =
+    useCreateSetFollowModuleTypedDataMutation({
       onCompleted: async ({ createSetFollowModuleTypedData }) => {
         try {
           const { id, typedData } = createSetFollowModuleTypedData
@@ -98,8 +103,7 @@ const SuperFollow: FC = () => {
         } catch {}
       },
       onError
-    }
-  )
+    })
 
   const setSuperFollow = (amount: string | null, recipient: string | null) => {
     if (!currentProfile) {
@@ -160,7 +164,7 @@ const SuperFollow: FC = () => {
             onChange={(e) => {
               const currency = e.target.value.split('-')
               setSelectedCurrency(currency[0])
-              setSelectedCurrencySymobol(currency[1])
+              setSelectedCurrencySymbol(currency[1])
             }}
           >
             {currencyData?.enabledModuleCurrencies?.map((currency: Erc20) => (
@@ -181,8 +185,8 @@ const SuperFollow: FC = () => {
               className="w-6 h-6"
               height={24}
               width={24}
-              src={getTokenImage(selectedCurrencySymobol)}
-              alt={selectedCurrencySymobol}
+              src={getTokenImage(selectedCurrencySymbol)}
+              alt={selectedCurrencySymbol}
             />
           }
           placeholder="5"

@@ -17,8 +17,8 @@ import {
   CreateCollectTypedDataDocument,
   CreateCommentTypedDataDocument
 } from '@generated/types'
-import { CollectModuleFields } from '@gql/CollectModuleFields'
-import { CommentFields } from '@gql/CommentFields'
+import { CollectModuleFields } from '@gql/CollectModuleFieldsq'
+import { CommentFields } from '@gql/CommentFieldsq'
 import { CheckCircleIcon } from '@heroicons/react/outline'
 import getSignature from '@lib/getSignature'
 import Logger from '@lib/logger'
@@ -38,7 +38,7 @@ import {
   VHR_TOKEN
 } from 'src/constants'
 import { useAppStore } from 'src/store/app'
-import { useCollectModuleStore } from 'src/store/collectmodule'
+import { useCollectModuleStore } from 'src/store/collect-module'
 import { v4 as uuid } from 'uuid'
 import { useAccount, useContractWrite, useSignTypedData } from 'wagmi'
 

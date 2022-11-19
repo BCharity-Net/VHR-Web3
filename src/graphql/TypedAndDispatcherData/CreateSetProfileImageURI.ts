@@ -1,5 +1,5 @@
 import { gql } from '@apollo/client'
-import { RelayerResultFields } from '@gql/RelayerResultFields'
+import { RelayerResultFields } from '@gql/RelayerResultFieldsq'
 
 export const CREATE_SET_PROFILE_IMAGE_URI_TYPED_DATA_MUTATION = gql`
   mutation CreateSetProfileImageURITypedData(

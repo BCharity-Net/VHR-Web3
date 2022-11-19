@@ -42,7 +42,7 @@ import {
   VHR_TOKEN
 } from 'src/constants'
 import { useAppStore } from 'src/store/app'
-import { useCollectModuleStore } from 'src/store/collectmodule'
+import { useCollectModuleStore } from 'src/store/collect-module'
 import { v4 as uuid } from 'uuid'
 import { useAccount, useBalance, useContractRead, useContractWrite, useSignTypedData } from 'wagmi'
 
@@ -89,7 +89,7 @@ const Verify: FC<Props> = ({ publication }) => {
     }
   })
 
-  const bal = useContractRead({
+  const bal: any = useContractRead({
     address: GOOD_TOKEN,
     abi: GOOD_ABI,
     functionName: 'balanceOf',
@@ -97,7 +97,7 @@ const Verify: FC<Props> = ({ publication }) => {
     args: [GIVE_DAI_LP]
   })
 
-  const balQ = useContractRead({
+  const balQ: any = useContractRead({
     address: DAI_TOKEN,
     abi: DAI_ABI,
     functionName: 'balanceOf',
@@ -105,7 +105,7 @@ const Verify: FC<Props> = ({ publication }) => {
     args: [GIVE_DAI_LP]
   })
 
-  const decs = useContractRead({
+  const decs: any = useContractRead({
     address: GOOD_TOKEN,
     abi: GOOD_ABI,
     functionName: 'decimals',
@@ -122,14 +122,14 @@ const Verify: FC<Props> = ({ publication }) => {
   const vhrToGoodPrice = +(VHR_TO_DAI_PRICE / goodToDAIPrice).toFixed(8)
 
   const getVhrBalance = useBalance({
-    addressOrName: address,
+    address: address,
     token: VHR_TOKEN,
     watch: true,
     chainId: 80001
   })
 
   const getGoodBalance = useBalance({
-    addressOrName: address,
+    address: address,
     token: GOOD_TOKEN,
     watch: true,
     chainId: 80001

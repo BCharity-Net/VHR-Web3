@@ -1,12 +1,14 @@
 import Beta from '@components/Shared/Beta'
 import { Card } from '@components/UI/Card'
 import { CheckCircleIcon, ExternalLinkIcon } from '@heroicons/react/outline'
+import { Leafwatch } from '@lib/leafwatch'
 import axios from 'axios'
 import type { FC } from 'react'
 import { useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { APP_NAME } from 'src/constants'
 import { useAppStore } from 'src/store/app'
+import { SETTINGS } from 'src/tracking'
 
 const REFLECT_URL = 'https://reflect.withlens.app'
 
@@ -49,6 +51,9 @@ const CrossPost: FC = () => {
           <a
             href={REFLECT_URL}
             className="flex items-center space-x-1.5"
+            onClick={() => {
+              Leafwatch.track(SETTINGS.ACCOUNT.OPEN_REFLECT, { purpose: 'disable' })
+            }}
             target="_blank"
             rel="noreferrer noopener"
           >
@@ -60,6 +65,9 @@ const CrossPost: FC = () => {
         <a
           href={REFLECT_URL}
           className="flex items-center space-x-1.5"
+          onClick={() => {
+            Leafwatch.track(SETTINGS.ACCOUNT.OPEN_REFLECT, { purpose: 'enable' })
+          }}
           target="_blank"
           rel="noreferrer noopener"
         >

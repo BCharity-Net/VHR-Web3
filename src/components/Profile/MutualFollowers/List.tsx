@@ -1,10 +1,9 @@
-import { useQuery } from '@apollo/client'
 import Loader from '@components/Shared/Loader'
 import UserProfile from '@components/Shared/UserProfile'
 import { ErrorMessage } from '@components/UI/ErrorMessage'
 import InfiniteLoader from '@components/UI/InfiniteLoader'
 import type { Profile } from '@generated/types'
-import { MutualFollowersListDocument } from '@generated/types'
+import { useMutualFollowersListQuery } from '@generated/types'
 import type { FC } from 'react'
 import { useInView } from 'react-cool-inview'
 import InfiniteScroll from 'react-infinite-scroll-component'
@@ -25,7 +24,7 @@ const MutualFollowersList: FC<Props> = ({ profileId }) => {
     limit: 10
   }
 
-  const { data, loading, error, fetchMore } = useQuery(MutualFollowersListDocument, {
+  const { data, loading, error, fetchMore } = useMutualFollowersListQuery({
     variables: { request },
     skip: !profileId
   })

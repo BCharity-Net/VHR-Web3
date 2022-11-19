@@ -47,6 +47,7 @@ const clearStorage = () => {
   localStorage.removeItem('refreshToken')
   localStorage.removeItem(LS_KEYS.BCHARITY_STORE)
   localStorage.removeItem(LS_KEYS.TRANSACTION_STORE)
+  localStorage.removeItem(LS_KEYS.MESSAGE_STORE)
 }
 
 const authLink = new ApolloLink((operation, forward) => {
@@ -113,7 +114,10 @@ const cache = new InMemoryCache({
         feed: cursorBasedPagination(['request', ['profileId', 'feedEventItemTypes']]),
         feedHighlights: cursorBasedPagination(['request', ['profileId']]),
         explorePublications: cursorBasedPagination(['request', ['sortCriteria', 'metadata']]),
-        publications: cursorBasedPagination(['request', ['profileId', 'commentsOf', 'publicationTypes']]),
+        publications: cursorBasedPagination([
+          'request',
+          ['profileId', 'commentsOf', 'publicationTypes', 'metadata']
+        ]),
         nfts: cursorBasedPagination(['request', ['ownerAddress', 'chainIds']]),
         notifications: cursorBasedPagination(['request', ['profileId', 'notificationTypes']]),
         followers: cursorBasedPagination(['request', ['profileId']]),
@@ -136,6 +140,11 @@ const cache = new InMemoryCache({
 
 const client = new ApolloClient({
   link: from([retryLink, authLink, httpLink]),
+  cache
+})
+
+export const serverlessClient = new ApolloClient({
+  link: from([httpLink]),
   cache
 })
 

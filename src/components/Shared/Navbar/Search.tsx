@@ -1,15 +1,16 @@
-import { useLazyQuery } from '@apollo/client'
 import { Card } from '@components/UI/Card'
 import { Input } from '@components/UI/Input'
 import { Spinner } from '@components/UI/Spinner'
 import useOnClickOutside from '@components/utils/hooks/useOnClickOutside'
 import type { Profile } from '@generated/types'
-import { CustomFiltersTypes, SearchProfilesDocument, SearchRequestTypes } from '@generated/types'
+import { CustomFiltersTypes, SearchRequestTypes, useSearchProfilesLazyQuery } from '@generated/types'
 import { SearchIcon, XIcon } from '@heroicons/react/outline'
+import { Leafwatch } from '@lib/leafwatch'
 import clsx from 'clsx'
 import { useRouter } from 'next/router'
 import type { ChangeEvent, FC } from 'react'
 import { useRef, useState } from 'react'
+import { SEARCH } from 'src/tracking'
 
 import UserProfile from '../UserProfile'
 
@@ -17,17 +18,22 @@ interface Props {
   hideDropdown?: boolean
   onProfileSelected?: (profile: Profile) => void
   placeholder?: string
+  modalWidthClassName?: string
 }
 
-const Search: FC<Props> = ({ hideDropdown = false, onProfileSelected, placeholder = 'Search...' }) => {
+const Search: FC<Props> = ({
+  hideDropdown = false,
+  onProfileSelected,
+  placeholder = 'Search...',
+  modalWidthClassName = 'max-w-md'
+}) => {
   const { push, pathname, query } = useRouter()
   const [searchText, setSearchText] = useState('')
   const dropdownRef = useRef(null)
 
   useOnClickOutside(dropdownRef, () => setSearchText(''))
 
-  const [searchUsers, { data: searchUsersData, loading: searchUsersLoading }] =
-    useLazyQuery(SearchProfilesDocument)
+  const [searchUsers, { data: searchUsersData, loading: searchUsersLoading }] = useSearchProfilesLazyQuery()
 
   const handleSearch = (evt: ChangeEvent<HTMLInputElement>) => {
     const keyword = evt.target.value
@@ -60,29 +66,29 @@ const Search: FC<Props> = ({ hideDropdown = false, onProfileSelected, placeholde
   const profiles = searchUsersData?.search?.items ?? []
 
   return (
-    <>
-      <div aria-hidden="true" className="w-full">
-        <form onSubmit={handleKeyDown}>
-          <Input
-            type="text"
-            className="py-2 px-3 text-sm"
-            placeholder={placeholder}
-            value={searchText}
-            iconLeft={<SearchIcon />}
-            iconRight={
-              <XIcon
-                className={clsx('cursor-pointer', searchText ? 'visible' : 'invisible')}
-                onClick={() => {
-                  setSearchText('')
-                }}
-              />
-            }
-            onChange={handleSearch}
-          />
-        </form>
-      </div>
+    <div aria-hidden="true" className="w-full">
+      <form onSubmit={handleKeyDown}>
+        <Input
+          type="text"
+          className="py-2 px-3 text-sm"
+          placeholder={placeholder}
+          value={searchText}
+          onFocus={() => Leafwatch.track(SEARCH.FOCUS)}
+          iconLeft={<SearchIcon />}
+          iconRight={
+            <XIcon
+              className={clsx('cursor-pointer', searchText ? 'visible' : 'invisible')}
+              onClick={() => {
+                setSearchText('')
+                Leafwatch.track(SEARCH.CLEAR)
+              }}
+            />
+          }
+          onChange={handleSearch}
+        />
+      </form>
       {pathname !== '/search' && !hideDropdown && searchText.length > 0 && (
-        <div className="flex absolute flex-col mt-2 w-full sm:max-w-md" ref={dropdownRef}>
+        <div className={clsx('flex absolute flex-col mt-2 w-[94%]', modalWidthClassName)} ref={dropdownRef}>
           <Card className="overflow-y-auto py-2 max-h-[80vh]">
             {searchUsersLoading ? (
               <div className="py-2 px-4 space-y-2 text-sm font-bold text-center">
@@ -111,7 +117,7 @@ const Search: FC<Props> = ({ hideDropdown = false, onProfileSelected, placeholde
           </Card>
         </div>
       )}
-    </>
+    </div>
   )
 }
 

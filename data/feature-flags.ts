@@ -31,5 +31,10 @@ export const featureFlags = [
     key: 'trending-widget',
     name: 'Trending widget',
     enabledFor: [...bcharityMembers]
+  },
+  {
+    key: 'access-settings',
+    name: 'Access settings',
+    enabledFor: [...bcharityMembers]
   }
 ]

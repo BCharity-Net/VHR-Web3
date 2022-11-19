@@ -54,24 +54,22 @@ const PublicationBody: FC<Props> = ({ publication }) => {
             )}
             {publication?.collectedBy ? <span>{t('Joined')}</span> : <span>{t('Launched group')}</span>}
           </span>
-          <Link href={`/groups/${publication?.id}`}>
-            <a href={`/groups/${publication?.id}`} className="flex items-center space-x-1.5 font-bold">
-              <img
-                src={imageProxy(
-                  getIPFSLink(
-                    publication?.metadata?.cover?.original?.url
-                      ? publication?.metadata?.cover?.original?.url
-                      : `https://avatar.tobi.sh/${publication?.id}.png`
-                  ),
-                  AVATAR
-                )}
-                className="bg-gray-200 rounded ring-2 ring-gray-50 dark:bg-gray-700 dark:ring-black w-[19px] h-[19px]"
-                height={19}
-                width={19}
-                alt={publication?.id}
-              />
-              <div>{publication?.metadata?.name}</div>
-            </a>
+          <Link href={`/groups/${publication?.id}`} className="flex items-center space-x-1.5 font-bold">
+            <img
+              src={imageProxy(
+                getIPFSLink(
+                  publication?.metadata?.cover?.original?.url
+                    ? publication?.metadata?.cover?.original?.url
+                    : `https://avatar.tobi.sh/${publication?.id}.png`
+                ),
+                AVATAR
+              )}
+              className="bg-gray-200 rounded ring-2 ring-gray-50 dark:bg-gray-700 dark:ring-black w-[19px] h-[19px]"
+              height={19}
+              width={19}
+              alt={publication?.id}
+            />
+            <div>{publication?.metadata?.name}</div>
           </Link>
         </div>
       ) : publicationType === 'fundraise' ? (

@@ -1,68 +1,57 @@
 /** @type {import('next').NextConfig} */
-const { withSentryConfig } = require('@sentry/nextjs')
-const withBundleAnalyzer = require('@next/bundle-analyzer')({
-  enabled: process.env.ANALYZE === 'true'
-})
-
 const headers = [{ key: 'Cache-Control', value: 'public, max-age=3600' }]
+const isProd = process.env.VERCEL_ENV === 'production'
 
-module.exports = withBundleAnalyzer(
-  withSentryConfig(
-    {
-      sentry: {
-        hideSourceMaps: true
+module.exports = {
+  reactStrictMode: false,
+  trailingSlash: false,
+  assetPrefix: isProd ? 'https://petals.lenster.xyz' : '',
+  experimental: {
+    scrollRestoration: true,
+    newNextLinkBehavior: true
+  },
+  maximumFileSizeToCacheInBytes: 8000000,
+  async rewrites() {
+    return [
+      {
+        source: '/sitemap.xml',
+        destination: 'https://sitemap.bcharity.net/sitemap.xml'
       },
-      reactStrictMode: false,
-      trailingSlash: false,
-      experimental: {
-        scrollRestoration: true,
-        newNextLinkBehavior: true
-      },
-      maximumFileSizeToCacheInBytes: 8000000,
-      async rewrites() {
-        return [
-          {
-            source: '/sitemap.xml',
-            destination: 'https://sitemap.bcharity.net/sitemap.xml'
-          },
-          {
-            source: '/sitemaps/:match*',
-            destination: 'https://sitemap.bcharity.net/sitemaps/:match*'
-          }
-        ]
-      },
-      async redirects() {
-        return [
-          {
-            source: '/discord',
-            destination: 'https://discord.com/invite/4vKS59q5kV',
-            permanent: true
-          },
-          {
-            source: '/donate',
-            destination: 'https://gitcoin.co/grants/5008/bcharity',
-            permanent: true
-          }
-        ]
-      },
-      async headers() {
-        return [
-          {
-            source: '/(.*)',
-            headers: [
-              { key: 'X-Content-Type-Options', value: 'nosniff' },
-              { key: 'X-Frame-Options', value: 'DENY' },
-              { key: 'X-XSS-Protection', value: '1; mode=block' },
-              { key: 'Referrer-Policy', value: 'strict-origin' },
-              { key: 'Permissions-Policy', value: 'interest-cohort=()' }
-            ]
-          },
-          { source: '/about', headers },
-          { source: '/privacy', headers },
-          { source: '/thanks', headers }
-        ]
+      {
+        source: '/sitemaps/:match*',
+        destination: 'https://sitemap.bcharity.net/sitemaps/:match*'
       }
-    },
-    { silent: true } // Sentry config
-  )
-)
+    ]
+  },
+  async redirects() {
+    return [
+      {
+        source: '/discord',
+        destination: 'https://discord.com/invite/4vKS59q5kV',
+        permanent: true
+      },
+      {
+        source: '/donate',
+        destination: 'https://gitcoin.co/grants/5008/bcharity',
+        permanent: true
+      }
+    ]
+  },
+  async headers() {
+    return [
+      {
+        source: '/(.*)',
+        headers: [
+          { key: 'X-Content-Type-Options', value: 'nosniff' },
+          { key: 'X-Frame-Options', value: 'DENY' },
+          { key: 'X-XSS-Protection', value: '1; mode=block' },
+          { key: 'Referrer-Policy', value: 'strict-origin' },
+          { key: 'Permissions-Policy', value: 'interest-cohort=()' }
+        ]
+      },
+      { source: '/about', headers },
+      { source: '/privacy', headers },
+      { source: '/thanks', headers }
+    ]
+  }
+}

@@ -1,26 +1,28 @@
-import { Button } from '@components/UI/Button'
-import { Card } from '@components/UI/Card'
-import { GridItemEight, GridItemFour, GridLayout } from '@components/UI/GridLayout'
-import MetaTags from '@components/utils/MetaTags'
-import type { NextPage } from 'next'
-import toast from 'react-hot-toast'
-import { APP_NAME, LS_KEYS } from 'src/constants'
-import Custom404 from 'src/pages/404'
-import { useAppStore } from 'src/store/app'
+import { Button } from '@components/UI/Button';
+import { Card } from '@components/UI/Card';
+import { GridItemEight, GridItemFour, GridLayout } from '@components/UI/GridLayout';
+import { useDisconnectXmtp } from '@components/utils/hooks/useXmtpClient';
+import MetaTags from '@components/utils/MetaTags';
+import type { NextPage } from 'next';
+import toast from 'react-hot-toast';
+import { APP_NAME, LS_KEYS } from 'src/constants';
+import Custom404 from 'src/pages/404';
+import { useAppStore } from 'src/store/app';
 
-import Sidebar from '../Sidebar'
+import Sidebar from '../Sidebar';
 
 const CleanupSettings: NextPage = () => {
-  const currentProfile = useAppStore((state) => state.currentProfile)
+  const currentProfile = useAppStore((state) => state.currentProfile);
+  const disconnectXmtp = useDisconnectXmtp();
 
   if (!currentProfile) {
-    return <Custom404 />
+    return <Custom404 />;
   }
 
   const cleanup = (key: string) => {
-    localStorage.removeItem(key)
-    toast.success(`Cleared ${key}`)
-  }
+    localStorage.removeItem(key);
+    toast.success(`Cleared ${key}`);
+  };
 
   return (
     <GridLayout>
@@ -41,7 +43,7 @@ const CleanupSettings: NextPage = () => {
           <div className="space-y-6">
             <div className="flex items-center justify-between">
               <div className="space-y-1">
-                <b>Optimistic posts</b>
+                <b>Optimistic publications</b>
                 <div className="font-bold text-xs text-gray-500">
                   Clean your posts or comments that are not indexed
                 </div>
@@ -60,7 +62,14 @@ const CleanupSettings: NextPage = () => {
                 <b>Direct message keys</b>
                 <div className="font-bold text-xs text-gray-500">Clean your DM encryption key</div>
               </div>
-              <Button onClick={() => cleanup(LS_KEYS.TIMELINE_STORE)}>Cleanup</Button>
+              <Button
+                onClick={() => {
+                  disconnectXmtp();
+                  toast.success('Cleared DM keys');
+                }}
+              >
+                Cleanup
+              </Button>
             </div>
             <div className="flex items-center justify-between">
               <div className="space-y-1">
@@ -73,7 +82,7 @@ const CleanupSettings: NextPage = () => {
         </Card>
       </GridItemEight>
     </GridLayout>
-  )
-}
+  );
+};
 
-export default CleanupSettings
+export default CleanupSettings;

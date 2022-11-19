@@ -1,5 +1,5 @@
 import { gql } from '@apollo/client'
-import { RelayerResultFields } from '@gql/RelayerResultFields'
+import { RelayerResultFields } from '@gql/RelayerResultFieldsq'
 
 export const CREATE_COMMENT_TYPED_DATA_MUTATION = gql`
   mutation CreateCommentTypedData($options: TypedDataOptions, $request: CreatePublicCommentRequest!) {

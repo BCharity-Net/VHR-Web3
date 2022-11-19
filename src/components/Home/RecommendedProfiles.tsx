@@ -1,4 +1,3 @@
-import { useQuery } from '@apollo/client'
 import UserProfileShimmer from '@components/Shared/Shimmer/UserProfileShimmer'
 import UserProfile from '@components/Shared/UserProfile'
 import { Card } from '@components/UI/Card'
@@ -6,12 +5,15 @@ import { EmptyState } from '@components/UI/EmptyState'
 import { ErrorMessage } from '@components/UI/ErrorMessage'
 import { Modal } from '@components/UI/Modal'
 import type { Profile } from '@generated/types'
-import { RecommendedProfilesDocument } from '@generated/types'
+import { useRecommendedProfilesQuery } from '@generated/types'
 import { DotsCircleHorizontalIcon, UsersIcon } from '@heroicons/react/outline'
 import { SparklesIcon } from '@heroicons/react/solid'
+import { Leafwatch } from '@lib/leafwatch'
 import type { FC } from 'react'
 import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
+import { MISCELLANEOUS } from 'src/tracking'
+
 
 import Suggested from './Suggested'
 
@@ -29,7 +31,9 @@ const Title = () => {
 const RecommendedProfiles: FC = () => {
   const { t } = useTranslation('common')
   const [showSuggestedModal, setShowSuggestedModal] = useState(false)
-  const { data, loading, error } = useQuery(RecommendedProfilesDocument)
+  const { data, loading, error } = useRecommendedProfilesQuery({
+    variables: { options: { shuffle: false } }
+  })
 
   if (loading) {
     return (
@@ -77,7 +81,10 @@ const RecommendedProfiles: FC = () => {
         <button
           className="bg-gray-50 dark:bg-gray-900 hover:bg-gray-100 dark:hover:bg-gray-800 border-t dark:border-t-gray-700/80 text-sm w-full rounded-b-xl text-left px-5 py-3 flex items-center space-x-2 text-gray-600 dark:text-gray-300"
           type="button"
-          onClick={() => setShowSuggestedModal(true)}
+          onClick={() => {
+            setShowSuggestedModal(true)
+            Leafwatch.track(MISCELLANEOUS.OPEN_RECOMMENDED_PROFILES)
+          }}
         >
           <DotsCircleHorizontalIcon className="h-4 w-4" />
           <span>Show more</span>

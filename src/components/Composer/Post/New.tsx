@@ -1,29 +1,32 @@
-import { Card } from '@components/UI/Card'
-import { Modal } from '@components/UI/Modal'
-import { Tooltip } from '@components/UI/Tooltip'
+import { Card } from '@components/UI/Card';
+import { Modal } from '@components/UI/Modal';
+import { Tooltip } from '@components/UI/Tooltip';
 import {
   DocumentTextIcon,
   MusicNoteIcon,
   PencilAltIcon,
   PhotographIcon,
   VideoCameraIcon
-} from '@heroicons/react/outline'
-import getAvatar from '@lib/getAvatar'
-import isFeatureEnabled from '@lib/isFeatureEnabled'
-import { useRouter } from 'next/router'
-import type { FC, ReactNode } from 'react'
-import { useEffect, useState } from 'react'
-import { useAppStore } from 'src/store/app'
-import { usePublicationStore } from 'src/store/publication'
+} from '@heroicons/react/outline';
+import { $convertFromMarkdownString } from '@lexical/markdown';
+import { useLexicalComposerContext } from '@lexical/react/LexicalComposerContext';
+import getAvatar from '@lib/getAvatar';
+import isFeatureEnabled from '@lib/isFeatureEnabled';
+import { useRouter } from 'next/router';
+import type { FC, ReactNode } from 'react';
+import { useEffect, useState } from 'react';
+import { useAppStore } from 'src/store/app';
+import { usePublicationStore } from 'src/store/publication';
 
-import NewUpdate from './Update'
+import withEditorContext from '../Editor/withEditorContext';
+import NewUpdate from './Update';
 
-type Action = 'update' | 'image' | 'video' | 'audio' | 'article'
+type Action = 'update' | 'image' | 'video' | 'audio' | 'article';
 
 interface ActionProps {
-  icon: ReactNode
-  text: string
-  onClick: () => void
+  icon: ReactNode;
+  text: string;
+  onClick: () => void;
 }
 
 const Action: FC<ActionProps> = ({ icon, text, onClick }) => (
@@ -36,44 +39,46 @@ const Action: FC<ActionProps> = ({ icon, text, onClick }) => (
       {icon}
     </button>
   </Tooltip>
-)
+);
 
 const NewPost: FC = () => {
-  const { query, isReady } = useRouter()
-  const currentProfile = useAppStore((state) => state.currentProfile)
-  const showNewPostModal = usePublicationStore((state) => state.showNewPostModal)
-  const setShowNewPostModal = usePublicationStore((state) => state.setShowNewPostModal)
-  const setPublicationContent = usePublicationStore((state) => state.setPublicationContent)
-  const setPreviewPublication = usePublicationStore((state) => state.setPreviewPublication)
-  const [selectedAction, setSelectedAction] = useState<Action>('update')
+  const { query, isReady } = useRouter();
+  const currentProfile = useAppStore((state) => state.currentProfile);
+  const showNewPostModal = usePublicationStore((state) => state.showNewPostModal);
+  const setShowNewPostModal = usePublicationStore((state) => state.setShowNewPostModal);
+  const setPublicationContent = usePublicationStore((state) => state.setPublicationContent);
+  const [selectedAction, setSelectedAction] = useState<Action>('update');
+  const [editor] = useLexicalComposerContext();
 
   const openModal = (action: Action) => {
-    setSelectedAction(action)
-    setShowNewPostModal(true)
-  }
+    setSelectedAction(action);
+    setShowNewPostModal(true);
+  };
 
   useEffect(() => {
     if (isReady && query.text) {
-      const { text, url, via, hashtags, preview } = query
-      let processedHashtags
+      const { text, url, via, hashtags } = query;
+      let processedHashtags;
 
       if (hashtags) {
         processedHashtags = (hashtags as string)
           .split(',')
           .map((tag) => `#${tag} `)
-          .join('')
+          .join('');
       }
 
-      setShowNewPostModal(true)
-      setPublicationContent(
-        `${text}${processedHashtags ? ` ${processedHashtags} ` : ''}${url ? `\n\n${url}` : ''}${
-          via ? `\n\nvia @${via}` : ''
-        }`
-      )
-      setPreviewPublication(preview ? true : false)
+      const content = `${text}${processedHashtags ? ` ${processedHashtags} ` : ''}${url ? `\n\n${url}` : ''}${
+        via ? `\n\nvia @${via}` : ''
+      }`;
+
+      setShowNewPostModal(true);
+      setPublicationContent(content);
+      editor.update(() => {
+        $convertFromMarkdownString(content);
+      });
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [])
+  }, []);
 
   return (
     <Card className="p-5 space-y-3">
@@ -125,7 +130,7 @@ const NewPost: FC = () => {
         </Modal>
       </div>
     </Card>
-  )
-}
+  );
+};
 
-export default NewPost
+export default withEditorContext(NewPost);

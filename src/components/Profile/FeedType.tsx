@@ -10,16 +10,19 @@ import {
   PhotographIcon
 } from '@heroicons/react/outline'
 import isVerified from '@lib/isVerified'
+import { Leafwatch } from '@lib/leafwatch'
 import type { Dispatch, FC } from 'react'
 import { useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { getTotalVHRSent } from 'src/alchemy'
 import { VHR_TOKEN } from 'src/constants'
+import { PROFILE } from 'src/tracking'
 import { useBalance } from 'wagmi'
 
 import OrgDonors from './Count/OrgDonors'
 import OrgGOOD from './Count/OrgGOOD'
 import OrgVerifiedHours from './Count/OrgVerifiedHours'
+import MediaFilter from './Filters/MediaFilter'
 
 interface Props {
   stats: ProfileStats
@@ -37,7 +40,7 @@ const FeedType: FC<Props> = ({ stats, address, id, setFeedType, feedType, profil
   const [orgDonors, setOrgDonors] = useState(0)
   const [orgGood, setOrgGood] = useState(0)
   const { data: vhrBalance } = useBalance({
-    addressOrName: address,
+    address: profile.ownedBy,
     token: VHR_TOKEN,
     watch: true
   })
@@ -88,37 +91,48 @@ const FeedType: FC<Props> = ({ stats, address, id, setFeedType, feedType, profil
           />
         </>
       )}
-      <div className="w-[600px] flex flex-wrap gap-3 px-5 pb-2 mt-3 sm:px-0 sm:mt-0 md:pb-0">
-        <TabButton
-          name={t('Posts')}
-          icon={<PencilAltIcon className="w-4 h-4" />}
-          active={feedType === 'FEED'}
-          count={stats?.totalPosts + stats?.totalMirrors}
-          onClick={() => setFeedType('FEED')}
-        />
-        <TabButton
-          name={t('Comments')}
-          icon={<ChatAlt2Icon className="w-4 h-4" />}
-          active={feedType === 'REPLIES'}
-          count={stats?.totalComments}
-          onClick={() => setFeedType('REPLIES')}
-        />
-        <TabButton
-          name="Media"
-          icon={<FilmIcon className="w-4 h-4" />}
-          active={feedType === 'MEDIA'}
-          onClick={() => {
-            setFeedType('MEDIA')
-          }}
-        />
-        <TabButton
-          name="NFTs"
-          icon={<PhotographIcon className="w-4 h-4" />}
-          active={feedType === 'NFT'}
-          onClick={() => {
-            setFeedType('NFT')
-          }}
-        />
+      <div className="flex justify-between items-center">
+        <div className="flex overflow-x-auto gap-3 px-5 pb-2 mt-3 sm:px-0 sm:mt-0 md:pb-0">
+          <TabButton
+            name={t('Posts')}
+            icon={<PencilAltIcon className="w-4 h-4" />}
+            active={feedType === 'FEED'}
+            count={stats?.totalPosts + stats?.totalMirrors}
+            onClick={() => {
+              setFeedType('FEED')
+              Leafwatch.track(PROFILE.SWITCH_FEED)
+            }}
+          />
+          <TabButton
+            name={t('Comments')}
+            icon={<ChatAlt2Icon className="w-4 h-4" />}
+            active={feedType === 'REPLIES'}
+            count={stats?.totalComments}
+            onClick={() => {
+              setFeedType('REPLIES')
+              Leafwatch.track(PROFILE.SWITCH_REPLIES)
+            }}
+          />
+          <TabButton
+            name="Media"
+            icon={<FilmIcon className="w-4 h-4" />}
+            active={feedType === 'MEDIA'}
+            onClick={() => {
+              setFeedType('MEDIA')
+              Leafwatch.track(PROFILE.SWITCH_MEDIA)
+            }}
+          />
+          <TabButton
+            name="NFTs"
+            icon={<PhotographIcon className="w-4 h-4" />}
+            active={feedType === 'NFT'}
+            onClick={() => {
+              setFeedType('NFT')
+              Leafwatch.track(PROFILE.SWITCH_NFTS)
+            }}
+          />
+        </div>
+        <div>{feedType === 'MEDIA' && <MediaFilter />}</div>
       </div>
       <div className="w-[800px] flex flex-wrap gap-3 px-5 pb-2 mt-3 sm:px-0 sm:mt-0 md:pb-0">
         {isVerified(id) ? (

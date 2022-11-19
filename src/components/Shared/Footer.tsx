@@ -1,7 +1,9 @@
 import useStaffMode from '@components/utils/hooks/useStaffMode'
+import { Leafwatch } from '@lib/leafwatch'
 import Link from 'next/link'
 import type { FC } from 'react'
 import { useTranslation } from 'react-i18next'
+import { FOOTER } from 'src/tracking'
 
 const Footer: FC = () => {
   const { t } = useTranslation('common')
@@ -16,7 +18,11 @@ const Footer: FC = () => {
       <a href="https://polygive.gitbook.io/bcharity/" target="_blank" rel="noreferrer noopener">
         {t('About')}
       </a>
-      <a href="https://discord.gg/4vKS59q5kV" target="_blank" rel="noreferrer noopener">
+      <a 
+        href="https://discord.gg/4vKS59q5kV" 
+        target="_blank" rel="noreferrer noopener"
+        onClick={() => Leafwatch.track(FOOTER.DISCORD)}
+      >
         Discord
       </a>
       <a href="https://twitter.com/BCharityFi" target="_blank" rel="noreferrer noopener">
@@ -25,19 +31,34 @@ const Footer: FC = () => {
       <a href="https://t.me/BCharitynet" target="_blank" rel="noreferrer noopener">
         {t('Telegram')}
       </a>
-      <a href="" target="_blank" rel="noreferrer noopener">
+      <a href="" target="_blank" rel="noreferrer noopener" onClick={() => Leafwatch.track(FOOTER.DONATE)}>
         {t('Donate')}
       </a>
-      <a href="" target="_blank" rel="noreferrer noopener">
+      <a href="" target="_blank" rel="noreferrer noopener" onClick={() => Leafwatch.track(FOOTER.STATUS)}>
         {t('Status')}
       </a>
-      <a href="https://snapshot.org/#/igive.eth" target="_blank" rel="noreferrer noopener">
+      <a 
+        href="https://snapshot.org/#/igive.eth" 
+        target="_blank" 
+        rel="noreferrer noopener"
+        onClick={() => Leafwatch.track(FOOTER.VOTE)}
+      >
         {t('Vote')}
       </a>
-      <a href="https://github.com/BCharity-Net/SocialFi" target="_blank" rel="noreferrer noopener">
+      <a 
+        href="https://github.com/BCharity-Net/SocialFi" 
+        target="_blank" 
+        rel="noreferrer noopener"
+        onClick={() => Leafwatch.track(FOOTER.GITHUB)}
+      >
         GitHub
       </a>
-      <a href="https://feedback.bcharity.net" target="_blank" rel="noreferrer noopener">
+      <a 
+        href="https://feedback.bcharity.net" 
+        target="_blank" 
+        rel="noreferrer noopener"
+        onClick={() => Leafwatch.track(FOOTER.FEEDBACK)}
+      >
         Feedback
       </a>
       <Link href="/thanks">{t('Thanks')}</Link>

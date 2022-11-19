@@ -77,7 +77,7 @@ const VHRTable: FC<Props> = ({ profile, handleQueryComplete, getColumns, query, 
     watch: true,
     args: [GIVE_DAI_LP],
 
-    onSuccess(data) {
+    onSuccess(data: any) {
       //console.log('Success', data)
       setBalanceOf(parseFloat(data.toString()))
       //console.log(totalSupply);
@@ -91,7 +91,7 @@ const VHRTable: FC<Props> = ({ profile, handleQueryComplete, getColumns, query, 
     watch: true,
     args: [GIVE_DAI_LP],
 
-    onSuccess(data) {
+    onSuccess(data: any) {
       //console.log('Success', data)
       setBalanceOfQuote(parseFloat(data.toString()))
       //console.log(totalSupply);
@@ -103,7 +103,7 @@ const VHRTable: FC<Props> = ({ profile, handleQueryComplete, getColumns, query, 
     abi: GOOD_ABI,
     functionName: 'decimals',
     watch: true,
-    onSuccess(data) {
+    onSuccess(data: any) {
       //console.log('Success', data)
       setDecimals(parseFloat(data.toString()))
       //console.log(totalSupply);

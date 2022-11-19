@@ -1,10 +1,9 @@
-import { useQuery } from '@apollo/client'
 import { Card } from '@components/UI/Card'
 import { GridItemEight, GridItemFour, GridLayout } from '@components/UI/GridLayout'
 import useStaffMode from '@components/utils/hooks/useStaffMode'
 import MetaTags from '@components/utils/MetaTags'
 import type { Erc20Amount } from '@generated/types'
-import { BCharityStatsDocument } from '@generated/types'
+import { useBCharityStatsQuery } from '@generated/types'
 import {
   CashIcon,
   ChatAlt2Icon,
@@ -17,11 +16,13 @@ import {
 import { PencilAltIcon } from '@heroicons/react/solid'
 import getTokenImage from '@lib/getTokenImage'
 import humanize from '@lib/humanize'
+import { Leafwatch } from '@lib/leafwatch'
 import type { NextPage } from 'next'
 import type { FC, ReactNode } from 'react'
 import { useEffect } from 'react'
 import { APP_NAME, ERROR_MESSAGE } from 'src/constants'
 import Custom404 from 'src/pages/404'
+import { PAGEVIEW } from 'src/tracking'
 
 import Sidebar from '../Sidebar'
 
@@ -44,16 +45,17 @@ const StatBox: FC<StatBoxProps> = ({ icon, value, title }) => (
 const Stats: NextPage = () => {
   const { allowed } = useStaffMode()
 
-  const { data, loading, error } = useQuery(BCharityStatsDocument, {
-    pollInterval: 1000
-  })
+  useEffect(() => {
+    Leafwatch.track('Pageview', { path: PAGEVIEW.STAFFTOOLS.STATS })
+  }, [])
+
+  const { data, loading, error } = useBCharityStatsQuery({ pollInterval: 1000 })
 
   if (!allowed) {
     return <Custom404 />
   }
 
   const stats: any = data?.globalProtocolStats
-  const fundraiseStats: any = data?.fundraiseStats
 
   return (
     <GridLayout>
@@ -98,11 +100,6 @@ const Stats: NextPage = () => {
                     icon={<ChatAlt2Icon className="w-4 h-4" />}
                     value={stats?.totalComments}
                     title="total comments"
-                  />
-                  <StatBox
-                    icon={<CashIcon className="w-4 h-4" />}
-                    value={fundraiseStats?.totalPosts}
-                    title="total fundraises"
                   />
                 </div>
                 <div className="block sm:flex space-y-3 sm:space-y-0 sm:space-x-3 justify-between">

@@ -1,5 +1,5 @@
 import { gql } from '@apollo/client'
-import { RelayerResultFields } from '@gql/RelayerResultFields'
+import { RelayerResultFields } from '@gql/RelayerResultFieldsq'
 
 export const CREATE_SET_PROFILE_METADATA_TYPED_DATA_MUTATION = gql`
   mutation CreateSetProfileMetadataTypedData($request: CreatePublicSetProfileMetadataURIRequest!) {

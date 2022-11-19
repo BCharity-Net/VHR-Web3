@@ -18,10 +18,8 @@ const GroupPublication: FC<Props> = ({ publication }) => {
       <UsersIcon className="w-4 h-4" />
       <div className="flex items-center space-x-1">
         <Link href={`/groups/${commentOn?.id}`}>
-          <a href={`/groups/${commentOn?.id}`}>
-            <span>{t('Posted on')} </span>
-            <Slug slug={publication?.commentOn?.metadata?.name as string} />
-          </a>
+          <span>{t('Posted on')} </span>
+          <Slug slug={publication?.commentOn?.metadata?.name as string} />
         </Link>
       </div>
     </div>

@@ -15,37 +15,35 @@ const GroupProfile: FC<Props> = ({ group }) => {
   return (
     <div className="flex justify-between items-center">
       <Link href={`/groups/${group?.id}`}>
-        <a href={`/groups/${group?.id}`}>
-          <div className="flex items-center space-x-3">
-            <img
-              src={imageProxy(
-                getIPFSLink(
-                  group?.metadata?.cover?.original?.url
-                    ? group?.metadata?.cover?.original?.url
-                    : `https://avatar.tobi.sh/${group?.id}.png`
-                ),
-                AVATAR
-              )}
-              className="w-16 h-16 bg-gray-200 rounded-xl border dark:border-gray-700/80"
-              height={64}
-              width={64}
-              alt={group?.id}
-            />
-            <div className="space-y-1">
-              <div className="">{group?.metadata?.name}</div>
-              <div className="text-sm text-gray-500">{group?.metadata?.description}</div>
-              {group?.stats?.totalAmountOfCollects !== 0 && (
-                <div className="flex items-center space-x-1 text-sm">
-                  <UsersIcon className="w-3 h-3" />
-                  <div>
-                    {humanize(group?.stats?.totalAmountOfCollects)}{' '}
-                    {group?.stats?.totalAmountOfCollects > 1 ? 'members' : 'member'}
-                  </div>
+        <div className="flex items-center space-x-3">
+          <img
+            src={imageProxy(
+              getIPFSLink(
+                group?.metadata?.cover?.original?.url
+                  ? group?.metadata?.cover?.original?.url
+                  : `https://avatar.tobi.sh/${group?.id}.png`
+              ),
+              AVATAR
+            )}
+            className="w-16 h-16 bg-gray-200 rounded-xl border dark:border-gray-700/80"
+            height={64}
+            width={64}
+            alt={group?.id}
+          />
+          <div className="space-y-1">
+            <div className="">{group?.metadata?.name}</div>
+            <div className="text-sm text-gray-500">{group?.metadata?.description}</div>
+            {group?.stats?.totalAmountOfCollects !== 0 && (
+              <div className="flex items-center space-x-1 text-sm">
+                <UsersIcon className="w-3 h-3" />
+                <div>
+                  {humanize(group?.stats?.totalAmountOfCollects)}{' '}
+                  {group?.stats?.totalAmountOfCollects > 1 ? 'members' : 'member'}
                 </div>
-              )}
-            </div>
+              </div>
+            )}
           </div>
-        </a>
+        </div>
       </Link>
     </div>
   )

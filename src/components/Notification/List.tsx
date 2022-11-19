@@ -1,4 +1,3 @@
-import { useQuery } from '@apollo/client'
 import { Card } from '@components/UI/Card'
 import { EmptyState } from '@components/UI/EmptyState'
 import { ErrorMessage } from '@components/UI/ErrorMessage'
@@ -11,9 +10,8 @@ import type {
   NewMirrorNotification,
   NewReactionNotification
 } from '@generated/types'
-import { NotificationTypes } from '@generated/types'
-import { CustomFiltersTypes, NotificationsDocument } from '@generated/types'
-import { MailIcon } from '@heroicons/react/outline'
+import { CustomFiltersTypes, NotificationTypes, useNotificationsQuery } from '@generated/types'
+import { LightningBoltIcon } from '@heroicons/react/outline'
 import type { FC } from 'react'
 import { useTranslation } from 'react-i18next'
 import InfiniteScroll from 'react-infinite-scroll-component'
@@ -29,23 +27,35 @@ import MentionNotification from './Type/MentionNotification'
 import MirrorNotification from './Type/MirrorNotification'
 
 interface Props {
-  feedType: 'ALL' | 'MENTIONS'
+  feedType: 'ALL' | 'MENTIONS' | 'COMMENTS'
 }
 
 const List: FC<Props> = ({ feedType }) => {
   const { t } = useTranslation('common')
   const currentProfile = useAppStore((state) => state.currentProfile)
 
+  const getNotificationType = () => {
+    switch (feedType) {
+      case 'ALL':
+        return
+      case 'MENTIONS':
+        return [NotificationTypes.MentionPost, NotificationTypes.MentionComment]
+      case 'COMMENTS':
+        return [NotificationTypes.CommentedComment, NotificationTypes.CommentedPost]
+      default:
+        return;
+    }
+  }
+
   // Variables
   const request = {
     profileId: currentProfile?.id,
     customFilters: [CustomFiltersTypes.Gardeners],
-    notificationTypes:
-      feedType === 'MENTIONS' ? [NotificationTypes.MentionPost, NotificationTypes.MentionComment] : undefined,
+    notificationTypes: getNotificationType(),
     limit: 20
   }
 
-  const { data, loading, error, fetchMore } = useQuery(NotificationsDocument, {
+  const { data, loading, error, fetchMore } = useNotificationsQuery({
     variables: { request }
   })
 
@@ -82,7 +92,7 @@ const List: FC<Props> = ({ feedType }) => {
             <span>{t('No inbox')}</span>
           </div>
         }
-        icon={<MailIcon className="w-8 h-8 text-brand" />}
+        icon={<LightningBoltIcon className="w-8 h-8 text-brand" />}
         hideCard
       />
     )

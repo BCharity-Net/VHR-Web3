@@ -1,9 +1,11 @@
 import { Card } from '@components/UI/Card'
 import { BadgeCheckIcon } from '@heroicons/react/solid'
 import isVerified from '@lib/isVerified'
+import { Leafwatch } from '@lib/leafwatch'
 import type { FC } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useAppStore } from 'src/store/app'
+import { SETTINGS } from 'src/tracking'
 
 const Verification: FC = () => {
   const { t } = useTranslation('common')
@@ -20,7 +22,14 @@ const Verification: FC = () => {
       ) : (
         <div>
           {t('Is verified1')}{' '}
-          <a href="https://tally.so/r/wgDajK" target="_blank" rel="noreferrer noopener">
+          <a
+            href="https://tally.so/r/wgDajK"
+            onClick={() => {
+              Leafwatch.track(SETTINGS.ACCOUNT.OPEN_VERIFICATION);
+            }}
+            target="_blank"
+            rel="noreferrer noopener"
+          >
             {t('Request verification')}
           </a>
         </div>

@@ -10,9 +10,9 @@ import { Tooltip } from '@components/UI/Tooltip'
 import MetaTags from '@components/utils/MetaTags'
 import type { BCharityPublication } from '@generated/bcharitytypes'
 import { PaginatedResultInfo } from '@generated/types'
-import { CommentFields } from '@gql/CommentFields'
-import { MirrorFields } from '@gql/MirrorFields'
-import { PostFields } from '@gql/PostFields'
+import { CommentFields } from '@gql/CommentFieldsq'
+import { MirrorFields } from '@gql/MirrorFieldsq'
+import { PostFields } from '@gql/PostFieldsq'
 import getTokenImage from '@lib/getTokenImage'
 import imageProxy from '@lib/imageProxy'
 import Logger from '@lib/logger'
@@ -20,7 +20,7 @@ import type { FC } from 'react'
 import { useState } from 'react'
 import { useInView } from 'react-cool-inview'
 import { useTranslation } from 'react-i18next'
-import { APP_NAME, STATIC_ASSETS } from 'src/constants'
+import { APP_NAME, STATIC_IMAGES_URL } from 'src/constants'
 import { useAppStore } from 'src/store/app'
 
 import RevenueDetails from './PublicationRevenue'
@@ -72,20 +72,18 @@ const Fundraisers: FC<Props> = ({ publication, isFullPublication = false }) => {
       request: {
         sortCriteria: feedType,
         limit: 50,
-        noRandomize: feedType === 'LATEST'
+        noRandomize: feedType === 'LATEST',
+        metadata: {
+          tags: {
+            oneOf: 'bcharity-fundraise'
+          }
+        }
       },
       reactionRequest: currentProfile ? { profileId: currentProfile?.id } : null,
       profileId: currentProfile?.id ?? null
     },
     onCompleted: (data) => {
-      const fundraise = data?.explorePublications?.items.filter((i: any) => {
-        return i?.metadata?.attributes[0]?.value == 'fundraise'
-      })
-      fundraise.map((i: any) => {
-        // if (!fundraise) {
-        revenueData.push(0)
-        // }
-      })
+      const fundraise = data?.explorePublications?.items
 
       setPageInfo(data?.explorePublications?.pageInfo)
       setPublications(fundraise)
@@ -152,7 +150,7 @@ const Fundraisers: FC<Props> = ({ publication, isFullPublication = false }) => {
                   className="h-40 rounded-t-xl border-b sm:h-52 dark:border-b-gray-700/80"
                   style={{
                     backgroundImage: `url(${
-                      cover ? imageProxy(cover, 'attachment') : `${STATIC_ASSETS}/patterns/2.svg`
+                      cover ? imageProxy(cover, 'attachment') : `${STATIC_IMAGES_URL}/patterns/2.svg`
                     })`,
                     backgroundColor: '#8b5cf6',
                     backgroundSize: cover ? 'cover' : '30%',

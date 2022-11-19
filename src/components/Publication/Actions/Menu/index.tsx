@@ -2,11 +2,13 @@ import { NextLink } from '@components/Shared/Navbar/MenuItems'
 import type { BCharityPublication } from '@generated/bcharitytypes'
 import { Menu, Transition } from '@headlessui/react'
 import { DotsHorizontalIcon } from '@heroicons/react/outline'
+import { Leafwatch } from '@lib/leafwatch'
 import clsx from 'clsx'
 import type { FC } from 'react'
 import { Fragment } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useAppStore } from 'src/store/app'
+import { PUBLICATION } from 'src/tracking'
 
 import Delete from './Delete'
 import Embed from './Embed'
@@ -27,7 +29,13 @@ const PublicationMenu: FC<Props> = ({ publication, isFullPublication }) => {
     <Menu as="div">
       {({ open }) => (
         <>
-          <Menu.Button className="p-1.5 rounded-full hover:bg-gray-300 hover:bg-opacity-20" aria-label="More">
+          <Menu.Button
+            className="p-1.5 rounded-full hover:bg-gray-300 hover:bg-opacity-20"
+            onClick={() => {
+              Leafwatch.track(PUBLICATION.MORE)
+            }}
+            aria-label="More"
+          >
             <DotsHorizontalIcon className={clsx('text-gray-500 dark:text-gray-300', iconClassName)} />
           </Menu.Button>
           <Transition

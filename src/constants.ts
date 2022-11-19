@@ -1,6 +1,8 @@
 import getEnvConfig from '@lib/getEnvConfig'
 import { chain } from 'wagmi'
 
+import packageJson from '../package.json'
+
 // Environments
 export const IS_PRODUCTION = process.env.NODE_ENV === 'production'
 
@@ -8,6 +10,7 @@ export const IS_PRODUCTION = process.env.NODE_ENV === 'production'
 export const LENS_NETWORK = process.env.NEXT_PUBLIC_LENS_NETWORK ?? 'mainnet'
 export const MAINNET_API_URL = 'https://api.lens.dev'
 export const TESTNET_API_URL = 'https://api-mumbai.lens.dev'
+export const STAGING_API_URL = 'https://staging-api-social-mumbai.lens.crtlkey.com'
 export const SANDBOX_API_URL = 'https://api-sandbox-mumbai.lens.dev'
 
 export const API_URL = getEnvConfig().apiEndpoint
@@ -25,6 +28,7 @@ export const XMTP_PREFIX = 'lens.dev/dm'
 // Application
 
 export const APP_NAME = 'BCharity'
+export const APP_VERSION = packageJson.version
 export const DESCRIPTION =
   'Next generation group-driven composable, decentralized, and permissionless public good Web3 built on blockchain.'
 export const DEFAULT_OG = 'https://github.com/bcharity/assets'
@@ -57,6 +61,11 @@ export const CATEGORIES = [
   'Peace and Justice'
 ]
 
+// Leafwatch
+export const DATADOG_TOKEN = process.env.NEXT_PUBLIC_DATADOG_API_KEY ?? ''
+export const DATADOG_APPLICATION_KEY = process.env.NEXT_PUBLIC_DATADOG_APPLICATION_KEY ?? ''
+export const LEAFWATCH_HOST = 'https://logs.browser-intake-datadoghq.eu/api/v2/logs'
+
 // Messages
 export const ERROR_MESSAGE = 'Something went wrong!'
 export const SIGN_WALLET = 'Please sign in your wallet.'
@@ -66,7 +75,8 @@ export const WRONG_NETWORK = IS_MAINNET
 export const SIGN_ERROR = 'Failed to sign data'
 
 // URLs
-export const STATIC_ASSETS = 'https://cdn.statically.io/gh/liraymond04/bcharity-assets/main/images'
+export const STATIC_ASSETS_URL = 'https://assets.lenster.xyz'
+export const STATIC_IMAGES_URL = `${STATIC_ASSETS_URL}/images`
 export const POLYGONSCAN_URL = IS_MAINNET ? 'https://polygonscan.com' : 'https://mumbai.polygonscan.com'
 export const VHR_TOP_HOLDERS_URL =
   'https://mumbai.polygonscan.com/token/tokenholderchart/0x28ee241ab245699968f2980d3d1b1d23120ab8be'
@@ -81,6 +91,7 @@ export const ALCHEMY_KEY = process.env.NEXT_PUBLIC_ALCHEMY_KEY
 export const ALCHEMY_RPC = IS_MAINNET
   ? `https://polygon-mainnet.g.alchemy.com/v2/${ALCHEMY_KEY}`
   : `https://polygon-mumbai.g.alchemy.com/v2/${ALCHEMY_KEY}`
+export const RPC_URL = IS_MAINNET ? 'https://rpc.ankr.com/polygon' : 'https://rpc.ankr.com/polygon_mumbai'
 
 export const INFURA_PROJECT_ID = process.env.NEXT_PUBLIC_INFURA_PROJECT_ID
 export const INFURA_PROJECT_SECRET = process.env.NEXT_PUBLIC_INFURA_PROJECT_SECRET
@@ -97,7 +108,7 @@ export const POLYGON_MUMBAI = {
   name: 'Polygon Mumbai',
   rpcUrls: { default: 'https://rpc-mumbai.maticvigil.com' }
 }
-export const CHAIN_ID = IS_MAINNET ? POLYGON_MAINNET.id : POLYGON_MUMBAI.id
+export const CHAIN_ID = IS_MAINNET ? POLYGON_MAINNET.id : POLYGON_MUMBAI.id  
 
 // Errors
 export const ERRORS = {
@@ -146,6 +157,7 @@ export const BUNDLR_NODE_URL = IS_MAINNET ? 'https://node2.bundlr.network' : 'ht
 // UI
 export const MESSAGE_PAGE_LIMIT = 15
 export const SCROLL_THRESHOLD = 0.5
+export const MIN_WIDTH_DESKTOP = 1024
 
 // Named transforms
 export const AVATAR = 'avatar'
@@ -156,5 +168,6 @@ export const ATTACHMENT = 'attachment'
 export const LS_KEYS = {
   BCHARITY_STORE: 'bcharity.store',
   TRANSACTION_STORE: 'transaction.store',
-  TIMELINE_STORE: 'timeline.store'
+  TIMELINE_STORE: 'timeline.store',
+  MESSAGE_STORE: 'message.store'
 }

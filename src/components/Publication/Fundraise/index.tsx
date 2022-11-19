@@ -38,7 +38,7 @@ import {
   LENSHUB_PROXY,
   RELAY_ON,
   SIGN_WALLET,
-  STATIC_ASSETS
+  STATIC_IMAGES_URL
 } from 'src/constants'
 import { useAppStore } from 'src/store/app'
 import { v4 as uuid } from 'uuid'
@@ -307,7 +307,7 @@ const Fundraise: FC<Props> = ({ fund }) => {
         className="h-40 rounded-t-xl border-b sm:h-52 dark:border-b-gray-700/80"
         style={{
           backgroundImage: `url(${
-            cover ? imageProxy(getIPFSLink(cover), 'attachment') : `${STATIC_ASSETS}/patterns/2.svg`
+            cover ? imageProxy(getIPFSLink(cover), 'attachment') : `${STATIC_IMAGES_URL}/patterns/2.svg`
           })`,
           backgroundColor: '#8b5cf6',
           backgroundSize: cover ? 'cover' : '30%',

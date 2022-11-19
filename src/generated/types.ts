@@ -1,9 +1,11 @@
-import { TypedDocumentNode as DocumentNode } from '@graphql-typed-document-node/core'
+import { gql } from '@apollo/client'
+import * as Apollo from '@apollo/client'
 export type Maybe<T> = T | null
 export type InputMaybe<T> = Maybe<T>
 export type Exact<T extends { [key: string]: unknown }> = { [K in keyof T]: T[K] }
 export type MakeOptional<T, K extends keyof T> = Omit<T, K> & { [SubKey in K]?: Maybe<T[SubKey]> }
 export type MakeMaybe<T, K extends keyof T> = Omit<T, K> & { [SubKey in K]: Maybe<T[SubKey]> }
+const defaultOptions = {} as const
 /** All built-in and custom scalars, mapped to their actual values */
 export type Scalars = {
   ID: string
@@ -15,15 +17,18 @@ export type Scalars = {
   BroadcastId: any
   ChainId: any
   CollectModuleData: any
+  ContentEncryptionKey: any
   ContractAddress: any
   CreateHandle: any
   Cursor: any
   DateTime: any
+  EncryptedValueScalar: any
   Ens: any
   EthereumAddress: any
   FollowModuleData: any
   Handle: any
   HandleClaimIdScalar: any
+  IfpsCid: any
   InternalPublicationId: any
   Jwt: any
   LimitScalar: any
@@ -34,6 +39,7 @@ export type Scalars = {
   Nonce: any
   NotificationId: any
   ProfileId: any
+  ProfileInterest: any
   ProxyActionId: any
   PublicationId: any
   PublicationTag: any
@@ -44,11 +50,53 @@ export type Scalars = {
   Signature: any
   Sources: any
   TimestampScalar: any
+  TokenId: any
   TxHash: any
   TxId: any
   UnixTimestamp: any
   Url: any
   Void: any
+}
+
+/** The access conditions for the publication */
+export type AccessConditionInput = {
+  /** AND condition */
+  and?: InputMaybe<AndConditionInput>
+  /** Profile follow condition */
+  collect?: InputMaybe<CollectConditionInput>
+  /** EOA ownership condition */
+  eoa?: InputMaybe<EoaOwnershipInput>
+  /** Profile follow condition */
+  follow?: InputMaybe<FollowConditionInput>
+  /** NFT ownership condition */
+  nft?: InputMaybe<NftOwnershipInput>
+  /** OR condition */
+  or?: InputMaybe<OrConditionInput>
+  /** Profile ownership condition */
+  profile?: InputMaybe<ProfileOwnershipInput>
+  /** ERC20 token ownership condition */
+  token?: InputMaybe<Erc20OwnershipInput>
+}
+
+/** The access conditions for the publication */
+export type AccessConditionOutput = {
+  __typename?: 'AccessConditionOutput'
+  /** AND condition */
+  and?: Maybe<AndConditionOutput>
+  /** Profile follow condition */
+  collect?: Maybe<CollectConditionOutput>
+  /** EOA ownership condition */
+  eoa?: Maybe<EoaOwnershipOutput>
+  /** Profile follow condition */
+  follow?: Maybe<FollowConditionOutput>
+  /** NFT ownership condition */
+  nft?: Maybe<NftOwnershipOutput>
+  /** OR condition */
+  or?: Maybe<OrConditionOutput>
+  /** Profile ownership condition */
+  profile?: Maybe<ProfileOwnershipOutput>
+  /** ERC20 token ownership condition */
+  token?: Maybe<Erc20OwnershipOutput>
 }
 
 export type AchRequest = {
@@ -60,12 +108,31 @@ export type AchRequest = {
   secret: Scalars['String']
 }
 
+/** The request object to add interests to a profile */
+export type AddProfileInterestsRequest = {
+  /** The profile interest to add */
+  interests: Array<Scalars['ProfileInterest']>
+  /** The profileId to add interests to */
+  profileId: Scalars['ProfileId']
+}
+
 export type AllPublicationsTagsRequest = {
   cursor?: InputMaybe<Scalars['Cursor']>
   limit?: InputMaybe<Scalars['LimitScalar']>
   sort: TagSortCriteria
   /** The App Id */
   source?: InputMaybe<Scalars['Sources']>
+}
+
+export type AndConditionInput = {
+  /** The list of conditions to apply AND to. You can only use nested boolean conditions at the root level. */
+  criteria: Array<AccessConditionInput>
+}
+
+export type AndConditionOutput = {
+  __typename?: 'AndConditionOutput'
+  /** The list of conditions to apply AND to. You can only use nested boolean conditions at the root level. */
+  criteria: Array<AccessConditionOutput>
 }
 
 export type ApprovedAllowanceAmount = {
@@ -130,6 +197,12 @@ export type CanCommentResponse = {
   result: Scalars['Boolean']
 }
 
+export type CanDecryptResponse = {
+  __typename?: 'CanDecryptResponse'
+  reasons?: Maybe<DecryptFailReason>
+  result: Scalars['Boolean']
+}
+
 export type CanMirrorResponse = {
   __typename?: 'CanMirrorResponse'
   result: Scalars['Boolean']
@@ -159,6 +232,23 @@ export type ClaimableHandles = {
   __typename?: 'ClaimableHandles'
   canClaimFreeTextHandle: Scalars['Boolean']
   reservedHandles: Array<ReservedClaimableHandle>
+}
+
+/** Condition that signifies if address or profile has collected a publication */
+export type CollectConditionInput = {
+  /** The collected publication id */
+  publicationId: Scalars['PublicationId']
+  /** The collected publication id */
+  publisherId: Scalars['ProfileId']
+}
+
+/** Condition that signifies if address or profile has collected a publication */
+export type CollectConditionOutput = {
+  __typename?: 'CollectConditionOutput'
+  /** The collected publication id */
+  publicationId: Scalars['PublicationId']
+  /** The collected publication id */
+  publisherId: Scalars['ProfileId']
 }
 
 export type CollectModule =
@@ -214,6 +304,7 @@ export type Comment = {
   /** ID of the source */
   appId?: Maybe<Scalars['Sources']>
   canComment: CanCommentResponse
+  canDecrypt: CanDecryptResponse
   canMirror: CanMirrorResponse
   /** The collect module */
   collectModule: CollectModule
@@ -232,6 +323,8 @@ export type Comment = {
   hidden: Scalars['Boolean']
   /** The internal publication id */
   id: Scalars['InternalPublicationId']
+  /** Indicates if the publication is gated behind some access criteria */
+  isGated: Scalars['Boolean']
   /** The top level post/mirror this comment lives on */
   mainPost: MainPostReference
   /** The metadata for the post */
@@ -254,8 +347,19 @@ export type CommentCanCommentArgs = {
 }
 
 /** The social comment */
+export type CommentCanDecryptArgs = {
+  address?: InputMaybe<Scalars['EthereumAddress']>
+  profileId?: InputMaybe<Scalars['ProfileId']>
+}
+
+/** The social comment */
 export type CommentCanMirrorArgs = {
   profileId?: InputMaybe<Scalars['ProfileId']>
+}
+
+/** The social comment */
+export type CommentHasCollectedByMeArgs = {
+  isFinalisedOnChain?: InputMaybe<Scalars['Boolean']>
 }
 
 /** The social comment */
@@ -266,6 +370,13 @@ export type CommentMirrorsArgs = {
 /** The social comment */
 export type CommentReactionArgs = {
   request?: InputMaybe<ReactionFieldResolverRequest>
+}
+
+/** The gated publication access criteria contract types */
+export enum ContractType {
+  Erc20 = 'ERC20',
+  Erc721 = 'ERC721',
+  Erc1155 = 'ERC1155'
 }
 
 /** The create burn eip 712 typed data */
@@ -535,6 +646,8 @@ export type CreatePublicCommentRequest = {
   collectModule: CollectModuleParams
   /** The metadata uploaded somewhere passing in the url to reach it */
   contentURI: Scalars['Url']
+  /** The criteria to access the publication data */
+  gated?: InputMaybe<GatedPublicationParamsInput>
   /** Profile id */
   profileId: Scalars['ProfileId']
   /** Publication id of what your comments on remember if this is a comment you commented on it will be that as the id */
@@ -548,6 +661,8 @@ export type CreatePublicPostRequest = {
   collectModule: CollectModuleParams
   /** The metadata uploaded somewhere passing in the url to reach it */
   contentURI: Scalars['Url']
+  /** The criteria to access the publication data */
+  gated?: InputMaybe<GatedPublicationParamsInput>
   /** Profile id */
   profileId: Scalars['ProfileId']
   /** The reference module */
@@ -822,6 +937,19 @@ export enum CustomFiltersTypes {
   Gardeners = 'GARDENERS'
 }
 
+/** The reason why a profile cannot decrypt a publication */
+export enum DecryptFailReason {
+  CollectNotFinalisedOnChain = 'COLLECT_NOT_FINALISED_ON_CHAIN',
+  DoesNotFollowProfile = 'DOES_NOT_FOLLOW_PROFILE',
+  DoesNotOwnNft = 'DOES_NOT_OWN_NFT',
+  DoesNotOwnProfile = 'DOES_NOT_OWN_PROFILE',
+  FollowNotFinalisedOnChain = 'FOLLOW_NOT_FINALISED_ON_CHAIN',
+  HasNotCollectedPublication = 'HAS_NOT_COLLECTED_PUBLICATION',
+  ProfileDoesNotExist = 'PROFILE_DOES_NOT_EXIST',
+  UnauthorizedAddress = 'UNAUTHORIZED_ADDRESS',
+  UnauthorizedBalance = 'UNAUTHORIZED_BALANCE'
+}
+
 export type DefaultProfileRequest = {
   ethereumAddress: Scalars['EthereumAddress']
 }
@@ -876,6 +1004,8 @@ export type DoesFollowResponse = {
   followerAddress: Scalars['EthereumAddress']
   /** If the user does follow */
   follows: Scalars['Boolean']
+  /** Is finalised on-chain */
+  isFinalisedOnChain: Scalars['Boolean']
   /** The profile id */
   profileId: Scalars['ProfileId']
 }
@@ -926,10 +1056,94 @@ export type EnabledModules = {
   referenceModules: Array<EnabledModule>
 }
 
+/** The encrypted fields */
+export type EncryptedFieldsOutput = {
+  __typename?: 'EncryptedFieldsOutput'
+  /** The encrypted animation_url field */
+  animation_url?: Maybe<Scalars['EncryptedValueScalar']>
+  /** The encrypted content field */
+  content?: Maybe<Scalars['EncryptedValueScalar']>
+  /** The encrypted external_url field */
+  external_url?: Maybe<Scalars['EncryptedValueScalar']>
+  /** The encrypted image field */
+  image?: Maybe<Scalars['EncryptedValueScalar']>
+  /** The encrypted media field */
+  media?: Maybe<Array<EncryptedMediaSet>>
+}
+
+/** The Encrypted Media url and metadata */
+export type EncryptedMedia = {
+  __typename?: 'EncryptedMedia'
+  /** The encrypted alt tags for accessibility */
+  altTag?: Maybe<Scalars['EncryptedValueScalar']>
+  /** The encrypted cover for any video or audio you attached */
+  cover?: Maybe<Scalars['EncryptedValueScalar']>
+  /** Height - will always be null on the public API */
+  height?: Maybe<Scalars['Int']>
+  /** The image/audio/video mime type for the publication */
+  mimeType?: Maybe<Scalars['MimeType']>
+  /** Size - will always be null on the public API */
+  size?: Maybe<Scalars['Int']>
+  /** The encrypted value for the URL */
+  url: Scalars['Url']
+  /** Width - will always be null on the public API */
+  width?: Maybe<Scalars['Int']>
+}
+
+/** The encrypted media set */
+export type EncryptedMediaSet = {
+  __typename?: 'EncryptedMediaSet'
+  /**
+   * Medium media - will always be null on the public API
+   * @deprecated should not be used will always be null
+   */
+  medium?: Maybe<EncryptedMedia>
+  /** Original media */
+  original: EncryptedMedia
+  /**
+   * Small media - will always be null on the public API
+   * @deprecated should not be used will always be null
+   */
+  small?: Maybe<EncryptedMedia>
+}
+
+/** The metadata encryption params */
+export type EncryptionParamsOutput = {
+  __typename?: 'EncryptionParamsOutput'
+  /** The access conditions */
+  accessCondition: AccessConditionOutput
+  /** The encrypted fields */
+  encryptedFields: EncryptedFieldsOutput
+  /** The encryption provider */
+  encryptionProvider: EncryptionProvider
+  /** The provider-specific encryption params */
+  providerSpecificParams: ProviderSpecificParamsOutput
+}
+
+/** The gated publication encryption provider */
+export enum EncryptionProvider {
+  LitProtocol = 'LIT_PROTOCOL'
+}
+
 export type EnsOnChainIdentity = {
   __typename?: 'EnsOnChainIdentity'
   /** The default ens mapped to this address */
   name?: Maybe<Scalars['Ens']>
+}
+
+export type EoaOwnershipInput = {
+  /** The address that will have access to the content */
+  address: Scalars['EthereumAddress']
+  /** The chain ID of the address */
+  chainID: Scalars['ChainId']
+}
+
+export type EoaOwnershipOutput = {
+  __typename?: 'EoaOwnershipOutput'
+  /** The address that will have access to the content */
+  address: Scalars['EthereumAddress']
+  /** The chain ID of the address */
+  chainID: Scalars['ChainId']
 }
 
 /** The erc20 type */
@@ -951,6 +1165,33 @@ export type Erc20Amount = {
   asset: Erc20
   /** Floating point number as string (e.g. 42.009837). It could have the entire precision of the Asset or be truncated to the last significant decimal. */
   value: Scalars['String']
+}
+
+export type Erc20OwnershipInput = {
+  /** The amount of tokens required to access the content */
+  amount: Scalars['String']
+  /** The amount of tokens required to access the content */
+  chainID: Scalars['ChainId']
+  /** The operator to use when comparing the amount of tokens */
+  condition: ScalarOperator
+  /** The ERC20 token's ethereum address */
+  contractAddress: Scalars['ContractAddress']
+  /** The amount of decimals of the ERC20 contract */
+  decimals: Scalars['Float']
+}
+
+export type Erc20OwnershipOutput = {
+  __typename?: 'Erc20OwnershipOutput'
+  /** The amount of tokens required to access the content */
+  amount: Scalars['String']
+  /** The amount of tokens required to access the content */
+  chainID: Scalars['ChainId']
+  /** The operator to use when comparing the amount of tokens */
+  condition: ScalarOperator
+  /** The ERC20 token's ethereum address */
+  contractAddress: Scalars['ContractAddress']
+  /** The amount of decimals of the ERC20 contract */
+  decimals: Scalars['Float']
 }
 
 /** The paginated publication result */
@@ -1096,6 +1337,17 @@ export type Follow = {
   profile: Scalars['ProfileId']
 }
 
+export type FollowConditionInput = {
+  /** The profile id of the gated profile */
+  profileId: Scalars['ProfileId']
+}
+
+export type FollowConditionOutput = {
+  __typename?: 'FollowConditionOutput'
+  /** The profile id of the gated profile */
+  profileId: Scalars['ProfileId']
+}
+
 export type FollowModule =
   | FeeFollowModuleSettings
   | ProfileFollowModuleSettings
@@ -1212,6 +1464,28 @@ export type FreeCollectProxyAction = {
 
 export type FreeFollowProxyAction = {
   profileId: Scalars['ProfileId']
+}
+
+/** The access conditions for the publication */
+export type GatedPublicationParamsInput = {
+  /** AND condition */
+  and?: InputMaybe<AndConditionInput>
+  /** Profile follow condition */
+  collect?: InputMaybe<CollectConditionInput>
+  /** The LIT Protocol encrypted symmetric key */
+  encryptedSymmetricKey: Scalars['ContentEncryptionKey']
+  /** EOA ownership condition */
+  eoa?: InputMaybe<EoaOwnershipInput>
+  /** Profile follow condition */
+  follow?: InputMaybe<FollowConditionInput>
+  /** NFT ownership condition */
+  nft?: InputMaybe<NftOwnershipInput>
+  /** OR condition */
+  or?: InputMaybe<OrConditionInput>
+  /** Profile ownership condition */
+  profile?: InputMaybe<ProfileOwnershipInput>
+  /** ERC20 token ownership condition */
+  token?: InputMaybe<Erc20OwnershipInput>
 }
 
 export type GenerateModuleCurrencyApproval = {
@@ -1373,7 +1647,7 @@ export type Media = {
   /** The alt tags for accessibility */
   altTag?: Maybe<Scalars['String']>
   /** The cover for any video or audio you attached */
-  cover?: Maybe<Scalars['String']>
+  cover?: Maybe<Scalars['Url']>
   /** Height - will always be null on the public API */
   height?: Maybe<Scalars['Int']>
   /** The image/audio/video mime type for the publication */
@@ -1384,6 +1658,19 @@ export type Media = {
   url: Scalars['Url']
   /** Width - will always be null on the public API */
   width?: Maybe<Scalars['Int']>
+}
+
+/** Media object output */
+export type MediaOutput = {
+  __typename?: 'MediaOutput'
+  /** The alt tags for accessibility */
+  altTag?: Maybe<Scalars['String']>
+  /** The cover for any video or audio you attached */
+  cover?: Maybe<Scalars['Url']>
+  item: Scalars['Url']
+  source?: Maybe<PublicationMediaSource>
+  /** This is the mime type of media */
+  type?: Maybe<Scalars['MimeType']>
 }
 
 /** The Media Set */
@@ -1441,6 +1728,8 @@ export type MetadataOutput = {
   cover?: Maybe<MediaSet>
   /** This is the metadata description */
   description?: Maybe<Scalars['Markdown']>
+  /** The publication's encryption params in case it's encrypted */
+  encryptionParams?: Maybe<EncryptionParamsOutput>
   /** This is the image attached to the metadata and the property used to show the NFT! */
   image?: Maybe<Scalars['Url']>
   /** The locale of the publication,  */
@@ -1461,6 +1750,7 @@ export type Mirror = {
   /** ID of the source */
   appId?: Maybe<Scalars['Sources']>
   canComment: CanCommentResponse
+  canDecrypt: CanDecryptResponse
   canMirror: CanMirrorResponse
   /** The collect module */
   collectModule: CollectModule
@@ -1473,6 +1763,8 @@ export type Mirror = {
   hidden: Scalars['Boolean']
   /** The internal publication id */
   id: Scalars['InternalPublicationId']
+  /** Indicates if the publication is gated behind some access criteria */
+  isGated: Scalars['Boolean']
   /** The metadata for the post */
   metadata: MetadataOutput
   /** The mirror publication */
@@ -1494,8 +1786,19 @@ export type MirrorCanCommentArgs = {
 }
 
 /** The social mirror */
+export type MirrorCanDecryptArgs = {
+  address?: InputMaybe<Scalars['EthereumAddress']>
+  profileId?: InputMaybe<Scalars['ProfileId']>
+}
+
+/** The social mirror */
 export type MirrorCanMirrorArgs = {
   profileId?: InputMaybe<Scalars['ProfileId']>
+}
+
+/** The social mirror */
+export type MirrorHasCollectedByMeArgs = {
+  isFinalisedOnChain?: InputMaybe<Scalars['Boolean']>
 }
 
 /** The social mirror */
@@ -1535,10 +1838,13 @@ export type ModuleInfo = {
 export type Mutation = {
   __typename?: 'Mutation'
   ach?: Maybe<Scalars['Void']>
+  /** Adds profile interests to the given profile */
+  addProfileInterests?: Maybe<Scalars['Void']>
   addReaction?: Maybe<Scalars['Void']>
   authenticate: AuthenticationResult
   broadcast: RelayResult
   claim: RelayResult
+  createAttachMediaData: PublicMediaResults
   createBurnProfileTypedData: CreateBurnProfileBroadcastItemResult
   createCollectTypedData: CreateCollectBroadcastItemResult
   createCommentTypedData: CreateCommentBroadcastItemResult
@@ -1562,12 +1868,18 @@ export type Mutation = {
   hidePublication?: Maybe<Scalars['Void']>
   proxyAction: Scalars['ProxyActionId']
   refresh: AuthenticationResult
+  /** Removes profile interests from the given profile */
+  removeProfileInterests?: Maybe<Scalars['Void']>
   removeReaction?: Maybe<Scalars['Void']>
   reportPublication?: Maybe<Scalars['Void']>
 }
 
 export type MutationAchArgs = {
   request: AchRequest
+}
+
+export type MutationAddProfileInterestsArgs = {
+  request: AddProfileInterestsRequest
 }
 
 export type MutationAddReactionArgs = {
@@ -1584,6 +1896,10 @@ export type MutationBroadcastArgs = {
 
 export type MutationClaimArgs = {
   request: ClaimHandleRequest
+}
+
+export type MutationCreateAttachMediaDataArgs = {
+  request: PublicMediaRequest
 }
 
 export type MutationCreateBurnProfileTypedDataArgs = {
@@ -1690,6 +2006,10 @@ export type MutationProxyActionArgs = {
 
 export type MutationRefreshArgs = {
   request: RefreshRequest
+}
+
+export type MutationRemoveProfileInterestsArgs = {
+  request: RemoveProfileInterestsRequest
 }
 
 export type MutationRemoveReactionArgs = {
@@ -1865,6 +2185,29 @@ export type NftOwnershipChallengeResult = {
   timeout: Scalars['TimestampScalar']
 }
 
+export type NftOwnershipInput = {
+  /** The NFT chain id */
+  chainID: Scalars['ChainId']
+  /** The NFT collection's ethereum address */
+  contractAddress: Scalars['ContractAddress']
+  /** The unlocker contract type */
+  contractType: ContractType
+  /** The optional token ID(s) to check for ownership */
+  tokenIds?: InputMaybe<Scalars['TokenId']>
+}
+
+export type NftOwnershipOutput = {
+  __typename?: 'NftOwnershipOutput'
+  /** The NFT chain id */
+  chainID: Scalars['ChainId']
+  /** The NFT collection's ethereum address */
+  contractAddress: Scalars['ContractAddress']
+  /** The unlocker contract type */
+  contractType: ContractType
+  /** The optional token ID(s) to check for ownership */
+  tokenIds?: Maybe<Scalars['TokenId']>
+}
+
 export type Notification =
   | NewCollectNotification
   | NewCommentNotification
@@ -1911,6 +2254,17 @@ export type OnChainIdentity = {
   sybilDotOrg: SybilDotOrgIdentity
   /** The worldcoin identity */
   worldcoin: WorldcoinIdentity
+}
+
+export type OrConditionInput = {
+  /** The list of conditions to apply OR to. You can only use nested boolean conditions at the root level. */
+  criteria: Array<AccessConditionInput>
+}
+
+export type OrConditionOutput = {
+  __typename?: 'OrConditionOutput'
+  /** The list of conditions to apply OR to. You can only use nested boolean conditions at the root level. */
+  criteria: Array<AccessConditionOutput>
 }
 
 /** The nft type */
@@ -2026,6 +2380,7 @@ export type Post = {
   /** ID of the source */
   appId?: Maybe<Scalars['Sources']>
   canComment: CanCommentResponse
+  canDecrypt: CanDecryptResponse
   canMirror: CanMirrorResponse
   /** The collect module */
   collectModule: CollectModule
@@ -2043,6 +2398,8 @@ export type Post = {
   hidden: Scalars['Boolean']
   /** The internal publication id */
   id: Scalars['InternalPublicationId']
+  /** Indicates if the publication is gated behind some access criteria */
+  isGated: Scalars['Boolean']
   /** The metadata for the post */
   metadata: MetadataOutput
   mirrors: Array<Scalars['InternalPublicationId']>
@@ -2063,8 +2420,19 @@ export type PostCanCommentArgs = {
 }
 
 /** The social post */
+export type PostCanDecryptArgs = {
+  address?: InputMaybe<Scalars['EthereumAddress']>
+  profileId?: InputMaybe<Scalars['ProfileId']>
+}
+
+/** The social post */
 export type PostCanMirrorArgs = {
   profileId?: InputMaybe<Scalars['ProfileId']>
+}
+
+/** The social post */
+export type PostHasCollectedByMeArgs = {
+  isFinalisedOnChain?: InputMaybe<Scalars['Boolean']>
 }
 
 /** The social post */
@@ -2096,6 +2464,8 @@ export type Profile = {
   handle: Scalars['Handle']
   /** The profile id */
   id: Scalars['ProfileId']
+  /** The profile interests */
+  interests?: Maybe<Array<Scalars['ProfileInterest']>>
   /** Is the profile default */
   isDefault: Scalars['Boolean']
   isFollowedByMe: Scalars['Boolean']
@@ -2112,6 +2482,11 @@ export type Profile = {
   picture?: Maybe<ProfileMedia>
   /** Profile stats */
   stats: ProfileStats
+}
+
+/** The Profile */
+export type ProfileIsFollowedByMeArgs = {
+  isFinalisedOnChain?: InputMaybe<Scalars['Boolean']>
 }
 
 /** The Profile */
@@ -2145,6 +2520,19 @@ export type ProfileMedia = MediaSet | NftImage
 
 export type ProfileOnChainIdentityRequest = {
   profileIds: Array<Scalars['ProfileId']>
+}
+
+/** Condition that signifies if address has access to profile */
+export type ProfileOwnershipInput = {
+  /** The profile id */
+  profileId: Scalars['ProfileId']
+}
+
+/** Condition that signifies if address has access to profile */
+export type ProfileOwnershipOutput = {
+  __typename?: 'ProfileOwnershipOutput'
+  /** The profile id */
+  profileId: Scalars['ProfileId']
 }
 
 export type ProfilePublicationRevenueQueryRequest = {
@@ -2253,6 +2641,13 @@ export type ProfileStatsPublicationsTotalArgs = {
   forSources: Array<Scalars['Sources']>
 }
 
+/** The provider-specific encryption params */
+export type ProviderSpecificParamsOutput = {
+  __typename?: 'ProviderSpecificParamsOutput'
+  /** The encryption key */
+  encryptionKey: Scalars['ContentEncryptionKey']
+}
+
 export type ProxyActionError = {
   __typename?: 'ProxyActionError'
   lastKnownTxId?: Maybe<Scalars['TxId']>
@@ -2285,6 +2680,26 @@ export enum ProxyActionStatusTypes {
   Transferring = 'TRANSFERRING'
 }
 
+export type PublicMediaRequest = {
+  /** The alt tags for accessibility */
+  altTag?: InputMaybe<Scalars['String']>
+  /** The cover for any video or audio you attached */
+  cover?: InputMaybe<Scalars['Url']>
+  /** Pre calculated cid of the file to push */
+  itemCid: Scalars['IfpsCid']
+  /** This is the mime type of media */
+  type?: InputMaybe<Scalars['MimeType']>
+}
+
+/** The response to upload the attached file */
+export type PublicMediaResults = {
+  __typename?: 'PublicMediaResults'
+  /** ipfs uri to add on the metadata */
+  media: MediaOutput
+  /** Signed url to push the file */
+  signedUrl: Scalars['String']
+}
+
 export type Publication = Comment | Mirror | Post
 
 /** The publication content warning */
@@ -2305,6 +2720,11 @@ export enum PublicationMainFocus {
   Link = 'LINK',
   TextOnly = 'TEXT_ONLY',
   Video = 'VIDEO'
+}
+
+/** The source of the media */
+export enum PublicationMediaSource {
+  Lens = 'LENS'
 }
 
 /** Publication metadata content waring filters */
@@ -2329,13 +2749,14 @@ export type PublicationMetadataFilters = {
   tags?: InputMaybe<PublicationMetadataTagsFilter>
 }
 
-/** The metadata attribute output */
+/** The metadata attribute input */
 export type PublicationMetadataMediaInput = {
   /** The alt tags for accessibility */
   altTag?: InputMaybe<Scalars['String']>
   /** The cover for any video or audio you attached */
-  cover?: InputMaybe<Scalars['String']>
+  cover?: InputMaybe<Scalars['Url']>
   item: Scalars['Url']
+  source?: InputMaybe<PublicationMediaSource>
   /** This is the mime type of media */
   type?: InputMaybe<Scalars['MimeType']>
 }
@@ -2616,6 +3037,8 @@ export type Query = {
   profile?: Maybe<Profile>
   profileFollowModuleBeenRedeemed: Scalars['Boolean']
   profileFollowRevenue: FollowRevenueResult
+  /** Get the list of profile interests */
+  profileInterests: Array<Scalars['ProfileInterest']>
   profileOnChainIdentity: Array<OnChainIdentity>
   profilePublicationRevenue: ProfilePublicationRevenueResult
   profilePublicationsForSale: PaginatedProfilePublicationsForSaleResult
@@ -2898,6 +3321,14 @@ export type RelayerResult = {
   txId: Scalars['TxId']
 }
 
+/** The request object to remove interests from a profile */
+export type RemoveProfileInterestsRequest = {
+  /** The profile interest to add */
+  interests: Array<Scalars['ProfileInterest']>
+  /** The profileId to add interests to */
+  profileId: Scalars['ProfileId']
+}
+
 export type ReportPublicationRequest = {
   additionalComments?: InputMaybe<Scalars['String']>
   publicationId: Scalars['InternalPublicationId']
@@ -2936,6 +3367,16 @@ export type RevertFollowModuleSettings = {
   contractAddress: Scalars['ContractAddress']
   /** The follow module enum */
   type: FollowModules
+}
+
+/** The gated publication access criteria scalar operators */
+export enum ScalarOperator {
+  Equal = 'EQUAL',
+  GreaterThan = 'GREATER_THAN',
+  GreaterThanOrEqual = 'GREATER_THAN_OR_EQUAL',
+  LessThan = 'LESS_THAN',
+  LessThanOrEqual = 'LESS_THAN_OR_EQUAL',
+  NotEqual = 'NOT_EQUAL'
 }
 
 export type SearchQueryRequest = {
@@ -3278,7 +3719,6 @@ export type WorldcoinIdentity = {
 type CollectModuleFields_FeeCollectModuleSettings_Fragment = {
   __typename?: 'FeeCollectModuleSettings'
   type: CollectModules
-  recipient: any
   referralFee: number
   contractAddress: any
   followerOnly: boolean
@@ -3300,7 +3740,6 @@ type CollectModuleFields_LimitedFeeCollectModuleSettings_Fragment = {
   __typename?: 'LimitedFeeCollectModuleSettings'
   type: CollectModules
   collectLimit: string
-  recipient: any
   referralFee: number
   contractAddress: any
   followerOnly: boolean
@@ -3315,7 +3754,6 @@ type CollectModuleFields_LimitedTimedFeeCollectModuleSettings_Fragment = {
   __typename?: 'LimitedTimedFeeCollectModuleSettings'
   type: CollectModules
   collectLimit: string
-  recipient: any
   endTimestamp: any
   referralFee: number
   contractAddress: any
@@ -3332,7 +3770,6 @@ type CollectModuleFields_RevertCollectModuleSettings_Fragment = { __typename?: '
 type CollectModuleFields_TimedFeeCollectModuleSettings_Fragment = {
   __typename?: 'TimedFeeCollectModuleSettings'
   type: CollectModules
-  recipient: any
   endTimestamp: any
   referralFee: number
   contractAddress: any
@@ -3373,6 +3810,8 @@ export type CommentFieldsFragment = {
     handle: any
     bio?: string | null
     ownedBy: any
+    isFollowedByMe: boolean
+    stats: { __typename?: 'ProfileStats'; totalFollowers: number; totalFollowing: number }
     attributes?: Array<{ __typename?: 'Attribute'; key: string; value: string }> | null
     picture?:
       | { __typename?: 'MediaSet'; original: { __typename?: 'Media'; url: any } }
@@ -3397,6 +3836,8 @@ export type CommentFieldsFragment = {
       handle: any
       bio?: string | null
       ownedBy: any
+      isFollowedByMe: boolean
+      stats: { __typename?: 'ProfileStats'; totalFollowers: number; totalFollowing: number }
       attributes?: Array<{ __typename?: 'Attribute'; key: string; value: string }> | null
       picture?:
         | { __typename?: 'MediaSet'; original: { __typename?: 'Media'; url: any } }
@@ -3414,7 +3855,6 @@ export type CommentFieldsFragment = {
     | {
         __typename?: 'FeeCollectModuleSettings'
         type: CollectModules
-        recipient: any
         referralFee: number
         contractAddress: any
         followerOnly: boolean
@@ -3434,7 +3874,6 @@ export type CommentFieldsFragment = {
         __typename?: 'LimitedFeeCollectModuleSettings'
         type: CollectModules
         collectLimit: string
-        recipient: any
         referralFee: number
         contractAddress: any
         followerOnly: boolean
@@ -3448,7 +3887,6 @@ export type CommentFieldsFragment = {
         __typename?: 'LimitedTimedFeeCollectModuleSettings'
         type: CollectModules
         collectLimit: string
-        recipient: any
         endTimestamp: any
         referralFee: number
         contractAddress: any
@@ -3463,7 +3901,6 @@ export type CommentFieldsFragment = {
     | {
         __typename?: 'TimedFeeCollectModuleSettings'
         type: CollectModules
-        recipient: any
         endTimestamp: any
         referralFee: number
         contractAddress: any
@@ -3515,6 +3952,8 @@ export type CommentFieldsFragment = {
           handle: any
           bio?: string | null
           ownedBy: any
+          isFollowedByMe: boolean
+          stats: { __typename?: 'ProfileStats'; totalFollowers: number; totalFollowing: number }
           attributes?: Array<{ __typename?: 'Attribute'; key: string; value: string }> | null
           picture?:
             | { __typename?: 'MediaSet'; original: { __typename?: 'Media'; url: any } }
@@ -3538,7 +3977,6 @@ export type CommentFieldsFragment = {
           | {
               __typename?: 'FeeCollectModuleSettings'
               type: CollectModules
-              recipient: any
               referralFee: number
               contractAddress: any
               followerOnly: boolean
@@ -3558,7 +3996,6 @@ export type CommentFieldsFragment = {
               __typename?: 'LimitedFeeCollectModuleSettings'
               type: CollectModules
               collectLimit: string
-              recipient: any
               referralFee: number
               contractAddress: any
               followerOnly: boolean
@@ -3572,7 +4009,6 @@ export type CommentFieldsFragment = {
               __typename?: 'LimitedTimedFeeCollectModuleSettings'
               type: CollectModules
               collectLimit: string
-              recipient: any
               endTimestamp: any
               referralFee: number
               contractAddress: any
@@ -3587,7 +4023,6 @@ export type CommentFieldsFragment = {
           | {
               __typename?: 'TimedFeeCollectModuleSettings'
               type: CollectModules
-              recipient: any
               endTimestamp: any
               referralFee: number
               contractAddress: any
@@ -3638,6 +4073,8 @@ export type CommentFieldsFragment = {
                 handle: any
                 bio?: string | null
                 ownedBy: any
+                isFollowedByMe: boolean
+                stats: { __typename?: 'ProfileStats'; totalFollowers: number; totalFollowing: number }
                 attributes?: Array<{ __typename?: 'Attribute'; key: string; value: string }> | null
                 picture?:
                   | { __typename?: 'MediaSet'; original: { __typename?: 'Media'; url: any } }
@@ -3656,7 +4093,6 @@ export type CommentFieldsFragment = {
                 | {
                     __typename?: 'FeeCollectModuleSettings'
                     type: CollectModules
-                    recipient: any
                     referralFee: number
                     contractAddress: any
                     followerOnly: boolean
@@ -3676,7 +4112,6 @@ export type CommentFieldsFragment = {
                     __typename?: 'LimitedFeeCollectModuleSettings'
                     type: CollectModules
                     collectLimit: string
-                    recipient: any
                     referralFee: number
                     contractAddress: any
                     followerOnly: boolean
@@ -3690,7 +4125,6 @@ export type CommentFieldsFragment = {
                     __typename?: 'LimitedTimedFeeCollectModuleSettings'
                     type: CollectModules
                     collectLimit: string
-                    recipient: any
                     endTimestamp: any
                     referralFee: number
                     contractAddress: any
@@ -3705,7 +4139,6 @@ export type CommentFieldsFragment = {
                 | {
                     __typename?: 'TimedFeeCollectModuleSettings'
                     type: CollectModules
-                    recipient: any
                     endTimestamp: any
                     referralFee: number
                     contractAddress: any
@@ -3755,6 +4188,8 @@ export type CommentFieldsFragment = {
                       handle: any
                       bio?: string | null
                       ownedBy: any
+                      isFollowedByMe: boolean
+                      stats: { __typename?: 'ProfileStats'; totalFollowers: number; totalFollowing: number }
                       attributes?: Array<{ __typename?: 'Attribute'; key: string; value: string }> | null
                       picture?:
                         | { __typename?: 'MediaSet'; original: { __typename?: 'Media'; url: any } }
@@ -3793,6 +4228,8 @@ export type CommentFieldsFragment = {
                       handle: any
                       bio?: string | null
                       ownedBy: any
+                      isFollowedByMe: boolean
+                      stats: { __typename?: 'ProfileStats'; totalFollowers: number; totalFollowing: number }
                       attributes?: Array<{ __typename?: 'Attribute'; key: string; value: string }> | null
                       picture?:
                         | { __typename?: 'MediaSet'; original: { __typename?: 'Media'; url: any } }
@@ -3817,6 +4254,8 @@ export type CommentFieldsFragment = {
                         handle: any
                         bio?: string | null
                         ownedBy: any
+                        isFollowedByMe: boolean
+                        stats: { __typename?: 'ProfileStats'; totalFollowers: number; totalFollowing: number }
                         attributes?: Array<{ __typename?: 'Attribute'; key: string; value: string }> | null
                         picture?:
                           | { __typename?: 'MediaSet'; original: { __typename?: 'Media'; url: any } }
@@ -3834,7 +4273,6 @@ export type CommentFieldsFragment = {
                       | {
                           __typename?: 'FeeCollectModuleSettings'
                           type: CollectModules
-                          recipient: any
                           referralFee: number
                           contractAddress: any
                           followerOnly: boolean
@@ -3854,7 +4292,6 @@ export type CommentFieldsFragment = {
                           __typename?: 'LimitedFeeCollectModuleSettings'
                           type: CollectModules
                           collectLimit: string
-                          recipient: any
                           referralFee: number
                           contractAddress: any
                           followerOnly: boolean
@@ -3868,7 +4305,6 @@ export type CommentFieldsFragment = {
                           __typename?: 'LimitedTimedFeeCollectModuleSettings'
                           type: CollectModules
                           collectLimit: string
-                          recipient: any
                           endTimestamp: any
                           referralFee: number
                           contractAddress: any
@@ -3883,7 +4319,6 @@ export type CommentFieldsFragment = {
                       | {
                           __typename?: 'TimedFeeCollectModuleSettings'
                           type: CollectModules
-                          recipient: any
                           endTimestamp: any
                           referralFee: number
                           contractAddress: any
@@ -3937,6 +4372,8 @@ export type CommentFieldsFragment = {
                 handle: any
                 bio?: string | null
                 ownedBy: any
+                isFollowedByMe: boolean
+                stats: { __typename?: 'ProfileStats'; totalFollowers: number; totalFollowing: number }
                 attributes?: Array<{ __typename?: 'Attribute'; key: string; value: string }> | null
                 picture?:
                   | { __typename?: 'MediaSet'; original: { __typename?: 'Media'; url: any } }
@@ -3961,6 +4398,8 @@ export type CommentFieldsFragment = {
                   handle: any
                   bio?: string | null
                   ownedBy: any
+                  isFollowedByMe: boolean
+                  stats: { __typename?: 'ProfileStats'; totalFollowers: number; totalFollowing: number }
                   attributes?: Array<{ __typename?: 'Attribute'; key: string; value: string }> | null
                   picture?:
                     | { __typename?: 'MediaSet'; original: { __typename?: 'Media'; url: any } }
@@ -3978,7 +4417,6 @@ export type CommentFieldsFragment = {
                 | {
                     __typename?: 'FeeCollectModuleSettings'
                     type: CollectModules
-                    recipient: any
                     referralFee: number
                     contractAddress: any
                     followerOnly: boolean
@@ -3998,7 +4436,6 @@ export type CommentFieldsFragment = {
                     __typename?: 'LimitedFeeCollectModuleSettings'
                     type: CollectModules
                     collectLimit: string
-                    recipient: any
                     referralFee: number
                     contractAddress: any
                     followerOnly: boolean
@@ -4012,7 +4449,6 @@ export type CommentFieldsFragment = {
                     __typename?: 'LimitedTimedFeeCollectModuleSettings'
                     type: CollectModules
                     collectLimit: string
-                    recipient: any
                     endTimestamp: any
                     referralFee: number
                     contractAddress: any
@@ -4027,7 +4463,6 @@ export type CommentFieldsFragment = {
                 | {
                     __typename?: 'TimedFeeCollectModuleSettings'
                     type: CollectModules
-                    recipient: any
                     endTimestamp: any
                     referralFee: number
                     contractAddress: any
@@ -4079,6 +4514,8 @@ export type CommentFieldsFragment = {
           handle: any
           bio?: string | null
           ownedBy: any
+          isFollowedByMe: boolean
+          stats: { __typename?: 'ProfileStats'; totalFollowers: number; totalFollowing: number }
           attributes?: Array<{ __typename?: 'Attribute'; key: string; value: string }> | null
           picture?:
             | { __typename?: 'MediaSet'; original: { __typename?: 'Media'; url: any } }
@@ -4097,7 +4534,6 @@ export type CommentFieldsFragment = {
           | {
               __typename?: 'FeeCollectModuleSettings'
               type: CollectModules
-              recipient: any
               referralFee: number
               contractAddress: any
               followerOnly: boolean
@@ -4117,7 +4553,6 @@ export type CommentFieldsFragment = {
               __typename?: 'LimitedFeeCollectModuleSettings'
               type: CollectModules
               collectLimit: string
-              recipient: any
               referralFee: number
               contractAddress: any
               followerOnly: boolean
@@ -4131,7 +4566,6 @@ export type CommentFieldsFragment = {
               __typename?: 'LimitedTimedFeeCollectModuleSettings'
               type: CollectModules
               collectLimit: string
-              recipient: any
               endTimestamp: any
               referralFee: number
               contractAddress: any
@@ -4146,7 +4580,6 @@ export type CommentFieldsFragment = {
           | {
               __typename?: 'TimedFeeCollectModuleSettings'
               type: CollectModules
-              recipient: any
               endTimestamp: any
               referralFee: number
               contractAddress: any
@@ -4196,6 +4629,8 @@ export type CommentFieldsFragment = {
                 handle: any
                 bio?: string | null
                 ownedBy: any
+                isFollowedByMe: boolean
+                stats: { __typename?: 'ProfileStats'; totalFollowers: number; totalFollowing: number }
                 attributes?: Array<{ __typename?: 'Attribute'; key: string; value: string }> | null
                 picture?:
                   | { __typename?: 'MediaSet'; original: { __typename?: 'Media'; url: any } }
@@ -4234,6 +4669,8 @@ export type CommentFieldsFragment = {
                 handle: any
                 bio?: string | null
                 ownedBy: any
+                isFollowedByMe: boolean
+                stats: { __typename?: 'ProfileStats'; totalFollowers: number; totalFollowing: number }
                 attributes?: Array<{ __typename?: 'Attribute'; key: string; value: string }> | null
                 picture?:
                   | { __typename?: 'MediaSet'; original: { __typename?: 'Media'; url: any } }
@@ -4258,6 +4695,8 @@ export type CommentFieldsFragment = {
                   handle: any
                   bio?: string | null
                   ownedBy: any
+                  isFollowedByMe: boolean
+                  stats: { __typename?: 'ProfileStats'; totalFollowers: number; totalFollowing: number }
                   attributes?: Array<{ __typename?: 'Attribute'; key: string; value: string }> | null
                   picture?:
                     | { __typename?: 'MediaSet'; original: { __typename?: 'Media'; url: any } }
@@ -4275,7 +4714,6 @@ export type CommentFieldsFragment = {
                 | {
                     __typename?: 'FeeCollectModuleSettings'
                     type: CollectModules
-                    recipient: any
                     referralFee: number
                     contractAddress: any
                     followerOnly: boolean
@@ -4295,7 +4733,6 @@ export type CommentFieldsFragment = {
                     __typename?: 'LimitedFeeCollectModuleSettings'
                     type: CollectModules
                     collectLimit: string
-                    recipient: any
                     referralFee: number
                     contractAddress: any
                     followerOnly: boolean
@@ -4309,7 +4746,6 @@ export type CommentFieldsFragment = {
                     __typename?: 'LimitedTimedFeeCollectModuleSettings'
                     type: CollectModules
                     collectLimit: string
-                    recipient: any
                     endTimestamp: any
                     referralFee: number
                     contractAddress: any
@@ -4324,7 +4760,6 @@ export type CommentFieldsFragment = {
                 | {
                     __typename?: 'TimedFeeCollectModuleSettings'
                     type: CollectModules
-                    recipient: any
                     endTimestamp: any
                     referralFee: number
                     contractAddress: any
@@ -4378,6 +4813,8 @@ export type CommentFieldsFragment = {
           handle: any
           bio?: string | null
           ownedBy: any
+          isFollowedByMe: boolean
+          stats: { __typename?: 'ProfileStats'; totalFollowers: number; totalFollowing: number }
           attributes?: Array<{ __typename?: 'Attribute'; key: string; value: string }> | null
           picture?:
             | { __typename?: 'MediaSet'; original: { __typename?: 'Media'; url: any } }
@@ -4402,6 +4839,8 @@ export type CommentFieldsFragment = {
             handle: any
             bio?: string | null
             ownedBy: any
+            isFollowedByMe: boolean
+            stats: { __typename?: 'ProfileStats'; totalFollowers: number; totalFollowing: number }
             attributes?: Array<{ __typename?: 'Attribute'; key: string; value: string }> | null
             picture?:
               | { __typename?: 'MediaSet'; original: { __typename?: 'Media'; url: any } }
@@ -4419,7 +4858,6 @@ export type CommentFieldsFragment = {
           | {
               __typename?: 'FeeCollectModuleSettings'
               type: CollectModules
-              recipient: any
               referralFee: number
               contractAddress: any
               followerOnly: boolean
@@ -4439,7 +4877,6 @@ export type CommentFieldsFragment = {
               __typename?: 'LimitedFeeCollectModuleSettings'
               type: CollectModules
               collectLimit: string
-              recipient: any
               referralFee: number
               contractAddress: any
               followerOnly: boolean
@@ -4453,7 +4890,6 @@ export type CommentFieldsFragment = {
               __typename?: 'LimitedTimedFeeCollectModuleSettings'
               type: CollectModules
               collectLimit: string
-              recipient: any
               endTimestamp: any
               referralFee: number
               contractAddress: any
@@ -4468,7 +4904,6 @@ export type CommentFieldsFragment = {
           | {
               __typename?: 'TimedFeeCollectModuleSettings'
               type: CollectModules
-              recipient: any
               endTimestamp: any
               referralFee: number
               contractAddress: any
@@ -4556,6 +4991,8 @@ export type MirrorFieldsFragment = {
     handle: any
     bio?: string | null
     ownedBy: any
+    isFollowedByMe: boolean
+    stats: { __typename?: 'ProfileStats'; totalFollowers: number; totalFollowing: number }
     attributes?: Array<{ __typename?: 'Attribute'; key: string; value: string }> | null
     picture?:
       | { __typename?: 'MediaSet'; original: { __typename?: 'Media'; url: any } }
@@ -4574,7 +5011,6 @@ export type MirrorFieldsFragment = {
     | {
         __typename?: 'FeeCollectModuleSettings'
         type: CollectModules
-        recipient: any
         referralFee: number
         contractAddress: any
         followerOnly: boolean
@@ -4594,7 +5030,6 @@ export type MirrorFieldsFragment = {
         __typename?: 'LimitedFeeCollectModuleSettings'
         type: CollectModules
         collectLimit: string
-        recipient: any
         referralFee: number
         contractAddress: any
         followerOnly: boolean
@@ -4608,7 +5043,6 @@ export type MirrorFieldsFragment = {
         __typename?: 'LimitedTimedFeeCollectModuleSettings'
         type: CollectModules
         collectLimit: string
-        recipient: any
         endTimestamp: any
         referralFee: number
         contractAddress: any
@@ -4623,7 +5057,6 @@ export type MirrorFieldsFragment = {
     | {
         __typename?: 'TimedFeeCollectModuleSettings'
         type: CollectModules
-        recipient: any
         endTimestamp: any
         referralFee: number
         contractAddress: any
@@ -4673,6 +5106,8 @@ export type MirrorFieldsFragment = {
           handle: any
           bio?: string | null
           ownedBy: any
+          isFollowedByMe: boolean
+          stats: { __typename?: 'ProfileStats'; totalFollowers: number; totalFollowing: number }
           attributes?: Array<{ __typename?: 'Attribute'; key: string; value: string }> | null
           picture?:
             | { __typename?: 'MediaSet'; original: { __typename?: 'Media'; url: any } }
@@ -4711,6 +5146,8 @@ export type MirrorFieldsFragment = {
           handle: any
           bio?: string | null
           ownedBy: any
+          isFollowedByMe: boolean
+          stats: { __typename?: 'ProfileStats'; totalFollowers: number; totalFollowing: number }
           attributes?: Array<{ __typename?: 'Attribute'; key: string; value: string }> | null
           picture?:
             | { __typename?: 'MediaSet'; original: { __typename?: 'Media'; url: any } }
@@ -4735,6 +5172,8 @@ export type MirrorFieldsFragment = {
             handle: any
             bio?: string | null
             ownedBy: any
+            isFollowedByMe: boolean
+            stats: { __typename?: 'ProfileStats'; totalFollowers: number; totalFollowing: number }
             attributes?: Array<{ __typename?: 'Attribute'; key: string; value: string }> | null
             picture?:
               | { __typename?: 'MediaSet'; original: { __typename?: 'Media'; url: any } }
@@ -4752,7 +5191,6 @@ export type MirrorFieldsFragment = {
           | {
               __typename?: 'FeeCollectModuleSettings'
               type: CollectModules
-              recipient: any
               referralFee: number
               contractAddress: any
               followerOnly: boolean
@@ -4772,7 +5210,6 @@ export type MirrorFieldsFragment = {
               __typename?: 'LimitedFeeCollectModuleSettings'
               type: CollectModules
               collectLimit: string
-              recipient: any
               referralFee: number
               contractAddress: any
               followerOnly: boolean
@@ -4786,7 +5223,6 @@ export type MirrorFieldsFragment = {
               __typename?: 'LimitedTimedFeeCollectModuleSettings'
               type: CollectModules
               collectLimit: string
-              recipient: any
               endTimestamp: any
               referralFee: number
               contractAddress: any
@@ -4801,7 +5237,6 @@ export type MirrorFieldsFragment = {
           | {
               __typename?: 'TimedFeeCollectModuleSettings'
               type: CollectModules
-              recipient: any
               endTimestamp: any
               referralFee: number
               contractAddress: any
@@ -4856,6 +5291,8 @@ export type PostFieldsFragment = {
     handle: any
     bio?: string | null
     ownedBy: any
+    isFollowedByMe: boolean
+    stats: { __typename?: 'ProfileStats'; totalFollowers: number; totalFollowing: number }
     attributes?: Array<{ __typename?: 'Attribute'; key: string; value: string }> | null
     picture?:
       | { __typename?: 'MediaSet'; original: { __typename?: 'Media'; url: any } }
@@ -4880,6 +5317,8 @@ export type PostFieldsFragment = {
       handle: any
       bio?: string | null
       ownedBy: any
+      isFollowedByMe: boolean
+      stats: { __typename?: 'ProfileStats'; totalFollowers: number; totalFollowing: number }
       attributes?: Array<{ __typename?: 'Attribute'; key: string; value: string }> | null
       picture?:
         | { __typename?: 'MediaSet'; original: { __typename?: 'Media'; url: any } }
@@ -4897,7 +5336,6 @@ export type PostFieldsFragment = {
     | {
         __typename?: 'FeeCollectModuleSettings'
         type: CollectModules
-        recipient: any
         referralFee: number
         contractAddress: any
         followerOnly: boolean
@@ -4917,7 +5355,6 @@ export type PostFieldsFragment = {
         __typename?: 'LimitedFeeCollectModuleSettings'
         type: CollectModules
         collectLimit: string
-        recipient: any
         referralFee: number
         contractAddress: any
         followerOnly: boolean
@@ -4931,7 +5368,6 @@ export type PostFieldsFragment = {
         __typename?: 'LimitedTimedFeeCollectModuleSettings'
         type: CollectModules
         collectLimit: string
-        recipient: any
         endTimestamp: any
         referralFee: number
         contractAddress: any
@@ -4946,7 +5382,6 @@ export type PostFieldsFragment = {
     | {
         __typename?: 'TimedFeeCollectModuleSettings'
         type: CollectModules
-        recipient: any
         endTimestamp: any
         referralFee: number
         contractAddress: any
@@ -4991,6 +5426,8 @@ export type ProfileFieldsFragment = {
   handle: any
   bio?: string | null
   ownedBy: any
+  isFollowedByMe: boolean
+  stats: { __typename?: 'ProfileStats'; totalFollowers: number; totalFollowing: number }
   attributes?: Array<{ __typename?: 'Attribute'; key: string; value: string }> | null
   picture?:
     | { __typename?: 'MediaSet'; original: { __typename?: 'Media'; url: any } }
@@ -5463,6 +5900,7 @@ export type CreateSetProfileImageUriViaDispatcherMutation = {
 }
 
 export type CreateSetProfileMetadataTypedDataMutationVariables = Exact<{
+  options?: InputMaybe<TypedDataOptions>
   request: CreatePublicSetProfileMetadataUriRequest
 }>
 
@@ -5599,7 +6037,6 @@ export type BCharityStatsQuery = {
     totalCollects: number
     totalFollows: number
   }
-  fundraiseStats: { __typename?: 'GlobalProtocolStats'; totalPosts: number }
 }
 
 export type ChallengeQueryVariables = Exact<{
@@ -5625,7 +6062,6 @@ export type CollectModuleQuery = {
           | {
               __typename?: 'FeeCollectModuleSettings'
               type: CollectModules
-              recipient: any
               referralFee: number
               contractAddress: any
               followerOnly: boolean
@@ -5645,7 +6081,6 @@ export type CollectModuleQuery = {
               __typename?: 'LimitedFeeCollectModuleSettings'
               type: CollectModules
               collectLimit: string
-              recipient: any
               referralFee: number
               contractAddress: any
               followerOnly: boolean
@@ -5659,7 +6094,6 @@ export type CollectModuleQuery = {
               __typename?: 'LimitedTimedFeeCollectModuleSettings'
               type: CollectModules
               collectLimit: string
-              recipient: any
               endTimestamp: any
               referralFee: number
               contractAddress: any
@@ -5674,7 +6108,6 @@ export type CollectModuleQuery = {
           | {
               __typename?: 'TimedFeeCollectModuleSettings'
               type: CollectModules
-              recipient: any
               endTimestamp: any
               referralFee: number
               contractAddress: any
@@ -5694,7 +6127,6 @@ export type CollectModuleQuery = {
           | {
               __typename?: 'FeeCollectModuleSettings'
               type: CollectModules
-              recipient: any
               referralFee: number
               contractAddress: any
               followerOnly: boolean
@@ -5714,7 +6146,6 @@ export type CollectModuleQuery = {
               __typename?: 'LimitedFeeCollectModuleSettings'
               type: CollectModules
               collectLimit: string
-              recipient: any
               referralFee: number
               contractAddress: any
               followerOnly: boolean
@@ -5728,7 +6159,6 @@ export type CollectModuleQuery = {
               __typename?: 'LimitedTimedFeeCollectModuleSettings'
               type: CollectModules
               collectLimit: string
-              recipient: any
               endTimestamp: any
               referralFee: number
               contractAddress: any
@@ -5743,7 +6173,6 @@ export type CollectModuleQuery = {
           | {
               __typename?: 'TimedFeeCollectModuleSettings'
               type: CollectModules
-              recipient: any
               endTimestamp: any
               referralFee: number
               contractAddress: any
@@ -5763,7 +6192,6 @@ export type CollectModuleQuery = {
           | {
               __typename?: 'FeeCollectModuleSettings'
               type: CollectModules
-              recipient: any
               referralFee: number
               contractAddress: any
               followerOnly: boolean
@@ -5783,7 +6211,6 @@ export type CollectModuleQuery = {
               __typename?: 'LimitedFeeCollectModuleSettings'
               type: CollectModules
               collectLimit: string
-              recipient: any
               referralFee: number
               contractAddress: any
               followerOnly: boolean
@@ -5797,7 +6224,6 @@ export type CollectModuleQuery = {
               __typename?: 'LimitedTimedFeeCollectModuleSettings'
               type: CollectModules
               collectLimit: string
-              recipient: any
               endTimestamp: any
               referralFee: number
               contractAddress: any
@@ -5812,7 +6238,6 @@ export type CollectModuleQuery = {
           | {
               __typename?: 'TimedFeeCollectModuleSettings'
               type: CollectModules
-              recipient: any
               endTimestamp: any
               referralFee: number
               contractAddress: any
@@ -5847,6 +6272,7 @@ export type CollectorsQuery = {
         handle: any
         bio?: string | null
         ownedBy: any
+        stats: { __typename?: 'ProfileStats'; totalFollowers: number; totalFollowing: number }
         attributes?: Array<{ __typename?: 'Attribute'; key: string; value: string }> | null
         picture?:
           | { __typename?: 'MediaSet'; original: { __typename?: 'Media'; url: any } }
@@ -5891,6 +6317,8 @@ export type CommentFeedQuery = {
             handle: any
             bio?: string | null
             ownedBy: any
+            isFollowedByMe: boolean
+            stats: { __typename?: 'ProfileStats'; totalFollowers: number; totalFollowing: number }
             attributes?: Array<{ __typename?: 'Attribute'; key: string; value: string }> | null
             picture?:
               | { __typename?: 'MediaSet'; original: { __typename?: 'Media'; url: any } }
@@ -5915,6 +6343,8 @@ export type CommentFeedQuery = {
               handle: any
               bio?: string | null
               ownedBy: any
+              isFollowedByMe: boolean
+              stats: { __typename?: 'ProfileStats'; totalFollowers: number; totalFollowing: number }
               attributes?: Array<{ __typename?: 'Attribute'; key: string; value: string }> | null
               picture?:
                 | { __typename?: 'MediaSet'; original: { __typename?: 'Media'; url: any } }
@@ -5932,7 +6362,6 @@ export type CommentFeedQuery = {
             | {
                 __typename?: 'FeeCollectModuleSettings'
                 type: CollectModules
-                recipient: any
                 referralFee: number
                 contractAddress: any
                 followerOnly: boolean
@@ -5952,7 +6381,6 @@ export type CommentFeedQuery = {
                 __typename?: 'LimitedFeeCollectModuleSettings'
                 type: CollectModules
                 collectLimit: string
-                recipient: any
                 referralFee: number
                 contractAddress: any
                 followerOnly: boolean
@@ -5966,7 +6394,6 @@ export type CommentFeedQuery = {
                 __typename?: 'LimitedTimedFeeCollectModuleSettings'
                 type: CollectModules
                 collectLimit: string
-                recipient: any
                 endTimestamp: any
                 referralFee: number
                 contractAddress: any
@@ -5981,7 +6408,6 @@ export type CommentFeedQuery = {
             | {
                 __typename?: 'TimedFeeCollectModuleSettings'
                 type: CollectModules
-                recipient: any
                 endTimestamp: any
                 referralFee: number
                 contractAddress: any
@@ -6033,6 +6459,8 @@ export type CommentFeedQuery = {
                   handle: any
                   bio?: string | null
                   ownedBy: any
+                  isFollowedByMe: boolean
+                  stats: { __typename?: 'ProfileStats'; totalFollowers: number; totalFollowing: number }
                   attributes?: Array<{ __typename?: 'Attribute'; key: string; value: string }> | null
                   picture?:
                     | { __typename?: 'MediaSet'; original: { __typename?: 'Media'; url: any } }
@@ -6056,7 +6484,6 @@ export type CommentFeedQuery = {
                   | {
                       __typename?: 'FeeCollectModuleSettings'
                       type: CollectModules
-                      recipient: any
                       referralFee: number
                       contractAddress: any
                       followerOnly: boolean
@@ -6076,7 +6503,6 @@ export type CommentFeedQuery = {
                       __typename?: 'LimitedFeeCollectModuleSettings'
                       type: CollectModules
                       collectLimit: string
-                      recipient: any
                       referralFee: number
                       contractAddress: any
                       followerOnly: boolean
@@ -6090,7 +6516,6 @@ export type CommentFeedQuery = {
                       __typename?: 'LimitedTimedFeeCollectModuleSettings'
                       type: CollectModules
                       collectLimit: string
-                      recipient: any
                       endTimestamp: any
                       referralFee: number
                       contractAddress: any
@@ -6105,7 +6530,6 @@ export type CommentFeedQuery = {
                   | {
                       __typename?: 'TimedFeeCollectModuleSettings'
                       type: CollectModules
-                      recipient: any
                       endTimestamp: any
                       referralFee: number
                       contractAddress: any
@@ -6156,6 +6580,8 @@ export type CommentFeedQuery = {
                         handle: any
                         bio?: string | null
                         ownedBy: any
+                        isFollowedByMe: boolean
+                        stats: { __typename?: 'ProfileStats'; totalFollowers: number; totalFollowing: number }
                         attributes?: Array<{ __typename?: 'Attribute'; key: string; value: string }> | null
                         picture?:
                           | { __typename?: 'MediaSet'; original: { __typename?: 'Media'; url: any } }
@@ -6174,7 +6600,6 @@ export type CommentFeedQuery = {
                         | {
                             __typename?: 'FeeCollectModuleSettings'
                             type: CollectModules
-                            recipient: any
                             referralFee: number
                             contractAddress: any
                             followerOnly: boolean
@@ -6194,7 +6619,6 @@ export type CommentFeedQuery = {
                             __typename?: 'LimitedFeeCollectModuleSettings'
                             type: CollectModules
                             collectLimit: string
-                            recipient: any
                             referralFee: number
                             contractAddress: any
                             followerOnly: boolean
@@ -6208,7 +6632,6 @@ export type CommentFeedQuery = {
                             __typename?: 'LimitedTimedFeeCollectModuleSettings'
                             type: CollectModules
                             collectLimit: string
-                            recipient: any
                             endTimestamp: any
                             referralFee: number
                             contractAddress: any
@@ -6223,7 +6646,6 @@ export type CommentFeedQuery = {
                         | {
                             __typename?: 'TimedFeeCollectModuleSettings'
                             type: CollectModules
-                            recipient: any
                             endTimestamp: any
                             referralFee: number
                             contractAddress: any
@@ -6276,6 +6698,12 @@ export type CommentFeedQuery = {
                               handle: any
                               bio?: string | null
                               ownedBy: any
+                              isFollowedByMe: boolean
+                              stats: {
+                                __typename?: 'ProfileStats'
+                                totalFollowers: number
+                                totalFollowing: number
+                              }
                               attributes?: Array<{
                                 __typename?: 'Attribute'
                                 key: string
@@ -6318,6 +6746,12 @@ export type CommentFeedQuery = {
                               handle: any
                               bio?: string | null
                               ownedBy: any
+                              isFollowedByMe: boolean
+                              stats: {
+                                __typename?: 'ProfileStats'
+                                totalFollowers: number
+                                totalFollowing: number
+                              }
                               attributes?: Array<{
                                 __typename?: 'Attribute'
                                 key: string
@@ -6346,6 +6780,12 @@ export type CommentFeedQuery = {
                                 handle: any
                                 bio?: string | null
                                 ownedBy: any
+                                isFollowedByMe: boolean
+                                stats: {
+                                  __typename?: 'ProfileStats'
+                                  totalFollowers: number
+                                  totalFollowing: number
+                                }
                                 attributes?: Array<{
                                   __typename?: 'Attribute'
                                   key: string
@@ -6367,7 +6807,6 @@ export type CommentFeedQuery = {
                               | {
                                   __typename?: 'FeeCollectModuleSettings'
                                   type: CollectModules
-                                  recipient: any
                                   referralFee: number
                                   contractAddress: any
                                   followerOnly: boolean
@@ -6392,7 +6831,6 @@ export type CommentFeedQuery = {
                                   __typename?: 'LimitedFeeCollectModuleSettings'
                                   type: CollectModules
                                   collectLimit: string
-                                  recipient: any
                                   referralFee: number
                                   contractAddress: any
                                   followerOnly: boolean
@@ -6411,7 +6849,6 @@ export type CommentFeedQuery = {
                                   __typename?: 'LimitedTimedFeeCollectModuleSettings'
                                   type: CollectModules
                                   collectLimit: string
-                                  recipient: any
                                   endTimestamp: any
                                   referralFee: number
                                   contractAddress: any
@@ -6431,7 +6868,6 @@ export type CommentFeedQuery = {
                               | {
                                   __typename?: 'TimedFeeCollectModuleSettings'
                                   type: CollectModules
-                                  recipient: any
                                   endTimestamp: any
                                   referralFee: number
                                   contractAddress: any
@@ -6493,6 +6929,8 @@ export type CommentFeedQuery = {
                         handle: any
                         bio?: string | null
                         ownedBy: any
+                        isFollowedByMe: boolean
+                        stats: { __typename?: 'ProfileStats'; totalFollowers: number; totalFollowing: number }
                         attributes?: Array<{ __typename?: 'Attribute'; key: string; value: string }> | null
                         picture?:
                           | { __typename?: 'MediaSet'; original: { __typename?: 'Media'; url: any } }
@@ -6517,6 +6955,12 @@ export type CommentFeedQuery = {
                           handle: any
                           bio?: string | null
                           ownedBy: any
+                          isFollowedByMe: boolean
+                          stats: {
+                            __typename?: 'ProfileStats'
+                            totalFollowers: number
+                            totalFollowing: number
+                          }
                           attributes?: Array<{ __typename?: 'Attribute'; key: string; value: string }> | null
                           picture?:
                             | { __typename?: 'MediaSet'; original: { __typename?: 'Media'; url: any } }
@@ -6534,7 +6978,6 @@ export type CommentFeedQuery = {
                         | {
                             __typename?: 'FeeCollectModuleSettings'
                             type: CollectModules
-                            recipient: any
                             referralFee: number
                             contractAddress: any
                             followerOnly: boolean
@@ -6554,7 +6997,6 @@ export type CommentFeedQuery = {
                             __typename?: 'LimitedFeeCollectModuleSettings'
                             type: CollectModules
                             collectLimit: string
-                            recipient: any
                             referralFee: number
                             contractAddress: any
                             followerOnly: boolean
@@ -6568,7 +7010,6 @@ export type CommentFeedQuery = {
                             __typename?: 'LimitedTimedFeeCollectModuleSettings'
                             type: CollectModules
                             collectLimit: string
-                            recipient: any
                             endTimestamp: any
                             referralFee: number
                             contractAddress: any
@@ -6583,7 +7024,6 @@ export type CommentFeedQuery = {
                         | {
                             __typename?: 'TimedFeeCollectModuleSettings'
                             type: CollectModules
-                            recipient: any
                             endTimestamp: any
                             referralFee: number
                             contractAddress: any
@@ -6638,6 +7078,8 @@ export type CommentFeedQuery = {
                   handle: any
                   bio?: string | null
                   ownedBy: any
+                  isFollowedByMe: boolean
+                  stats: { __typename?: 'ProfileStats'; totalFollowers: number; totalFollowing: number }
                   attributes?: Array<{ __typename?: 'Attribute'; key: string; value: string }> | null
                   picture?:
                     | { __typename?: 'MediaSet'; original: { __typename?: 'Media'; url: any } }
@@ -6656,7 +7098,6 @@ export type CommentFeedQuery = {
                   | {
                       __typename?: 'FeeCollectModuleSettings'
                       type: CollectModules
-                      recipient: any
                       referralFee: number
                       contractAddress: any
                       followerOnly: boolean
@@ -6676,7 +7117,6 @@ export type CommentFeedQuery = {
                       __typename?: 'LimitedFeeCollectModuleSettings'
                       type: CollectModules
                       collectLimit: string
-                      recipient: any
                       referralFee: number
                       contractAddress: any
                       followerOnly: boolean
@@ -6690,7 +7130,6 @@ export type CommentFeedQuery = {
                       __typename?: 'LimitedTimedFeeCollectModuleSettings'
                       type: CollectModules
                       collectLimit: string
-                      recipient: any
                       endTimestamp: any
                       referralFee: number
                       contractAddress: any
@@ -6705,7 +7144,6 @@ export type CommentFeedQuery = {
                   | {
                       __typename?: 'TimedFeeCollectModuleSettings'
                       type: CollectModules
-                      recipient: any
                       endTimestamp: any
                       referralFee: number
                       contractAddress: any
@@ -6755,6 +7193,8 @@ export type CommentFeedQuery = {
                         handle: any
                         bio?: string | null
                         ownedBy: any
+                        isFollowedByMe: boolean
+                        stats: { __typename?: 'ProfileStats'; totalFollowers: number; totalFollowing: number }
                         attributes?: Array<{ __typename?: 'Attribute'; key: string; value: string }> | null
                         picture?:
                           | { __typename?: 'MediaSet'; original: { __typename?: 'Media'; url: any } }
@@ -6793,6 +7233,8 @@ export type CommentFeedQuery = {
                         handle: any
                         bio?: string | null
                         ownedBy: any
+                        isFollowedByMe: boolean
+                        stats: { __typename?: 'ProfileStats'; totalFollowers: number; totalFollowing: number }
                         attributes?: Array<{ __typename?: 'Attribute'; key: string; value: string }> | null
                         picture?:
                           | { __typename?: 'MediaSet'; original: { __typename?: 'Media'; url: any } }
@@ -6817,6 +7259,12 @@ export type CommentFeedQuery = {
                           handle: any
                           bio?: string | null
                           ownedBy: any
+                          isFollowedByMe: boolean
+                          stats: {
+                            __typename?: 'ProfileStats'
+                            totalFollowers: number
+                            totalFollowing: number
+                          }
                           attributes?: Array<{ __typename?: 'Attribute'; key: string; value: string }> | null
                           picture?:
                             | { __typename?: 'MediaSet'; original: { __typename?: 'Media'; url: any } }
@@ -6834,7 +7282,6 @@ export type CommentFeedQuery = {
                         | {
                             __typename?: 'FeeCollectModuleSettings'
                             type: CollectModules
-                            recipient: any
                             referralFee: number
                             contractAddress: any
                             followerOnly: boolean
@@ -6854,7 +7301,6 @@ export type CommentFeedQuery = {
                             __typename?: 'LimitedFeeCollectModuleSettings'
                             type: CollectModules
                             collectLimit: string
-                            recipient: any
                             referralFee: number
                             contractAddress: any
                             followerOnly: boolean
@@ -6868,7 +7314,6 @@ export type CommentFeedQuery = {
                             __typename?: 'LimitedTimedFeeCollectModuleSettings'
                             type: CollectModules
                             collectLimit: string
-                            recipient: any
                             endTimestamp: any
                             referralFee: number
                             contractAddress: any
@@ -6883,7 +7328,6 @@ export type CommentFeedQuery = {
                         | {
                             __typename?: 'TimedFeeCollectModuleSettings'
                             type: CollectModules
-                            recipient: any
                             endTimestamp: any
                             referralFee: number
                             contractAddress: any
@@ -6940,6 +7384,8 @@ export type CommentFeedQuery = {
                   handle: any
                   bio?: string | null
                   ownedBy: any
+                  isFollowedByMe: boolean
+                  stats: { __typename?: 'ProfileStats'; totalFollowers: number; totalFollowing: number }
                   attributes?: Array<{ __typename?: 'Attribute'; key: string; value: string }> | null
                   picture?:
                     | { __typename?: 'MediaSet'; original: { __typename?: 'Media'; url: any } }
@@ -6964,6 +7410,8 @@ export type CommentFeedQuery = {
                     handle: any
                     bio?: string | null
                     ownedBy: any
+                    isFollowedByMe: boolean
+                    stats: { __typename?: 'ProfileStats'; totalFollowers: number; totalFollowing: number }
                     attributes?: Array<{ __typename?: 'Attribute'; key: string; value: string }> | null
                     picture?:
                       | { __typename?: 'MediaSet'; original: { __typename?: 'Media'; url: any } }
@@ -6981,7 +7429,6 @@ export type CommentFeedQuery = {
                   | {
                       __typename?: 'FeeCollectModuleSettings'
                       type: CollectModules
-                      recipient: any
                       referralFee: number
                       contractAddress: any
                       followerOnly: boolean
@@ -7001,7 +7448,6 @@ export type CommentFeedQuery = {
                       __typename?: 'LimitedFeeCollectModuleSettings'
                       type: CollectModules
                       collectLimit: string
-                      recipient: any
                       referralFee: number
                       contractAddress: any
                       followerOnly: boolean
@@ -7015,7 +7461,6 @@ export type CommentFeedQuery = {
                       __typename?: 'LimitedTimedFeeCollectModuleSettings'
                       type: CollectModules
                       collectLimit: string
-                      recipient: any
                       endTimestamp: any
                       referralFee: number
                       contractAddress: any
@@ -7030,7 +7475,6 @@ export type CommentFeedQuery = {
                   | {
                       __typename?: 'TimedFeeCollectModuleSettings'
                       type: CollectModules
-                      recipient: any
                       endTimestamp: any
                       referralFee: number
                       contractAddress: any
@@ -7157,6 +7601,8 @@ export type ExploreFeedQuery = {
             handle: any
             bio?: string | null
             ownedBy: any
+            isFollowedByMe: boolean
+            stats: { __typename?: 'ProfileStats'; totalFollowers: number; totalFollowing: number }
             attributes?: Array<{ __typename?: 'Attribute'; key: string; value: string }> | null
             picture?:
               | { __typename?: 'MediaSet'; original: { __typename?: 'Media'; url: any } }
@@ -7181,6 +7627,8 @@ export type ExploreFeedQuery = {
               handle: any
               bio?: string | null
               ownedBy: any
+              isFollowedByMe: boolean
+              stats: { __typename?: 'ProfileStats'; totalFollowers: number; totalFollowing: number }
               attributes?: Array<{ __typename?: 'Attribute'; key: string; value: string }> | null
               picture?:
                 | { __typename?: 'MediaSet'; original: { __typename?: 'Media'; url: any } }
@@ -7198,7 +7646,6 @@ export type ExploreFeedQuery = {
             | {
                 __typename?: 'FeeCollectModuleSettings'
                 type: CollectModules
-                recipient: any
                 referralFee: number
                 contractAddress: any
                 followerOnly: boolean
@@ -7218,7 +7665,6 @@ export type ExploreFeedQuery = {
                 __typename?: 'LimitedFeeCollectModuleSettings'
                 type: CollectModules
                 collectLimit: string
-                recipient: any
                 referralFee: number
                 contractAddress: any
                 followerOnly: boolean
@@ -7232,7 +7678,6 @@ export type ExploreFeedQuery = {
                 __typename?: 'LimitedTimedFeeCollectModuleSettings'
                 type: CollectModules
                 collectLimit: string
-                recipient: any
                 endTimestamp: any
                 referralFee: number
                 contractAddress: any
@@ -7247,7 +7692,6 @@ export type ExploreFeedQuery = {
             | {
                 __typename?: 'TimedFeeCollectModuleSettings'
                 type: CollectModules
-                recipient: any
                 endTimestamp: any
                 referralFee: number
                 contractAddress: any
@@ -7299,6 +7743,8 @@ export type ExploreFeedQuery = {
                   handle: any
                   bio?: string | null
                   ownedBy: any
+                  isFollowedByMe: boolean
+                  stats: { __typename?: 'ProfileStats'; totalFollowers: number; totalFollowing: number }
                   attributes?: Array<{ __typename?: 'Attribute'; key: string; value: string }> | null
                   picture?:
                     | { __typename?: 'MediaSet'; original: { __typename?: 'Media'; url: any } }
@@ -7322,7 +7768,6 @@ export type ExploreFeedQuery = {
                   | {
                       __typename?: 'FeeCollectModuleSettings'
                       type: CollectModules
-                      recipient: any
                       referralFee: number
                       contractAddress: any
                       followerOnly: boolean
@@ -7342,7 +7787,6 @@ export type ExploreFeedQuery = {
                       __typename?: 'LimitedFeeCollectModuleSettings'
                       type: CollectModules
                       collectLimit: string
-                      recipient: any
                       referralFee: number
                       contractAddress: any
                       followerOnly: boolean
@@ -7356,7 +7800,6 @@ export type ExploreFeedQuery = {
                       __typename?: 'LimitedTimedFeeCollectModuleSettings'
                       type: CollectModules
                       collectLimit: string
-                      recipient: any
                       endTimestamp: any
                       referralFee: number
                       contractAddress: any
@@ -7371,7 +7814,6 @@ export type ExploreFeedQuery = {
                   | {
                       __typename?: 'TimedFeeCollectModuleSettings'
                       type: CollectModules
-                      recipient: any
                       endTimestamp: any
                       referralFee: number
                       contractAddress: any
@@ -7422,6 +7864,8 @@ export type ExploreFeedQuery = {
                         handle: any
                         bio?: string | null
                         ownedBy: any
+                        isFollowedByMe: boolean
+                        stats: { __typename?: 'ProfileStats'; totalFollowers: number; totalFollowing: number }
                         attributes?: Array<{ __typename?: 'Attribute'; key: string; value: string }> | null
                         picture?:
                           | { __typename?: 'MediaSet'; original: { __typename?: 'Media'; url: any } }
@@ -7440,7 +7884,6 @@ export type ExploreFeedQuery = {
                         | {
                             __typename?: 'FeeCollectModuleSettings'
                             type: CollectModules
-                            recipient: any
                             referralFee: number
                             contractAddress: any
                             followerOnly: boolean
@@ -7460,7 +7903,6 @@ export type ExploreFeedQuery = {
                             __typename?: 'LimitedFeeCollectModuleSettings'
                             type: CollectModules
                             collectLimit: string
-                            recipient: any
                             referralFee: number
                             contractAddress: any
                             followerOnly: boolean
@@ -7474,7 +7916,6 @@ export type ExploreFeedQuery = {
                             __typename?: 'LimitedTimedFeeCollectModuleSettings'
                             type: CollectModules
                             collectLimit: string
-                            recipient: any
                             endTimestamp: any
                             referralFee: number
                             contractAddress: any
@@ -7489,7 +7930,6 @@ export type ExploreFeedQuery = {
                         | {
                             __typename?: 'TimedFeeCollectModuleSettings'
                             type: CollectModules
-                            recipient: any
                             endTimestamp: any
                             referralFee: number
                             contractAddress: any
@@ -7542,6 +7982,12 @@ export type ExploreFeedQuery = {
                               handle: any
                               bio?: string | null
                               ownedBy: any
+                              isFollowedByMe: boolean
+                              stats: {
+                                __typename?: 'ProfileStats'
+                                totalFollowers: number
+                                totalFollowing: number
+                              }
                               attributes?: Array<{
                                 __typename?: 'Attribute'
                                 key: string
@@ -7584,6 +8030,12 @@ export type ExploreFeedQuery = {
                               handle: any
                               bio?: string | null
                               ownedBy: any
+                              isFollowedByMe: boolean
+                              stats: {
+                                __typename?: 'ProfileStats'
+                                totalFollowers: number
+                                totalFollowing: number
+                              }
                               attributes?: Array<{
                                 __typename?: 'Attribute'
                                 key: string
@@ -7612,6 +8064,12 @@ export type ExploreFeedQuery = {
                                 handle: any
                                 bio?: string | null
                                 ownedBy: any
+                                isFollowedByMe: boolean
+                                stats: {
+                                  __typename?: 'ProfileStats'
+                                  totalFollowers: number
+                                  totalFollowing: number
+                                }
                                 attributes?: Array<{
                                   __typename?: 'Attribute'
                                   key: string
@@ -7633,7 +8091,6 @@ export type ExploreFeedQuery = {
                               | {
                                   __typename?: 'FeeCollectModuleSettings'
                                   type: CollectModules
-                                  recipient: any
                                   referralFee: number
                                   contractAddress: any
                                   followerOnly: boolean
@@ -7658,7 +8115,6 @@ export type ExploreFeedQuery = {
                                   __typename?: 'LimitedFeeCollectModuleSettings'
                                   type: CollectModules
                                   collectLimit: string
-                                  recipient: any
                                   referralFee: number
                                   contractAddress: any
                                   followerOnly: boolean
@@ -7677,7 +8133,6 @@ export type ExploreFeedQuery = {
                                   __typename?: 'LimitedTimedFeeCollectModuleSettings'
                                   type: CollectModules
                                   collectLimit: string
-                                  recipient: any
                                   endTimestamp: any
                                   referralFee: number
                                   contractAddress: any
@@ -7697,7 +8152,6 @@ export type ExploreFeedQuery = {
                               | {
                                   __typename?: 'TimedFeeCollectModuleSettings'
                                   type: CollectModules
-                                  recipient: any
                                   endTimestamp: any
                                   referralFee: number
                                   contractAddress: any
@@ -7759,6 +8213,8 @@ export type ExploreFeedQuery = {
                         handle: any
                         bio?: string | null
                         ownedBy: any
+                        isFollowedByMe: boolean
+                        stats: { __typename?: 'ProfileStats'; totalFollowers: number; totalFollowing: number }
                         attributes?: Array<{ __typename?: 'Attribute'; key: string; value: string }> | null
                         picture?:
                           | { __typename?: 'MediaSet'; original: { __typename?: 'Media'; url: any } }
@@ -7783,6 +8239,12 @@ export type ExploreFeedQuery = {
                           handle: any
                           bio?: string | null
                           ownedBy: any
+                          isFollowedByMe: boolean
+                          stats: {
+                            __typename?: 'ProfileStats'
+                            totalFollowers: number
+                            totalFollowing: number
+                          }
                           attributes?: Array<{ __typename?: 'Attribute'; key: string; value: string }> | null
                           picture?:
                             | { __typename?: 'MediaSet'; original: { __typename?: 'Media'; url: any } }
@@ -7800,7 +8262,6 @@ export type ExploreFeedQuery = {
                         | {
                             __typename?: 'FeeCollectModuleSettings'
                             type: CollectModules
-                            recipient: any
                             referralFee: number
                             contractAddress: any
                             followerOnly: boolean
@@ -7820,7 +8281,6 @@ export type ExploreFeedQuery = {
                             __typename?: 'LimitedFeeCollectModuleSettings'
                             type: CollectModules
                             collectLimit: string
-                            recipient: any
                             referralFee: number
                             contractAddress: any
                             followerOnly: boolean
@@ -7834,7 +8294,6 @@ export type ExploreFeedQuery = {
                             __typename?: 'LimitedTimedFeeCollectModuleSettings'
                             type: CollectModules
                             collectLimit: string
-                            recipient: any
                             endTimestamp: any
                             referralFee: number
                             contractAddress: any
@@ -7849,7 +8308,6 @@ export type ExploreFeedQuery = {
                         | {
                             __typename?: 'TimedFeeCollectModuleSettings'
                             type: CollectModules
-                            recipient: any
                             endTimestamp: any
                             referralFee: number
                             contractAddress: any
@@ -7904,6 +8362,8 @@ export type ExploreFeedQuery = {
                   handle: any
                   bio?: string | null
                   ownedBy: any
+                  isFollowedByMe: boolean
+                  stats: { __typename?: 'ProfileStats'; totalFollowers: number; totalFollowing: number }
                   attributes?: Array<{ __typename?: 'Attribute'; key: string; value: string }> | null
                   picture?:
                     | { __typename?: 'MediaSet'; original: { __typename?: 'Media'; url: any } }
@@ -7922,7 +8382,6 @@ export type ExploreFeedQuery = {
                   | {
                       __typename?: 'FeeCollectModuleSettings'
                       type: CollectModules
-                      recipient: any
                       referralFee: number
                       contractAddress: any
                       followerOnly: boolean
@@ -7942,7 +8401,6 @@ export type ExploreFeedQuery = {
                       __typename?: 'LimitedFeeCollectModuleSettings'
                       type: CollectModules
                       collectLimit: string
-                      recipient: any
                       referralFee: number
                       contractAddress: any
                       followerOnly: boolean
@@ -7956,7 +8414,6 @@ export type ExploreFeedQuery = {
                       __typename?: 'LimitedTimedFeeCollectModuleSettings'
                       type: CollectModules
                       collectLimit: string
-                      recipient: any
                       endTimestamp: any
                       referralFee: number
                       contractAddress: any
@@ -7971,7 +8428,6 @@ export type ExploreFeedQuery = {
                   | {
                       __typename?: 'TimedFeeCollectModuleSettings'
                       type: CollectModules
-                      recipient: any
                       endTimestamp: any
                       referralFee: number
                       contractAddress: any
@@ -8021,6 +8477,8 @@ export type ExploreFeedQuery = {
                         handle: any
                         bio?: string | null
                         ownedBy: any
+                        isFollowedByMe: boolean
+                        stats: { __typename?: 'ProfileStats'; totalFollowers: number; totalFollowing: number }
                         attributes?: Array<{ __typename?: 'Attribute'; key: string; value: string }> | null
                         picture?:
                           | { __typename?: 'MediaSet'; original: { __typename?: 'Media'; url: any } }
@@ -8059,6 +8517,8 @@ export type ExploreFeedQuery = {
                         handle: any
                         bio?: string | null
                         ownedBy: any
+                        isFollowedByMe: boolean
+                        stats: { __typename?: 'ProfileStats'; totalFollowers: number; totalFollowing: number }
                         attributes?: Array<{ __typename?: 'Attribute'; key: string; value: string }> | null
                         picture?:
                           | { __typename?: 'MediaSet'; original: { __typename?: 'Media'; url: any } }
@@ -8083,6 +8543,12 @@ export type ExploreFeedQuery = {
                           handle: any
                           bio?: string | null
                           ownedBy: any
+                          isFollowedByMe: boolean
+                          stats: {
+                            __typename?: 'ProfileStats'
+                            totalFollowers: number
+                            totalFollowing: number
+                          }
                           attributes?: Array<{ __typename?: 'Attribute'; key: string; value: string }> | null
                           picture?:
                             | { __typename?: 'MediaSet'; original: { __typename?: 'Media'; url: any } }
@@ -8100,7 +8566,6 @@ export type ExploreFeedQuery = {
                         | {
                             __typename?: 'FeeCollectModuleSettings'
                             type: CollectModules
-                            recipient: any
                             referralFee: number
                             contractAddress: any
                             followerOnly: boolean
@@ -8120,7 +8585,6 @@ export type ExploreFeedQuery = {
                             __typename?: 'LimitedFeeCollectModuleSettings'
                             type: CollectModules
                             collectLimit: string
-                            recipient: any
                             referralFee: number
                             contractAddress: any
                             followerOnly: boolean
@@ -8134,7 +8598,6 @@ export type ExploreFeedQuery = {
                             __typename?: 'LimitedTimedFeeCollectModuleSettings'
                             type: CollectModules
                             collectLimit: string
-                            recipient: any
                             endTimestamp: any
                             referralFee: number
                             contractAddress: any
@@ -8149,7 +8612,6 @@ export type ExploreFeedQuery = {
                         | {
                             __typename?: 'TimedFeeCollectModuleSettings'
                             type: CollectModules
-                            recipient: any
                             endTimestamp: any
                             referralFee: number
                             contractAddress: any
@@ -8206,6 +8668,8 @@ export type ExploreFeedQuery = {
                   handle: any
                   bio?: string | null
                   ownedBy: any
+                  isFollowedByMe: boolean
+                  stats: { __typename?: 'ProfileStats'; totalFollowers: number; totalFollowing: number }
                   attributes?: Array<{ __typename?: 'Attribute'; key: string; value: string }> | null
                   picture?:
                     | { __typename?: 'MediaSet'; original: { __typename?: 'Media'; url: any } }
@@ -8230,6 +8694,8 @@ export type ExploreFeedQuery = {
                     handle: any
                     bio?: string | null
                     ownedBy: any
+                    isFollowedByMe: boolean
+                    stats: { __typename?: 'ProfileStats'; totalFollowers: number; totalFollowing: number }
                     attributes?: Array<{ __typename?: 'Attribute'; key: string; value: string }> | null
                     picture?:
                       | { __typename?: 'MediaSet'; original: { __typename?: 'Media'; url: any } }
@@ -8247,7 +8713,6 @@ export type ExploreFeedQuery = {
                   | {
                       __typename?: 'FeeCollectModuleSettings'
                       type: CollectModules
-                      recipient: any
                       referralFee: number
                       contractAddress: any
                       followerOnly: boolean
@@ -8267,7 +8732,6 @@ export type ExploreFeedQuery = {
                       __typename?: 'LimitedFeeCollectModuleSettings'
                       type: CollectModules
                       collectLimit: string
-                      recipient: any
                       referralFee: number
                       contractAddress: any
                       followerOnly: boolean
@@ -8281,7 +8745,6 @@ export type ExploreFeedQuery = {
                       __typename?: 'LimitedTimedFeeCollectModuleSettings'
                       type: CollectModules
                       collectLimit: string
-                      recipient: any
                       endTimestamp: any
                       referralFee: number
                       contractAddress: any
@@ -8296,7 +8759,6 @@ export type ExploreFeedQuery = {
                   | {
                       __typename?: 'TimedFeeCollectModuleSettings'
                       type: CollectModules
-                      recipient: any
                       endTimestamp: any
                       referralFee: number
                       contractAddress: any
@@ -8349,6 +8811,8 @@ export type ExploreFeedQuery = {
             handle: any
             bio?: string | null
             ownedBy: any
+            isFollowedByMe: boolean
+            stats: { __typename?: 'ProfileStats'; totalFollowers: number; totalFollowing: number }
             attributes?: Array<{ __typename?: 'Attribute'; key: string; value: string }> | null
             picture?:
               | { __typename?: 'MediaSet'; original: { __typename?: 'Media'; url: any } }
@@ -8367,7 +8831,6 @@ export type ExploreFeedQuery = {
             | {
                 __typename?: 'FeeCollectModuleSettings'
                 type: CollectModules
-                recipient: any
                 referralFee: number
                 contractAddress: any
                 followerOnly: boolean
@@ -8387,7 +8850,6 @@ export type ExploreFeedQuery = {
                 __typename?: 'LimitedFeeCollectModuleSettings'
                 type: CollectModules
                 collectLimit: string
-                recipient: any
                 referralFee: number
                 contractAddress: any
                 followerOnly: boolean
@@ -8401,7 +8863,6 @@ export type ExploreFeedQuery = {
                 __typename?: 'LimitedTimedFeeCollectModuleSettings'
                 type: CollectModules
                 collectLimit: string
-                recipient: any
                 endTimestamp: any
                 referralFee: number
                 contractAddress: any
@@ -8416,7 +8877,6 @@ export type ExploreFeedQuery = {
             | {
                 __typename?: 'TimedFeeCollectModuleSettings'
                 type: CollectModules
-                recipient: any
                 endTimestamp: any
                 referralFee: number
                 contractAddress: any
@@ -8466,6 +8926,8 @@ export type ExploreFeedQuery = {
                   handle: any
                   bio?: string | null
                   ownedBy: any
+                  isFollowedByMe: boolean
+                  stats: { __typename?: 'ProfileStats'; totalFollowers: number; totalFollowing: number }
                   attributes?: Array<{ __typename?: 'Attribute'; key: string; value: string }> | null
                   picture?:
                     | { __typename?: 'MediaSet'; original: { __typename?: 'Media'; url: any } }
@@ -8504,6 +8966,8 @@ export type ExploreFeedQuery = {
                   handle: any
                   bio?: string | null
                   ownedBy: any
+                  isFollowedByMe: boolean
+                  stats: { __typename?: 'ProfileStats'; totalFollowers: number; totalFollowing: number }
                   attributes?: Array<{ __typename?: 'Attribute'; key: string; value: string }> | null
                   picture?:
                     | { __typename?: 'MediaSet'; original: { __typename?: 'Media'; url: any } }
@@ -8528,6 +8992,8 @@ export type ExploreFeedQuery = {
                     handle: any
                     bio?: string | null
                     ownedBy: any
+                    isFollowedByMe: boolean
+                    stats: { __typename?: 'ProfileStats'; totalFollowers: number; totalFollowing: number }
                     attributes?: Array<{ __typename?: 'Attribute'; key: string; value: string }> | null
                     picture?:
                       | { __typename?: 'MediaSet'; original: { __typename?: 'Media'; url: any } }
@@ -8545,7 +9011,6 @@ export type ExploreFeedQuery = {
                   | {
                       __typename?: 'FeeCollectModuleSettings'
                       type: CollectModules
-                      recipient: any
                       referralFee: number
                       contractAddress: any
                       followerOnly: boolean
@@ -8565,7 +9030,6 @@ export type ExploreFeedQuery = {
                       __typename?: 'LimitedFeeCollectModuleSettings'
                       type: CollectModules
                       collectLimit: string
-                      recipient: any
                       referralFee: number
                       contractAddress: any
                       followerOnly: boolean
@@ -8579,7 +9043,6 @@ export type ExploreFeedQuery = {
                       __typename?: 'LimitedTimedFeeCollectModuleSettings'
                       type: CollectModules
                       collectLimit: string
-                      recipient: any
                       endTimestamp: any
                       referralFee: number
                       contractAddress: any
@@ -8594,7 +9057,6 @@ export type ExploreFeedQuery = {
                   | {
                       __typename?: 'TimedFeeCollectModuleSettings'
                       type: CollectModules
-                      recipient: any
                       endTimestamp: any
                       referralFee: number
                       contractAddress: any
@@ -8648,6 +9110,8 @@ export type ExploreFeedQuery = {
             handle: any
             bio?: string | null
             ownedBy: any
+            isFollowedByMe: boolean
+            stats: { __typename?: 'ProfileStats'; totalFollowers: number; totalFollowing: number }
             attributes?: Array<{ __typename?: 'Attribute'; key: string; value: string }> | null
             picture?:
               | { __typename?: 'MediaSet'; original: { __typename?: 'Media'; url: any } }
@@ -8672,6 +9136,8 @@ export type ExploreFeedQuery = {
               handle: any
               bio?: string | null
               ownedBy: any
+              isFollowedByMe: boolean
+              stats: { __typename?: 'ProfileStats'; totalFollowers: number; totalFollowing: number }
               attributes?: Array<{ __typename?: 'Attribute'; key: string; value: string }> | null
               picture?:
                 | { __typename?: 'MediaSet'; original: { __typename?: 'Media'; url: any } }
@@ -8689,7 +9155,6 @@ export type ExploreFeedQuery = {
             | {
                 __typename?: 'FeeCollectModuleSettings'
                 type: CollectModules
-                recipient: any
                 referralFee: number
                 contractAddress: any
                 followerOnly: boolean
@@ -8709,7 +9174,6 @@ export type ExploreFeedQuery = {
                 __typename?: 'LimitedFeeCollectModuleSettings'
                 type: CollectModules
                 collectLimit: string
-                recipient: any
                 referralFee: number
                 contractAddress: any
                 followerOnly: boolean
@@ -8723,7 +9187,6 @@ export type ExploreFeedQuery = {
                 __typename?: 'LimitedTimedFeeCollectModuleSettings'
                 type: CollectModules
                 collectLimit: string
-                recipient: any
                 endTimestamp: any
                 referralFee: number
                 contractAddress: any
@@ -8738,7 +9201,6 @@ export type ExploreFeedQuery = {
             | {
                 __typename?: 'TimedFeeCollectModuleSettings'
                 type: CollectModules
-                recipient: any
                 endTimestamp: any
                 referralFee: number
                 contractAddress: any
@@ -8807,6 +9269,8 @@ export type FeedHighlightsQuery = {
             handle: any
             bio?: string | null
             ownedBy: any
+            isFollowedByMe: boolean
+            stats: { __typename?: 'ProfileStats'; totalFollowers: number; totalFollowing: number }
             attributes?: Array<{ __typename?: 'Attribute'; key: string; value: string }> | null
             picture?:
               | { __typename?: 'MediaSet'; original: { __typename?: 'Media'; url: any } }
@@ -8831,6 +9295,8 @@ export type FeedHighlightsQuery = {
               handle: any
               bio?: string | null
               ownedBy: any
+              isFollowedByMe: boolean
+              stats: { __typename?: 'ProfileStats'; totalFollowers: number; totalFollowing: number }
               attributes?: Array<{ __typename?: 'Attribute'; key: string; value: string }> | null
               picture?:
                 | { __typename?: 'MediaSet'; original: { __typename?: 'Media'; url: any } }
@@ -8848,7 +9314,6 @@ export type FeedHighlightsQuery = {
             | {
                 __typename?: 'FeeCollectModuleSettings'
                 type: CollectModules
-                recipient: any
                 referralFee: number
                 contractAddress: any
                 followerOnly: boolean
@@ -8868,7 +9333,6 @@ export type FeedHighlightsQuery = {
                 __typename?: 'LimitedFeeCollectModuleSettings'
                 type: CollectModules
                 collectLimit: string
-                recipient: any
                 referralFee: number
                 contractAddress: any
                 followerOnly: boolean
@@ -8882,7 +9346,6 @@ export type FeedHighlightsQuery = {
                 __typename?: 'LimitedTimedFeeCollectModuleSettings'
                 type: CollectModules
                 collectLimit: string
-                recipient: any
                 endTimestamp: any
                 referralFee: number
                 contractAddress: any
@@ -8897,7 +9360,6 @@ export type FeedHighlightsQuery = {
             | {
                 __typename?: 'TimedFeeCollectModuleSettings'
                 type: CollectModules
-                recipient: any
                 endTimestamp: any
                 referralFee: number
                 contractAddress: any
@@ -8949,6 +9411,8 @@ export type FeedHighlightsQuery = {
                   handle: any
                   bio?: string | null
                   ownedBy: any
+                  isFollowedByMe: boolean
+                  stats: { __typename?: 'ProfileStats'; totalFollowers: number; totalFollowing: number }
                   attributes?: Array<{ __typename?: 'Attribute'; key: string; value: string }> | null
                   picture?:
                     | { __typename?: 'MediaSet'; original: { __typename?: 'Media'; url: any } }
@@ -8972,7 +9436,6 @@ export type FeedHighlightsQuery = {
                   | {
                       __typename?: 'FeeCollectModuleSettings'
                       type: CollectModules
-                      recipient: any
                       referralFee: number
                       contractAddress: any
                       followerOnly: boolean
@@ -8992,7 +9455,6 @@ export type FeedHighlightsQuery = {
                       __typename?: 'LimitedFeeCollectModuleSettings'
                       type: CollectModules
                       collectLimit: string
-                      recipient: any
                       referralFee: number
                       contractAddress: any
                       followerOnly: boolean
@@ -9006,7 +9468,6 @@ export type FeedHighlightsQuery = {
                       __typename?: 'LimitedTimedFeeCollectModuleSettings'
                       type: CollectModules
                       collectLimit: string
-                      recipient: any
                       endTimestamp: any
                       referralFee: number
                       contractAddress: any
@@ -9021,7 +9482,6 @@ export type FeedHighlightsQuery = {
                   | {
                       __typename?: 'TimedFeeCollectModuleSettings'
                       type: CollectModules
-                      recipient: any
                       endTimestamp: any
                       referralFee: number
                       contractAddress: any
@@ -9072,6 +9532,8 @@ export type FeedHighlightsQuery = {
                         handle: any
                         bio?: string | null
                         ownedBy: any
+                        isFollowedByMe: boolean
+                        stats: { __typename?: 'ProfileStats'; totalFollowers: number; totalFollowing: number }
                         attributes?: Array<{ __typename?: 'Attribute'; key: string; value: string }> | null
                         picture?:
                           | { __typename?: 'MediaSet'; original: { __typename?: 'Media'; url: any } }
@@ -9090,7 +9552,6 @@ export type FeedHighlightsQuery = {
                         | {
                             __typename?: 'FeeCollectModuleSettings'
                             type: CollectModules
-                            recipient: any
                             referralFee: number
                             contractAddress: any
                             followerOnly: boolean
@@ -9110,7 +9571,6 @@ export type FeedHighlightsQuery = {
                             __typename?: 'LimitedFeeCollectModuleSettings'
                             type: CollectModules
                             collectLimit: string
-                            recipient: any
                             referralFee: number
                             contractAddress: any
                             followerOnly: boolean
@@ -9124,7 +9584,6 @@ export type FeedHighlightsQuery = {
                             __typename?: 'LimitedTimedFeeCollectModuleSettings'
                             type: CollectModules
                             collectLimit: string
-                            recipient: any
                             endTimestamp: any
                             referralFee: number
                             contractAddress: any
@@ -9139,7 +9598,6 @@ export type FeedHighlightsQuery = {
                         | {
                             __typename?: 'TimedFeeCollectModuleSettings'
                             type: CollectModules
-                            recipient: any
                             endTimestamp: any
                             referralFee: number
                             contractAddress: any
@@ -9192,6 +9650,12 @@ export type FeedHighlightsQuery = {
                               handle: any
                               bio?: string | null
                               ownedBy: any
+                              isFollowedByMe: boolean
+                              stats: {
+                                __typename?: 'ProfileStats'
+                                totalFollowers: number
+                                totalFollowing: number
+                              }
                               attributes?: Array<{
                                 __typename?: 'Attribute'
                                 key: string
@@ -9234,6 +9698,12 @@ export type FeedHighlightsQuery = {
                               handle: any
                               bio?: string | null
                               ownedBy: any
+                              isFollowedByMe: boolean
+                              stats: {
+                                __typename?: 'ProfileStats'
+                                totalFollowers: number
+                                totalFollowing: number
+                              }
                               attributes?: Array<{
                                 __typename?: 'Attribute'
                                 key: string
@@ -9262,6 +9732,12 @@ export type FeedHighlightsQuery = {
                                 handle: any
                                 bio?: string | null
                                 ownedBy: any
+                                isFollowedByMe: boolean
+                                stats: {
+                                  __typename?: 'ProfileStats'
+                                  totalFollowers: number
+                                  totalFollowing: number
+                                }
                                 attributes?: Array<{
                                   __typename?: 'Attribute'
                                   key: string
@@ -9283,7 +9759,6 @@ export type FeedHighlightsQuery = {
                               | {
                                   __typename?: 'FeeCollectModuleSettings'
                                   type: CollectModules
-                                  recipient: any
                                   referralFee: number
                                   contractAddress: any
                                   followerOnly: boolean
@@ -9308,7 +9783,6 @@ export type FeedHighlightsQuery = {
                                   __typename?: 'LimitedFeeCollectModuleSettings'
                                   type: CollectModules
                                   collectLimit: string
-                                  recipient: any
                                   referralFee: number
                                   contractAddress: any
                                   followerOnly: boolean
@@ -9327,7 +9801,6 @@ export type FeedHighlightsQuery = {
                                   __typename?: 'LimitedTimedFeeCollectModuleSettings'
                                   type: CollectModules
                                   collectLimit: string
-                                  recipient: any
                                   endTimestamp: any
                                   referralFee: number
                                   contractAddress: any
@@ -9347,7 +9820,6 @@ export type FeedHighlightsQuery = {
                               | {
                                   __typename?: 'TimedFeeCollectModuleSettings'
                                   type: CollectModules
-                                  recipient: any
                                   endTimestamp: any
                                   referralFee: number
                                   contractAddress: any
@@ -9409,6 +9881,8 @@ export type FeedHighlightsQuery = {
                         handle: any
                         bio?: string | null
                         ownedBy: any
+                        isFollowedByMe: boolean
+                        stats: { __typename?: 'ProfileStats'; totalFollowers: number; totalFollowing: number }
                         attributes?: Array<{ __typename?: 'Attribute'; key: string; value: string }> | null
                         picture?:
                           | { __typename?: 'MediaSet'; original: { __typename?: 'Media'; url: any } }
@@ -9433,6 +9907,12 @@ export type FeedHighlightsQuery = {
                           handle: any
                           bio?: string | null
                           ownedBy: any
+                          isFollowedByMe: boolean
+                          stats: {
+                            __typename?: 'ProfileStats'
+                            totalFollowers: number
+                            totalFollowing: number
+                          }
                           attributes?: Array<{ __typename?: 'Attribute'; key: string; value: string }> | null
                           picture?:
                             | { __typename?: 'MediaSet'; original: { __typename?: 'Media'; url: any } }
@@ -9450,7 +9930,6 @@ export type FeedHighlightsQuery = {
                         | {
                             __typename?: 'FeeCollectModuleSettings'
                             type: CollectModules
-                            recipient: any
                             referralFee: number
                             contractAddress: any
                             followerOnly: boolean
@@ -9470,7 +9949,6 @@ export type FeedHighlightsQuery = {
                             __typename?: 'LimitedFeeCollectModuleSettings'
                             type: CollectModules
                             collectLimit: string
-                            recipient: any
                             referralFee: number
                             contractAddress: any
                             followerOnly: boolean
@@ -9484,7 +9962,6 @@ export type FeedHighlightsQuery = {
                             __typename?: 'LimitedTimedFeeCollectModuleSettings'
                             type: CollectModules
                             collectLimit: string
-                            recipient: any
                             endTimestamp: any
                             referralFee: number
                             contractAddress: any
@@ -9499,7 +9976,6 @@ export type FeedHighlightsQuery = {
                         | {
                             __typename?: 'TimedFeeCollectModuleSettings'
                             type: CollectModules
-                            recipient: any
                             endTimestamp: any
                             referralFee: number
                             contractAddress: any
@@ -9554,6 +10030,8 @@ export type FeedHighlightsQuery = {
                   handle: any
                   bio?: string | null
                   ownedBy: any
+                  isFollowedByMe: boolean
+                  stats: { __typename?: 'ProfileStats'; totalFollowers: number; totalFollowing: number }
                   attributes?: Array<{ __typename?: 'Attribute'; key: string; value: string }> | null
                   picture?:
                     | { __typename?: 'MediaSet'; original: { __typename?: 'Media'; url: any } }
@@ -9572,7 +10050,6 @@ export type FeedHighlightsQuery = {
                   | {
                       __typename?: 'FeeCollectModuleSettings'
                       type: CollectModules
-                      recipient: any
                       referralFee: number
                       contractAddress: any
                       followerOnly: boolean
@@ -9592,7 +10069,6 @@ export type FeedHighlightsQuery = {
                       __typename?: 'LimitedFeeCollectModuleSettings'
                       type: CollectModules
                       collectLimit: string
-                      recipient: any
                       referralFee: number
                       contractAddress: any
                       followerOnly: boolean
@@ -9606,7 +10082,6 @@ export type FeedHighlightsQuery = {
                       __typename?: 'LimitedTimedFeeCollectModuleSettings'
                       type: CollectModules
                       collectLimit: string
-                      recipient: any
                       endTimestamp: any
                       referralFee: number
                       contractAddress: any
@@ -9621,7 +10096,6 @@ export type FeedHighlightsQuery = {
                   | {
                       __typename?: 'TimedFeeCollectModuleSettings'
                       type: CollectModules
-                      recipient: any
                       endTimestamp: any
                       referralFee: number
                       contractAddress: any
@@ -9671,6 +10145,8 @@ export type FeedHighlightsQuery = {
                         handle: any
                         bio?: string | null
                         ownedBy: any
+                        isFollowedByMe: boolean
+                        stats: { __typename?: 'ProfileStats'; totalFollowers: number; totalFollowing: number }
                         attributes?: Array<{ __typename?: 'Attribute'; key: string; value: string }> | null
                         picture?:
                           | { __typename?: 'MediaSet'; original: { __typename?: 'Media'; url: any } }
@@ -9709,6 +10185,8 @@ export type FeedHighlightsQuery = {
                         handle: any
                         bio?: string | null
                         ownedBy: any
+                        isFollowedByMe: boolean
+                        stats: { __typename?: 'ProfileStats'; totalFollowers: number; totalFollowing: number }
                         attributes?: Array<{ __typename?: 'Attribute'; key: string; value: string }> | null
                         picture?:
                           | { __typename?: 'MediaSet'; original: { __typename?: 'Media'; url: any } }
@@ -9733,6 +10211,12 @@ export type FeedHighlightsQuery = {
                           handle: any
                           bio?: string | null
                           ownedBy: any
+                          isFollowedByMe: boolean
+                          stats: {
+                            __typename?: 'ProfileStats'
+                            totalFollowers: number
+                            totalFollowing: number
+                          }
                           attributes?: Array<{ __typename?: 'Attribute'; key: string; value: string }> | null
                           picture?:
                             | { __typename?: 'MediaSet'; original: { __typename?: 'Media'; url: any } }
@@ -9750,7 +10234,6 @@ export type FeedHighlightsQuery = {
                         | {
                             __typename?: 'FeeCollectModuleSettings'
                             type: CollectModules
-                            recipient: any
                             referralFee: number
                             contractAddress: any
                             followerOnly: boolean
@@ -9770,7 +10253,6 @@ export type FeedHighlightsQuery = {
                             __typename?: 'LimitedFeeCollectModuleSettings'
                             type: CollectModules
                             collectLimit: string
-                            recipient: any
                             referralFee: number
                             contractAddress: any
                             followerOnly: boolean
@@ -9784,7 +10266,6 @@ export type FeedHighlightsQuery = {
                             __typename?: 'LimitedTimedFeeCollectModuleSettings'
                             type: CollectModules
                             collectLimit: string
-                            recipient: any
                             endTimestamp: any
                             referralFee: number
                             contractAddress: any
@@ -9799,7 +10280,6 @@ export type FeedHighlightsQuery = {
                         | {
                             __typename?: 'TimedFeeCollectModuleSettings'
                             type: CollectModules
-                            recipient: any
                             endTimestamp: any
                             referralFee: number
                             contractAddress: any
@@ -9856,6 +10336,8 @@ export type FeedHighlightsQuery = {
                   handle: any
                   bio?: string | null
                   ownedBy: any
+                  isFollowedByMe: boolean
+                  stats: { __typename?: 'ProfileStats'; totalFollowers: number; totalFollowing: number }
                   attributes?: Array<{ __typename?: 'Attribute'; key: string; value: string }> | null
                   picture?:
                     | { __typename?: 'MediaSet'; original: { __typename?: 'Media'; url: any } }
@@ -9880,6 +10362,8 @@ export type FeedHighlightsQuery = {
                     handle: any
                     bio?: string | null
                     ownedBy: any
+                    isFollowedByMe: boolean
+                    stats: { __typename?: 'ProfileStats'; totalFollowers: number; totalFollowing: number }
                     attributes?: Array<{ __typename?: 'Attribute'; key: string; value: string }> | null
                     picture?:
                       | { __typename?: 'MediaSet'; original: { __typename?: 'Media'; url: any } }
@@ -9897,7 +10381,6 @@ export type FeedHighlightsQuery = {
                   | {
                       __typename?: 'FeeCollectModuleSettings'
                       type: CollectModules
-                      recipient: any
                       referralFee: number
                       contractAddress: any
                       followerOnly: boolean
@@ -9917,7 +10400,6 @@ export type FeedHighlightsQuery = {
                       __typename?: 'LimitedFeeCollectModuleSettings'
                       type: CollectModules
                       collectLimit: string
-                      recipient: any
                       referralFee: number
                       contractAddress: any
                       followerOnly: boolean
@@ -9931,7 +10413,6 @@ export type FeedHighlightsQuery = {
                       __typename?: 'LimitedTimedFeeCollectModuleSettings'
                       type: CollectModules
                       collectLimit: string
-                      recipient: any
                       endTimestamp: any
                       referralFee: number
                       contractAddress: any
@@ -9946,7 +10427,6 @@ export type FeedHighlightsQuery = {
                   | {
                       __typename?: 'TimedFeeCollectModuleSettings'
                       type: CollectModules
-                      recipient: any
                       endTimestamp: any
                       referralFee: number
                       contractAddress: any
@@ -9999,6 +10479,8 @@ export type FeedHighlightsQuery = {
             handle: any
             bio?: string | null
             ownedBy: any
+            isFollowedByMe: boolean
+            stats: { __typename?: 'ProfileStats'; totalFollowers: number; totalFollowing: number }
             attributes?: Array<{ __typename?: 'Attribute'; key: string; value: string }> | null
             picture?:
               | { __typename?: 'MediaSet'; original: { __typename?: 'Media'; url: any } }
@@ -10017,7 +10499,6 @@ export type FeedHighlightsQuery = {
             | {
                 __typename?: 'FeeCollectModuleSettings'
                 type: CollectModules
-                recipient: any
                 referralFee: number
                 contractAddress: any
                 followerOnly: boolean
@@ -10037,7 +10518,6 @@ export type FeedHighlightsQuery = {
                 __typename?: 'LimitedFeeCollectModuleSettings'
                 type: CollectModules
                 collectLimit: string
-                recipient: any
                 referralFee: number
                 contractAddress: any
                 followerOnly: boolean
@@ -10051,7 +10531,6 @@ export type FeedHighlightsQuery = {
                 __typename?: 'LimitedTimedFeeCollectModuleSettings'
                 type: CollectModules
                 collectLimit: string
-                recipient: any
                 endTimestamp: any
                 referralFee: number
                 contractAddress: any
@@ -10066,7 +10545,6 @@ export type FeedHighlightsQuery = {
             | {
                 __typename?: 'TimedFeeCollectModuleSettings'
                 type: CollectModules
-                recipient: any
                 endTimestamp: any
                 referralFee: number
                 contractAddress: any
@@ -10116,6 +10594,8 @@ export type FeedHighlightsQuery = {
                   handle: any
                   bio?: string | null
                   ownedBy: any
+                  isFollowedByMe: boolean
+                  stats: { __typename?: 'ProfileStats'; totalFollowers: number; totalFollowing: number }
                   attributes?: Array<{ __typename?: 'Attribute'; key: string; value: string }> | null
                   picture?:
                     | { __typename?: 'MediaSet'; original: { __typename?: 'Media'; url: any } }
@@ -10154,6 +10634,8 @@ export type FeedHighlightsQuery = {
                   handle: any
                   bio?: string | null
                   ownedBy: any
+                  isFollowedByMe: boolean
+                  stats: { __typename?: 'ProfileStats'; totalFollowers: number; totalFollowing: number }
                   attributes?: Array<{ __typename?: 'Attribute'; key: string; value: string }> | null
                   picture?:
                     | { __typename?: 'MediaSet'; original: { __typename?: 'Media'; url: any } }
@@ -10178,6 +10660,8 @@ export type FeedHighlightsQuery = {
                     handle: any
                     bio?: string | null
                     ownedBy: any
+                    isFollowedByMe: boolean
+                    stats: { __typename?: 'ProfileStats'; totalFollowers: number; totalFollowing: number }
                     attributes?: Array<{ __typename?: 'Attribute'; key: string; value: string }> | null
                     picture?:
                       | { __typename?: 'MediaSet'; original: { __typename?: 'Media'; url: any } }
@@ -10195,7 +10679,6 @@ export type FeedHighlightsQuery = {
                   | {
                       __typename?: 'FeeCollectModuleSettings'
                       type: CollectModules
-                      recipient: any
                       referralFee: number
                       contractAddress: any
                       followerOnly: boolean
@@ -10215,7 +10698,6 @@ export type FeedHighlightsQuery = {
                       __typename?: 'LimitedFeeCollectModuleSettings'
                       type: CollectModules
                       collectLimit: string
-                      recipient: any
                       referralFee: number
                       contractAddress: any
                       followerOnly: boolean
@@ -10229,7 +10711,6 @@ export type FeedHighlightsQuery = {
                       __typename?: 'LimitedTimedFeeCollectModuleSettings'
                       type: CollectModules
                       collectLimit: string
-                      recipient: any
                       endTimestamp: any
                       referralFee: number
                       contractAddress: any
@@ -10244,7 +10725,6 @@ export type FeedHighlightsQuery = {
                   | {
                       __typename?: 'TimedFeeCollectModuleSettings'
                       type: CollectModules
-                      recipient: any
                       endTimestamp: any
                       referralFee: number
                       contractAddress: any
@@ -10298,6 +10778,8 @@ export type FeedHighlightsQuery = {
             handle: any
             bio?: string | null
             ownedBy: any
+            isFollowedByMe: boolean
+            stats: { __typename?: 'ProfileStats'; totalFollowers: number; totalFollowing: number }
             attributes?: Array<{ __typename?: 'Attribute'; key: string; value: string }> | null
             picture?:
               | { __typename?: 'MediaSet'; original: { __typename?: 'Media'; url: any } }
@@ -10322,6 +10804,8 @@ export type FeedHighlightsQuery = {
               handle: any
               bio?: string | null
               ownedBy: any
+              isFollowedByMe: boolean
+              stats: { __typename?: 'ProfileStats'; totalFollowers: number; totalFollowing: number }
               attributes?: Array<{ __typename?: 'Attribute'; key: string; value: string }> | null
               picture?:
                 | { __typename?: 'MediaSet'; original: { __typename?: 'Media'; url: any } }
@@ -10339,7 +10823,6 @@ export type FeedHighlightsQuery = {
             | {
                 __typename?: 'FeeCollectModuleSettings'
                 type: CollectModules
-                recipient: any
                 referralFee: number
                 contractAddress: any
                 followerOnly: boolean
@@ -10359,7 +10842,6 @@ export type FeedHighlightsQuery = {
                 __typename?: 'LimitedFeeCollectModuleSettings'
                 type: CollectModules
                 collectLimit: string
-                recipient: any
                 referralFee: number
                 contractAddress: any
                 followerOnly: boolean
@@ -10373,7 +10855,6 @@ export type FeedHighlightsQuery = {
                 __typename?: 'LimitedTimedFeeCollectModuleSettings'
                 type: CollectModules
                 collectLimit: string
-                recipient: any
                 endTimestamp: any
                 referralFee: number
                 contractAddress: any
@@ -10388,7 +10869,6 @@ export type FeedHighlightsQuery = {
             | {
                 __typename?: 'TimedFeeCollectModuleSettings'
                 type: CollectModules
-                recipient: any
                 endTimestamp: any
                 referralFee: number
                 contractAddress: any
@@ -10452,6 +10932,7 @@ export type FollowersQuery = {
           handle: any
           bio?: string | null
           ownedBy: any
+          stats: { __typename?: 'ProfileStats'; totalFollowers: number; totalFollowing: number }
           attributes?: Array<{ __typename?: 'Attribute'; key: string; value: string }> | null
           picture?:
             | { __typename?: 'MediaSet'; original: { __typename?: 'Media'; url: any } }
@@ -10489,6 +10970,7 @@ export type FollowingQuery = {
         handle: any
         bio?: string | null
         ownedBy: any
+        stats: { __typename?: 'ProfileStats'; totalFollowers: number; totalFollowing: number }
         attributes?: Array<{ __typename?: 'Attribute'; key: string; value: string }> | null
         picture?:
           | { __typename?: 'MediaSet'; original: { __typename?: 'Media'; url: any } }
@@ -10646,6 +11128,7 @@ export type LikesQuery = {
         handle: any
         bio?: string | null
         ownedBy: any
+        stats: { __typename?: 'ProfileStats'; totalFollowers: number; totalFollowing: number }
         attributes?: Array<{ __typename?: 'Attribute'; key: string; value: string }> | null
         picture?:
           | { __typename?: 'MediaSet'; original: { __typename?: 'Media'; url: any } }
@@ -10679,6 +11162,7 @@ export type MirrorsQuery = {
       handle: any
       bio?: string | null
       ownedBy: any
+      stats: { __typename?: 'ProfileStats'; totalFollowers: number; totalFollowing: number }
       attributes?: Array<{ __typename?: 'Attribute'; key: string; value: string }> | null
       picture?:
         | { __typename?: 'MediaSet'; original: { __typename?: 'Media'; url: any } }
@@ -10732,6 +11216,7 @@ export type MutualFollowersListQuery = {
       handle: any
       bio?: string | null
       ownedBy: any
+      stats: { __typename?: 'ProfileStats'; totalFollowers: number; totalFollowing: number }
       attributes?: Array<{ __typename?: 'Attribute'; key: string; value: string }> | null
       picture?:
         | { __typename?: 'MediaSet'; original: { __typename?: 'Media'; url: any } }
@@ -10813,6 +11298,8 @@ export type NotificationsQuery = {
               handle: any
               bio?: string | null
               ownedBy: any
+              isFollowedByMe: boolean
+              stats: { __typename?: 'ProfileStats'; totalFollowers: number; totalFollowing: number }
               attributes?: Array<{ __typename?: 'Attribute'; key: string; value: string }> | null
               picture?:
                 | { __typename?: 'MediaSet'; original: { __typename?: 'Media'; url: any } }
@@ -10835,7 +11322,6 @@ export type NotificationsQuery = {
                   | {
                       __typename?: 'FeeCollectModuleSettings'
                       type: CollectModules
-                      recipient: any
                       referralFee: number
                       contractAddress: any
                       followerOnly: boolean
@@ -10855,7 +11341,6 @@ export type NotificationsQuery = {
                       __typename?: 'LimitedFeeCollectModuleSettings'
                       type: CollectModules
                       collectLimit: string
-                      recipient: any
                       referralFee: number
                       contractAddress: any
                       followerOnly: boolean
@@ -10869,7 +11354,6 @@ export type NotificationsQuery = {
                       __typename?: 'LimitedTimedFeeCollectModuleSettings'
                       type: CollectModules
                       collectLimit: string
-                      recipient: any
                       endTimestamp: any
                       referralFee: number
                       contractAddress: any
@@ -10884,7 +11368,6 @@ export type NotificationsQuery = {
                   | {
                       __typename?: 'TimedFeeCollectModuleSettings'
                       type: CollectModules
-                      recipient: any
                       endTimestamp: any
                       referralFee: number
                       contractAddress: any
@@ -10906,7 +11389,6 @@ export type NotificationsQuery = {
                   | {
                       __typename?: 'FeeCollectModuleSettings'
                       type: CollectModules
-                      recipient: any
                       referralFee: number
                       contractAddress: any
                       followerOnly: boolean
@@ -10926,7 +11408,6 @@ export type NotificationsQuery = {
                       __typename?: 'LimitedFeeCollectModuleSettings'
                       type: CollectModules
                       collectLimit: string
-                      recipient: any
                       referralFee: number
                       contractAddress: any
                       followerOnly: boolean
@@ -10940,7 +11421,6 @@ export type NotificationsQuery = {
                       __typename?: 'LimitedTimedFeeCollectModuleSettings'
                       type: CollectModules
                       collectLimit: string
-                      recipient: any
                       endTimestamp: any
                       referralFee: number
                       contractAddress: any
@@ -10955,7 +11435,6 @@ export type NotificationsQuery = {
                   | {
                       __typename?: 'TimedFeeCollectModuleSettings'
                       type: CollectModules
-                      recipient: any
                       endTimestamp: any
                       referralFee: number
                       contractAddress: any
@@ -10980,6 +11459,8 @@ export type NotificationsQuery = {
             handle: any
             bio?: string | null
             ownedBy: any
+            isFollowedByMe: boolean
+            stats: { __typename?: 'ProfileStats'; totalFollowers: number; totalFollowing: number }
             attributes?: Array<{ __typename?: 'Attribute'; key: string; value: string }> | null
             picture?:
               | { __typename?: 'MediaSet'; original: { __typename?: 'Media'; url: any } }
@@ -11017,6 +11498,8 @@ export type NotificationsQuery = {
               handle: any
               bio?: string | null
               ownedBy: any
+              isFollowedByMe: boolean
+              stats: { __typename?: 'ProfileStats'; totalFollowers: number; totalFollowing: number }
               attributes?: Array<{ __typename?: 'Attribute'; key: string; value: string }> | null
               picture?:
                 | { __typename?: 'MediaSet'; original: { __typename?: 'Media'; url: any } }
@@ -11046,6 +11529,8 @@ export type NotificationsQuery = {
                   handle: any
                   bio?: string | null
                   ownedBy: any
+                  isFollowedByMe: boolean
+                  stats: { __typename?: 'ProfileStats'; totalFollowers: number; totalFollowing: number }
                   attributes?: Array<{ __typename?: 'Attribute'; key: string; value: string }> | null
                   picture?:
                     | { __typename?: 'MediaSet'; original: { __typename?: 'Media'; url: any } }
@@ -11070,6 +11555,8 @@ export type NotificationsQuery = {
                   handle: any
                   bio?: string | null
                   ownedBy: any
+                  isFollowedByMe: boolean
+                  stats: { __typename?: 'ProfileStats'; totalFollowers: number; totalFollowing: number }
                   attributes?: Array<{ __typename?: 'Attribute'; key: string; value: string }> | null
                   picture?:
                     | { __typename?: 'MediaSet'; original: { __typename?: 'Media'; url: any } }
@@ -11096,6 +11583,8 @@ export type NotificationsQuery = {
             handle: any
             bio?: string | null
             ownedBy: any
+            isFollowedByMe: boolean
+            stats: { __typename?: 'ProfileStats'; totalFollowers: number; totalFollowing: number }
             attributes?: Array<{ __typename?: 'Attribute'; key: string; value: string }> | null
             picture?:
               | { __typename?: 'MediaSet'; original: { __typename?: 'Media'; url: any } }
@@ -11131,6 +11620,8 @@ export type NotificationsQuery = {
             handle: any
             bio?: string | null
             ownedBy: any
+            isFollowedByMe: boolean
+            stats: { __typename?: 'ProfileStats'; totalFollowers: number; totalFollowing: number }
             attributes?: Array<{ __typename?: 'Attribute'; key: string; value: string }> | null
             picture?:
               | { __typename?: 'MediaSet'; original: { __typename?: 'Media'; url: any } }
@@ -11260,6 +11751,8 @@ export type ProfileFeedQuery = {
             handle: any
             bio?: string | null
             ownedBy: any
+            isFollowedByMe: boolean
+            stats: { __typename?: 'ProfileStats'; totalFollowers: number; totalFollowing: number }
             attributes?: Array<{ __typename?: 'Attribute'; key: string; value: string }> | null
             picture?:
               | { __typename?: 'MediaSet'; original: { __typename?: 'Media'; url: any } }
@@ -11284,6 +11777,8 @@ export type ProfileFeedQuery = {
               handle: any
               bio?: string | null
               ownedBy: any
+              isFollowedByMe: boolean
+              stats: { __typename?: 'ProfileStats'; totalFollowers: number; totalFollowing: number }
               attributes?: Array<{ __typename?: 'Attribute'; key: string; value: string }> | null
               picture?:
                 | { __typename?: 'MediaSet'; original: { __typename?: 'Media'; url: any } }
@@ -11301,7 +11796,6 @@ export type ProfileFeedQuery = {
             | {
                 __typename?: 'FeeCollectModuleSettings'
                 type: CollectModules
-                recipient: any
                 referralFee: number
                 contractAddress: any
                 followerOnly: boolean
@@ -11321,7 +11815,6 @@ export type ProfileFeedQuery = {
                 __typename?: 'LimitedFeeCollectModuleSettings'
                 type: CollectModules
                 collectLimit: string
-                recipient: any
                 referralFee: number
                 contractAddress: any
                 followerOnly: boolean
@@ -11335,7 +11828,6 @@ export type ProfileFeedQuery = {
                 __typename?: 'LimitedTimedFeeCollectModuleSettings'
                 type: CollectModules
                 collectLimit: string
-                recipient: any
                 endTimestamp: any
                 referralFee: number
                 contractAddress: any
@@ -11350,7 +11842,6 @@ export type ProfileFeedQuery = {
             | {
                 __typename?: 'TimedFeeCollectModuleSettings'
                 type: CollectModules
-                recipient: any
                 endTimestamp: any
                 referralFee: number
                 contractAddress: any
@@ -11402,6 +11893,8 @@ export type ProfileFeedQuery = {
                   handle: any
                   bio?: string | null
                   ownedBy: any
+                  isFollowedByMe: boolean
+                  stats: { __typename?: 'ProfileStats'; totalFollowers: number; totalFollowing: number }
                   attributes?: Array<{ __typename?: 'Attribute'; key: string; value: string }> | null
                   picture?:
                     | { __typename?: 'MediaSet'; original: { __typename?: 'Media'; url: any } }
@@ -11425,7 +11918,6 @@ export type ProfileFeedQuery = {
                   | {
                       __typename?: 'FeeCollectModuleSettings'
                       type: CollectModules
-                      recipient: any
                       referralFee: number
                       contractAddress: any
                       followerOnly: boolean
@@ -11445,7 +11937,6 @@ export type ProfileFeedQuery = {
                       __typename?: 'LimitedFeeCollectModuleSettings'
                       type: CollectModules
                       collectLimit: string
-                      recipient: any
                       referralFee: number
                       contractAddress: any
                       followerOnly: boolean
@@ -11459,7 +11950,6 @@ export type ProfileFeedQuery = {
                       __typename?: 'LimitedTimedFeeCollectModuleSettings'
                       type: CollectModules
                       collectLimit: string
-                      recipient: any
                       endTimestamp: any
                       referralFee: number
                       contractAddress: any
@@ -11474,7 +11964,6 @@ export type ProfileFeedQuery = {
                   | {
                       __typename?: 'TimedFeeCollectModuleSettings'
                       type: CollectModules
-                      recipient: any
                       endTimestamp: any
                       referralFee: number
                       contractAddress: any
@@ -11525,6 +12014,8 @@ export type ProfileFeedQuery = {
                         handle: any
                         bio?: string | null
                         ownedBy: any
+                        isFollowedByMe: boolean
+                        stats: { __typename?: 'ProfileStats'; totalFollowers: number; totalFollowing: number }
                         attributes?: Array<{ __typename?: 'Attribute'; key: string; value: string }> | null
                         picture?:
                           | { __typename?: 'MediaSet'; original: { __typename?: 'Media'; url: any } }
@@ -11543,7 +12034,6 @@ export type ProfileFeedQuery = {
                         | {
                             __typename?: 'FeeCollectModuleSettings'
                             type: CollectModules
-                            recipient: any
                             referralFee: number
                             contractAddress: any
                             followerOnly: boolean
@@ -11563,7 +12053,6 @@ export type ProfileFeedQuery = {
                             __typename?: 'LimitedFeeCollectModuleSettings'
                             type: CollectModules
                             collectLimit: string
-                            recipient: any
                             referralFee: number
                             contractAddress: any
                             followerOnly: boolean
@@ -11577,7 +12066,6 @@ export type ProfileFeedQuery = {
                             __typename?: 'LimitedTimedFeeCollectModuleSettings'
                             type: CollectModules
                             collectLimit: string
-                            recipient: any
                             endTimestamp: any
                             referralFee: number
                             contractAddress: any
@@ -11592,7 +12080,6 @@ export type ProfileFeedQuery = {
                         | {
                             __typename?: 'TimedFeeCollectModuleSettings'
                             type: CollectModules
-                            recipient: any
                             endTimestamp: any
                             referralFee: number
                             contractAddress: any
@@ -11645,6 +12132,12 @@ export type ProfileFeedQuery = {
                               handle: any
                               bio?: string | null
                               ownedBy: any
+                              isFollowedByMe: boolean
+                              stats: {
+                                __typename?: 'ProfileStats'
+                                totalFollowers: number
+                                totalFollowing: number
+                              }
                               attributes?: Array<{
                                 __typename?: 'Attribute'
                                 key: string
@@ -11687,6 +12180,12 @@ export type ProfileFeedQuery = {
                               handle: any
                               bio?: string | null
                               ownedBy: any
+                              isFollowedByMe: boolean
+                              stats: {
+                                __typename?: 'ProfileStats'
+                                totalFollowers: number
+                                totalFollowing: number
+                              }
                               attributes?: Array<{
                                 __typename?: 'Attribute'
                                 key: string
@@ -11715,6 +12214,12 @@ export type ProfileFeedQuery = {
                                 handle: any
                                 bio?: string | null
                                 ownedBy: any
+                                isFollowedByMe: boolean
+                                stats: {
+                                  __typename?: 'ProfileStats'
+                                  totalFollowers: number
+                                  totalFollowing: number
+                                }
                                 attributes?: Array<{
                                   __typename?: 'Attribute'
                                   key: string
@@ -11736,7 +12241,6 @@ export type ProfileFeedQuery = {
                               | {
                                   __typename?: 'FeeCollectModuleSettings'
                                   type: CollectModules
-                                  recipient: any
                                   referralFee: number
                                   contractAddress: any
                                   followerOnly: boolean
@@ -11761,7 +12265,6 @@ export type ProfileFeedQuery = {
                                   __typename?: 'LimitedFeeCollectModuleSettings'
                                   type: CollectModules
                                   collectLimit: string
-                                  recipient: any
                                   referralFee: number
                                   contractAddress: any
                                   followerOnly: boolean
@@ -11780,7 +12283,6 @@ export type ProfileFeedQuery = {
                                   __typename?: 'LimitedTimedFeeCollectModuleSettings'
                                   type: CollectModules
                                   collectLimit: string
-                                  recipient: any
                                   endTimestamp: any
                                   referralFee: number
                                   contractAddress: any
@@ -11800,7 +12302,6 @@ export type ProfileFeedQuery = {
                               | {
                                   __typename?: 'TimedFeeCollectModuleSettings'
                                   type: CollectModules
-                                  recipient: any
                                   endTimestamp: any
                                   referralFee: number
                                   contractAddress: any
@@ -11862,6 +12363,8 @@ export type ProfileFeedQuery = {
                         handle: any
                         bio?: string | null
                         ownedBy: any
+                        isFollowedByMe: boolean
+                        stats: { __typename?: 'ProfileStats'; totalFollowers: number; totalFollowing: number }
                         attributes?: Array<{ __typename?: 'Attribute'; key: string; value: string }> | null
                         picture?:
                           | { __typename?: 'MediaSet'; original: { __typename?: 'Media'; url: any } }
@@ -11886,6 +12389,12 @@ export type ProfileFeedQuery = {
                           handle: any
                           bio?: string | null
                           ownedBy: any
+                          isFollowedByMe: boolean
+                          stats: {
+                            __typename?: 'ProfileStats'
+                            totalFollowers: number
+                            totalFollowing: number
+                          }
                           attributes?: Array<{ __typename?: 'Attribute'; key: string; value: string }> | null
                           picture?:
                             | { __typename?: 'MediaSet'; original: { __typename?: 'Media'; url: any } }
@@ -11903,7 +12412,6 @@ export type ProfileFeedQuery = {
                         | {
                             __typename?: 'FeeCollectModuleSettings'
                             type: CollectModules
-                            recipient: any
                             referralFee: number
                             contractAddress: any
                             followerOnly: boolean
@@ -11923,7 +12431,6 @@ export type ProfileFeedQuery = {
                             __typename?: 'LimitedFeeCollectModuleSettings'
                             type: CollectModules
                             collectLimit: string
-                            recipient: any
                             referralFee: number
                             contractAddress: any
                             followerOnly: boolean
@@ -11937,7 +12444,6 @@ export type ProfileFeedQuery = {
                             __typename?: 'LimitedTimedFeeCollectModuleSettings'
                             type: CollectModules
                             collectLimit: string
-                            recipient: any
                             endTimestamp: any
                             referralFee: number
                             contractAddress: any
@@ -11952,7 +12458,6 @@ export type ProfileFeedQuery = {
                         | {
                             __typename?: 'TimedFeeCollectModuleSettings'
                             type: CollectModules
-                            recipient: any
                             endTimestamp: any
                             referralFee: number
                             contractAddress: any
@@ -12007,6 +12512,8 @@ export type ProfileFeedQuery = {
                   handle: any
                   bio?: string | null
                   ownedBy: any
+                  isFollowedByMe: boolean
+                  stats: { __typename?: 'ProfileStats'; totalFollowers: number; totalFollowing: number }
                   attributes?: Array<{ __typename?: 'Attribute'; key: string; value: string }> | null
                   picture?:
                     | { __typename?: 'MediaSet'; original: { __typename?: 'Media'; url: any } }
@@ -12025,7 +12532,6 @@ export type ProfileFeedQuery = {
                   | {
                       __typename?: 'FeeCollectModuleSettings'
                       type: CollectModules
-                      recipient: any
                       referralFee: number
                       contractAddress: any
                       followerOnly: boolean
@@ -12045,7 +12551,6 @@ export type ProfileFeedQuery = {
                       __typename?: 'LimitedFeeCollectModuleSettings'
                       type: CollectModules
                       collectLimit: string
-                      recipient: any
                       referralFee: number
                       contractAddress: any
                       followerOnly: boolean
@@ -12059,7 +12564,6 @@ export type ProfileFeedQuery = {
                       __typename?: 'LimitedTimedFeeCollectModuleSettings'
                       type: CollectModules
                       collectLimit: string
-                      recipient: any
                       endTimestamp: any
                       referralFee: number
                       contractAddress: any
@@ -12074,7 +12578,6 @@ export type ProfileFeedQuery = {
                   | {
                       __typename?: 'TimedFeeCollectModuleSettings'
                       type: CollectModules
-                      recipient: any
                       endTimestamp: any
                       referralFee: number
                       contractAddress: any
@@ -12124,6 +12627,8 @@ export type ProfileFeedQuery = {
                         handle: any
                         bio?: string | null
                         ownedBy: any
+                        isFollowedByMe: boolean
+                        stats: { __typename?: 'ProfileStats'; totalFollowers: number; totalFollowing: number }
                         attributes?: Array<{ __typename?: 'Attribute'; key: string; value: string }> | null
                         picture?:
                           | { __typename?: 'MediaSet'; original: { __typename?: 'Media'; url: any } }
@@ -12162,6 +12667,8 @@ export type ProfileFeedQuery = {
                         handle: any
                         bio?: string | null
                         ownedBy: any
+                        isFollowedByMe: boolean
+                        stats: { __typename?: 'ProfileStats'; totalFollowers: number; totalFollowing: number }
                         attributes?: Array<{ __typename?: 'Attribute'; key: string; value: string }> | null
                         picture?:
                           | { __typename?: 'MediaSet'; original: { __typename?: 'Media'; url: any } }
@@ -12186,6 +12693,12 @@ export type ProfileFeedQuery = {
                           handle: any
                           bio?: string | null
                           ownedBy: any
+                          isFollowedByMe: boolean
+                          stats: {
+                            __typename?: 'ProfileStats'
+                            totalFollowers: number
+                            totalFollowing: number
+                          }
                           attributes?: Array<{ __typename?: 'Attribute'; key: string; value: string }> | null
                           picture?:
                             | { __typename?: 'MediaSet'; original: { __typename?: 'Media'; url: any } }
@@ -12203,7 +12716,6 @@ export type ProfileFeedQuery = {
                         | {
                             __typename?: 'FeeCollectModuleSettings'
                             type: CollectModules
-                            recipient: any
                             referralFee: number
                             contractAddress: any
                             followerOnly: boolean
@@ -12223,7 +12735,6 @@ export type ProfileFeedQuery = {
                             __typename?: 'LimitedFeeCollectModuleSettings'
                             type: CollectModules
                             collectLimit: string
-                            recipient: any
                             referralFee: number
                             contractAddress: any
                             followerOnly: boolean
@@ -12237,7 +12748,6 @@ export type ProfileFeedQuery = {
                             __typename?: 'LimitedTimedFeeCollectModuleSettings'
                             type: CollectModules
                             collectLimit: string
-                            recipient: any
                             endTimestamp: any
                             referralFee: number
                             contractAddress: any
@@ -12252,7 +12762,6 @@ export type ProfileFeedQuery = {
                         | {
                             __typename?: 'TimedFeeCollectModuleSettings'
                             type: CollectModules
-                            recipient: any
                             endTimestamp: any
                             referralFee: number
                             contractAddress: any
@@ -12309,6 +12818,8 @@ export type ProfileFeedQuery = {
                   handle: any
                   bio?: string | null
                   ownedBy: any
+                  isFollowedByMe: boolean
+                  stats: { __typename?: 'ProfileStats'; totalFollowers: number; totalFollowing: number }
                   attributes?: Array<{ __typename?: 'Attribute'; key: string; value: string }> | null
                   picture?:
                     | { __typename?: 'MediaSet'; original: { __typename?: 'Media'; url: any } }
@@ -12333,6 +12844,8 @@ export type ProfileFeedQuery = {
                     handle: any
                     bio?: string | null
                     ownedBy: any
+                    isFollowedByMe: boolean
+                    stats: { __typename?: 'ProfileStats'; totalFollowers: number; totalFollowing: number }
                     attributes?: Array<{ __typename?: 'Attribute'; key: string; value: string }> | null
                     picture?:
                       | { __typename?: 'MediaSet'; original: { __typename?: 'Media'; url: any } }
@@ -12350,7 +12863,6 @@ export type ProfileFeedQuery = {
                   | {
                       __typename?: 'FeeCollectModuleSettings'
                       type: CollectModules
-                      recipient: any
                       referralFee: number
                       contractAddress: any
                       followerOnly: boolean
@@ -12370,7 +12882,6 @@ export type ProfileFeedQuery = {
                       __typename?: 'LimitedFeeCollectModuleSettings'
                       type: CollectModules
                       collectLimit: string
-                      recipient: any
                       referralFee: number
                       contractAddress: any
                       followerOnly: boolean
@@ -12384,7 +12895,6 @@ export type ProfileFeedQuery = {
                       __typename?: 'LimitedTimedFeeCollectModuleSettings'
                       type: CollectModules
                       collectLimit: string
-                      recipient: any
                       endTimestamp: any
                       referralFee: number
                       contractAddress: any
@@ -12399,7 +12909,6 @@ export type ProfileFeedQuery = {
                   | {
                       __typename?: 'TimedFeeCollectModuleSettings'
                       type: CollectModules
-                      recipient: any
                       endTimestamp: any
                       referralFee: number
                       contractAddress: any
@@ -12452,6 +12961,8 @@ export type ProfileFeedQuery = {
             handle: any
             bio?: string | null
             ownedBy: any
+            isFollowedByMe: boolean
+            stats: { __typename?: 'ProfileStats'; totalFollowers: number; totalFollowing: number }
             attributes?: Array<{ __typename?: 'Attribute'; key: string; value: string }> | null
             picture?:
               | { __typename?: 'MediaSet'; original: { __typename?: 'Media'; url: any } }
@@ -12470,7 +12981,6 @@ export type ProfileFeedQuery = {
             | {
                 __typename?: 'FeeCollectModuleSettings'
                 type: CollectModules
-                recipient: any
                 referralFee: number
                 contractAddress: any
                 followerOnly: boolean
@@ -12490,7 +13000,6 @@ export type ProfileFeedQuery = {
                 __typename?: 'LimitedFeeCollectModuleSettings'
                 type: CollectModules
                 collectLimit: string
-                recipient: any
                 referralFee: number
                 contractAddress: any
                 followerOnly: boolean
@@ -12504,7 +13013,6 @@ export type ProfileFeedQuery = {
                 __typename?: 'LimitedTimedFeeCollectModuleSettings'
                 type: CollectModules
                 collectLimit: string
-                recipient: any
                 endTimestamp: any
                 referralFee: number
                 contractAddress: any
@@ -12519,7 +13027,6 @@ export type ProfileFeedQuery = {
             | {
                 __typename?: 'TimedFeeCollectModuleSettings'
                 type: CollectModules
-                recipient: any
                 endTimestamp: any
                 referralFee: number
                 contractAddress: any
@@ -12569,6 +13076,8 @@ export type ProfileFeedQuery = {
                   handle: any
                   bio?: string | null
                   ownedBy: any
+                  isFollowedByMe: boolean
+                  stats: { __typename?: 'ProfileStats'; totalFollowers: number; totalFollowing: number }
                   attributes?: Array<{ __typename?: 'Attribute'; key: string; value: string }> | null
                   picture?:
                     | { __typename?: 'MediaSet'; original: { __typename?: 'Media'; url: any } }
@@ -12607,6 +13116,8 @@ export type ProfileFeedQuery = {
                   handle: any
                   bio?: string | null
                   ownedBy: any
+                  isFollowedByMe: boolean
+                  stats: { __typename?: 'ProfileStats'; totalFollowers: number; totalFollowing: number }
                   attributes?: Array<{ __typename?: 'Attribute'; key: string; value: string }> | null
                   picture?:
                     | { __typename?: 'MediaSet'; original: { __typename?: 'Media'; url: any } }
@@ -12631,6 +13142,8 @@ export type ProfileFeedQuery = {
                     handle: any
                     bio?: string | null
                     ownedBy: any
+                    isFollowedByMe: boolean
+                    stats: { __typename?: 'ProfileStats'; totalFollowers: number; totalFollowing: number }
                     attributes?: Array<{ __typename?: 'Attribute'; key: string; value: string }> | null
                     picture?:
                       | { __typename?: 'MediaSet'; original: { __typename?: 'Media'; url: any } }
@@ -12648,7 +13161,6 @@ export type ProfileFeedQuery = {
                   | {
                       __typename?: 'FeeCollectModuleSettings'
                       type: CollectModules
-                      recipient: any
                       referralFee: number
                       contractAddress: any
                       followerOnly: boolean
@@ -12668,7 +13180,6 @@ export type ProfileFeedQuery = {
                       __typename?: 'LimitedFeeCollectModuleSettings'
                       type: CollectModules
                       collectLimit: string
-                      recipient: any
                       referralFee: number
                       contractAddress: any
                       followerOnly: boolean
@@ -12682,7 +13193,6 @@ export type ProfileFeedQuery = {
                       __typename?: 'LimitedTimedFeeCollectModuleSettings'
                       type: CollectModules
                       collectLimit: string
-                      recipient: any
                       endTimestamp: any
                       referralFee: number
                       contractAddress: any
@@ -12697,7 +13207,6 @@ export type ProfileFeedQuery = {
                   | {
                       __typename?: 'TimedFeeCollectModuleSettings'
                       type: CollectModules
-                      recipient: any
                       endTimestamp: any
                       referralFee: number
                       contractAddress: any
@@ -12751,6 +13260,8 @@ export type ProfileFeedQuery = {
             handle: any
             bio?: string | null
             ownedBy: any
+            isFollowedByMe: boolean
+            stats: { __typename?: 'ProfileStats'; totalFollowers: number; totalFollowing: number }
             attributes?: Array<{ __typename?: 'Attribute'; key: string; value: string }> | null
             picture?:
               | { __typename?: 'MediaSet'; original: { __typename?: 'Media'; url: any } }
@@ -12775,6 +13286,8 @@ export type ProfileFeedQuery = {
               handle: any
               bio?: string | null
               ownedBy: any
+              isFollowedByMe: boolean
+              stats: { __typename?: 'ProfileStats'; totalFollowers: number; totalFollowing: number }
               attributes?: Array<{ __typename?: 'Attribute'; key: string; value: string }> | null
               picture?:
                 | { __typename?: 'MediaSet'; original: { __typename?: 'Media'; url: any } }
@@ -12792,7 +13305,6 @@ export type ProfileFeedQuery = {
             | {
                 __typename?: 'FeeCollectModuleSettings'
                 type: CollectModules
-                recipient: any
                 referralFee: number
                 contractAddress: any
                 followerOnly: boolean
@@ -12812,7 +13324,6 @@ export type ProfileFeedQuery = {
                 __typename?: 'LimitedFeeCollectModuleSettings'
                 type: CollectModules
                 collectLimit: string
-                recipient: any
                 referralFee: number
                 contractAddress: any
                 followerOnly: boolean
@@ -12826,7 +13337,6 @@ export type ProfileFeedQuery = {
                 __typename?: 'LimitedTimedFeeCollectModuleSettings'
                 type: CollectModules
                 collectLimit: string
-                recipient: any
                 endTimestamp: any
                 referralFee: number
                 contractAddress: any
@@ -12841,7 +13351,6 @@ export type ProfileFeedQuery = {
             | {
                 __typename?: 'TimedFeeCollectModuleSettings'
                 type: CollectModules
-                recipient: any
                 endTimestamp: any
                 referralFee: number
                 contractAddress: any
@@ -12936,6 +13445,7 @@ export type ProfilesQuery = {
       handle: any
       bio?: string | null
       ownedBy: any
+      stats: { __typename?: 'ProfileStats'; totalFollowers: number; totalFollowing: number }
       attributes?: Array<{ __typename?: 'Attribute'; key: string; value: string }> | null
       picture?:
         | { __typename?: 'MediaSet'; original: { __typename?: 'Media'; url: any } }
@@ -12980,6 +13490,7 @@ export type PublicationQuery = {
           handle: any
           bio?: string | null
           ownedBy: any
+          stats: { __typename?: 'ProfileStats'; totalFollowers: number; totalFollowing: number }
           attributes?: Array<{ __typename?: 'Attribute'; key: string; value: string }> | null
           picture?:
             | { __typename?: 'MediaSet'; original: { __typename?: 'Media'; url: any } }
@@ -13009,6 +13520,8 @@ export type PublicationQuery = {
             handle: any
             bio?: string | null
             ownedBy: any
+            isFollowedByMe: boolean
+            stats: { __typename?: 'ProfileStats'; totalFollowers: number; totalFollowing: number }
             attributes?: Array<{ __typename?: 'Attribute'; key: string; value: string }> | null
             picture?:
               | { __typename?: 'MediaSet'; original: { __typename?: 'Media'; url: any } }
@@ -13026,7 +13539,6 @@ export type PublicationQuery = {
           | {
               __typename?: 'FeeCollectModuleSettings'
               type: CollectModules
-              recipient: any
               referralFee: number
               contractAddress: any
               followerOnly: boolean
@@ -13046,7 +13558,6 @@ export type PublicationQuery = {
               __typename?: 'LimitedFeeCollectModuleSettings'
               type: CollectModules
               collectLimit: string
-              recipient: any
               referralFee: number
               contractAddress: any
               followerOnly: boolean
@@ -13060,7 +13571,6 @@ export type PublicationQuery = {
               __typename?: 'LimitedTimedFeeCollectModuleSettings'
               type: CollectModules
               collectLimit: string
-              recipient: any
               endTimestamp: any
               referralFee: number
               contractAddress: any
@@ -13075,7 +13585,6 @@ export type PublicationQuery = {
           | {
               __typename?: 'TimedFeeCollectModuleSettings'
               type: CollectModules
-              recipient: any
               endTimestamp: any
               referralFee: number
               contractAddress: any
@@ -13127,6 +13636,8 @@ export type PublicationQuery = {
                 handle: any
                 bio?: string | null
                 ownedBy: any
+                isFollowedByMe: boolean
+                stats: { __typename?: 'ProfileStats'; totalFollowers: number; totalFollowing: number }
                 attributes?: Array<{ __typename?: 'Attribute'; key: string; value: string }> | null
                 picture?:
                   | { __typename?: 'MediaSet'; original: { __typename?: 'Media'; url: any } }
@@ -13150,7 +13661,6 @@ export type PublicationQuery = {
                 | {
                     __typename?: 'FeeCollectModuleSettings'
                     type: CollectModules
-                    recipient: any
                     referralFee: number
                     contractAddress: any
                     followerOnly: boolean
@@ -13170,7 +13680,6 @@ export type PublicationQuery = {
                     __typename?: 'LimitedFeeCollectModuleSettings'
                     type: CollectModules
                     collectLimit: string
-                    recipient: any
                     referralFee: number
                     contractAddress: any
                     followerOnly: boolean
@@ -13184,7 +13693,6 @@ export type PublicationQuery = {
                     __typename?: 'LimitedTimedFeeCollectModuleSettings'
                     type: CollectModules
                     collectLimit: string
-                    recipient: any
                     endTimestamp: any
                     referralFee: number
                     contractAddress: any
@@ -13199,7 +13707,6 @@ export type PublicationQuery = {
                 | {
                     __typename?: 'TimedFeeCollectModuleSettings'
                     type: CollectModules
-                    recipient: any
                     endTimestamp: any
                     referralFee: number
                     contractAddress: any
@@ -13250,6 +13757,8 @@ export type PublicationQuery = {
                       handle: any
                       bio?: string | null
                       ownedBy: any
+                      isFollowedByMe: boolean
+                      stats: { __typename?: 'ProfileStats'; totalFollowers: number; totalFollowing: number }
                       attributes?: Array<{ __typename?: 'Attribute'; key: string; value: string }> | null
                       picture?:
                         | { __typename?: 'MediaSet'; original: { __typename?: 'Media'; url: any } }
@@ -13268,7 +13777,6 @@ export type PublicationQuery = {
                       | {
                           __typename?: 'FeeCollectModuleSettings'
                           type: CollectModules
-                          recipient: any
                           referralFee: number
                           contractAddress: any
                           followerOnly: boolean
@@ -13288,7 +13796,6 @@ export type PublicationQuery = {
                           __typename?: 'LimitedFeeCollectModuleSettings'
                           type: CollectModules
                           collectLimit: string
-                          recipient: any
                           referralFee: number
                           contractAddress: any
                           followerOnly: boolean
@@ -13302,7 +13809,6 @@ export type PublicationQuery = {
                           __typename?: 'LimitedTimedFeeCollectModuleSettings'
                           type: CollectModules
                           collectLimit: string
-                          recipient: any
                           endTimestamp: any
                           referralFee: number
                           contractAddress: any
@@ -13317,7 +13823,6 @@ export type PublicationQuery = {
                       | {
                           __typename?: 'TimedFeeCollectModuleSettings'
                           type: CollectModules
-                          recipient: any
                           endTimestamp: any
                           referralFee: number
                           contractAddress: any
@@ -13367,6 +13872,12 @@ export type PublicationQuery = {
                             handle: any
                             bio?: string | null
                             ownedBy: any
+                            isFollowedByMe: boolean
+                            stats: {
+                              __typename?: 'ProfileStats'
+                              totalFollowers: number
+                              totalFollowing: number
+                            }
                             attributes?: Array<{
                               __typename?: 'Attribute'
                               key: string
@@ -13409,6 +13920,12 @@ export type PublicationQuery = {
                             handle: any
                             bio?: string | null
                             ownedBy: any
+                            isFollowedByMe: boolean
+                            stats: {
+                              __typename?: 'ProfileStats'
+                              totalFollowers: number
+                              totalFollowing: number
+                            }
                             attributes?: Array<{
                               __typename?: 'Attribute'
                               key: string
@@ -13437,6 +13954,12 @@ export type PublicationQuery = {
                               handle: any
                               bio?: string | null
                               ownedBy: any
+                              isFollowedByMe: boolean
+                              stats: {
+                                __typename?: 'ProfileStats'
+                                totalFollowers: number
+                                totalFollowing: number
+                              }
                               attributes?: Array<{
                                 __typename?: 'Attribute'
                                 key: string
@@ -13458,7 +13981,6 @@ export type PublicationQuery = {
                             | {
                                 __typename?: 'FeeCollectModuleSettings'
                                 type: CollectModules
-                                recipient: any
                                 referralFee: number
                                 contractAddress: any
                                 followerOnly: boolean
@@ -13483,7 +14005,6 @@ export type PublicationQuery = {
                                 __typename?: 'LimitedFeeCollectModuleSettings'
                                 type: CollectModules
                                 collectLimit: string
-                                recipient: any
                                 referralFee: number
                                 contractAddress: any
                                 followerOnly: boolean
@@ -13502,7 +14023,6 @@ export type PublicationQuery = {
                                 __typename?: 'LimitedTimedFeeCollectModuleSettings'
                                 type: CollectModules
                                 collectLimit: string
-                                recipient: any
                                 endTimestamp: any
                                 referralFee: number
                                 contractAddress: any
@@ -13522,7 +14042,6 @@ export type PublicationQuery = {
                             | {
                                 __typename?: 'TimedFeeCollectModuleSettings'
                                 type: CollectModules
-                                recipient: any
                                 endTimestamp: any
                                 referralFee: number
                                 contractAddress: any
@@ -13584,6 +14103,8 @@ export type PublicationQuery = {
                       handle: any
                       bio?: string | null
                       ownedBy: any
+                      isFollowedByMe: boolean
+                      stats: { __typename?: 'ProfileStats'; totalFollowers: number; totalFollowing: number }
                       attributes?: Array<{ __typename?: 'Attribute'; key: string; value: string }> | null
                       picture?:
                         | { __typename?: 'MediaSet'; original: { __typename?: 'Media'; url: any } }
@@ -13608,6 +14129,8 @@ export type PublicationQuery = {
                         handle: any
                         bio?: string | null
                         ownedBy: any
+                        isFollowedByMe: boolean
+                        stats: { __typename?: 'ProfileStats'; totalFollowers: number; totalFollowing: number }
                         attributes?: Array<{ __typename?: 'Attribute'; key: string; value: string }> | null
                         picture?:
                           | { __typename?: 'MediaSet'; original: { __typename?: 'Media'; url: any } }
@@ -13625,7 +14148,6 @@ export type PublicationQuery = {
                       | {
                           __typename?: 'FeeCollectModuleSettings'
                           type: CollectModules
-                          recipient: any
                           referralFee: number
                           contractAddress: any
                           followerOnly: boolean
@@ -13645,7 +14167,6 @@ export type PublicationQuery = {
                           __typename?: 'LimitedFeeCollectModuleSettings'
                           type: CollectModules
                           collectLimit: string
-                          recipient: any
                           referralFee: number
                           contractAddress: any
                           followerOnly: boolean
@@ -13659,7 +14180,6 @@ export type PublicationQuery = {
                           __typename?: 'LimitedTimedFeeCollectModuleSettings'
                           type: CollectModules
                           collectLimit: string
-                          recipient: any
                           endTimestamp: any
                           referralFee: number
                           contractAddress: any
@@ -13674,7 +14194,6 @@ export type PublicationQuery = {
                       | {
                           __typename?: 'TimedFeeCollectModuleSettings'
                           type: CollectModules
-                          recipient: any
                           endTimestamp: any
                           referralFee: number
                           contractAddress: any
@@ -13726,6 +14245,8 @@ export type PublicationQuery = {
                 handle: any
                 bio?: string | null
                 ownedBy: any
+                isFollowedByMe: boolean
+                stats: { __typename?: 'ProfileStats'; totalFollowers: number; totalFollowing: number }
                 attributes?: Array<{ __typename?: 'Attribute'; key: string; value: string }> | null
                 picture?:
                   | { __typename?: 'MediaSet'; original: { __typename?: 'Media'; url: any } }
@@ -13744,7 +14265,6 @@ export type PublicationQuery = {
                 | {
                     __typename?: 'FeeCollectModuleSettings'
                     type: CollectModules
-                    recipient: any
                     referralFee: number
                     contractAddress: any
                     followerOnly: boolean
@@ -13764,7 +14284,6 @@ export type PublicationQuery = {
                     __typename?: 'LimitedFeeCollectModuleSettings'
                     type: CollectModules
                     collectLimit: string
-                    recipient: any
                     referralFee: number
                     contractAddress: any
                     followerOnly: boolean
@@ -13778,7 +14297,6 @@ export type PublicationQuery = {
                     __typename?: 'LimitedTimedFeeCollectModuleSettings'
                     type: CollectModules
                     collectLimit: string
-                    recipient: any
                     endTimestamp: any
                     referralFee: number
                     contractAddress: any
@@ -13793,7 +14311,6 @@ export type PublicationQuery = {
                 | {
                     __typename?: 'TimedFeeCollectModuleSettings'
                     type: CollectModules
-                    recipient: any
                     endTimestamp: any
                     referralFee: number
                     contractAddress: any
@@ -13843,6 +14360,8 @@ export type PublicationQuery = {
                       handle: any
                       bio?: string | null
                       ownedBy: any
+                      isFollowedByMe: boolean
+                      stats: { __typename?: 'ProfileStats'; totalFollowers: number; totalFollowing: number }
                       attributes?: Array<{ __typename?: 'Attribute'; key: string; value: string }> | null
                       picture?:
                         | { __typename?: 'MediaSet'; original: { __typename?: 'Media'; url: any } }
@@ -13881,6 +14400,8 @@ export type PublicationQuery = {
                       handle: any
                       bio?: string | null
                       ownedBy: any
+                      isFollowedByMe: boolean
+                      stats: { __typename?: 'ProfileStats'; totalFollowers: number; totalFollowing: number }
                       attributes?: Array<{ __typename?: 'Attribute'; key: string; value: string }> | null
                       picture?:
                         | { __typename?: 'MediaSet'; original: { __typename?: 'Media'; url: any } }
@@ -13905,6 +14426,8 @@ export type PublicationQuery = {
                         handle: any
                         bio?: string | null
                         ownedBy: any
+                        isFollowedByMe: boolean
+                        stats: { __typename?: 'ProfileStats'; totalFollowers: number; totalFollowing: number }
                         attributes?: Array<{ __typename?: 'Attribute'; key: string; value: string }> | null
                         picture?:
                           | { __typename?: 'MediaSet'; original: { __typename?: 'Media'; url: any } }
@@ -13922,7 +14445,6 @@ export type PublicationQuery = {
                       | {
                           __typename?: 'FeeCollectModuleSettings'
                           type: CollectModules
-                          recipient: any
                           referralFee: number
                           contractAddress: any
                           followerOnly: boolean
@@ -13942,7 +14464,6 @@ export type PublicationQuery = {
                           __typename?: 'LimitedFeeCollectModuleSettings'
                           type: CollectModules
                           collectLimit: string
-                          recipient: any
                           referralFee: number
                           contractAddress: any
                           followerOnly: boolean
@@ -13956,7 +14477,6 @@ export type PublicationQuery = {
                           __typename?: 'LimitedTimedFeeCollectModuleSettings'
                           type: CollectModules
                           collectLimit: string
-                          recipient: any
                           endTimestamp: any
                           referralFee: number
                           contractAddress: any
@@ -13971,7 +14491,6 @@ export type PublicationQuery = {
                       | {
                           __typename?: 'TimedFeeCollectModuleSettings'
                           type: CollectModules
-                          recipient: any
                           endTimestamp: any
                           referralFee: number
                           contractAddress: any
@@ -14025,6 +14544,8 @@ export type PublicationQuery = {
                 handle: any
                 bio?: string | null
                 ownedBy: any
+                isFollowedByMe: boolean
+                stats: { __typename?: 'ProfileStats'; totalFollowers: number; totalFollowing: number }
                 attributes?: Array<{ __typename?: 'Attribute'; key: string; value: string }> | null
                 picture?:
                   | { __typename?: 'MediaSet'; original: { __typename?: 'Media'; url: any } }
@@ -14049,6 +14570,8 @@ export type PublicationQuery = {
                   handle: any
                   bio?: string | null
                   ownedBy: any
+                  isFollowedByMe: boolean
+                  stats: { __typename?: 'ProfileStats'; totalFollowers: number; totalFollowing: number }
                   attributes?: Array<{ __typename?: 'Attribute'; key: string; value: string }> | null
                   picture?:
                     | { __typename?: 'MediaSet'; original: { __typename?: 'Media'; url: any } }
@@ -14066,7 +14589,6 @@ export type PublicationQuery = {
                 | {
                     __typename?: 'FeeCollectModuleSettings'
                     type: CollectModules
-                    recipient: any
                     referralFee: number
                     contractAddress: any
                     followerOnly: boolean
@@ -14086,7 +14608,6 @@ export type PublicationQuery = {
                     __typename?: 'LimitedFeeCollectModuleSettings'
                     type: CollectModules
                     collectLimit: string
-                    recipient: any
                     referralFee: number
                     contractAddress: any
                     followerOnly: boolean
@@ -14100,7 +14621,6 @@ export type PublicationQuery = {
                     __typename?: 'LimitedTimedFeeCollectModuleSettings'
                     type: CollectModules
                     collectLimit: string
-                    recipient: any
                     endTimestamp: any
                     referralFee: number
                     contractAddress: any
@@ -14115,7 +14635,6 @@ export type PublicationQuery = {
                 | {
                     __typename?: 'TimedFeeCollectModuleSettings'
                     type: CollectModules
-                    recipient: any
                     endTimestamp: any
                     referralFee: number
                     contractAddress: any
@@ -14171,6 +14690,7 @@ export type PublicationQuery = {
           handle: any
           bio?: string | null
           ownedBy: any
+          stats: { __typename?: 'ProfileStats'; totalFollowers: number; totalFollowing: number }
           attributes?: Array<{ __typename?: 'Attribute'; key: string; value: string }> | null
           picture?:
             | { __typename?: 'MediaSet'; original: { __typename?: 'Media'; url: any } }
@@ -14194,7 +14714,6 @@ export type PublicationQuery = {
           | {
               __typename?: 'FeeCollectModuleSettings'
               type: CollectModules
-              recipient: any
               referralFee: number
               contractAddress: any
               followerOnly: boolean
@@ -14214,7 +14733,6 @@ export type PublicationQuery = {
               __typename?: 'LimitedFeeCollectModuleSettings'
               type: CollectModules
               collectLimit: string
-              recipient: any
               referralFee: number
               contractAddress: any
               followerOnly: boolean
@@ -14228,7 +14746,6 @@ export type PublicationQuery = {
               __typename?: 'LimitedTimedFeeCollectModuleSettings'
               type: CollectModules
               collectLimit: string
-              recipient: any
               endTimestamp: any
               referralFee: number
               contractAddress: any
@@ -14243,7 +14760,6 @@ export type PublicationQuery = {
           | {
               __typename?: 'TimedFeeCollectModuleSettings'
               type: CollectModules
-              recipient: any
               endTimestamp: any
               referralFee: number
               contractAddress: any
@@ -14293,6 +14809,8 @@ export type PublicationQuery = {
                 handle: any
                 bio?: string | null
                 ownedBy: any
+                isFollowedByMe: boolean
+                stats: { __typename?: 'ProfileStats'; totalFollowers: number; totalFollowing: number }
                 attributes?: Array<{ __typename?: 'Attribute'; key: string; value: string }> | null
                 picture?:
                   | { __typename?: 'MediaSet'; original: { __typename?: 'Media'; url: any } }
@@ -14331,6 +14849,8 @@ export type PublicationQuery = {
                 handle: any
                 bio?: string | null
                 ownedBy: any
+                isFollowedByMe: boolean
+                stats: { __typename?: 'ProfileStats'; totalFollowers: number; totalFollowing: number }
                 attributes?: Array<{ __typename?: 'Attribute'; key: string; value: string }> | null
                 picture?:
                   | { __typename?: 'MediaSet'; original: { __typename?: 'Media'; url: any } }
@@ -14355,6 +14875,8 @@ export type PublicationQuery = {
                   handle: any
                   bio?: string | null
                   ownedBy: any
+                  isFollowedByMe: boolean
+                  stats: { __typename?: 'ProfileStats'; totalFollowers: number; totalFollowing: number }
                   attributes?: Array<{ __typename?: 'Attribute'; key: string; value: string }> | null
                   picture?:
                     | { __typename?: 'MediaSet'; original: { __typename?: 'Media'; url: any } }
@@ -14372,7 +14894,6 @@ export type PublicationQuery = {
                 | {
                     __typename?: 'FeeCollectModuleSettings'
                     type: CollectModules
-                    recipient: any
                     referralFee: number
                     contractAddress: any
                     followerOnly: boolean
@@ -14392,7 +14913,6 @@ export type PublicationQuery = {
                     __typename?: 'LimitedFeeCollectModuleSettings'
                     type: CollectModules
                     collectLimit: string
-                    recipient: any
                     referralFee: number
                     contractAddress: any
                     followerOnly: boolean
@@ -14406,7 +14926,6 @@ export type PublicationQuery = {
                     __typename?: 'LimitedTimedFeeCollectModuleSettings'
                     type: CollectModules
                     collectLimit: string
-                    recipient: any
                     endTimestamp: any
                     referralFee: number
                     contractAddress: any
@@ -14421,7 +14940,6 @@ export type PublicationQuery = {
                 | {
                     __typename?: 'TimedFeeCollectModuleSettings'
                     type: CollectModules
-                    recipient: any
                     endTimestamp: any
                     referralFee: number
                     contractAddress: any
@@ -14478,6 +14996,7 @@ export type PublicationQuery = {
           handle: any
           bio?: string | null
           ownedBy: any
+          stats: { __typename?: 'ProfileStats'; totalFollowers: number; totalFollowing: number }
           attributes?: Array<{ __typename?: 'Attribute'; key: string; value: string }> | null
           picture?:
             | { __typename?: 'MediaSet'; original: { __typename?: 'Media'; url: any } }
@@ -14507,6 +15026,8 @@ export type PublicationQuery = {
             handle: any
             bio?: string | null
             ownedBy: any
+            isFollowedByMe: boolean
+            stats: { __typename?: 'ProfileStats'; totalFollowers: number; totalFollowing: number }
             attributes?: Array<{ __typename?: 'Attribute'; key: string; value: string }> | null
             picture?:
               | { __typename?: 'MediaSet'; original: { __typename?: 'Media'; url: any } }
@@ -14524,7 +15045,6 @@ export type PublicationQuery = {
           | {
               __typename?: 'FeeCollectModuleSettings'
               type: CollectModules
-              recipient: any
               referralFee: number
               contractAddress: any
               followerOnly: boolean
@@ -14544,7 +15064,6 @@ export type PublicationQuery = {
               __typename?: 'LimitedFeeCollectModuleSettings'
               type: CollectModules
               collectLimit: string
-              recipient: any
               referralFee: number
               contractAddress: any
               followerOnly: boolean
@@ -14558,7 +15077,6 @@ export type PublicationQuery = {
               __typename?: 'LimitedTimedFeeCollectModuleSettings'
               type: CollectModules
               collectLimit: string
-              recipient: any
               endTimestamp: any
               referralFee: number
               contractAddress: any
@@ -14573,7 +15091,6 @@ export type PublicationQuery = {
           | {
               __typename?: 'TimedFeeCollectModuleSettings'
               type: CollectModules
-              recipient: any
               endTimestamp: any
               referralFee: number
               contractAddress: any
@@ -14625,7 +15142,9 @@ export type PublicationRevenueQuery = {
   } | null
 }
 
-export type RecommendedProfilesQueryVariables = Exact<{ [key: string]: never }>
+export type RecommendedProfilesQueryVariables = Exact<{
+  options?: InputMaybe<RecommendedProfileOptions>
+}>
 
 export type RecommendedProfilesQuery = {
   __typename?: 'Query'
@@ -14637,6 +15156,7 @@ export type RecommendedProfilesQuery = {
     handle: any
     bio?: string | null
     ownedBy: any
+    stats: { __typename?: 'ProfileStats'; totalFollowers: number; totalFollowing: number }
     attributes?: Array<{ __typename?: 'Attribute'; key: string; value: string }> | null
     picture?:
       | { __typename?: 'MediaSet'; original: { __typename?: 'Media'; url: any } }
@@ -14667,6 +15187,7 @@ export type RelevantPeopleQuery = {
       handle: any
       bio?: string | null
       ownedBy: any
+      stats: { __typename?: 'ProfileStats'; totalFollowers: number; totalFollowing: number }
       attributes?: Array<{ __typename?: 'Attribute'; key: string; value: string }> | null
       picture?:
         | { __typename?: 'MediaSet'; original: { __typename?: 'Media'; url: any } }
@@ -14698,6 +15219,8 @@ export type SearchProfilesQuery = {
           handle: any
           bio?: string | null
           ownedBy: any
+          isFollowedByMe: boolean
+          stats: { __typename?: 'ProfileStats'; totalFollowers: number; totalFollowing: number }
           attributes?: Array<{ __typename?: 'Attribute'; key: string; value: string }> | null
           picture?:
             | { __typename?: 'MediaSet'; original: { __typename?: 'Media'; url: any } }
@@ -14744,6 +15267,8 @@ export type SearchPublicationsQuery = {
                 handle: any
                 bio?: string | null
                 ownedBy: any
+                isFollowedByMe: boolean
+                stats: { __typename?: 'ProfileStats'; totalFollowers: number; totalFollowing: number }
                 attributes?: Array<{ __typename?: 'Attribute'; key: string; value: string }> | null
                 picture?:
                   | { __typename?: 'MediaSet'; original: { __typename?: 'Media'; url: any } }
@@ -14768,6 +15293,8 @@ export type SearchPublicationsQuery = {
                   handle: any
                   bio?: string | null
                   ownedBy: any
+                  isFollowedByMe: boolean
+                  stats: { __typename?: 'ProfileStats'; totalFollowers: number; totalFollowing: number }
                   attributes?: Array<{ __typename?: 'Attribute'; key: string; value: string }> | null
                   picture?:
                     | { __typename?: 'MediaSet'; original: { __typename?: 'Media'; url: any } }
@@ -14785,7 +15312,6 @@ export type SearchPublicationsQuery = {
                 | {
                     __typename?: 'FeeCollectModuleSettings'
                     type: CollectModules
-                    recipient: any
                     referralFee: number
                     contractAddress: any
                     followerOnly: boolean
@@ -14805,7 +15331,6 @@ export type SearchPublicationsQuery = {
                     __typename?: 'LimitedFeeCollectModuleSettings'
                     type: CollectModules
                     collectLimit: string
-                    recipient: any
                     referralFee: number
                     contractAddress: any
                     followerOnly: boolean
@@ -14819,7 +15344,6 @@ export type SearchPublicationsQuery = {
                     __typename?: 'LimitedTimedFeeCollectModuleSettings'
                     type: CollectModules
                     collectLimit: string
-                    recipient: any
                     endTimestamp: any
                     referralFee: number
                     contractAddress: any
@@ -14834,7 +15358,6 @@ export type SearchPublicationsQuery = {
                 | {
                     __typename?: 'TimedFeeCollectModuleSettings'
                     type: CollectModules
-                    recipient: any
                     endTimestamp: any
                     referralFee: number
                     contractAddress: any
@@ -14886,6 +15409,8 @@ export type SearchPublicationsQuery = {
                       handle: any
                       bio?: string | null
                       ownedBy: any
+                      isFollowedByMe: boolean
+                      stats: { __typename?: 'ProfileStats'; totalFollowers: number; totalFollowing: number }
                       attributes?: Array<{ __typename?: 'Attribute'; key: string; value: string }> | null
                       picture?:
                         | { __typename?: 'MediaSet'; original: { __typename?: 'Media'; url: any } }
@@ -14909,7 +15434,6 @@ export type SearchPublicationsQuery = {
                       | {
                           __typename?: 'FeeCollectModuleSettings'
                           type: CollectModules
-                          recipient: any
                           referralFee: number
                           contractAddress: any
                           followerOnly: boolean
@@ -14929,7 +15453,6 @@ export type SearchPublicationsQuery = {
                           __typename?: 'LimitedFeeCollectModuleSettings'
                           type: CollectModules
                           collectLimit: string
-                          recipient: any
                           referralFee: number
                           contractAddress: any
                           followerOnly: boolean
@@ -14943,7 +15466,6 @@ export type SearchPublicationsQuery = {
                           __typename?: 'LimitedTimedFeeCollectModuleSettings'
                           type: CollectModules
                           collectLimit: string
-                          recipient: any
                           endTimestamp: any
                           referralFee: number
                           contractAddress: any
@@ -14958,7 +15480,6 @@ export type SearchPublicationsQuery = {
                       | {
                           __typename?: 'TimedFeeCollectModuleSettings'
                           type: CollectModules
-                          recipient: any
                           endTimestamp: any
                           referralFee: number
                           contractAddress: any
@@ -15009,6 +15530,12 @@ export type SearchPublicationsQuery = {
                             handle: any
                             bio?: string | null
                             ownedBy: any
+                            isFollowedByMe: boolean
+                            stats: {
+                              __typename?: 'ProfileStats'
+                              totalFollowers: number
+                              totalFollowing: number
+                            }
                             attributes?: Array<{
                               __typename?: 'Attribute'
                               key: string
@@ -15031,7 +15558,6 @@ export type SearchPublicationsQuery = {
                             | {
                                 __typename?: 'FeeCollectModuleSettings'
                                 type: CollectModules
-                                recipient: any
                                 referralFee: number
                                 contractAddress: any
                                 followerOnly: boolean
@@ -15056,7 +15582,6 @@ export type SearchPublicationsQuery = {
                                 __typename?: 'LimitedFeeCollectModuleSettings'
                                 type: CollectModules
                                 collectLimit: string
-                                recipient: any
                                 referralFee: number
                                 contractAddress: any
                                 followerOnly: boolean
@@ -15075,7 +15600,6 @@ export type SearchPublicationsQuery = {
                                 __typename?: 'LimitedTimedFeeCollectModuleSettings'
                                 type: CollectModules
                                 collectLimit: string
-                                recipient: any
                                 endTimestamp: any
                                 referralFee: number
                                 contractAddress: any
@@ -15095,7 +15619,6 @@ export type SearchPublicationsQuery = {
                             | {
                                 __typename?: 'TimedFeeCollectModuleSettings'
                                 type: CollectModules
-                                recipient: any
                                 endTimestamp: any
                                 referralFee: number
                                 contractAddress: any
@@ -15153,6 +15676,12 @@ export type SearchPublicationsQuery = {
                                   handle: any
                                   bio?: string | null
                                   ownedBy: any
+                                  isFollowedByMe: boolean
+                                  stats: {
+                                    __typename?: 'ProfileStats'
+                                    totalFollowers: number
+                                    totalFollowing: number
+                                  }
                                   attributes?: Array<{
                                     __typename?: 'Attribute'
                                     key: string
@@ -15198,6 +15727,12 @@ export type SearchPublicationsQuery = {
                                   handle: any
                                   bio?: string | null
                                   ownedBy: any
+                                  isFollowedByMe: boolean
+                                  stats: {
+                                    __typename?: 'ProfileStats'
+                                    totalFollowers: number
+                                    totalFollowing: number
+                                  }
                                   attributes?: Array<{
                                     __typename?: 'Attribute'
                                     key: string
@@ -15229,6 +15764,12 @@ export type SearchPublicationsQuery = {
                                     handle: any
                                     bio?: string | null
                                     ownedBy: any
+                                    isFollowedByMe: boolean
+                                    stats: {
+                                      __typename?: 'ProfileStats'
+                                      totalFollowers: number
+                                      totalFollowing: number
+                                    }
                                     attributes?: Array<{
                                       __typename?: 'Attribute'
                                       key: string
@@ -15253,7 +15794,6 @@ export type SearchPublicationsQuery = {
                                   | {
                                       __typename?: 'FeeCollectModuleSettings'
                                       type: CollectModules
-                                      recipient: any
                                       referralFee: number
                                       contractAddress: any
                                       followerOnly: boolean
@@ -15278,7 +15818,6 @@ export type SearchPublicationsQuery = {
                                       __typename?: 'LimitedFeeCollectModuleSettings'
                                       type: CollectModules
                                       collectLimit: string
-                                      recipient: any
                                       referralFee: number
                                       contractAddress: any
                                       followerOnly: boolean
@@ -15297,7 +15836,6 @@ export type SearchPublicationsQuery = {
                                       __typename?: 'LimitedTimedFeeCollectModuleSettings'
                                       type: CollectModules
                                       collectLimit: string
-                                      recipient: any
                                       endTimestamp: any
                                       referralFee: number
                                       contractAddress: any
@@ -15317,7 +15855,6 @@ export type SearchPublicationsQuery = {
                                   | {
                                       __typename?: 'TimedFeeCollectModuleSettings'
                                       type: CollectModules
-                                      recipient: any
                                       endTimestamp: any
                                       referralFee: number
                                       contractAddress: any
@@ -15379,6 +15916,12 @@ export type SearchPublicationsQuery = {
                             handle: any
                             bio?: string | null
                             ownedBy: any
+                            isFollowedByMe: boolean
+                            stats: {
+                              __typename?: 'ProfileStats'
+                              totalFollowers: number
+                              totalFollowing: number
+                            }
                             attributes?: Array<{
                               __typename?: 'Attribute'
                               key: string
@@ -15407,6 +15950,12 @@ export type SearchPublicationsQuery = {
                               handle: any
                               bio?: string | null
                               ownedBy: any
+                              isFollowedByMe: boolean
+                              stats: {
+                                __typename?: 'ProfileStats'
+                                totalFollowers: number
+                                totalFollowing: number
+                              }
                               attributes?: Array<{
                                 __typename?: 'Attribute'
                                 key: string
@@ -15428,7 +15977,6 @@ export type SearchPublicationsQuery = {
                             | {
                                 __typename?: 'FeeCollectModuleSettings'
                                 type: CollectModules
-                                recipient: any
                                 referralFee: number
                                 contractAddress: any
                                 followerOnly: boolean
@@ -15453,7 +16001,6 @@ export type SearchPublicationsQuery = {
                                 __typename?: 'LimitedFeeCollectModuleSettings'
                                 type: CollectModules
                                 collectLimit: string
-                                recipient: any
                                 referralFee: number
                                 contractAddress: any
                                 followerOnly: boolean
@@ -15472,7 +16019,6 @@ export type SearchPublicationsQuery = {
                                 __typename?: 'LimitedTimedFeeCollectModuleSettings'
                                 type: CollectModules
                                 collectLimit: string
-                                recipient: any
                                 endTimestamp: any
                                 referralFee: number
                                 contractAddress: any
@@ -15492,7 +16038,6 @@ export type SearchPublicationsQuery = {
                             | {
                                 __typename?: 'TimedFeeCollectModuleSettings'
                                 type: CollectModules
-                                recipient: any
                                 endTimestamp: any
                                 referralFee: number
                                 contractAddress: any
@@ -15552,6 +16097,8 @@ export type SearchPublicationsQuery = {
                       handle: any
                       bio?: string | null
                       ownedBy: any
+                      isFollowedByMe: boolean
+                      stats: { __typename?: 'ProfileStats'; totalFollowers: number; totalFollowing: number }
                       attributes?: Array<{ __typename?: 'Attribute'; key: string; value: string }> | null
                       picture?:
                         | { __typename?: 'MediaSet'; original: { __typename?: 'Media'; url: any } }
@@ -15570,7 +16117,6 @@ export type SearchPublicationsQuery = {
                       | {
                           __typename?: 'FeeCollectModuleSettings'
                           type: CollectModules
-                          recipient: any
                           referralFee: number
                           contractAddress: any
                           followerOnly: boolean
@@ -15590,7 +16136,6 @@ export type SearchPublicationsQuery = {
                           __typename?: 'LimitedFeeCollectModuleSettings'
                           type: CollectModules
                           collectLimit: string
-                          recipient: any
                           referralFee: number
                           contractAddress: any
                           followerOnly: boolean
@@ -15604,7 +16149,6 @@ export type SearchPublicationsQuery = {
                           __typename?: 'LimitedTimedFeeCollectModuleSettings'
                           type: CollectModules
                           collectLimit: string
-                          recipient: any
                           endTimestamp: any
                           referralFee: number
                           contractAddress: any
@@ -15619,7 +16163,6 @@ export type SearchPublicationsQuery = {
                       | {
                           __typename?: 'TimedFeeCollectModuleSettings'
                           type: CollectModules
-                          recipient: any
                           endTimestamp: any
                           referralFee: number
                           contractAddress: any
@@ -15669,6 +16212,12 @@ export type SearchPublicationsQuery = {
                             handle: any
                             bio?: string | null
                             ownedBy: any
+                            isFollowedByMe: boolean
+                            stats: {
+                              __typename?: 'ProfileStats'
+                              totalFollowers: number
+                              totalFollowing: number
+                            }
                             attributes?: Array<{
                               __typename?: 'Attribute'
                               key: string
@@ -15711,6 +16260,12 @@ export type SearchPublicationsQuery = {
                             handle: any
                             bio?: string | null
                             ownedBy: any
+                            isFollowedByMe: boolean
+                            stats: {
+                              __typename?: 'ProfileStats'
+                              totalFollowers: number
+                              totalFollowing: number
+                            }
                             attributes?: Array<{
                               __typename?: 'Attribute'
                               key: string
@@ -15739,6 +16294,12 @@ export type SearchPublicationsQuery = {
                               handle: any
                               bio?: string | null
                               ownedBy: any
+                              isFollowedByMe: boolean
+                              stats: {
+                                __typename?: 'ProfileStats'
+                                totalFollowers: number
+                                totalFollowing: number
+                              }
                               attributes?: Array<{
                                 __typename?: 'Attribute'
                                 key: string
@@ -15760,7 +16321,6 @@ export type SearchPublicationsQuery = {
                             | {
                                 __typename?: 'FeeCollectModuleSettings'
                                 type: CollectModules
-                                recipient: any
                                 referralFee: number
                                 contractAddress: any
                                 followerOnly: boolean
@@ -15785,7 +16345,6 @@ export type SearchPublicationsQuery = {
                                 __typename?: 'LimitedFeeCollectModuleSettings'
                                 type: CollectModules
                                 collectLimit: string
-                                recipient: any
                                 referralFee: number
                                 contractAddress: any
                                 followerOnly: boolean
@@ -15804,7 +16363,6 @@ export type SearchPublicationsQuery = {
                                 __typename?: 'LimitedTimedFeeCollectModuleSettings'
                                 type: CollectModules
                                 collectLimit: string
-                                recipient: any
                                 endTimestamp: any
                                 referralFee: number
                                 contractAddress: any
@@ -15824,7 +16382,6 @@ export type SearchPublicationsQuery = {
                             | {
                                 __typename?: 'TimedFeeCollectModuleSettings'
                                 type: CollectModules
-                                recipient: any
                                 endTimestamp: any
                                 referralFee: number
                                 contractAddress: any
@@ -15886,6 +16443,8 @@ export type SearchPublicationsQuery = {
                       handle: any
                       bio?: string | null
                       ownedBy: any
+                      isFollowedByMe: boolean
+                      stats: { __typename?: 'ProfileStats'; totalFollowers: number; totalFollowing: number }
                       attributes?: Array<{ __typename?: 'Attribute'; key: string; value: string }> | null
                       picture?:
                         | { __typename?: 'MediaSet'; original: { __typename?: 'Media'; url: any } }
@@ -15910,6 +16469,8 @@ export type SearchPublicationsQuery = {
                         handle: any
                         bio?: string | null
                         ownedBy: any
+                        isFollowedByMe: boolean
+                        stats: { __typename?: 'ProfileStats'; totalFollowers: number; totalFollowing: number }
                         attributes?: Array<{ __typename?: 'Attribute'; key: string; value: string }> | null
                         picture?:
                           | { __typename?: 'MediaSet'; original: { __typename?: 'Media'; url: any } }
@@ -15927,7 +16488,6 @@ export type SearchPublicationsQuery = {
                       | {
                           __typename?: 'FeeCollectModuleSettings'
                           type: CollectModules
-                          recipient: any
                           referralFee: number
                           contractAddress: any
                           followerOnly: boolean
@@ -15947,7 +16507,6 @@ export type SearchPublicationsQuery = {
                           __typename?: 'LimitedFeeCollectModuleSettings'
                           type: CollectModules
                           collectLimit: string
-                          recipient: any
                           referralFee: number
                           contractAddress: any
                           followerOnly: boolean
@@ -15961,7 +16520,6 @@ export type SearchPublicationsQuery = {
                           __typename?: 'LimitedTimedFeeCollectModuleSettings'
                           type: CollectModules
                           collectLimit: string
-                          recipient: any
                           endTimestamp: any
                           referralFee: number
                           contractAddress: any
@@ -15976,7 +16534,6 @@ export type SearchPublicationsQuery = {
                       | {
                           __typename?: 'TimedFeeCollectModuleSettings'
                           type: CollectModules
-                          recipient: any
                           endTimestamp: any
                           referralFee: number
                           contractAddress: any
@@ -16031,6 +16588,8 @@ export type SearchPublicationsQuery = {
                 handle: any
                 bio?: string | null
                 ownedBy: any
+                isFollowedByMe: boolean
+                stats: { __typename?: 'ProfileStats'; totalFollowers: number; totalFollowing: number }
                 attributes?: Array<{ __typename?: 'Attribute'; key: string; value: string }> | null
                 picture?:
                   | { __typename?: 'MediaSet'; original: { __typename?: 'Media'; url: any } }
@@ -16055,6 +16614,8 @@ export type SearchPublicationsQuery = {
                   handle: any
                   bio?: string | null
                   ownedBy: any
+                  isFollowedByMe: boolean
+                  stats: { __typename?: 'ProfileStats'; totalFollowers: number; totalFollowing: number }
                   attributes?: Array<{ __typename?: 'Attribute'; key: string; value: string }> | null
                   picture?:
                     | { __typename?: 'MediaSet'; original: { __typename?: 'Media'; url: any } }
@@ -16072,7 +16633,6 @@ export type SearchPublicationsQuery = {
                 | {
                     __typename?: 'FeeCollectModuleSettings'
                     type: CollectModules
-                    recipient: any
                     referralFee: number
                     contractAddress: any
                     followerOnly: boolean
@@ -16092,7 +16652,6 @@ export type SearchPublicationsQuery = {
                     __typename?: 'LimitedFeeCollectModuleSettings'
                     type: CollectModules
                     collectLimit: string
-                    recipient: any
                     referralFee: number
                     contractAddress: any
                     followerOnly: boolean
@@ -16106,7 +16665,6 @@ export type SearchPublicationsQuery = {
                     __typename?: 'LimitedTimedFeeCollectModuleSettings'
                     type: CollectModules
                     collectLimit: string
-                    recipient: any
                     endTimestamp: any
                     referralFee: number
                     contractAddress: any
@@ -16121,7 +16679,6 @@ export type SearchPublicationsQuery = {
                 | {
                     __typename?: 'TimedFeeCollectModuleSettings'
                     type: CollectModules
-                    recipient: any
                     endTimestamp: any
                     referralFee: number
                     contractAddress: any
@@ -16218,6 +16775,8 @@ export type TimelineQuery = {
               handle: any
               bio?: string | null
               ownedBy: any
+              isFollowedByMe: boolean
+              stats: { __typename?: 'ProfileStats'; totalFollowers: number; totalFollowing: number }
               attributes?: Array<{ __typename?: 'Attribute'; key: string; value: string }> | null
               picture?:
                 | { __typename?: 'MediaSet'; original: { __typename?: 'Media'; url: any } }
@@ -16242,6 +16801,8 @@ export type TimelineQuery = {
                 handle: any
                 bio?: string | null
                 ownedBy: any
+                isFollowedByMe: boolean
+                stats: { __typename?: 'ProfileStats'; totalFollowers: number; totalFollowing: number }
                 attributes?: Array<{ __typename?: 'Attribute'; key: string; value: string }> | null
                 picture?:
                   | { __typename?: 'MediaSet'; original: { __typename?: 'Media'; url: any } }
@@ -16259,7 +16820,6 @@ export type TimelineQuery = {
               | {
                   __typename?: 'FeeCollectModuleSettings'
                   type: CollectModules
-                  recipient: any
                   referralFee: number
                   contractAddress: any
                   followerOnly: boolean
@@ -16279,7 +16839,6 @@ export type TimelineQuery = {
                   __typename?: 'LimitedFeeCollectModuleSettings'
                   type: CollectModules
                   collectLimit: string
-                  recipient: any
                   referralFee: number
                   contractAddress: any
                   followerOnly: boolean
@@ -16293,7 +16852,6 @@ export type TimelineQuery = {
                   __typename?: 'LimitedTimedFeeCollectModuleSettings'
                   type: CollectModules
                   collectLimit: string
-                  recipient: any
                   endTimestamp: any
                   referralFee: number
                   contractAddress: any
@@ -16308,7 +16866,6 @@ export type TimelineQuery = {
               | {
                   __typename?: 'TimedFeeCollectModuleSettings'
                   type: CollectModules
-                  recipient: any
                   endTimestamp: any
                   referralFee: number
                   contractAddress: any
@@ -16360,6 +16917,8 @@ export type TimelineQuery = {
                     handle: any
                     bio?: string | null
                     ownedBy: any
+                    isFollowedByMe: boolean
+                    stats: { __typename?: 'ProfileStats'; totalFollowers: number; totalFollowing: number }
                     attributes?: Array<{ __typename?: 'Attribute'; key: string; value: string }> | null
                     picture?:
                       | { __typename?: 'MediaSet'; original: { __typename?: 'Media'; url: any } }
@@ -16383,7 +16942,6 @@ export type TimelineQuery = {
                     | {
                         __typename?: 'FeeCollectModuleSettings'
                         type: CollectModules
-                        recipient: any
                         referralFee: number
                         contractAddress: any
                         followerOnly: boolean
@@ -16403,7 +16961,6 @@ export type TimelineQuery = {
                         __typename?: 'LimitedFeeCollectModuleSettings'
                         type: CollectModules
                         collectLimit: string
-                        recipient: any
                         referralFee: number
                         contractAddress: any
                         followerOnly: boolean
@@ -16417,7 +16974,6 @@ export type TimelineQuery = {
                         __typename?: 'LimitedTimedFeeCollectModuleSettings'
                         type: CollectModules
                         collectLimit: string
-                        recipient: any
                         endTimestamp: any
                         referralFee: number
                         contractAddress: any
@@ -16432,7 +16988,6 @@ export type TimelineQuery = {
                     | {
                         __typename?: 'TimedFeeCollectModuleSettings'
                         type: CollectModules
-                        recipient: any
                         endTimestamp: any
                         referralFee: number
                         contractAddress: any
@@ -16483,6 +17038,12 @@ export type TimelineQuery = {
                           handle: any
                           bio?: string | null
                           ownedBy: any
+                          isFollowedByMe: boolean
+                          stats: {
+                            __typename?: 'ProfileStats'
+                            totalFollowers: number
+                            totalFollowing: number
+                          }
                           attributes?: Array<{ __typename?: 'Attribute'; key: string; value: string }> | null
                           picture?:
                             | { __typename?: 'MediaSet'; original: { __typename?: 'Media'; url: any } }
@@ -16501,7 +17062,6 @@ export type TimelineQuery = {
                           | {
                               __typename?: 'FeeCollectModuleSettings'
                               type: CollectModules
-                              recipient: any
                               referralFee: number
                               contractAddress: any
                               followerOnly: boolean
@@ -16526,7 +17086,6 @@ export type TimelineQuery = {
                               __typename?: 'LimitedFeeCollectModuleSettings'
                               type: CollectModules
                               collectLimit: string
-                              recipient: any
                               referralFee: number
                               contractAddress: any
                               followerOnly: boolean
@@ -16545,7 +17104,6 @@ export type TimelineQuery = {
                               __typename?: 'LimitedTimedFeeCollectModuleSettings'
                               type: CollectModules
                               collectLimit: string
-                              recipient: any
                               endTimestamp: any
                               referralFee: number
                               contractAddress: any
@@ -16565,7 +17123,6 @@ export type TimelineQuery = {
                           | {
                               __typename?: 'TimedFeeCollectModuleSettings'
                               type: CollectModules
-                              recipient: any
                               endTimestamp: any
                               referralFee: number
                               contractAddress: any
@@ -16623,6 +17180,12 @@ export type TimelineQuery = {
                                 handle: any
                                 bio?: string | null
                                 ownedBy: any
+                                isFollowedByMe: boolean
+                                stats: {
+                                  __typename?: 'ProfileStats'
+                                  totalFollowers: number
+                                  totalFollowing: number
+                                }
                                 attributes?: Array<{
                                   __typename?: 'Attribute'
                                   key: string
@@ -16665,6 +17228,12 @@ export type TimelineQuery = {
                                 handle: any
                                 bio?: string | null
                                 ownedBy: any
+                                isFollowedByMe: boolean
+                                stats: {
+                                  __typename?: 'ProfileStats'
+                                  totalFollowers: number
+                                  totalFollowing: number
+                                }
                                 attributes?: Array<{
                                   __typename?: 'Attribute'
                                   key: string
@@ -16693,6 +17262,12 @@ export type TimelineQuery = {
                                   handle: any
                                   bio?: string | null
                                   ownedBy: any
+                                  isFollowedByMe: boolean
+                                  stats: {
+                                    __typename?: 'ProfileStats'
+                                    totalFollowers: number
+                                    totalFollowing: number
+                                  }
                                   attributes?: Array<{
                                     __typename?: 'Attribute'
                                     key: string
@@ -16717,7 +17292,6 @@ export type TimelineQuery = {
                                 | {
                                     __typename?: 'FeeCollectModuleSettings'
                                     type: CollectModules
-                                    recipient: any
                                     referralFee: number
                                     contractAddress: any
                                     followerOnly: boolean
@@ -16742,7 +17316,6 @@ export type TimelineQuery = {
                                     __typename?: 'LimitedFeeCollectModuleSettings'
                                     type: CollectModules
                                     collectLimit: string
-                                    recipient: any
                                     referralFee: number
                                     contractAddress: any
                                     followerOnly: boolean
@@ -16761,7 +17334,6 @@ export type TimelineQuery = {
                                     __typename?: 'LimitedTimedFeeCollectModuleSettings'
                                     type: CollectModules
                                     collectLimit: string
-                                    recipient: any
                                     endTimestamp: any
                                     referralFee: number
                                     contractAddress: any
@@ -16781,7 +17353,6 @@ export type TimelineQuery = {
                                 | {
                                     __typename?: 'TimedFeeCollectModuleSettings'
                                     type: CollectModules
-                                    recipient: any
                                     endTimestamp: any
                                     referralFee: number
                                     contractAddress: any
@@ -16843,6 +17414,12 @@ export type TimelineQuery = {
                           handle: any
                           bio?: string | null
                           ownedBy: any
+                          isFollowedByMe: boolean
+                          stats: {
+                            __typename?: 'ProfileStats'
+                            totalFollowers: number
+                            totalFollowing: number
+                          }
                           attributes?: Array<{ __typename?: 'Attribute'; key: string; value: string }> | null
                           picture?:
                             | { __typename?: 'MediaSet'; original: { __typename?: 'Media'; url: any } }
@@ -16867,6 +17444,12 @@ export type TimelineQuery = {
                             handle: any
                             bio?: string | null
                             ownedBy: any
+                            isFollowedByMe: boolean
+                            stats: {
+                              __typename?: 'ProfileStats'
+                              totalFollowers: number
+                              totalFollowing: number
+                            }
                             attributes?: Array<{
                               __typename?: 'Attribute'
                               key: string
@@ -16888,7 +17471,6 @@ export type TimelineQuery = {
                           | {
                               __typename?: 'FeeCollectModuleSettings'
                               type: CollectModules
-                              recipient: any
                               referralFee: number
                               contractAddress: any
                               followerOnly: boolean
@@ -16913,7 +17495,6 @@ export type TimelineQuery = {
                               __typename?: 'LimitedFeeCollectModuleSettings'
                               type: CollectModules
                               collectLimit: string
-                              recipient: any
                               referralFee: number
                               contractAddress: any
                               followerOnly: boolean
@@ -16932,7 +17513,6 @@ export type TimelineQuery = {
                               __typename?: 'LimitedTimedFeeCollectModuleSettings'
                               type: CollectModules
                               collectLimit: string
-                              recipient: any
                               endTimestamp: any
                               referralFee: number
                               contractAddress: any
@@ -16952,7 +17532,6 @@ export type TimelineQuery = {
                           | {
                               __typename?: 'TimedFeeCollectModuleSettings'
                               type: CollectModules
-                              recipient: any
                               endTimestamp: any
                               referralFee: number
                               contractAddress: any
@@ -17012,6 +17591,8 @@ export type TimelineQuery = {
                     handle: any
                     bio?: string | null
                     ownedBy: any
+                    isFollowedByMe: boolean
+                    stats: { __typename?: 'ProfileStats'; totalFollowers: number; totalFollowing: number }
                     attributes?: Array<{ __typename?: 'Attribute'; key: string; value: string }> | null
                     picture?:
                       | { __typename?: 'MediaSet'; original: { __typename?: 'Media'; url: any } }
@@ -17030,7 +17611,6 @@ export type TimelineQuery = {
                     | {
                         __typename?: 'FeeCollectModuleSettings'
                         type: CollectModules
-                        recipient: any
                         referralFee: number
                         contractAddress: any
                         followerOnly: boolean
@@ -17050,7 +17630,6 @@ export type TimelineQuery = {
                         __typename?: 'LimitedFeeCollectModuleSettings'
                         type: CollectModules
                         collectLimit: string
-                        recipient: any
                         referralFee: number
                         contractAddress: any
                         followerOnly: boolean
@@ -17064,7 +17643,6 @@ export type TimelineQuery = {
                         __typename?: 'LimitedTimedFeeCollectModuleSettings'
                         type: CollectModules
                         collectLimit: string
-                        recipient: any
                         endTimestamp: any
                         referralFee: number
                         contractAddress: any
@@ -17079,7 +17657,6 @@ export type TimelineQuery = {
                     | {
                         __typename?: 'TimedFeeCollectModuleSettings'
                         type: CollectModules
-                        recipient: any
                         endTimestamp: any
                         referralFee: number
                         contractAddress: any
@@ -17129,6 +17706,12 @@ export type TimelineQuery = {
                           handle: any
                           bio?: string | null
                           ownedBy: any
+                          isFollowedByMe: boolean
+                          stats: {
+                            __typename?: 'ProfileStats'
+                            totalFollowers: number
+                            totalFollowing: number
+                          }
                           attributes?: Array<{ __typename?: 'Attribute'; key: string; value: string }> | null
                           picture?:
                             | { __typename?: 'MediaSet'; original: { __typename?: 'Media'; url: any } }
@@ -17167,6 +17750,12 @@ export type TimelineQuery = {
                           handle: any
                           bio?: string | null
                           ownedBy: any
+                          isFollowedByMe: boolean
+                          stats: {
+                            __typename?: 'ProfileStats'
+                            totalFollowers: number
+                            totalFollowing: number
+                          }
                           attributes?: Array<{ __typename?: 'Attribute'; key: string; value: string }> | null
                           picture?:
                             | { __typename?: 'MediaSet'; original: { __typename?: 'Media'; url: any } }
@@ -17191,6 +17780,12 @@ export type TimelineQuery = {
                             handle: any
                             bio?: string | null
                             ownedBy: any
+                            isFollowedByMe: boolean
+                            stats: {
+                              __typename?: 'ProfileStats'
+                              totalFollowers: number
+                              totalFollowing: number
+                            }
                             attributes?: Array<{
                               __typename?: 'Attribute'
                               key: string
@@ -17212,7 +17807,6 @@ export type TimelineQuery = {
                           | {
                               __typename?: 'FeeCollectModuleSettings'
                               type: CollectModules
-                              recipient: any
                               referralFee: number
                               contractAddress: any
                               followerOnly: boolean
@@ -17237,7 +17831,6 @@ export type TimelineQuery = {
                               __typename?: 'LimitedFeeCollectModuleSettings'
                               type: CollectModules
                               collectLimit: string
-                              recipient: any
                               referralFee: number
                               contractAddress: any
                               followerOnly: boolean
@@ -17256,7 +17849,6 @@ export type TimelineQuery = {
                               __typename?: 'LimitedTimedFeeCollectModuleSettings'
                               type: CollectModules
                               collectLimit: string
-                              recipient: any
                               endTimestamp: any
                               referralFee: number
                               contractAddress: any
@@ -17276,7 +17868,6 @@ export type TimelineQuery = {
                           | {
                               __typename?: 'TimedFeeCollectModuleSettings'
                               type: CollectModules
-                              recipient: any
                               endTimestamp: any
                               referralFee: number
                               contractAddress: any
@@ -17338,6 +17929,8 @@ export type TimelineQuery = {
                     handle: any
                     bio?: string | null
                     ownedBy: any
+                    isFollowedByMe: boolean
+                    stats: { __typename?: 'ProfileStats'; totalFollowers: number; totalFollowing: number }
                     attributes?: Array<{ __typename?: 'Attribute'; key: string; value: string }> | null
                     picture?:
                       | { __typename?: 'MediaSet'; original: { __typename?: 'Media'; url: any } }
@@ -17362,6 +17955,8 @@ export type TimelineQuery = {
                       handle: any
                       bio?: string | null
                       ownedBy: any
+                      isFollowedByMe: boolean
+                      stats: { __typename?: 'ProfileStats'; totalFollowers: number; totalFollowing: number }
                       attributes?: Array<{ __typename?: 'Attribute'; key: string; value: string }> | null
                       picture?:
                         | { __typename?: 'MediaSet'; original: { __typename?: 'Media'; url: any } }
@@ -17379,7 +17974,6 @@ export type TimelineQuery = {
                     | {
                         __typename?: 'FeeCollectModuleSettings'
                         type: CollectModules
-                        recipient: any
                         referralFee: number
                         contractAddress: any
                         followerOnly: boolean
@@ -17399,7 +17993,6 @@ export type TimelineQuery = {
                         __typename?: 'LimitedFeeCollectModuleSettings'
                         type: CollectModules
                         collectLimit: string
-                        recipient: any
                         referralFee: number
                         contractAddress: any
                         followerOnly: boolean
@@ -17413,7 +18006,6 @@ export type TimelineQuery = {
                         __typename?: 'LimitedTimedFeeCollectModuleSettings'
                         type: CollectModules
                         collectLimit: string
-                        recipient: any
                         endTimestamp: any
                         referralFee: number
                         contractAddress: any
@@ -17428,7 +18020,6 @@ export type TimelineQuery = {
                     | {
                         __typename?: 'TimedFeeCollectModuleSettings'
                         type: CollectModules
-                        recipient: any
                         endTimestamp: any
                         referralFee: number
                         contractAddress: any
@@ -17483,6 +18074,8 @@ export type TimelineQuery = {
               handle: any
               bio?: string | null
               ownedBy: any
+              isFollowedByMe: boolean
+              stats: { __typename?: 'ProfileStats'; totalFollowers: number; totalFollowing: number }
               attributes?: Array<{ __typename?: 'Attribute'; key: string; value: string }> | null
               picture?:
                 | { __typename?: 'MediaSet'; original: { __typename?: 'Media'; url: any } }
@@ -17507,6 +18100,8 @@ export type TimelineQuery = {
                 handle: any
                 bio?: string | null
                 ownedBy: any
+                isFollowedByMe: boolean
+                stats: { __typename?: 'ProfileStats'; totalFollowers: number; totalFollowing: number }
                 attributes?: Array<{ __typename?: 'Attribute'; key: string; value: string }> | null
                 picture?:
                   | { __typename?: 'MediaSet'; original: { __typename?: 'Media'; url: any } }
@@ -17524,7 +18119,6 @@ export type TimelineQuery = {
               | {
                   __typename?: 'FeeCollectModuleSettings'
                   type: CollectModules
-                  recipient: any
                   referralFee: number
                   contractAddress: any
                   followerOnly: boolean
@@ -17544,7 +18138,6 @@ export type TimelineQuery = {
                   __typename?: 'LimitedFeeCollectModuleSettings'
                   type: CollectModules
                   collectLimit: string
-                  recipient: any
                   referralFee: number
                   contractAddress: any
                   followerOnly: boolean
@@ -17558,7 +18151,6 @@ export type TimelineQuery = {
                   __typename?: 'LimitedTimedFeeCollectModuleSettings'
                   type: CollectModules
                   collectLimit: string
-                  recipient: any
                   endTimestamp: any
                   referralFee: number
                   contractAddress: any
@@ -17573,7 +18165,6 @@ export type TimelineQuery = {
               | {
                   __typename?: 'TimedFeeCollectModuleSettings'
                   type: CollectModules
-                  recipient: any
                   endTimestamp: any
                   referralFee: number
                   contractAddress: any
@@ -17621,6 +18212,8 @@ export type TimelineQuery = {
           handle: any
           bio?: string | null
           ownedBy: any
+          isFollowedByMe: boolean
+          stats: { __typename?: 'ProfileStats'; totalFollowers: number; totalFollowing: number }
           attributes?: Array<{ __typename?: 'Attribute'; key: string; value: string }> | null
           picture?:
             | { __typename?: 'MediaSet'; original: { __typename?: 'Media'; url: any } }
@@ -17644,6 +18237,8 @@ export type TimelineQuery = {
           handle: any
           bio?: string | null
           ownedBy: any
+          isFollowedByMe: boolean
+          stats: { __typename?: 'ProfileStats'; totalFollowers: number; totalFollowing: number }
           attributes?: Array<{ __typename?: 'Attribute'; key: string; value: string }> | null
           picture?:
             | { __typename?: 'MediaSet'; original: { __typename?: 'Media'; url: any } }
@@ -17667,6 +18262,8 @@ export type TimelineQuery = {
           handle: any
           bio?: string | null
           ownedBy: any
+          isFollowedByMe: boolean
+          stats: { __typename?: 'ProfileStats'; totalFollowers: number; totalFollowing: number }
           attributes?: Array<{ __typename?: 'Attribute'; key: string; value: string }> | null
           picture?:
             | { __typename?: 'MediaSet'; original: { __typename?: 'Media'; url: any } }
@@ -17691,6 +18288,8 @@ export type TimelineQuery = {
           handle: any
           bio?: string | null
           ownedBy: any
+          isFollowedByMe: boolean
+          stats: { __typename?: 'ProfileStats'; totalFollowers: number; totalFollowing: number }
           attributes?: Array<{ __typename?: 'Attribute'; key: string; value: string }> | null
           picture?:
             | { __typename?: 'MediaSet'; original: { __typename?: 'Media'; url: any } }
@@ -17720,6 +18319,8 @@ export type TimelineQuery = {
           handle: any
           bio?: string | null
           ownedBy: any
+          isFollowedByMe: boolean
+          stats: { __typename?: 'ProfileStats'; totalFollowers: number; totalFollowing: number }
           attributes?: Array<{ __typename?: 'Attribute'; key: string; value: string }> | null
           picture?:
             | { __typename?: 'MediaSet'; original: { __typename?: 'Media'; url: any } }
@@ -17744,6 +18345,8 @@ export type TimelineQuery = {
             handle: any
             bio?: string | null
             ownedBy: any
+            isFollowedByMe: boolean
+            stats: { __typename?: 'ProfileStats'; totalFollowers: number; totalFollowing: number }
             attributes?: Array<{ __typename?: 'Attribute'; key: string; value: string }> | null
             picture?:
               | { __typename?: 'MediaSet'; original: { __typename?: 'Media'; url: any } }
@@ -17761,7 +18364,6 @@ export type TimelineQuery = {
           | {
               __typename?: 'FeeCollectModuleSettings'
               type: CollectModules
-              recipient: any
               referralFee: number
               contractAddress: any
               followerOnly: boolean
@@ -17781,7 +18383,6 @@ export type TimelineQuery = {
               __typename?: 'LimitedFeeCollectModuleSettings'
               type: CollectModules
               collectLimit: string
-              recipient: any
               referralFee: number
               contractAddress: any
               followerOnly: boolean
@@ -17795,7 +18396,6 @@ export type TimelineQuery = {
               __typename?: 'LimitedTimedFeeCollectModuleSettings'
               type: CollectModules
               collectLimit: string
-              recipient: any
               endTimestamp: any
               referralFee: number
               contractAddress: any
@@ -17810,7 +18410,6 @@ export type TimelineQuery = {
           | {
               __typename?: 'TimedFeeCollectModuleSettings'
               type: CollectModules
-              recipient: any
               endTimestamp: any
               referralFee: number
               contractAddress: any
@@ -17862,6 +18461,8 @@ export type TimelineQuery = {
                 handle: any
                 bio?: string | null
                 ownedBy: any
+                isFollowedByMe: boolean
+                stats: { __typename?: 'ProfileStats'; totalFollowers: number; totalFollowing: number }
                 attributes?: Array<{ __typename?: 'Attribute'; key: string; value: string }> | null
                 picture?:
                   | { __typename?: 'MediaSet'; original: { __typename?: 'Media'; url: any } }
@@ -17885,7 +18486,6 @@ export type TimelineQuery = {
                 | {
                     __typename?: 'FeeCollectModuleSettings'
                     type: CollectModules
-                    recipient: any
                     referralFee: number
                     contractAddress: any
                     followerOnly: boolean
@@ -17905,7 +18505,6 @@ export type TimelineQuery = {
                     __typename?: 'LimitedFeeCollectModuleSettings'
                     type: CollectModules
                     collectLimit: string
-                    recipient: any
                     referralFee: number
                     contractAddress: any
                     followerOnly: boolean
@@ -17919,7 +18518,6 @@ export type TimelineQuery = {
                     __typename?: 'LimitedTimedFeeCollectModuleSettings'
                     type: CollectModules
                     collectLimit: string
-                    recipient: any
                     endTimestamp: any
                     referralFee: number
                     contractAddress: any
@@ -17934,7 +18532,6 @@ export type TimelineQuery = {
                 | {
                     __typename?: 'TimedFeeCollectModuleSettings'
                     type: CollectModules
-                    recipient: any
                     endTimestamp: any
                     referralFee: number
                     contractAddress: any
@@ -17985,6 +18582,8 @@ export type TimelineQuery = {
                       handle: any
                       bio?: string | null
                       ownedBy: any
+                      isFollowedByMe: boolean
+                      stats: { __typename?: 'ProfileStats'; totalFollowers: number; totalFollowing: number }
                       attributes?: Array<{ __typename?: 'Attribute'; key: string; value: string }> | null
                       picture?:
                         | { __typename?: 'MediaSet'; original: { __typename?: 'Media'; url: any } }
@@ -18003,7 +18602,6 @@ export type TimelineQuery = {
                       | {
                           __typename?: 'FeeCollectModuleSettings'
                           type: CollectModules
-                          recipient: any
                           referralFee: number
                           contractAddress: any
                           followerOnly: boolean
@@ -18023,7 +18621,6 @@ export type TimelineQuery = {
                           __typename?: 'LimitedFeeCollectModuleSettings'
                           type: CollectModules
                           collectLimit: string
-                          recipient: any
                           referralFee: number
                           contractAddress: any
                           followerOnly: boolean
@@ -18037,7 +18634,6 @@ export type TimelineQuery = {
                           __typename?: 'LimitedTimedFeeCollectModuleSettings'
                           type: CollectModules
                           collectLimit: string
-                          recipient: any
                           endTimestamp: any
                           referralFee: number
                           contractAddress: any
@@ -18052,7 +18648,6 @@ export type TimelineQuery = {
                       | {
                           __typename?: 'TimedFeeCollectModuleSettings'
                           type: CollectModules
-                          recipient: any
                           endTimestamp: any
                           referralFee: number
                           contractAddress: any
@@ -18102,6 +18697,12 @@ export type TimelineQuery = {
                             handle: any
                             bio?: string | null
                             ownedBy: any
+                            isFollowedByMe: boolean
+                            stats: {
+                              __typename?: 'ProfileStats'
+                              totalFollowers: number
+                              totalFollowing: number
+                            }
                             attributes?: Array<{
                               __typename?: 'Attribute'
                               key: string
@@ -18144,6 +18745,12 @@ export type TimelineQuery = {
                             handle: any
                             bio?: string | null
                             ownedBy: any
+                            isFollowedByMe: boolean
+                            stats: {
+                              __typename?: 'ProfileStats'
+                              totalFollowers: number
+                              totalFollowing: number
+                            }
                             attributes?: Array<{
                               __typename?: 'Attribute'
                               key: string
@@ -18172,6 +18779,12 @@ export type TimelineQuery = {
                               handle: any
                               bio?: string | null
                               ownedBy: any
+                              isFollowedByMe: boolean
+                              stats: {
+                                __typename?: 'ProfileStats'
+                                totalFollowers: number
+                                totalFollowing: number
+                              }
                               attributes?: Array<{
                                 __typename?: 'Attribute'
                                 key: string
@@ -18193,7 +18806,6 @@ export type TimelineQuery = {
                             | {
                                 __typename?: 'FeeCollectModuleSettings'
                                 type: CollectModules
-                                recipient: any
                                 referralFee: number
                                 contractAddress: any
                                 followerOnly: boolean
@@ -18218,7 +18830,6 @@ export type TimelineQuery = {
                                 __typename?: 'LimitedFeeCollectModuleSettings'
                                 type: CollectModules
                                 collectLimit: string
-                                recipient: any
                                 referralFee: number
                                 contractAddress: any
                                 followerOnly: boolean
@@ -18237,7 +18848,6 @@ export type TimelineQuery = {
                                 __typename?: 'LimitedTimedFeeCollectModuleSettings'
                                 type: CollectModules
                                 collectLimit: string
-                                recipient: any
                                 endTimestamp: any
                                 referralFee: number
                                 contractAddress: any
@@ -18257,7 +18867,6 @@ export type TimelineQuery = {
                             | {
                                 __typename?: 'TimedFeeCollectModuleSettings'
                                 type: CollectModules
-                                recipient: any
                                 endTimestamp: any
                                 referralFee: number
                                 contractAddress: any
@@ -18319,6 +18928,8 @@ export type TimelineQuery = {
                       handle: any
                       bio?: string | null
                       ownedBy: any
+                      isFollowedByMe: boolean
+                      stats: { __typename?: 'ProfileStats'; totalFollowers: number; totalFollowing: number }
                       attributes?: Array<{ __typename?: 'Attribute'; key: string; value: string }> | null
                       picture?:
                         | { __typename?: 'MediaSet'; original: { __typename?: 'Media'; url: any } }
@@ -18343,6 +18954,8 @@ export type TimelineQuery = {
                         handle: any
                         bio?: string | null
                         ownedBy: any
+                        isFollowedByMe: boolean
+                        stats: { __typename?: 'ProfileStats'; totalFollowers: number; totalFollowing: number }
                         attributes?: Array<{ __typename?: 'Attribute'; key: string; value: string }> | null
                         picture?:
                           | { __typename?: 'MediaSet'; original: { __typename?: 'Media'; url: any } }
@@ -18360,7 +18973,6 @@ export type TimelineQuery = {
                       | {
                           __typename?: 'FeeCollectModuleSettings'
                           type: CollectModules
-                          recipient: any
                           referralFee: number
                           contractAddress: any
                           followerOnly: boolean
@@ -18380,7 +18992,6 @@ export type TimelineQuery = {
                           __typename?: 'LimitedFeeCollectModuleSettings'
                           type: CollectModules
                           collectLimit: string
-                          recipient: any
                           referralFee: number
                           contractAddress: any
                           followerOnly: boolean
@@ -18394,7 +19005,6 @@ export type TimelineQuery = {
                           __typename?: 'LimitedTimedFeeCollectModuleSettings'
                           type: CollectModules
                           collectLimit: string
-                          recipient: any
                           endTimestamp: any
                           referralFee: number
                           contractAddress: any
@@ -18409,7 +19019,6 @@ export type TimelineQuery = {
                       | {
                           __typename?: 'TimedFeeCollectModuleSettings'
                           type: CollectModules
-                          recipient: any
                           endTimestamp: any
                           referralFee: number
                           contractAddress: any
@@ -18461,6 +19070,8 @@ export type TimelineQuery = {
                 handle: any
                 bio?: string | null
                 ownedBy: any
+                isFollowedByMe: boolean
+                stats: { __typename?: 'ProfileStats'; totalFollowers: number; totalFollowing: number }
                 attributes?: Array<{ __typename?: 'Attribute'; key: string; value: string }> | null
                 picture?:
                   | { __typename?: 'MediaSet'; original: { __typename?: 'Media'; url: any } }
@@ -18479,7 +19090,6 @@ export type TimelineQuery = {
                 | {
                     __typename?: 'FeeCollectModuleSettings'
                     type: CollectModules
-                    recipient: any
                     referralFee: number
                     contractAddress: any
                     followerOnly: boolean
@@ -18499,7 +19109,6 @@ export type TimelineQuery = {
                     __typename?: 'LimitedFeeCollectModuleSettings'
                     type: CollectModules
                     collectLimit: string
-                    recipient: any
                     referralFee: number
                     contractAddress: any
                     followerOnly: boolean
@@ -18513,7 +19122,6 @@ export type TimelineQuery = {
                     __typename?: 'LimitedTimedFeeCollectModuleSettings'
                     type: CollectModules
                     collectLimit: string
-                    recipient: any
                     endTimestamp: any
                     referralFee: number
                     contractAddress: any
@@ -18528,7 +19136,6 @@ export type TimelineQuery = {
                 | {
                     __typename?: 'TimedFeeCollectModuleSettings'
                     type: CollectModules
-                    recipient: any
                     endTimestamp: any
                     referralFee: number
                     contractAddress: any
@@ -18578,6 +19185,8 @@ export type TimelineQuery = {
                       handle: any
                       bio?: string | null
                       ownedBy: any
+                      isFollowedByMe: boolean
+                      stats: { __typename?: 'ProfileStats'; totalFollowers: number; totalFollowing: number }
                       attributes?: Array<{ __typename?: 'Attribute'; key: string; value: string }> | null
                       picture?:
                         | { __typename?: 'MediaSet'; original: { __typename?: 'Media'; url: any } }
@@ -18616,6 +19225,8 @@ export type TimelineQuery = {
                       handle: any
                       bio?: string | null
                       ownedBy: any
+                      isFollowedByMe: boolean
+                      stats: { __typename?: 'ProfileStats'; totalFollowers: number; totalFollowing: number }
                       attributes?: Array<{ __typename?: 'Attribute'; key: string; value: string }> | null
                       picture?:
                         | { __typename?: 'MediaSet'; original: { __typename?: 'Media'; url: any } }
@@ -18640,6 +19251,8 @@ export type TimelineQuery = {
                         handle: any
                         bio?: string | null
                         ownedBy: any
+                        isFollowedByMe: boolean
+                        stats: { __typename?: 'ProfileStats'; totalFollowers: number; totalFollowing: number }
                         attributes?: Array<{ __typename?: 'Attribute'; key: string; value: string }> | null
                         picture?:
                           | { __typename?: 'MediaSet'; original: { __typename?: 'Media'; url: any } }
@@ -18657,7 +19270,6 @@ export type TimelineQuery = {
                       | {
                           __typename?: 'FeeCollectModuleSettings'
                           type: CollectModules
-                          recipient: any
                           referralFee: number
                           contractAddress: any
                           followerOnly: boolean
@@ -18677,7 +19289,6 @@ export type TimelineQuery = {
                           __typename?: 'LimitedFeeCollectModuleSettings'
                           type: CollectModules
                           collectLimit: string
-                          recipient: any
                           referralFee: number
                           contractAddress: any
                           followerOnly: boolean
@@ -18691,7 +19302,6 @@ export type TimelineQuery = {
                           __typename?: 'LimitedTimedFeeCollectModuleSettings'
                           type: CollectModules
                           collectLimit: string
-                          recipient: any
                           endTimestamp: any
                           referralFee: number
                           contractAddress: any
@@ -18706,7 +19316,6 @@ export type TimelineQuery = {
                       | {
                           __typename?: 'TimedFeeCollectModuleSettings'
                           type: CollectModules
-                          recipient: any
                           endTimestamp: any
                           referralFee: number
                           contractAddress: any
@@ -18760,6 +19369,8 @@ export type TimelineQuery = {
                 handle: any
                 bio?: string | null
                 ownedBy: any
+                isFollowedByMe: boolean
+                stats: { __typename?: 'ProfileStats'; totalFollowers: number; totalFollowing: number }
                 attributes?: Array<{ __typename?: 'Attribute'; key: string; value: string }> | null
                 picture?:
                   | { __typename?: 'MediaSet'; original: { __typename?: 'Media'; url: any } }
@@ -18784,6 +19395,8 @@ export type TimelineQuery = {
                   handle: any
                   bio?: string | null
                   ownedBy: any
+                  isFollowedByMe: boolean
+                  stats: { __typename?: 'ProfileStats'; totalFollowers: number; totalFollowing: number }
                   attributes?: Array<{ __typename?: 'Attribute'; key: string; value: string }> | null
                   picture?:
                     | { __typename?: 'MediaSet'; original: { __typename?: 'Media'; url: any } }
@@ -18801,7 +19414,6 @@ export type TimelineQuery = {
                 | {
                     __typename?: 'FeeCollectModuleSettings'
                     type: CollectModules
-                    recipient: any
                     referralFee: number
                     contractAddress: any
                     followerOnly: boolean
@@ -18821,7 +19433,6 @@ export type TimelineQuery = {
                     __typename?: 'LimitedFeeCollectModuleSettings'
                     type: CollectModules
                     collectLimit: string
-                    recipient: any
                     referralFee: number
                     contractAddress: any
                     followerOnly: boolean
@@ -18835,7 +19446,6 @@ export type TimelineQuery = {
                     __typename?: 'LimitedTimedFeeCollectModuleSettings'
                     type: CollectModules
                     collectLimit: string
-                    recipient: any
                     endTimestamp: any
                     referralFee: number
                     contractAddress: any
@@ -18850,7 +19460,6 @@ export type TimelineQuery = {
                 | {
                     __typename?: 'TimedFeeCollectModuleSettings'
                     type: CollectModules
-                    recipient: any
                     endTimestamp: any
                     referralFee: number
                     contractAddress: any
@@ -18922,7 +19531,8 @@ export type UserProfilesQuery = {
       handle: any
       bio?: string | null
       ownedBy: any
-      stats: { __typename?: 'ProfileStats'; totalFollowing: number }
+      isFollowedByMe: boolean
+      stats: { __typename?: 'ProfileStats'; totalFollowing: number; totalFollowers: number }
       dispatcher?: { __typename?: 'Dispatcher'; canUseRelay: boolean } | null
       attributes?: Array<{ __typename?: 'Attribute'; key: string; value: string }> | null
       picture?:
@@ -18939,6691 +19549,6 @@ export type UserProfilesQuery = {
   }
   userSigNonces: { __typename?: 'UserSigNonces'; lensHubOnChainSigNonce: any }
 }
-
-export const ProfileFieldsFragmentDoc = {
-  kind: 'Document',
-  definitions: [
-    {
-      kind: 'FragmentDefinition',
-      name: { kind: 'Name', value: 'ProfileFields' },
-      typeCondition: { kind: 'NamedType', name: { kind: 'Name', value: 'Profile' } },
-      selectionSet: {
-        kind: 'SelectionSet',
-        selections: [
-          { kind: 'Field', name: { kind: 'Name', value: 'id' } },
-          { kind: 'Field', name: { kind: 'Name', value: 'name' } },
-          { kind: 'Field', name: { kind: 'Name', value: 'handle' } },
-          { kind: 'Field', name: { kind: 'Name', value: 'bio' } },
-          { kind: 'Field', name: { kind: 'Name', value: 'ownedBy' } },
-          {
-            kind: 'Field',
-            name: { kind: 'Name', value: 'attributes' },
-            selectionSet: {
-              kind: 'SelectionSet',
-              selections: [
-                { kind: 'Field', name: { kind: 'Name', value: 'key' } },
-                { kind: 'Field', name: { kind: 'Name', value: 'value' } }
-              ]
-            }
-          },
-          {
-            kind: 'Field',
-            name: { kind: 'Name', value: 'picture' },
-            selectionSet: {
-              kind: 'SelectionSet',
-              selections: [
-                {
-                  kind: 'InlineFragment',
-                  typeCondition: { kind: 'NamedType', name: { kind: 'Name', value: 'MediaSet' } },
-                  selectionSet: {
-                    kind: 'SelectionSet',
-                    selections: [
-                      {
-                        kind: 'Field',
-                        name: { kind: 'Name', value: 'original' },
-                        selectionSet: {
-                          kind: 'SelectionSet',
-                          selections: [{ kind: 'Field', name: { kind: 'Name', value: 'url' } }]
-                        }
-                      }
-                    ]
-                  }
-                },
-                {
-                  kind: 'InlineFragment',
-                  typeCondition: { kind: 'NamedType', name: { kind: 'Name', value: 'NftImage' } },
-                  selectionSet: {
-                    kind: 'SelectionSet',
-                    selections: [{ kind: 'Field', name: { kind: 'Name', value: 'uri' } }]
-                  }
-                }
-              ]
-            }
-          },
-          {
-            kind: 'Field',
-            name: { kind: 'Name', value: 'followModule' },
-            selectionSet: {
-              kind: 'SelectionSet',
-              selections: [{ kind: 'Field', name: { kind: 'Name', value: '__typename' } }]
-            }
-          }
-        ]
-      }
-    }
-  ]
-} as unknown as DocumentNode<ProfileFieldsFragment, unknown>
-export const CollectModuleFieldsFragmentDoc = {
-  kind: 'Document',
-  definitions: [
-    {
-      kind: 'FragmentDefinition',
-      name: { kind: 'Name', value: 'CollectModuleFields' },
-      typeCondition: { kind: 'NamedType', name: { kind: 'Name', value: 'CollectModule' } },
-      selectionSet: {
-        kind: 'SelectionSet',
-        selections: [
-          {
-            kind: 'InlineFragment',
-            typeCondition: { kind: 'NamedType', name: { kind: 'Name', value: 'FreeCollectModuleSettings' } },
-            selectionSet: {
-              kind: 'SelectionSet',
-              selections: [
-                { kind: 'Field', name: { kind: 'Name', value: 'type' } },
-                { kind: 'Field', name: { kind: 'Name', value: 'contractAddress' } },
-                { kind: 'Field', name: { kind: 'Name', value: 'followerOnly' } }
-              ]
-            }
-          },
-          {
-            kind: 'InlineFragment',
-            typeCondition: { kind: 'NamedType', name: { kind: 'Name', value: 'FeeCollectModuleSettings' } },
-            selectionSet: {
-              kind: 'SelectionSet',
-              selections: [
-                { kind: 'Field', name: { kind: 'Name', value: 'type' } },
-                { kind: 'Field', name: { kind: 'Name', value: 'recipient' } },
-                { kind: 'Field', name: { kind: 'Name', value: 'referralFee' } },
-                { kind: 'Field', name: { kind: 'Name', value: 'contractAddress' } },
-                { kind: 'Field', name: { kind: 'Name', value: 'followerOnly' } },
-                {
-                  kind: 'Field',
-                  name: { kind: 'Name', value: 'amount' },
-                  selectionSet: {
-                    kind: 'SelectionSet',
-                    selections: [
-                      {
-                        kind: 'Field',
-                        name: { kind: 'Name', value: 'asset' },
-                        selectionSet: {
-                          kind: 'SelectionSet',
-                          selections: [
-                            { kind: 'Field', name: { kind: 'Name', value: 'symbol' } },
-                            { kind: 'Field', name: { kind: 'Name', value: 'decimals' } },
-                            { kind: 'Field', name: { kind: 'Name', value: 'address' } }
-                          ]
-                        }
-                      },
-                      { kind: 'Field', name: { kind: 'Name', value: 'value' } }
-                    ]
-                  }
-                }
-              ]
-            }
-          },
-          {
-            kind: 'InlineFragment',
-            typeCondition: {
-              kind: 'NamedType',
-              name: { kind: 'Name', value: 'LimitedFeeCollectModuleSettings' }
-            },
-            selectionSet: {
-              kind: 'SelectionSet',
-              selections: [
-                { kind: 'Field', name: { kind: 'Name', value: 'type' } },
-                { kind: 'Field', name: { kind: 'Name', value: 'collectLimit' } },
-                { kind: 'Field', name: { kind: 'Name', value: 'recipient' } },
-                { kind: 'Field', name: { kind: 'Name', value: 'referralFee' } },
-                { kind: 'Field', name: { kind: 'Name', value: 'contractAddress' } },
-                { kind: 'Field', name: { kind: 'Name', value: 'followerOnly' } },
-                {
-                  kind: 'Field',
-                  name: { kind: 'Name', value: 'amount' },
-                  selectionSet: {
-                    kind: 'SelectionSet',
-                    selections: [
-                      {
-                        kind: 'Field',
-                        name: { kind: 'Name', value: 'asset' },
-                        selectionSet: {
-                          kind: 'SelectionSet',
-                          selections: [
-                            { kind: 'Field', name: { kind: 'Name', value: 'symbol' } },
-                            { kind: 'Field', name: { kind: 'Name', value: 'decimals' } },
-                            { kind: 'Field', name: { kind: 'Name', value: 'address' } }
-                          ]
-                        }
-                      },
-                      { kind: 'Field', name: { kind: 'Name', value: 'value' } }
-                    ]
-                  }
-                }
-              ]
-            }
-          },
-          {
-            kind: 'InlineFragment',
-            typeCondition: {
-              kind: 'NamedType',
-              name: { kind: 'Name', value: 'LimitedTimedFeeCollectModuleSettings' }
-            },
-            selectionSet: {
-              kind: 'SelectionSet',
-              selections: [
-                { kind: 'Field', name: { kind: 'Name', value: 'type' } },
-                { kind: 'Field', name: { kind: 'Name', value: 'collectLimit' } },
-                { kind: 'Field', name: { kind: 'Name', value: 'recipient' } },
-                { kind: 'Field', name: { kind: 'Name', value: 'endTimestamp' } },
-                { kind: 'Field', name: { kind: 'Name', value: 'referralFee' } },
-                { kind: 'Field', name: { kind: 'Name', value: 'contractAddress' } },
-                { kind: 'Field', name: { kind: 'Name', value: 'followerOnly' } },
-                {
-                  kind: 'Field',
-                  name: { kind: 'Name', value: 'amount' },
-                  selectionSet: {
-                    kind: 'SelectionSet',
-                    selections: [
-                      {
-                        kind: 'Field',
-                        name: { kind: 'Name', value: 'asset' },
-                        selectionSet: {
-                          kind: 'SelectionSet',
-                          selections: [
-                            { kind: 'Field', name: { kind: 'Name', value: 'symbol' } },
-                            { kind: 'Field', name: { kind: 'Name', value: 'decimals' } },
-                            { kind: 'Field', name: { kind: 'Name', value: 'address' } }
-                          ]
-                        }
-                      },
-                      { kind: 'Field', name: { kind: 'Name', value: 'value' } }
-                    ]
-                  }
-                }
-              ]
-            }
-          },
-          {
-            kind: 'InlineFragment',
-            typeCondition: {
-              kind: 'NamedType',
-              name: { kind: 'Name', value: 'TimedFeeCollectModuleSettings' }
-            },
-            selectionSet: {
-              kind: 'SelectionSet',
-              selections: [
-                { kind: 'Field', name: { kind: 'Name', value: 'type' } },
-                { kind: 'Field', name: { kind: 'Name', value: 'recipient' } },
-                { kind: 'Field', name: { kind: 'Name', value: 'endTimestamp' } },
-                { kind: 'Field', name: { kind: 'Name', value: 'referralFee' } },
-                { kind: 'Field', name: { kind: 'Name', value: 'contractAddress' } },
-                { kind: 'Field', name: { kind: 'Name', value: 'followerOnly' } },
-                {
-                  kind: 'Field',
-                  name: { kind: 'Name', value: 'amount' },
-                  selectionSet: {
-                    kind: 'SelectionSet',
-                    selections: [
-                      {
-                        kind: 'Field',
-                        name: { kind: 'Name', value: 'asset' },
-                        selectionSet: {
-                          kind: 'SelectionSet',
-                          selections: [
-                            { kind: 'Field', name: { kind: 'Name', value: 'symbol' } },
-                            { kind: 'Field', name: { kind: 'Name', value: 'decimals' } },
-                            { kind: 'Field', name: { kind: 'Name', value: 'address' } }
-                          ]
-                        }
-                      },
-                      { kind: 'Field', name: { kind: 'Name', value: 'value' } }
-                    ]
-                  }
-                }
-              ]
-            }
-          }
-        ]
-      }
-    }
-  ]
-} as unknown as DocumentNode<CollectModuleFieldsFragment, unknown>
-export const StatsFieldsFragmentDoc = {
-  kind: 'Document',
-  definitions: [
-    {
-      kind: 'FragmentDefinition',
-      name: { kind: 'Name', value: 'StatsFields' },
-      typeCondition: { kind: 'NamedType', name: { kind: 'Name', value: 'PublicationStats' } },
-      selectionSet: {
-        kind: 'SelectionSet',
-        selections: [
-          { kind: 'Field', name: { kind: 'Name', value: 'totalUpvotes' } },
-          { kind: 'Field', name: { kind: 'Name', value: 'totalAmountOfMirrors' } },
-          { kind: 'Field', name: { kind: 'Name', value: 'totalAmountOfCollects' } },
-          { kind: 'Field', name: { kind: 'Name', value: 'totalAmountOfComments' } }
-        ]
-      }
-    }
-  ]
-} as unknown as DocumentNode<StatsFieldsFragment, unknown>
-export const MetadataFieldsFragmentDoc = {
-  kind: 'Document',
-  definitions: [
-    {
-      kind: 'FragmentDefinition',
-      name: { kind: 'Name', value: 'MetadataFields' },
-      typeCondition: { kind: 'NamedType', name: { kind: 'Name', value: 'MetadataOutput' } },
-      selectionSet: {
-        kind: 'SelectionSet',
-        selections: [
-          { kind: 'Field', name: { kind: 'Name', value: 'name' } },
-          { kind: 'Field', name: { kind: 'Name', value: 'description' } },
-          { kind: 'Field', name: { kind: 'Name', value: 'content' } },
-          { kind: 'Field', name: { kind: 'Name', value: 'image' } },
-          {
-            kind: 'Field',
-            name: { kind: 'Name', value: 'attributes' },
-            selectionSet: {
-              kind: 'SelectionSet',
-              selections: [
-                { kind: 'Field', name: { kind: 'Name', value: 'traitType' } },
-                { kind: 'Field', name: { kind: 'Name', value: 'value' } }
-              ]
-            }
-          },
-          {
-            kind: 'Field',
-            name: { kind: 'Name', value: 'cover' },
-            selectionSet: {
-              kind: 'SelectionSet',
-              selections: [
-                {
-                  kind: 'Field',
-                  name: { kind: 'Name', value: 'original' },
-                  selectionSet: {
-                    kind: 'SelectionSet',
-                    selections: [{ kind: 'Field', name: { kind: 'Name', value: 'url' } }]
-                  }
-                }
-              ]
-            }
-          },
-          {
-            kind: 'Field',
-            name: { kind: 'Name', value: 'media' },
-            selectionSet: {
-              kind: 'SelectionSet',
-              selections: [
-                {
-                  kind: 'Field',
-                  name: { kind: 'Name', value: 'original' },
-                  selectionSet: {
-                    kind: 'SelectionSet',
-                    selections: [
-                      { kind: 'Field', name: { kind: 'Name', value: 'url' } },
-                      { kind: 'Field', name: { kind: 'Name', value: 'mimeType' } }
-                    ]
-                  }
-                }
-              ]
-            }
-          }
-        ]
-      }
-    }
-  ]
-} as unknown as DocumentNode<MetadataFieldsFragment, unknown>
-export const PostFieldsFragmentDoc = {
-  kind: 'Document',
-  definitions: [
-    {
-      kind: 'FragmentDefinition',
-      name: { kind: 'Name', value: 'PostFields' },
-      typeCondition: { kind: 'NamedType', name: { kind: 'Name', value: 'Post' } },
-      selectionSet: {
-        kind: 'SelectionSet',
-        selections: [
-          { kind: 'Field', name: { kind: 'Name', value: 'id' } },
-          {
-            kind: 'Field',
-            name: { kind: 'Name', value: 'profile' },
-            selectionSet: {
-              kind: 'SelectionSet',
-              selections: [{ kind: 'FragmentSpread', name: { kind: 'Name', value: 'ProfileFields' } }]
-            }
-          },
-          {
-            kind: 'Field',
-            name: { kind: 'Name', value: 'reaction' },
-            arguments: [
-              {
-                kind: 'Argument',
-                name: { kind: 'Name', value: 'request' },
-                value: { kind: 'Variable', name: { kind: 'Name', value: 'reactionRequest' } }
-              }
-            ]
-          },
-          {
-            kind: 'Field',
-            name: { kind: 'Name', value: 'mirrors' },
-            arguments: [
-              {
-                kind: 'Argument',
-                name: { kind: 'Name', value: 'by' },
-                value: { kind: 'Variable', name: { kind: 'Name', value: 'profileId' } }
-              }
-            ]
-          },
-          {
-            kind: 'Field',
-            name: { kind: 'Name', value: 'canComment' },
-            arguments: [
-              {
-                kind: 'Argument',
-                name: { kind: 'Name', value: 'profileId' },
-                value: { kind: 'Variable', name: { kind: 'Name', value: 'profileId' } }
-              }
-            ],
-            selectionSet: {
-              kind: 'SelectionSet',
-              selections: [{ kind: 'Field', name: { kind: 'Name', value: 'result' } }]
-            }
-          },
-          {
-            kind: 'Field',
-            name: { kind: 'Name', value: 'canMirror' },
-            arguments: [
-              {
-                kind: 'Argument',
-                name: { kind: 'Name', value: 'profileId' },
-                value: { kind: 'Variable', name: { kind: 'Name', value: 'profileId' } }
-              }
-            ],
-            selectionSet: {
-              kind: 'SelectionSet',
-              selections: [{ kind: 'Field', name: { kind: 'Name', value: 'result' } }]
-            }
-          },
-          { kind: 'Field', name: { kind: 'Name', value: 'hasCollectedByMe' } },
-          {
-            kind: 'Field',
-            name: { kind: 'Name', value: 'collectedBy' },
-            selectionSet: {
-              kind: 'SelectionSet',
-              selections: [
-                { kind: 'Field', name: { kind: 'Name', value: 'address' } },
-                {
-                  kind: 'Field',
-                  name: { kind: 'Name', value: 'defaultProfile' },
-                  selectionSet: {
-                    kind: 'SelectionSet',
-                    selections: [{ kind: 'FragmentSpread', name: { kind: 'Name', value: 'ProfileFields' } }]
-                  }
-                }
-              ]
-            }
-          },
-          {
-            kind: 'Field',
-            name: { kind: 'Name', value: 'collectModule' },
-            selectionSet: {
-              kind: 'SelectionSet',
-              selections: [{ kind: 'FragmentSpread', name: { kind: 'Name', value: 'CollectModuleFields' } }]
-            }
-          },
-          {
-            kind: 'Field',
-            name: { kind: 'Name', value: 'stats' },
-            selectionSet: {
-              kind: 'SelectionSet',
-              selections: [{ kind: 'FragmentSpread', name: { kind: 'Name', value: 'StatsFields' } }]
-            }
-          },
-          {
-            kind: 'Field',
-            name: { kind: 'Name', value: 'metadata' },
-            selectionSet: {
-              kind: 'SelectionSet',
-              selections: [{ kind: 'FragmentSpread', name: { kind: 'Name', value: 'MetadataFields' } }]
-            }
-          },
-          { kind: 'Field', name: { kind: 'Name', value: 'hidden' } },
-          { kind: 'Field', name: { kind: 'Name', value: 'createdAt' } },
-          { kind: 'Field', name: { kind: 'Name', value: 'appId' } }
-        ]
-      }
-    }
-  ]
-} as unknown as DocumentNode<PostFieldsFragment, unknown>
-export const MirrorFieldsFragmentDoc = {
-  kind: 'Document',
-  definitions: [
-    {
-      kind: 'FragmentDefinition',
-      name: { kind: 'Name', value: 'MirrorFields' },
-      typeCondition: { kind: 'NamedType', name: { kind: 'Name', value: 'Mirror' } },
-      selectionSet: {
-        kind: 'SelectionSet',
-        selections: [
-          { kind: 'Field', name: { kind: 'Name', value: 'id' } },
-          {
-            kind: 'Field',
-            name: { kind: 'Name', value: 'profile' },
-            selectionSet: {
-              kind: 'SelectionSet',
-              selections: [{ kind: 'FragmentSpread', name: { kind: 'Name', value: 'ProfileFields' } }]
-            }
-          },
-          {
-            kind: 'Field',
-            name: { kind: 'Name', value: 'reaction' },
-            arguments: [
-              {
-                kind: 'Argument',
-                name: { kind: 'Name', value: 'request' },
-                value: { kind: 'Variable', name: { kind: 'Name', value: 'reactionRequest' } }
-              }
-            ]
-          },
-          {
-            kind: 'Field',
-            name: { kind: 'Name', value: 'canComment' },
-            arguments: [
-              {
-                kind: 'Argument',
-                name: { kind: 'Name', value: 'profileId' },
-                value: { kind: 'Variable', name: { kind: 'Name', value: 'profileId' } }
-              }
-            ],
-            selectionSet: {
-              kind: 'SelectionSet',
-              selections: [{ kind: 'Field', name: { kind: 'Name', value: 'result' } }]
-            }
-          },
-          {
-            kind: 'Field',
-            name: { kind: 'Name', value: 'canMirror' },
-            arguments: [
-              {
-                kind: 'Argument',
-                name: { kind: 'Name', value: 'profileId' },
-                value: { kind: 'Variable', name: { kind: 'Name', value: 'profileId' } }
-              }
-            ],
-            selectionSet: {
-              kind: 'SelectionSet',
-              selections: [{ kind: 'Field', name: { kind: 'Name', value: 'result' } }]
-            }
-          },
-          {
-            kind: 'Field',
-            name: { kind: 'Name', value: 'collectModule' },
-            selectionSet: {
-              kind: 'SelectionSet',
-              selections: [{ kind: 'FragmentSpread', name: { kind: 'Name', value: 'CollectModuleFields' } }]
-            }
-          },
-          {
-            kind: 'Field',
-            name: { kind: 'Name', value: 'stats' },
-            selectionSet: {
-              kind: 'SelectionSet',
-              selections: [{ kind: 'FragmentSpread', name: { kind: 'Name', value: 'StatsFields' } }]
-            }
-          },
-          {
-            kind: 'Field',
-            name: { kind: 'Name', value: 'metadata' },
-            selectionSet: {
-              kind: 'SelectionSet',
-              selections: [{ kind: 'FragmentSpread', name: { kind: 'Name', value: 'MetadataFields' } }]
-            }
-          },
-          { kind: 'Field', name: { kind: 'Name', value: 'hidden' } },
-          {
-            kind: 'Field',
-            name: { kind: 'Name', value: 'mirrorOf' },
-            selectionSet: {
-              kind: 'SelectionSet',
-              selections: [
-                {
-                  kind: 'InlineFragment',
-                  typeCondition: { kind: 'NamedType', name: { kind: 'Name', value: 'Post' } },
-                  selectionSet: {
-                    kind: 'SelectionSet',
-                    selections: [{ kind: 'FragmentSpread', name: { kind: 'Name', value: 'PostFields' } }]
-                  }
-                },
-                {
-                  kind: 'InlineFragment',
-                  typeCondition: { kind: 'NamedType', name: { kind: 'Name', value: 'Comment' } },
-                  selectionSet: {
-                    kind: 'SelectionSet',
-                    selections: [
-                      { kind: 'Field', name: { kind: 'Name', value: 'id' } },
-                      {
-                        kind: 'Field',
-                        name: { kind: 'Name', value: 'profile' },
-                        selectionSet: {
-                          kind: 'SelectionSet',
-                          selections: [
-                            { kind: 'FragmentSpread', name: { kind: 'Name', value: 'ProfileFields' } }
-                          ]
-                        }
-                      },
-                      {
-                        kind: 'Field',
-                        name: { kind: 'Name', value: 'reaction' },
-                        arguments: [
-                          {
-                            kind: 'Argument',
-                            name: { kind: 'Name', value: 'request' },
-                            value: { kind: 'Variable', name: { kind: 'Name', value: 'reactionRequest' } }
-                          }
-                        ]
-                      },
-                      {
-                        kind: 'Field',
-                        name: { kind: 'Name', value: 'mirrors' },
-                        arguments: [
-                          {
-                            kind: 'Argument',
-                            name: { kind: 'Name', value: 'by' },
-                            value: { kind: 'Variable', name: { kind: 'Name', value: 'profileId' } }
-                          }
-                        ]
-                      },
-                      {
-                        kind: 'Field',
-                        name: { kind: 'Name', value: 'canComment' },
-                        arguments: [
-                          {
-                            kind: 'Argument',
-                            name: { kind: 'Name', value: 'profileId' },
-                            value: { kind: 'Variable', name: { kind: 'Name', value: 'profileId' } }
-                          }
-                        ],
-                        selectionSet: {
-                          kind: 'SelectionSet',
-                          selections: [{ kind: 'Field', name: { kind: 'Name', value: 'result' } }]
-                        }
-                      },
-                      {
-                        kind: 'Field',
-                        name: { kind: 'Name', value: 'canMirror' },
-                        arguments: [
-                          {
-                            kind: 'Argument',
-                            name: { kind: 'Name', value: 'profileId' },
-                            value: { kind: 'Variable', name: { kind: 'Name', value: 'profileId' } }
-                          }
-                        ],
-                        selectionSet: {
-                          kind: 'SelectionSet',
-                          selections: [{ kind: 'Field', name: { kind: 'Name', value: 'result' } }]
-                        }
-                      },
-                      {
-                        kind: 'Field',
-                        name: { kind: 'Name', value: 'stats' },
-                        selectionSet: {
-                          kind: 'SelectionSet',
-                          selections: [
-                            { kind: 'FragmentSpread', name: { kind: 'Name', value: 'StatsFields' } }
-                          ]
-                        }
-                      },
-                      { kind: 'Field', name: { kind: 'Name', value: 'createdAt' } }
-                    ]
-                  }
-                }
-              ]
-            }
-          },
-          { kind: 'Field', name: { kind: 'Name', value: 'createdAt' } },
-          { kind: 'Field', name: { kind: 'Name', value: 'appId' } }
-        ]
-      }
-    }
-  ]
-} as unknown as DocumentNode<MirrorFieldsFragment, unknown>
-export const CommentFieldsFragmentDoc = {
-  kind: 'Document',
-  definitions: [
-    {
-      kind: 'FragmentDefinition',
-      name: { kind: 'Name', value: 'CommentFields' },
-      typeCondition: { kind: 'NamedType', name: { kind: 'Name', value: 'Comment' } },
-      selectionSet: {
-        kind: 'SelectionSet',
-        selections: [
-          { kind: 'Field', name: { kind: 'Name', value: 'id' } },
-          {
-            kind: 'Field',
-            name: { kind: 'Name', value: 'profile' },
-            selectionSet: {
-              kind: 'SelectionSet',
-              selections: [{ kind: 'FragmentSpread', name: { kind: 'Name', value: 'ProfileFields' } }]
-            }
-          },
-          {
-            kind: 'Field',
-            name: { kind: 'Name', value: 'reaction' },
-            arguments: [
-              {
-                kind: 'Argument',
-                name: { kind: 'Name', value: 'request' },
-                value: { kind: 'Variable', name: { kind: 'Name', value: 'reactionRequest' } }
-              }
-            ]
-          },
-          {
-            kind: 'Field',
-            name: { kind: 'Name', value: 'mirrors' },
-            arguments: [
-              {
-                kind: 'Argument',
-                name: { kind: 'Name', value: 'by' },
-                value: { kind: 'Variable', name: { kind: 'Name', value: 'profileId' } }
-              }
-            ]
-          },
-          {
-            kind: 'Field',
-            name: { kind: 'Name', value: 'canComment' },
-            arguments: [
-              {
-                kind: 'Argument',
-                name: { kind: 'Name', value: 'profileId' },
-                value: { kind: 'Variable', name: { kind: 'Name', value: 'profileId' } }
-              }
-            ],
-            selectionSet: {
-              kind: 'SelectionSet',
-              selections: [{ kind: 'Field', name: { kind: 'Name', value: 'result' } }]
-            }
-          },
-          {
-            kind: 'Field',
-            name: { kind: 'Name', value: 'canMirror' },
-            arguments: [
-              {
-                kind: 'Argument',
-                name: { kind: 'Name', value: 'profileId' },
-                value: { kind: 'Variable', name: { kind: 'Name', value: 'profileId' } }
-              }
-            ],
-            selectionSet: {
-              kind: 'SelectionSet',
-              selections: [{ kind: 'Field', name: { kind: 'Name', value: 'result' } }]
-            }
-          },
-          { kind: 'Field', name: { kind: 'Name', value: 'hasCollectedByMe' } },
-          {
-            kind: 'Field',
-            name: { kind: 'Name', value: 'collectedBy' },
-            selectionSet: {
-              kind: 'SelectionSet',
-              selections: [
-                { kind: 'Field', name: { kind: 'Name', value: 'address' } },
-                {
-                  kind: 'Field',
-                  name: { kind: 'Name', value: 'defaultProfile' },
-                  selectionSet: {
-                    kind: 'SelectionSet',
-                    selections: [{ kind: 'FragmentSpread', name: { kind: 'Name', value: 'ProfileFields' } }]
-                  }
-                }
-              ]
-            }
-          },
-          {
-            kind: 'Field',
-            name: { kind: 'Name', value: 'collectModule' },
-            selectionSet: {
-              kind: 'SelectionSet',
-              selections: [{ kind: 'FragmentSpread', name: { kind: 'Name', value: 'CollectModuleFields' } }]
-            }
-          },
-          {
-            kind: 'Field',
-            name: { kind: 'Name', value: 'stats' },
-            selectionSet: {
-              kind: 'SelectionSet',
-              selections: [{ kind: 'FragmentSpread', name: { kind: 'Name', value: 'StatsFields' } }]
-            }
-          },
-          {
-            kind: 'Field',
-            name: { kind: 'Name', value: 'metadata' },
-            selectionSet: {
-              kind: 'SelectionSet',
-              selections: [{ kind: 'FragmentSpread', name: { kind: 'Name', value: 'MetadataFields' } }]
-            }
-          },
-          { kind: 'Field', name: { kind: 'Name', value: 'hidden' } },
-          { kind: 'Field', name: { kind: 'Name', value: 'createdAt' } },
-          { kind: 'Field', name: { kind: 'Name', value: 'appId' } },
-          {
-            kind: 'Field',
-            name: { kind: 'Name', value: 'commentOn' },
-            selectionSet: {
-              kind: 'SelectionSet',
-              selections: [
-                {
-                  kind: 'InlineFragment',
-                  typeCondition: { kind: 'NamedType', name: { kind: 'Name', value: 'Post' } },
-                  selectionSet: {
-                    kind: 'SelectionSet',
-                    selections: [{ kind: 'FragmentSpread', name: { kind: 'Name', value: 'PostFields' } }]
-                  }
-                },
-                {
-                  kind: 'InlineFragment',
-                  typeCondition: { kind: 'NamedType', name: { kind: 'Name', value: 'Comment' } },
-                  selectionSet: {
-                    kind: 'SelectionSet',
-                    selections: [
-                      { kind: 'Field', name: { kind: 'Name', value: 'id' } },
-                      {
-                        kind: 'Field',
-                        name: { kind: 'Name', value: 'profile' },
-                        selectionSet: {
-                          kind: 'SelectionSet',
-                          selections: [
-                            { kind: 'FragmentSpread', name: { kind: 'Name', value: 'ProfileFields' } }
-                          ]
-                        }
-                      },
-                      {
-                        kind: 'Field',
-                        name: { kind: 'Name', value: 'reaction' },
-                        arguments: [
-                          {
-                            kind: 'Argument',
-                            name: { kind: 'Name', value: 'request' },
-                            value: { kind: 'Variable', name: { kind: 'Name', value: 'reactionRequest' } }
-                          }
-                        ]
-                      },
-                      {
-                        kind: 'Field',
-                        name: { kind: 'Name', value: 'mirrors' },
-                        arguments: [
-                          {
-                            kind: 'Argument',
-                            name: { kind: 'Name', value: 'by' },
-                            value: { kind: 'Variable', name: { kind: 'Name', value: 'profileId' } }
-                          }
-                        ]
-                      },
-                      {
-                        kind: 'Field',
-                        name: { kind: 'Name', value: 'canComment' },
-                        arguments: [
-                          {
-                            kind: 'Argument',
-                            name: { kind: 'Name', value: 'profileId' },
-                            value: { kind: 'Variable', name: { kind: 'Name', value: 'profileId' } }
-                          }
-                        ],
-                        selectionSet: {
-                          kind: 'SelectionSet',
-                          selections: [{ kind: 'Field', name: { kind: 'Name', value: 'result' } }]
-                        }
-                      },
-                      {
-                        kind: 'Field',
-                        name: { kind: 'Name', value: 'canMirror' },
-                        arguments: [
-                          {
-                            kind: 'Argument',
-                            name: { kind: 'Name', value: 'profileId' },
-                            value: { kind: 'Variable', name: { kind: 'Name', value: 'profileId' } }
-                          }
-                        ],
-                        selectionSet: {
-                          kind: 'SelectionSet',
-                          selections: [{ kind: 'Field', name: { kind: 'Name', value: 'result' } }]
-                        }
-                      },
-                      { kind: 'Field', name: { kind: 'Name', value: 'hasCollectedByMe' } },
-                      {
-                        kind: 'Field',
-                        name: { kind: 'Name', value: 'collectedBy' },
-                        selectionSet: {
-                          kind: 'SelectionSet',
-                          selections: [
-                            { kind: 'Field', name: { kind: 'Name', value: 'address' } },
-                            {
-                              kind: 'Field',
-                              name: { kind: 'Name', value: 'defaultProfile' },
-                              selectionSet: {
-                                kind: 'SelectionSet',
-                                selections: [{ kind: 'Field', name: { kind: 'Name', value: 'handle' } }]
-                              }
-                            }
-                          ]
-                        }
-                      },
-                      {
-                        kind: 'Field',
-                        name: { kind: 'Name', value: 'collectModule' },
-                        selectionSet: {
-                          kind: 'SelectionSet',
-                          selections: [
-                            { kind: 'FragmentSpread', name: { kind: 'Name', value: 'CollectModuleFields' } }
-                          ]
-                        }
-                      },
-                      {
-                        kind: 'Field',
-                        name: { kind: 'Name', value: 'metadata' },
-                        selectionSet: {
-                          kind: 'SelectionSet',
-                          selections: [
-                            { kind: 'FragmentSpread', name: { kind: 'Name', value: 'MetadataFields' } }
-                          ]
-                        }
-                      },
-                      {
-                        kind: 'Field',
-                        name: { kind: 'Name', value: 'stats' },
-                        selectionSet: {
-                          kind: 'SelectionSet',
-                          selections: [
-                            { kind: 'FragmentSpread', name: { kind: 'Name', value: 'StatsFields' } }
-                          ]
-                        }
-                      },
-                      {
-                        kind: 'Field',
-                        name: { kind: 'Name', value: 'mainPost' },
-                        selectionSet: {
-                          kind: 'SelectionSet',
-                          selections: [
-                            {
-                              kind: 'InlineFragment',
-                              typeCondition: { kind: 'NamedType', name: { kind: 'Name', value: 'Post' } },
-                              selectionSet: {
-                                kind: 'SelectionSet',
-                                selections: [
-                                  { kind: 'FragmentSpread', name: { kind: 'Name', value: 'PostFields' } }
-                                ]
-                              }
-                            },
-                            {
-                              kind: 'InlineFragment',
-                              typeCondition: { kind: 'NamedType', name: { kind: 'Name', value: 'Mirror' } },
-                              selectionSet: {
-                                kind: 'SelectionSet',
-                                selections: [
-                                  { kind: 'FragmentSpread', name: { kind: 'Name', value: 'MirrorFields' } }
-                                ]
-                              }
-                            }
-                          ]
-                        }
-                      },
-                      { kind: 'Field', name: { kind: 'Name', value: 'hidden' } },
-                      { kind: 'Field', name: { kind: 'Name', value: 'createdAt' } }
-                    ]
-                  }
-                },
-                {
-                  kind: 'InlineFragment',
-                  typeCondition: { kind: 'NamedType', name: { kind: 'Name', value: 'Mirror' } },
-                  selectionSet: {
-                    kind: 'SelectionSet',
-                    selections: [{ kind: 'FragmentSpread', name: { kind: 'Name', value: 'MirrorFields' } }]
-                  }
-                }
-              ]
-            }
-          }
-        ]
-      }
-    }
-  ]
-} as unknown as DocumentNode<CommentFieldsFragment, unknown>
-export const GroupFieldsFragmentDoc = {
-  kind: 'Document',
-  definitions: [
-    {
-      kind: 'FragmentDefinition',
-      name: { kind: 'Name', value: 'GroupFields' },
-      typeCondition: { kind: 'NamedType', name: { kind: 'Name', value: 'Post' } },
-      selectionSet: {
-        kind: 'SelectionSet',
-        selections: [
-          { kind: 'Field', name: { kind: 'Name', value: 'id' } },
-          {
-            kind: 'Field',
-            name: { kind: 'Name', value: 'profile' },
-            selectionSet: {
-              kind: 'SelectionSet',
-              selections: [{ kind: 'Field', name: { kind: 'Name', value: 'id' } }]
-            }
-          },
-          {
-            kind: 'Field',
-            name: { kind: 'Name', value: 'metadata' },
-            selectionSet: {
-              kind: 'SelectionSet',
-              selections: [
-                { kind: 'Field', name: { kind: 'Name', value: 'name' } },
-                { kind: 'Field', name: { kind: 'Name', value: 'description' } },
-                { kind: 'Field', name: { kind: 'Name', value: 'content' } },
-                {
-                  kind: 'Field',
-                  name: { kind: 'Name', value: 'attributes' },
-                  selectionSet: {
-                    kind: 'SelectionSet',
-                    selections: [{ kind: 'Field', name: { kind: 'Name', value: 'value' } }]
-                  }
-                },
-                {
-                  kind: 'Field',
-                  name: { kind: 'Name', value: 'cover' },
-                  selectionSet: {
-                    kind: 'SelectionSet',
-                    selections: [
-                      {
-                        kind: 'Field',
-                        name: { kind: 'Name', value: 'original' },
-                        selectionSet: {
-                          kind: 'SelectionSet',
-                          selections: [{ kind: 'Field', name: { kind: 'Name', value: 'url' } }]
-                        }
-                      }
-                    ]
-                  }
-                }
-              ]
-            }
-          },
-          {
-            kind: 'Field',
-            name: { kind: 'Name', value: 'stats' },
-            selectionSet: {
-              kind: 'SelectionSet',
-              selections: [
-                { kind: 'Field', name: { kind: 'Name', value: 'totalAmountOfCollects' } },
-                { kind: 'Field', name: { kind: 'Name', value: 'totalAmountOfComments' } }
-              ]
-            }
-          },
-          { kind: 'Field', name: { kind: 'Name', value: 'createdAt' } }
-        ]
-      }
-    }
-  ]
-} as unknown as DocumentNode<GroupFieldsFragment, unknown>
-export const RelayerResultFieldsFragmentDoc = {
-  kind: 'Document',
-  definitions: [
-    {
-      kind: 'FragmentDefinition',
-      name: { kind: 'Name', value: 'RelayerResultFields' },
-      typeCondition: { kind: 'NamedType', name: { kind: 'Name', value: 'RelayResult' } },
-      selectionSet: {
-        kind: 'SelectionSet',
-        selections: [
-          {
-            kind: 'InlineFragment',
-            typeCondition: { kind: 'NamedType', name: { kind: 'Name', value: 'RelayerResult' } },
-            selectionSet: {
-              kind: 'SelectionSet',
-              selections: [
-                { kind: 'Field', name: { kind: 'Name', value: 'txHash' } },
-                { kind: 'Field', name: { kind: 'Name', value: 'txId' } }
-              ]
-            }
-          },
-          {
-            kind: 'InlineFragment',
-            typeCondition: { kind: 'NamedType', name: { kind: 'Name', value: 'RelayError' } },
-            selectionSet: {
-              kind: 'SelectionSet',
-              selections: [{ kind: 'Field', name: { kind: 'Name', value: 'reason' } }]
-            }
-          }
-        ]
-      }
-    }
-  ]
-} as unknown as DocumentNode<RelayerResultFieldsFragment, unknown>
-export const AddReactionDocument = {
-  kind: 'Document',
-  definitions: [
-    {
-      kind: 'OperationDefinition',
-      operation: 'mutation',
-      name: { kind: 'Name', value: 'AddReaction' },
-      variableDefinitions: [
-        {
-          kind: 'VariableDefinition',
-          variable: { kind: 'Variable', name: { kind: 'Name', value: 'request' } },
-          type: {
-            kind: 'NonNullType',
-            type: { kind: 'NamedType', name: { kind: 'Name', value: 'ReactionRequest' } }
-          }
-        }
-      ],
-      selectionSet: {
-        kind: 'SelectionSet',
-        selections: [
-          {
-            kind: 'Field',
-            name: { kind: 'Name', value: 'addReaction' },
-            arguments: [
-              {
-                kind: 'Argument',
-                name: { kind: 'Name', value: 'request' },
-                value: { kind: 'Variable', name: { kind: 'Name', value: 'request' } }
-              }
-            ]
-          }
-        ]
-      }
-    }
-  ]
-} as unknown as DocumentNode<AddReactionMutation, AddReactionMutationVariables>
-export const AuthenticateDocument = {
-  kind: 'Document',
-  definitions: [
-    {
-      kind: 'OperationDefinition',
-      operation: 'mutation',
-      name: { kind: 'Name', value: 'Authenticate' },
-      variableDefinitions: [
-        {
-          kind: 'VariableDefinition',
-          variable: { kind: 'Variable', name: { kind: 'Name', value: 'request' } },
-          type: {
-            kind: 'NonNullType',
-            type: { kind: 'NamedType', name: { kind: 'Name', value: 'SignedAuthChallenge' } }
-          }
-        }
-      ],
-      selectionSet: {
-        kind: 'SelectionSet',
-        selections: [
-          {
-            kind: 'Field',
-            name: { kind: 'Name', value: 'authenticate' },
-            arguments: [
-              {
-                kind: 'Argument',
-                name: { kind: 'Name', value: 'request' },
-                value: { kind: 'Variable', name: { kind: 'Name', value: 'request' } }
-              }
-            ],
-            selectionSet: {
-              kind: 'SelectionSet',
-              selections: [
-                { kind: 'Field', name: { kind: 'Name', value: 'accessToken' } },
-                { kind: 'Field', name: { kind: 'Name', value: 'refreshToken' } }
-              ]
-            }
-          }
-        ]
-      }
-    }
-  ]
-} as unknown as DocumentNode<AuthenticateMutation, AuthenticateMutationVariables>
-export const BroadcastDocument = {
-  kind: 'Document',
-  definitions: [
-    {
-      kind: 'OperationDefinition',
-      operation: 'mutation',
-      name: { kind: 'Name', value: 'Broadcast' },
-      variableDefinitions: [
-        {
-          kind: 'VariableDefinition',
-          variable: { kind: 'Variable', name: { kind: 'Name', value: 'request' } },
-          type: {
-            kind: 'NonNullType',
-            type: { kind: 'NamedType', name: { kind: 'Name', value: 'BroadcastRequest' } }
-          }
-        }
-      ],
-      selectionSet: {
-        kind: 'SelectionSet',
-        selections: [
-          {
-            kind: 'Field',
-            name: { kind: 'Name', value: 'broadcast' },
-            arguments: [
-              {
-                kind: 'Argument',
-                name: { kind: 'Name', value: 'request' },
-                value: { kind: 'Variable', name: { kind: 'Name', value: 'request' } }
-              }
-            ],
-            selectionSet: {
-              kind: 'SelectionSet',
-              selections: [
-                {
-                  kind: 'InlineFragment',
-                  typeCondition: { kind: 'NamedType', name: { kind: 'Name', value: 'RelayerResult' } },
-                  selectionSet: {
-                    kind: 'SelectionSet',
-                    selections: [
-                      { kind: 'Field', name: { kind: 'Name', value: 'txHash' } },
-                      { kind: 'Field', name: { kind: 'Name', value: 'txId' } }
-                    ]
-                  }
-                },
-                {
-                  kind: 'InlineFragment',
-                  typeCondition: { kind: 'NamedType', name: { kind: 'Name', value: 'RelayError' } },
-                  selectionSet: {
-                    kind: 'SelectionSet',
-                    selections: [{ kind: 'Field', name: { kind: 'Name', value: 'reason' } }]
-                  }
-                }
-              ]
-            }
-          }
-        ]
-      }
-    }
-  ]
-} as unknown as DocumentNode<BroadcastMutation, BroadcastMutationVariables>
-export const CreateBurnProfileTypedDataDocument = {
-  kind: 'Document',
-  definitions: [
-    {
-      kind: 'OperationDefinition',
-      operation: 'mutation',
-      name: { kind: 'Name', value: 'CreateBurnProfileTypedData' },
-      variableDefinitions: [
-        {
-          kind: 'VariableDefinition',
-          variable: { kind: 'Variable', name: { kind: 'Name', value: 'options' } },
-          type: { kind: 'NamedType', name: { kind: 'Name', value: 'TypedDataOptions' } }
-        },
-        {
-          kind: 'VariableDefinition',
-          variable: { kind: 'Variable', name: { kind: 'Name', value: 'request' } },
-          type: {
-            kind: 'NonNullType',
-            type: { kind: 'NamedType', name: { kind: 'Name', value: 'BurnProfileRequest' } }
-          }
-        }
-      ],
-      selectionSet: {
-        kind: 'SelectionSet',
-        selections: [
-          {
-            kind: 'Field',
-            name: { kind: 'Name', value: 'createBurnProfileTypedData' },
-            arguments: [
-              {
-                kind: 'Argument',
-                name: { kind: 'Name', value: 'options' },
-                value: { kind: 'Variable', name: { kind: 'Name', value: 'options' } }
-              },
-              {
-                kind: 'Argument',
-                name: { kind: 'Name', value: 'request' },
-                value: { kind: 'Variable', name: { kind: 'Name', value: 'request' } }
-              }
-            ],
-            selectionSet: {
-              kind: 'SelectionSet',
-              selections: [
-                { kind: 'Field', name: { kind: 'Name', value: 'id' } },
-                { kind: 'Field', name: { kind: 'Name', value: 'expiresAt' } },
-                {
-                  kind: 'Field',
-                  name: { kind: 'Name', value: 'typedData' },
-                  selectionSet: {
-                    kind: 'SelectionSet',
-                    selections: [
-                      {
-                        kind: 'Field',
-                        name: { kind: 'Name', value: 'domain' },
-                        selectionSet: {
-                          kind: 'SelectionSet',
-                          selections: [
-                            { kind: 'Field', name: { kind: 'Name', value: 'name' } },
-                            { kind: 'Field', name: { kind: 'Name', value: 'chainId' } },
-                            { kind: 'Field', name: { kind: 'Name', value: 'version' } },
-                            { kind: 'Field', name: { kind: 'Name', value: 'verifyingContract' } }
-                          ]
-                        }
-                      },
-                      {
-                        kind: 'Field',
-                        name: { kind: 'Name', value: 'types' },
-                        selectionSet: {
-                          kind: 'SelectionSet',
-                          selections: [
-                            {
-                              kind: 'Field',
-                              name: { kind: 'Name', value: 'BurnWithSig' },
-                              selectionSet: {
-                                kind: 'SelectionSet',
-                                selections: [
-                                  { kind: 'Field', name: { kind: 'Name', value: 'name' } },
-                                  { kind: 'Field', name: { kind: 'Name', value: 'type' } }
-                                ]
-                              }
-                            }
-                          ]
-                        }
-                      },
-                      {
-                        kind: 'Field',
-                        name: { kind: 'Name', value: 'value' },
-                        selectionSet: {
-                          kind: 'SelectionSet',
-                          selections: [
-                            { kind: 'Field', name: { kind: 'Name', value: 'nonce' } },
-                            { kind: 'Field', name: { kind: 'Name', value: 'deadline' } },
-                            { kind: 'Field', name: { kind: 'Name', value: 'tokenId' } }
-                          ]
-                        }
-                      }
-                    ]
-                  }
-                }
-              ]
-            }
-          }
-        ]
-      }
-    }
-  ]
-} as unknown as DocumentNode<CreateBurnProfileTypedDataMutation, CreateBurnProfileTypedDataMutationVariables>
-export const CreateCollectTypedDataDocument = {
-  kind: 'Document',
-  definitions: [
-    {
-      kind: 'OperationDefinition',
-      operation: 'mutation',
-      name: { kind: 'Name', value: 'CreateCollectTypedData' },
-      variableDefinitions: [
-        {
-          kind: 'VariableDefinition',
-          variable: { kind: 'Variable', name: { kind: 'Name', value: 'options' } },
-          type: { kind: 'NamedType', name: { kind: 'Name', value: 'TypedDataOptions' } }
-        },
-        {
-          kind: 'VariableDefinition',
-          variable: { kind: 'Variable', name: { kind: 'Name', value: 'request' } },
-          type: {
-            kind: 'NonNullType',
-            type: { kind: 'NamedType', name: { kind: 'Name', value: 'CreateCollectRequest' } }
-          }
-        }
-      ],
-      selectionSet: {
-        kind: 'SelectionSet',
-        selections: [
-          {
-            kind: 'Field',
-            name: { kind: 'Name', value: 'createCollectTypedData' },
-            arguments: [
-              {
-                kind: 'Argument',
-                name: { kind: 'Name', value: 'options' },
-                value: { kind: 'Variable', name: { kind: 'Name', value: 'options' } }
-              },
-              {
-                kind: 'Argument',
-                name: { kind: 'Name', value: 'request' },
-                value: { kind: 'Variable', name: { kind: 'Name', value: 'request' } }
-              }
-            ],
-            selectionSet: {
-              kind: 'SelectionSet',
-              selections: [
-                { kind: 'Field', name: { kind: 'Name', value: 'id' } },
-                { kind: 'Field', name: { kind: 'Name', value: 'expiresAt' } },
-                {
-                  kind: 'Field',
-                  name: { kind: 'Name', value: 'typedData' },
-                  selectionSet: {
-                    kind: 'SelectionSet',
-                    selections: [
-                      {
-                        kind: 'Field',
-                        name: { kind: 'Name', value: 'types' },
-                        selectionSet: {
-                          kind: 'SelectionSet',
-                          selections: [
-                            {
-                              kind: 'Field',
-                              name: { kind: 'Name', value: 'CollectWithSig' },
-                              selectionSet: {
-                                kind: 'SelectionSet',
-                                selections: [
-                                  { kind: 'Field', name: { kind: 'Name', value: 'name' } },
-                                  { kind: 'Field', name: { kind: 'Name', value: 'type' } }
-                                ]
-                              }
-                            }
-                          ]
-                        }
-                      },
-                      {
-                        kind: 'Field',
-                        name: { kind: 'Name', value: 'domain' },
-                        selectionSet: {
-                          kind: 'SelectionSet',
-                          selections: [
-                            { kind: 'Field', name: { kind: 'Name', value: 'name' } },
-                            { kind: 'Field', name: { kind: 'Name', value: 'chainId' } },
-                            { kind: 'Field', name: { kind: 'Name', value: 'version' } },
-                            { kind: 'Field', name: { kind: 'Name', value: 'verifyingContract' } }
-                          ]
-                        }
-                      },
-                      {
-                        kind: 'Field',
-                        name: { kind: 'Name', value: 'value' },
-                        selectionSet: {
-                          kind: 'SelectionSet',
-                          selections: [
-                            { kind: 'Field', name: { kind: 'Name', value: 'nonce' } },
-                            { kind: 'Field', name: { kind: 'Name', value: 'deadline' } },
-                            { kind: 'Field', name: { kind: 'Name', value: 'profileId' } },
-                            { kind: 'Field', name: { kind: 'Name', value: 'pubId' } },
-                            { kind: 'Field', name: { kind: 'Name', value: 'data' } }
-                          ]
-                        }
-                      }
-                    ]
-                  }
-                }
-              ]
-            }
-          }
-        ]
-      }
-    }
-  ]
-} as unknown as DocumentNode<CreateCollectTypedDataMutation, CreateCollectTypedDataMutationVariables>
-export const CreateCommentTypedDataDocument = {
-  kind: 'Document',
-  definitions: [
-    {
-      kind: 'OperationDefinition',
-      operation: 'mutation',
-      name: { kind: 'Name', value: 'CreateCommentTypedData' },
-      variableDefinitions: [
-        {
-          kind: 'VariableDefinition',
-          variable: { kind: 'Variable', name: { kind: 'Name', value: 'options' } },
-          type: { kind: 'NamedType', name: { kind: 'Name', value: 'TypedDataOptions' } }
-        },
-        {
-          kind: 'VariableDefinition',
-          variable: { kind: 'Variable', name: { kind: 'Name', value: 'request' } },
-          type: {
-            kind: 'NonNullType',
-            type: { kind: 'NamedType', name: { kind: 'Name', value: 'CreatePublicCommentRequest' } }
-          }
-        }
-      ],
-      selectionSet: {
-        kind: 'SelectionSet',
-        selections: [
-          {
-            kind: 'Field',
-            name: { kind: 'Name', value: 'createCommentTypedData' },
-            arguments: [
-              {
-                kind: 'Argument',
-                name: { kind: 'Name', value: 'options' },
-                value: { kind: 'Variable', name: { kind: 'Name', value: 'options' } }
-              },
-              {
-                kind: 'Argument',
-                name: { kind: 'Name', value: 'request' },
-                value: { kind: 'Variable', name: { kind: 'Name', value: 'request' } }
-              }
-            ],
-            selectionSet: {
-              kind: 'SelectionSet',
-              selections: [
-                { kind: 'Field', name: { kind: 'Name', value: 'id' } },
-                { kind: 'Field', name: { kind: 'Name', value: 'expiresAt' } },
-                {
-                  kind: 'Field',
-                  name: { kind: 'Name', value: 'typedData' },
-                  selectionSet: {
-                    kind: 'SelectionSet',
-                    selections: [
-                      {
-                        kind: 'Field',
-                        name: { kind: 'Name', value: 'types' },
-                        selectionSet: {
-                          kind: 'SelectionSet',
-                          selections: [
-                            {
-                              kind: 'Field',
-                              name: { kind: 'Name', value: 'CommentWithSig' },
-                              selectionSet: {
-                                kind: 'SelectionSet',
-                                selections: [
-                                  { kind: 'Field', name: { kind: 'Name', value: 'name' } },
-                                  { kind: 'Field', name: { kind: 'Name', value: 'type' } }
-                                ]
-                              }
-                            }
-                          ]
-                        }
-                      },
-                      {
-                        kind: 'Field',
-                        name: { kind: 'Name', value: 'domain' },
-                        selectionSet: {
-                          kind: 'SelectionSet',
-                          selections: [
-                            { kind: 'Field', name: { kind: 'Name', value: 'name' } },
-                            { kind: 'Field', name: { kind: 'Name', value: 'chainId' } },
-                            { kind: 'Field', name: { kind: 'Name', value: 'version' } },
-                            { kind: 'Field', name: { kind: 'Name', value: 'verifyingContract' } }
-                          ]
-                        }
-                      },
-                      {
-                        kind: 'Field',
-                        name: { kind: 'Name', value: 'value' },
-                        selectionSet: {
-                          kind: 'SelectionSet',
-                          selections: [
-                            { kind: 'Field', name: { kind: 'Name', value: 'nonce' } },
-                            { kind: 'Field', name: { kind: 'Name', value: 'deadline' } },
-                            { kind: 'Field', name: { kind: 'Name', value: 'profileId' } },
-                            { kind: 'Field', name: { kind: 'Name', value: 'profileIdPointed' } },
-                            { kind: 'Field', name: { kind: 'Name', value: 'pubIdPointed' } },
-                            { kind: 'Field', name: { kind: 'Name', value: 'contentURI' } },
-                            { kind: 'Field', name: { kind: 'Name', value: 'collectModule' } },
-                            { kind: 'Field', name: { kind: 'Name', value: 'collectModuleInitData' } },
-                            { kind: 'Field', name: { kind: 'Name', value: 'referenceModule' } },
-                            { kind: 'Field', name: { kind: 'Name', value: 'referenceModuleData' } },
-                            { kind: 'Field', name: { kind: 'Name', value: 'referenceModuleInitData' } }
-                          ]
-                        }
-                      }
-                    ]
-                  }
-                }
-              ]
-            }
-          }
-        ]
-      }
-    }
-  ]
-} as unknown as DocumentNode<CreateCommentTypedDataMutation, CreateCommentTypedDataMutationVariables>
-export const CreateCommentViaDispatcherDocument = {
-  kind: 'Document',
-  definitions: [
-    {
-      kind: 'OperationDefinition',
-      operation: 'mutation',
-      name: { kind: 'Name', value: 'CreateCommentViaDispatcher' },
-      variableDefinitions: [
-        {
-          kind: 'VariableDefinition',
-          variable: { kind: 'Variable', name: { kind: 'Name', value: 'request' } },
-          type: {
-            kind: 'NonNullType',
-            type: { kind: 'NamedType', name: { kind: 'Name', value: 'CreatePublicCommentRequest' } }
-          }
-        }
-      ],
-      selectionSet: {
-        kind: 'SelectionSet',
-        selections: [
-          {
-            kind: 'Field',
-            name: { kind: 'Name', value: 'createCommentViaDispatcher' },
-            arguments: [
-              {
-                kind: 'Argument',
-                name: { kind: 'Name', value: 'request' },
-                value: { kind: 'Variable', name: { kind: 'Name', value: 'request' } }
-              }
-            ],
-            selectionSet: {
-              kind: 'SelectionSet',
-              selections: [{ kind: 'FragmentSpread', name: { kind: 'Name', value: 'RelayerResultFields' } }]
-            }
-          }
-        ]
-      }
-    },
-    ...RelayerResultFieldsFragmentDoc.definitions
-  ]
-} as unknown as DocumentNode<CreateCommentViaDispatcherMutation, CreateCommentViaDispatcherMutationVariables>
-export const CreateFollowTypedDataDocument = {
-  kind: 'Document',
-  definitions: [
-    {
-      kind: 'OperationDefinition',
-      operation: 'mutation',
-      name: { kind: 'Name', value: 'CreateFollowTypedData' },
-      variableDefinitions: [
-        {
-          kind: 'VariableDefinition',
-          variable: { kind: 'Variable', name: { kind: 'Name', value: 'options' } },
-          type: { kind: 'NamedType', name: { kind: 'Name', value: 'TypedDataOptions' } }
-        },
-        {
-          kind: 'VariableDefinition',
-          variable: { kind: 'Variable', name: { kind: 'Name', value: 'request' } },
-          type: {
-            kind: 'NonNullType',
-            type: { kind: 'NamedType', name: { kind: 'Name', value: 'FollowRequest' } }
-          }
-        }
-      ],
-      selectionSet: {
-        kind: 'SelectionSet',
-        selections: [
-          {
-            kind: 'Field',
-            name: { kind: 'Name', value: 'createFollowTypedData' },
-            arguments: [
-              {
-                kind: 'Argument',
-                name: { kind: 'Name', value: 'options' },
-                value: { kind: 'Variable', name: { kind: 'Name', value: 'options' } }
-              },
-              {
-                kind: 'Argument',
-                name: { kind: 'Name', value: 'request' },
-                value: { kind: 'Variable', name: { kind: 'Name', value: 'request' } }
-              }
-            ],
-            selectionSet: {
-              kind: 'SelectionSet',
-              selections: [
-                { kind: 'Field', name: { kind: 'Name', value: 'id' } },
-                { kind: 'Field', name: { kind: 'Name', value: 'expiresAt' } },
-                {
-                  kind: 'Field',
-                  name: { kind: 'Name', value: 'typedData' },
-                  selectionSet: {
-                    kind: 'SelectionSet',
-                    selections: [
-                      {
-                        kind: 'Field',
-                        name: { kind: 'Name', value: 'domain' },
-                        selectionSet: {
-                          kind: 'SelectionSet',
-                          selections: [
-                            { kind: 'Field', name: { kind: 'Name', value: 'name' } },
-                            { kind: 'Field', name: { kind: 'Name', value: 'chainId' } },
-                            { kind: 'Field', name: { kind: 'Name', value: 'version' } },
-                            { kind: 'Field', name: { kind: 'Name', value: 'verifyingContract' } }
-                          ]
-                        }
-                      },
-                      {
-                        kind: 'Field',
-                        name: { kind: 'Name', value: 'types' },
-                        selectionSet: {
-                          kind: 'SelectionSet',
-                          selections: [
-                            {
-                              kind: 'Field',
-                              name: { kind: 'Name', value: 'FollowWithSig' },
-                              selectionSet: {
-                                kind: 'SelectionSet',
-                                selections: [
-                                  { kind: 'Field', name: { kind: 'Name', value: 'name' } },
-                                  { kind: 'Field', name: { kind: 'Name', value: 'type' } }
-                                ]
-                              }
-                            }
-                          ]
-                        }
-                      },
-                      {
-                        kind: 'Field',
-                        name: { kind: 'Name', value: 'value' },
-                        selectionSet: {
-                          kind: 'SelectionSet',
-                          selections: [
-                            { kind: 'Field', name: { kind: 'Name', value: 'nonce' } },
-                            { kind: 'Field', name: { kind: 'Name', value: 'deadline' } },
-                            { kind: 'Field', name: { kind: 'Name', value: 'profileIds' } },
-                            { kind: 'Field', name: { kind: 'Name', value: 'datas' } }
-                          ]
-                        }
-                      }
-                    ]
-                  }
-                }
-              ]
-            }
-          }
-        ]
-      }
-    }
-  ]
-} as unknown as DocumentNode<CreateFollowTypedDataMutation, CreateFollowTypedDataMutationVariables>
-export const CreateMirrorTypedDataDocument = {
-  kind: 'Document',
-  definitions: [
-    {
-      kind: 'OperationDefinition',
-      operation: 'mutation',
-      name: { kind: 'Name', value: 'CreateMirrorTypedData' },
-      variableDefinitions: [
-        {
-          kind: 'VariableDefinition',
-          variable: { kind: 'Variable', name: { kind: 'Name', value: 'options' } },
-          type: { kind: 'NamedType', name: { kind: 'Name', value: 'TypedDataOptions' } }
-        },
-        {
-          kind: 'VariableDefinition',
-          variable: { kind: 'Variable', name: { kind: 'Name', value: 'request' } },
-          type: {
-            kind: 'NonNullType',
-            type: { kind: 'NamedType', name: { kind: 'Name', value: 'CreateMirrorRequest' } }
-          }
-        }
-      ],
-      selectionSet: {
-        kind: 'SelectionSet',
-        selections: [
-          {
-            kind: 'Field',
-            name: { kind: 'Name', value: 'createMirrorTypedData' },
-            arguments: [
-              {
-                kind: 'Argument',
-                name: { kind: 'Name', value: 'options' },
-                value: { kind: 'Variable', name: { kind: 'Name', value: 'options' } }
-              },
-              {
-                kind: 'Argument',
-                name: { kind: 'Name', value: 'request' },
-                value: { kind: 'Variable', name: { kind: 'Name', value: 'request' } }
-              }
-            ],
-            selectionSet: {
-              kind: 'SelectionSet',
-              selections: [
-                { kind: 'Field', name: { kind: 'Name', value: 'id' } },
-                { kind: 'Field', name: { kind: 'Name', value: 'expiresAt' } },
-                {
-                  kind: 'Field',
-                  name: { kind: 'Name', value: 'typedData' },
-                  selectionSet: {
-                    kind: 'SelectionSet',
-                    selections: [
-                      {
-                        kind: 'Field',
-                        name: { kind: 'Name', value: 'types' },
-                        selectionSet: {
-                          kind: 'SelectionSet',
-                          selections: [
-                            {
-                              kind: 'Field',
-                              name: { kind: 'Name', value: 'MirrorWithSig' },
-                              selectionSet: {
-                                kind: 'SelectionSet',
-                                selections: [
-                                  { kind: 'Field', name: { kind: 'Name', value: 'name' } },
-                                  { kind: 'Field', name: { kind: 'Name', value: 'type' } }
-                                ]
-                              }
-                            }
-                          ]
-                        }
-                      },
-                      {
-                        kind: 'Field',
-                        name: { kind: 'Name', value: 'domain' },
-                        selectionSet: {
-                          kind: 'SelectionSet',
-                          selections: [
-                            { kind: 'Field', name: { kind: 'Name', value: 'name' } },
-                            { kind: 'Field', name: { kind: 'Name', value: 'chainId' } },
-                            { kind: 'Field', name: { kind: 'Name', value: 'version' } },
-                            { kind: 'Field', name: { kind: 'Name', value: 'verifyingContract' } }
-                          ]
-                        }
-                      },
-                      {
-                        kind: 'Field',
-                        name: { kind: 'Name', value: 'value' },
-                        selectionSet: {
-                          kind: 'SelectionSet',
-                          selections: [
-                            { kind: 'Field', name: { kind: 'Name', value: 'nonce' } },
-                            { kind: 'Field', name: { kind: 'Name', value: 'deadline' } },
-                            { kind: 'Field', name: { kind: 'Name', value: 'profileId' } },
-                            { kind: 'Field', name: { kind: 'Name', value: 'profileIdPointed' } },
-                            { kind: 'Field', name: { kind: 'Name', value: 'pubIdPointed' } },
-                            { kind: 'Field', name: { kind: 'Name', value: 'referenceModule' } },
-                            { kind: 'Field', name: { kind: 'Name', value: 'referenceModuleData' } },
-                            { kind: 'Field', name: { kind: 'Name', value: 'referenceModuleInitData' } }
-                          ]
-                        }
-                      }
-                    ]
-                  }
-                }
-              ]
-            }
-          }
-        ]
-      }
-    }
-  ]
-} as unknown as DocumentNode<CreateMirrorTypedDataMutation, CreateMirrorTypedDataMutationVariables>
-export const CreateMirrorViaDispatcherDocument = {
-  kind: 'Document',
-  definitions: [
-    {
-      kind: 'OperationDefinition',
-      operation: 'mutation',
-      name: { kind: 'Name', value: 'CreateMirrorViaDispatcher' },
-      variableDefinitions: [
-        {
-          kind: 'VariableDefinition',
-          variable: { kind: 'Variable', name: { kind: 'Name', value: 'request' } },
-          type: {
-            kind: 'NonNullType',
-            type: { kind: 'NamedType', name: { kind: 'Name', value: 'CreateMirrorRequest' } }
-          }
-        }
-      ],
-      selectionSet: {
-        kind: 'SelectionSet',
-        selections: [
-          {
-            kind: 'Field',
-            name: { kind: 'Name', value: 'createMirrorViaDispatcher' },
-            arguments: [
-              {
-                kind: 'Argument',
-                name: { kind: 'Name', value: 'request' },
-                value: { kind: 'Variable', name: { kind: 'Name', value: 'request' } }
-              }
-            ],
-            selectionSet: {
-              kind: 'SelectionSet',
-              selections: [{ kind: 'FragmentSpread', name: { kind: 'Name', value: 'RelayerResultFields' } }]
-            }
-          }
-        ]
-      }
-    },
-    ...RelayerResultFieldsFragmentDoc.definitions
-  ]
-} as unknown as DocumentNode<CreateMirrorViaDispatcherMutation, CreateMirrorViaDispatcherMutationVariables>
-export const CreatePostTypedDataDocument = {
-  kind: 'Document',
-  definitions: [
-    {
-      kind: 'OperationDefinition',
-      operation: 'mutation',
-      name: { kind: 'Name', value: 'CreatePostTypedData' },
-      variableDefinitions: [
-        {
-          kind: 'VariableDefinition',
-          variable: { kind: 'Variable', name: { kind: 'Name', value: 'options' } },
-          type: { kind: 'NamedType', name: { kind: 'Name', value: 'TypedDataOptions' } }
-        },
-        {
-          kind: 'VariableDefinition',
-          variable: { kind: 'Variable', name: { kind: 'Name', value: 'request' } },
-          type: {
-            kind: 'NonNullType',
-            type: { kind: 'NamedType', name: { kind: 'Name', value: 'CreatePublicPostRequest' } }
-          }
-        }
-      ],
-      selectionSet: {
-        kind: 'SelectionSet',
-        selections: [
-          {
-            kind: 'Field',
-            name: { kind: 'Name', value: 'createPostTypedData' },
-            arguments: [
-              {
-                kind: 'Argument',
-                name: { kind: 'Name', value: 'options' },
-                value: { kind: 'Variable', name: { kind: 'Name', value: 'options' } }
-              },
-              {
-                kind: 'Argument',
-                name: { kind: 'Name', value: 'request' },
-                value: { kind: 'Variable', name: { kind: 'Name', value: 'request' } }
-              }
-            ],
-            selectionSet: {
-              kind: 'SelectionSet',
-              selections: [
-                { kind: 'Field', name: { kind: 'Name', value: 'id' } },
-                { kind: 'Field', name: { kind: 'Name', value: 'expiresAt' } },
-                {
-                  kind: 'Field',
-                  name: { kind: 'Name', value: 'typedData' },
-                  selectionSet: {
-                    kind: 'SelectionSet',
-                    selections: [
-                      {
-                        kind: 'Field',
-                        name: { kind: 'Name', value: 'types' },
-                        selectionSet: {
-                          kind: 'SelectionSet',
-                          selections: [
-                            {
-                              kind: 'Field',
-                              name: { kind: 'Name', value: 'PostWithSig' },
-                              selectionSet: {
-                                kind: 'SelectionSet',
-                                selections: [
-                                  { kind: 'Field', name: { kind: 'Name', value: 'name' } },
-                                  { kind: 'Field', name: { kind: 'Name', value: 'type' } }
-                                ]
-                              }
-                            }
-                          ]
-                        }
-                      },
-                      {
-                        kind: 'Field',
-                        name: { kind: 'Name', value: 'domain' },
-                        selectionSet: {
-                          kind: 'SelectionSet',
-                          selections: [
-                            { kind: 'Field', name: { kind: 'Name', value: 'name' } },
-                            { kind: 'Field', name: { kind: 'Name', value: 'chainId' } },
-                            { kind: 'Field', name: { kind: 'Name', value: 'version' } },
-                            { kind: 'Field', name: { kind: 'Name', value: 'verifyingContract' } }
-                          ]
-                        }
-                      },
-                      {
-                        kind: 'Field',
-                        name: { kind: 'Name', value: 'value' },
-                        selectionSet: {
-                          kind: 'SelectionSet',
-                          selections: [
-                            { kind: 'Field', name: { kind: 'Name', value: 'nonce' } },
-                            { kind: 'Field', name: { kind: 'Name', value: 'deadline' } },
-                            { kind: 'Field', name: { kind: 'Name', value: 'profileId' } },
-                            { kind: 'Field', name: { kind: 'Name', value: 'contentURI' } },
-                            { kind: 'Field', name: { kind: 'Name', value: 'collectModule' } },
-                            { kind: 'Field', name: { kind: 'Name', value: 'collectModuleInitData' } },
-                            { kind: 'Field', name: { kind: 'Name', value: 'referenceModule' } },
-                            { kind: 'Field', name: { kind: 'Name', value: 'referenceModuleInitData' } }
-                          ]
-                        }
-                      }
-                    ]
-                  }
-                }
-              ]
-            }
-          }
-        ]
-      }
-    }
-  ]
-} as unknown as DocumentNode<CreatePostTypedDataMutation, CreatePostTypedDataMutationVariables>
-export const CreatePostViaDispatcherDocument = {
-  kind: 'Document',
-  definitions: [
-    {
-      kind: 'OperationDefinition',
-      operation: 'mutation',
-      name: { kind: 'Name', value: 'CreatePostViaDispatcher' },
-      variableDefinitions: [
-        {
-          kind: 'VariableDefinition',
-          variable: { kind: 'Variable', name: { kind: 'Name', value: 'request' } },
-          type: {
-            kind: 'NonNullType',
-            type: { kind: 'NamedType', name: { kind: 'Name', value: 'CreatePublicPostRequest' } }
-          }
-        }
-      ],
-      selectionSet: {
-        kind: 'SelectionSet',
-        selections: [
-          {
-            kind: 'Field',
-            name: { kind: 'Name', value: 'createPostViaDispatcher' },
-            arguments: [
-              {
-                kind: 'Argument',
-                name: { kind: 'Name', value: 'request' },
-                value: { kind: 'Variable', name: { kind: 'Name', value: 'request' } }
-              }
-            ],
-            selectionSet: {
-              kind: 'SelectionSet',
-              selections: [{ kind: 'FragmentSpread', name: { kind: 'Name', value: 'RelayerResultFields' } }]
-            }
-          }
-        ]
-      }
-    },
-    ...RelayerResultFieldsFragmentDoc.definitions
-  ]
-} as unknown as DocumentNode<CreatePostViaDispatcherMutation, CreatePostViaDispatcherMutationVariables>
-export const CreateProfileDocument = {
-  kind: 'Document',
-  definitions: [
-    {
-      kind: 'OperationDefinition',
-      operation: 'mutation',
-      name: { kind: 'Name', value: 'CreateProfile' },
-      variableDefinitions: [
-        {
-          kind: 'VariableDefinition',
-          variable: { kind: 'Variable', name: { kind: 'Name', value: 'request' } },
-          type: {
-            kind: 'NonNullType',
-            type: { kind: 'NamedType', name: { kind: 'Name', value: 'CreateProfileRequest' } }
-          }
-        }
-      ],
-      selectionSet: {
-        kind: 'SelectionSet',
-        selections: [
-          {
-            kind: 'Field',
-            name: { kind: 'Name', value: 'createProfile' },
-            arguments: [
-              {
-                kind: 'Argument',
-                name: { kind: 'Name', value: 'request' },
-                value: { kind: 'Variable', name: { kind: 'Name', value: 'request' } }
-              }
-            ],
-            selectionSet: {
-              kind: 'SelectionSet',
-              selections: [{ kind: 'FragmentSpread', name: { kind: 'Name', value: 'RelayerResultFields' } }]
-            }
-          }
-        ]
-      }
-    },
-    ...RelayerResultFieldsFragmentDoc.definitions
-  ]
-} as unknown as DocumentNode<CreateProfileMutation, CreateProfileMutationVariables>
-export const CreateSetDefaultProfileTypedDataDocument = {
-  kind: 'Document',
-  definitions: [
-    {
-      kind: 'OperationDefinition',
-      operation: 'mutation',
-      name: { kind: 'Name', value: 'CreateSetDefaultProfileTypedData' },
-      variableDefinitions: [
-        {
-          kind: 'VariableDefinition',
-          variable: { kind: 'Variable', name: { kind: 'Name', value: 'options' } },
-          type: { kind: 'NamedType', name: { kind: 'Name', value: 'TypedDataOptions' } }
-        },
-        {
-          kind: 'VariableDefinition',
-          variable: { kind: 'Variable', name: { kind: 'Name', value: 'request' } },
-          type: {
-            kind: 'NonNullType',
-            type: { kind: 'NamedType', name: { kind: 'Name', value: 'CreateSetDefaultProfileRequest' } }
-          }
-        }
-      ],
-      selectionSet: {
-        kind: 'SelectionSet',
-        selections: [
-          {
-            kind: 'Field',
-            name: { kind: 'Name', value: 'createSetDefaultProfileTypedData' },
-            arguments: [
-              {
-                kind: 'Argument',
-                name: { kind: 'Name', value: 'options' },
-                value: { kind: 'Variable', name: { kind: 'Name', value: 'options' } }
-              },
-              {
-                kind: 'Argument',
-                name: { kind: 'Name', value: 'request' },
-                value: { kind: 'Variable', name: { kind: 'Name', value: 'request' } }
-              }
-            ],
-            selectionSet: {
-              kind: 'SelectionSet',
-              selections: [
-                { kind: 'Field', name: { kind: 'Name', value: 'id' } },
-                { kind: 'Field', name: { kind: 'Name', value: 'expiresAt' } },
-                {
-                  kind: 'Field',
-                  name: { kind: 'Name', value: 'typedData' },
-                  selectionSet: {
-                    kind: 'SelectionSet',
-                    selections: [
-                      {
-                        kind: 'Field',
-                        name: { kind: 'Name', value: 'domain' },
-                        selectionSet: {
-                          kind: 'SelectionSet',
-                          selections: [
-                            { kind: 'Field', name: { kind: 'Name', value: 'name' } },
-                            { kind: 'Field', name: { kind: 'Name', value: 'chainId' } },
-                            { kind: 'Field', name: { kind: 'Name', value: 'version' } },
-                            { kind: 'Field', name: { kind: 'Name', value: 'verifyingContract' } }
-                          ]
-                        }
-                      },
-                      {
-                        kind: 'Field',
-                        name: { kind: 'Name', value: 'types' },
-                        selectionSet: {
-                          kind: 'SelectionSet',
-                          selections: [
-                            {
-                              kind: 'Field',
-                              name: { kind: 'Name', value: 'SetDefaultProfileWithSig' },
-                              selectionSet: {
-                                kind: 'SelectionSet',
-                                selections: [
-                                  { kind: 'Field', name: { kind: 'Name', value: 'name' } },
-                                  { kind: 'Field', name: { kind: 'Name', value: 'type' } }
-                                ]
-                              }
-                            }
-                          ]
-                        }
-                      },
-                      {
-                        kind: 'Field',
-                        name: { kind: 'Name', value: 'value' },
-                        selectionSet: {
-                          kind: 'SelectionSet',
-                          selections: [
-                            { kind: 'Field', name: { kind: 'Name', value: 'nonce' } },
-                            { kind: 'Field', name: { kind: 'Name', value: 'deadline' } },
-                            { kind: 'Field', name: { kind: 'Name', value: 'wallet' } },
-                            { kind: 'Field', name: { kind: 'Name', value: 'profileId' } }
-                          ]
-                        }
-                      }
-                    ]
-                  }
-                }
-              ]
-            }
-          }
-        ]
-      }
-    }
-  ]
-} as unknown as DocumentNode<
-  CreateSetDefaultProfileTypedDataMutation,
-  CreateSetDefaultProfileTypedDataMutationVariables
->
-export const CreateSetDispatcherTypedDataDocument = {
-  kind: 'Document',
-  definitions: [
-    {
-      kind: 'OperationDefinition',
-      operation: 'mutation',
-      name: { kind: 'Name', value: 'CreateSetDispatcherTypedData' },
-      variableDefinitions: [
-        {
-          kind: 'VariableDefinition',
-          variable: { kind: 'Variable', name: { kind: 'Name', value: 'options' } },
-          type: { kind: 'NamedType', name: { kind: 'Name', value: 'TypedDataOptions' } }
-        },
-        {
-          kind: 'VariableDefinition',
-          variable: { kind: 'Variable', name: { kind: 'Name', value: 'request' } },
-          type: {
-            kind: 'NonNullType',
-            type: { kind: 'NamedType', name: { kind: 'Name', value: 'SetDispatcherRequest' } }
-          }
-        }
-      ],
-      selectionSet: {
-        kind: 'SelectionSet',
-        selections: [
-          {
-            kind: 'Field',
-            name: { kind: 'Name', value: 'createSetDispatcherTypedData' },
-            arguments: [
-              {
-                kind: 'Argument',
-                name: { kind: 'Name', value: 'options' },
-                value: { kind: 'Variable', name: { kind: 'Name', value: 'options' } }
-              },
-              {
-                kind: 'Argument',
-                name: { kind: 'Name', value: 'request' },
-                value: { kind: 'Variable', name: { kind: 'Name', value: 'request' } }
-              }
-            ],
-            selectionSet: {
-              kind: 'SelectionSet',
-              selections: [
-                { kind: 'Field', name: { kind: 'Name', value: 'id' } },
-                { kind: 'Field', name: { kind: 'Name', value: 'expiresAt' } },
-                {
-                  kind: 'Field',
-                  name: { kind: 'Name', value: 'typedData' },
-                  selectionSet: {
-                    kind: 'SelectionSet',
-                    selections: [
-                      {
-                        kind: 'Field',
-                        name: { kind: 'Name', value: 'types' },
-                        selectionSet: {
-                          kind: 'SelectionSet',
-                          selections: [
-                            {
-                              kind: 'Field',
-                              name: { kind: 'Name', value: 'SetDispatcherWithSig' },
-                              selectionSet: {
-                                kind: 'SelectionSet',
-                                selections: [
-                                  { kind: 'Field', name: { kind: 'Name', value: 'name' } },
-                                  { kind: 'Field', name: { kind: 'Name', value: 'type' } }
-                                ]
-                              }
-                            }
-                          ]
-                        }
-                      },
-                      {
-                        kind: 'Field',
-                        name: { kind: 'Name', value: 'domain' },
-                        selectionSet: {
-                          kind: 'SelectionSet',
-                          selections: [
-                            { kind: 'Field', name: { kind: 'Name', value: 'name' } },
-                            { kind: 'Field', name: { kind: 'Name', value: 'chainId' } },
-                            { kind: 'Field', name: { kind: 'Name', value: 'version' } },
-                            { kind: 'Field', name: { kind: 'Name', value: 'verifyingContract' } }
-                          ]
-                        }
-                      },
-                      {
-                        kind: 'Field',
-                        name: { kind: 'Name', value: 'value' },
-                        selectionSet: {
-                          kind: 'SelectionSet',
-                          selections: [
-                            { kind: 'Field', name: { kind: 'Name', value: 'nonce' } },
-                            { kind: 'Field', name: { kind: 'Name', value: 'deadline' } },
-                            { kind: 'Field', name: { kind: 'Name', value: 'profileId' } },
-                            { kind: 'Field', name: { kind: 'Name', value: 'dispatcher' } }
-                          ]
-                        }
-                      }
-                    ]
-                  }
-                }
-              ]
-            }
-          }
-        ]
-      }
-    }
-  ]
-} as unknown as DocumentNode<
-  CreateSetDispatcherTypedDataMutation,
-  CreateSetDispatcherTypedDataMutationVariables
->
-export const CreateSetFollowModuleTypedDataDocument = {
-  kind: 'Document',
-  definitions: [
-    {
-      kind: 'OperationDefinition',
-      operation: 'mutation',
-      name: { kind: 'Name', value: 'CreateSetFollowModuleTypedData' },
-      variableDefinitions: [
-        {
-          kind: 'VariableDefinition',
-          variable: { kind: 'Variable', name: { kind: 'Name', value: 'options' } },
-          type: { kind: 'NamedType', name: { kind: 'Name', value: 'TypedDataOptions' } }
-        },
-        {
-          kind: 'VariableDefinition',
-          variable: { kind: 'Variable', name: { kind: 'Name', value: 'request' } },
-          type: {
-            kind: 'NonNullType',
-            type: { kind: 'NamedType', name: { kind: 'Name', value: 'CreateSetFollowModuleRequest' } }
-          }
-        }
-      ],
-      selectionSet: {
-        kind: 'SelectionSet',
-        selections: [
-          {
-            kind: 'Field',
-            name: { kind: 'Name', value: 'createSetFollowModuleTypedData' },
-            arguments: [
-              {
-                kind: 'Argument',
-                name: { kind: 'Name', value: 'options' },
-                value: { kind: 'Variable', name: { kind: 'Name', value: 'options' } }
-              },
-              {
-                kind: 'Argument',
-                name: { kind: 'Name', value: 'request' },
-                value: { kind: 'Variable', name: { kind: 'Name', value: 'request' } }
-              }
-            ],
-            selectionSet: {
-              kind: 'SelectionSet',
-              selections: [
-                { kind: 'Field', name: { kind: 'Name', value: 'id' } },
-                { kind: 'Field', name: { kind: 'Name', value: 'expiresAt' } },
-                {
-                  kind: 'Field',
-                  name: { kind: 'Name', value: 'typedData' },
-                  selectionSet: {
-                    kind: 'SelectionSet',
-                    selections: [
-                      {
-                        kind: 'Field',
-                        name: { kind: 'Name', value: 'types' },
-                        selectionSet: {
-                          kind: 'SelectionSet',
-                          selections: [
-                            {
-                              kind: 'Field',
-                              name: { kind: 'Name', value: 'SetFollowModuleWithSig' },
-                              selectionSet: {
-                                kind: 'SelectionSet',
-                                selections: [
-                                  { kind: 'Field', name: { kind: 'Name', value: 'name' } },
-                                  { kind: 'Field', name: { kind: 'Name', value: 'type' } }
-                                ]
-                              }
-                            }
-                          ]
-                        }
-                      },
-                      {
-                        kind: 'Field',
-                        name: { kind: 'Name', value: 'domain' },
-                        selectionSet: {
-                          kind: 'SelectionSet',
-                          selections: [
-                            { kind: 'Field', name: { kind: 'Name', value: 'name' } },
-                            { kind: 'Field', name: { kind: 'Name', value: 'chainId' } },
-                            { kind: 'Field', name: { kind: 'Name', value: 'version' } },
-                            { kind: 'Field', name: { kind: 'Name', value: 'verifyingContract' } }
-                          ]
-                        }
-                      },
-                      {
-                        kind: 'Field',
-                        name: { kind: 'Name', value: 'value' },
-                        selectionSet: {
-                          kind: 'SelectionSet',
-                          selections: [
-                            { kind: 'Field', name: { kind: 'Name', value: 'nonce' } },
-                            { kind: 'Field', name: { kind: 'Name', value: 'deadline' } },
-                            { kind: 'Field', name: { kind: 'Name', value: 'profileId' } },
-                            { kind: 'Field', name: { kind: 'Name', value: 'followModule' } },
-                            { kind: 'Field', name: { kind: 'Name', value: 'followModuleInitData' } }
-                          ]
-                        }
-                      }
-                    ]
-                  }
-                }
-              ]
-            }
-          }
-        ]
-      }
-    }
-  ]
-} as unknown as DocumentNode<
-  CreateSetFollowModuleTypedDataMutation,
-  CreateSetFollowModuleTypedDataMutationVariables
->
-export const CreateSetProfileImageUriTypedDataDocument = {
-  kind: 'Document',
-  definitions: [
-    {
-      kind: 'OperationDefinition',
-      operation: 'mutation',
-      name: { kind: 'Name', value: 'CreateSetProfileImageURITypedData' },
-      variableDefinitions: [
-        {
-          kind: 'VariableDefinition',
-          variable: { kind: 'Variable', name: { kind: 'Name', value: 'options' } },
-          type: { kind: 'NamedType', name: { kind: 'Name', value: 'TypedDataOptions' } }
-        },
-        {
-          kind: 'VariableDefinition',
-          variable: { kind: 'Variable', name: { kind: 'Name', value: 'request' } },
-          type: {
-            kind: 'NonNullType',
-            type: { kind: 'NamedType', name: { kind: 'Name', value: 'UpdateProfileImageRequest' } }
-          }
-        }
-      ],
-      selectionSet: {
-        kind: 'SelectionSet',
-        selections: [
-          {
-            kind: 'Field',
-            name: { kind: 'Name', value: 'createSetProfileImageURITypedData' },
-            arguments: [
-              {
-                kind: 'Argument',
-                name: { kind: 'Name', value: 'options' },
-                value: { kind: 'Variable', name: { kind: 'Name', value: 'options' } }
-              },
-              {
-                kind: 'Argument',
-                name: { kind: 'Name', value: 'request' },
-                value: { kind: 'Variable', name: { kind: 'Name', value: 'request' } }
-              }
-            ],
-            selectionSet: {
-              kind: 'SelectionSet',
-              selections: [
-                { kind: 'Field', name: { kind: 'Name', value: 'id' } },
-                { kind: 'Field', name: { kind: 'Name', value: 'expiresAt' } },
-                {
-                  kind: 'Field',
-                  name: { kind: 'Name', value: 'typedData' },
-                  selectionSet: {
-                    kind: 'SelectionSet',
-                    selections: [
-                      {
-                        kind: 'Field',
-                        name: { kind: 'Name', value: 'domain' },
-                        selectionSet: {
-                          kind: 'SelectionSet',
-                          selections: [
-                            { kind: 'Field', name: { kind: 'Name', value: 'name' } },
-                            { kind: 'Field', name: { kind: 'Name', value: 'chainId' } },
-                            { kind: 'Field', name: { kind: 'Name', value: 'version' } },
-                            { kind: 'Field', name: { kind: 'Name', value: 'verifyingContract' } }
-                          ]
-                        }
-                      },
-                      {
-                        kind: 'Field',
-                        name: { kind: 'Name', value: 'types' },
-                        selectionSet: {
-                          kind: 'SelectionSet',
-                          selections: [
-                            {
-                              kind: 'Field',
-                              name: { kind: 'Name', value: 'SetProfileImageURIWithSig' },
-                              selectionSet: {
-                                kind: 'SelectionSet',
-                                selections: [
-                                  { kind: 'Field', name: { kind: 'Name', value: 'name' } },
-                                  { kind: 'Field', name: { kind: 'Name', value: 'type' } }
-                                ]
-                              }
-                            }
-                          ]
-                        }
-                      },
-                      {
-                        kind: 'Field',
-                        name: { kind: 'Name', value: 'value' },
-                        selectionSet: {
-                          kind: 'SelectionSet',
-                          selections: [
-                            { kind: 'Field', name: { kind: 'Name', value: 'nonce' } },
-                            { kind: 'Field', name: { kind: 'Name', value: 'deadline' } },
-                            { kind: 'Field', name: { kind: 'Name', value: 'imageURI' } },
-                            { kind: 'Field', name: { kind: 'Name', value: 'profileId' } }
-                          ]
-                        }
-                      }
-                    ]
-                  }
-                }
-              ]
-            }
-          }
-        ]
-      }
-    }
-  ]
-} as unknown as DocumentNode<
-  CreateSetProfileImageUriTypedDataMutation,
-  CreateSetProfileImageUriTypedDataMutationVariables
->
-export const CreateSetProfileImageUriViaDispatcherDocument = {
-  kind: 'Document',
-  definitions: [
-    {
-      kind: 'OperationDefinition',
-      operation: 'mutation',
-      name: { kind: 'Name', value: 'CreateSetProfileImageURIViaDispatcher' },
-      variableDefinitions: [
-        {
-          kind: 'VariableDefinition',
-          variable: { kind: 'Variable', name: { kind: 'Name', value: 'request' } },
-          type: {
-            kind: 'NonNullType',
-            type: { kind: 'NamedType', name: { kind: 'Name', value: 'UpdateProfileImageRequest' } }
-          }
-        }
-      ],
-      selectionSet: {
-        kind: 'SelectionSet',
-        selections: [
-          {
-            kind: 'Field',
-            name: { kind: 'Name', value: 'createSetProfileImageURIViaDispatcher' },
-            arguments: [
-              {
-                kind: 'Argument',
-                name: { kind: 'Name', value: 'request' },
-                value: { kind: 'Variable', name: { kind: 'Name', value: 'request' } }
-              }
-            ],
-            selectionSet: {
-              kind: 'SelectionSet',
-              selections: [{ kind: 'FragmentSpread', name: { kind: 'Name', value: 'RelayerResultFields' } }]
-            }
-          }
-        ]
-      }
-    },
-    ...RelayerResultFieldsFragmentDoc.definitions
-  ]
-} as unknown as DocumentNode<
-  CreateSetProfileImageUriViaDispatcherMutation,
-  CreateSetProfileImageUriViaDispatcherMutationVariables
->
-export const CreateSetProfileMetadataTypedDataDocument = {
-  kind: 'Document',
-  definitions: [
-    {
-      kind: 'OperationDefinition',
-      operation: 'mutation',
-      name: { kind: 'Name', value: 'CreateSetProfileMetadataTypedData' },
-      variableDefinitions: [
-        {
-          kind: 'VariableDefinition',
-          variable: { kind: 'Variable', name: { kind: 'Name', value: 'request' } },
-          type: {
-            kind: 'NonNullType',
-            type: {
-              kind: 'NamedType',
-              name: { kind: 'Name', value: 'CreatePublicSetProfileMetadataURIRequest' }
-            }
-          }
-        }
-      ],
-      selectionSet: {
-        kind: 'SelectionSet',
-        selections: [
-          {
-            kind: 'Field',
-            name: { kind: 'Name', value: 'createSetProfileMetadataTypedData' },
-            arguments: [
-              {
-                kind: 'Argument',
-                name: { kind: 'Name', value: 'request' },
-                value: { kind: 'Variable', name: { kind: 'Name', value: 'request' } }
-              }
-            ],
-            selectionSet: {
-              kind: 'SelectionSet',
-              selections: [
-                { kind: 'Field', name: { kind: 'Name', value: 'id' } },
-                { kind: 'Field', name: { kind: 'Name', value: 'expiresAt' } },
-                {
-                  kind: 'Field',
-                  name: { kind: 'Name', value: 'typedData' },
-                  selectionSet: {
-                    kind: 'SelectionSet',
-                    selections: [
-                      {
-                        kind: 'Field',
-                        name: { kind: 'Name', value: 'types' },
-                        selectionSet: {
-                          kind: 'SelectionSet',
-                          selections: [
-                            {
-                              kind: 'Field',
-                              name: { kind: 'Name', value: 'SetProfileMetadataURIWithSig' },
-                              selectionSet: {
-                                kind: 'SelectionSet',
-                                selections: [
-                                  { kind: 'Field', name: { kind: 'Name', value: 'name' } },
-                                  { kind: 'Field', name: { kind: 'Name', value: 'type' } }
-                                ]
-                              }
-                            }
-                          ]
-                        }
-                      },
-                      {
-                        kind: 'Field',
-                        name: { kind: 'Name', value: 'domain' },
-                        selectionSet: {
-                          kind: 'SelectionSet',
-                          selections: [
-                            { kind: 'Field', name: { kind: 'Name', value: 'name' } },
-                            { kind: 'Field', name: { kind: 'Name', value: 'chainId' } },
-                            { kind: 'Field', name: { kind: 'Name', value: 'version' } },
-                            { kind: 'Field', name: { kind: 'Name', value: 'verifyingContract' } }
-                          ]
-                        }
-                      },
-                      {
-                        kind: 'Field',
-                        name: { kind: 'Name', value: 'value' },
-                        selectionSet: {
-                          kind: 'SelectionSet',
-                          selections: [
-                            { kind: 'Field', name: { kind: 'Name', value: 'nonce' } },
-                            { kind: 'Field', name: { kind: 'Name', value: 'deadline' } },
-                            { kind: 'Field', name: { kind: 'Name', value: 'profileId' } },
-                            { kind: 'Field', name: { kind: 'Name', value: 'metadata' } }
-                          ]
-                        }
-                      }
-                    ]
-                  }
-                }
-              ]
-            }
-          }
-        ]
-      }
-    }
-  ]
-} as unknown as DocumentNode<
-  CreateSetProfileMetadataTypedDataMutation,
-  CreateSetProfileMetadataTypedDataMutationVariables
->
-export const CreateSetProfileMetadataViaDispatcherDocument = {
-  kind: 'Document',
-  definitions: [
-    {
-      kind: 'OperationDefinition',
-      operation: 'mutation',
-      name: { kind: 'Name', value: 'CreateSetProfileMetadataViaDispatcher' },
-      variableDefinitions: [
-        {
-          kind: 'VariableDefinition',
-          variable: { kind: 'Variable', name: { kind: 'Name', value: 'request' } },
-          type: {
-            kind: 'NonNullType',
-            type: {
-              kind: 'NamedType',
-              name: { kind: 'Name', value: 'CreatePublicSetProfileMetadataURIRequest' }
-            }
-          }
-        }
-      ],
-      selectionSet: {
-        kind: 'SelectionSet',
-        selections: [
-          {
-            kind: 'Field',
-            name: { kind: 'Name', value: 'createSetProfileMetadataViaDispatcher' },
-            arguments: [
-              {
-                kind: 'Argument',
-                name: { kind: 'Name', value: 'request' },
-                value: { kind: 'Variable', name: { kind: 'Name', value: 'request' } }
-              }
-            ],
-            selectionSet: {
-              kind: 'SelectionSet',
-              selections: [{ kind: 'FragmentSpread', name: { kind: 'Name', value: 'RelayerResultFields' } }]
-            }
-          }
-        ]
-      }
-    },
-    ...RelayerResultFieldsFragmentDoc.definitions
-  ]
-} as unknown as DocumentNode<
-  CreateSetProfileMetadataViaDispatcherMutation,
-  CreateSetProfileMetadataViaDispatcherMutationVariables
->
-export const CreateUnfollowTypedDataDocument = {
-  kind: 'Document',
-  definitions: [
-    {
-      kind: 'OperationDefinition',
-      operation: 'mutation',
-      name: { kind: 'Name', value: 'CreateUnfollowTypedData' },
-      variableDefinitions: [
-        {
-          kind: 'VariableDefinition',
-          variable: { kind: 'Variable', name: { kind: 'Name', value: 'request' } },
-          type: {
-            kind: 'NonNullType',
-            type: { kind: 'NamedType', name: { kind: 'Name', value: 'UnfollowRequest' } }
-          }
-        }
-      ],
-      selectionSet: {
-        kind: 'SelectionSet',
-        selections: [
-          {
-            kind: 'Field',
-            name: { kind: 'Name', value: 'createUnfollowTypedData' },
-            arguments: [
-              {
-                kind: 'Argument',
-                name: { kind: 'Name', value: 'request' },
-                value: { kind: 'Variable', name: { kind: 'Name', value: 'request' } }
-              }
-            ],
-            selectionSet: {
-              kind: 'SelectionSet',
-              selections: [
-                { kind: 'Field', name: { kind: 'Name', value: 'id' } },
-                { kind: 'Field', name: { kind: 'Name', value: 'expiresAt' } },
-                {
-                  kind: 'Field',
-                  name: { kind: 'Name', value: 'typedData' },
-                  selectionSet: {
-                    kind: 'SelectionSet',
-                    selections: [
-                      {
-                        kind: 'Field',
-                        name: { kind: 'Name', value: 'domain' },
-                        selectionSet: {
-                          kind: 'SelectionSet',
-                          selections: [
-                            { kind: 'Field', name: { kind: 'Name', value: 'name' } },
-                            { kind: 'Field', name: { kind: 'Name', value: 'chainId' } },
-                            { kind: 'Field', name: { kind: 'Name', value: 'version' } },
-                            { kind: 'Field', name: { kind: 'Name', value: 'verifyingContract' } }
-                          ]
-                        }
-                      },
-                      {
-                        kind: 'Field',
-                        name: { kind: 'Name', value: 'types' },
-                        selectionSet: {
-                          kind: 'SelectionSet',
-                          selections: [
-                            {
-                              kind: 'Field',
-                              name: { kind: 'Name', value: 'BurnWithSig' },
-                              selectionSet: {
-                                kind: 'SelectionSet',
-                                selections: [
-                                  { kind: 'Field', name: { kind: 'Name', value: 'name' } },
-                                  { kind: 'Field', name: { kind: 'Name', value: 'type' } }
-                                ]
-                              }
-                            }
-                          ]
-                        }
-                      },
-                      {
-                        kind: 'Field',
-                        name: { kind: 'Name', value: 'value' },
-                        selectionSet: {
-                          kind: 'SelectionSet',
-                          selections: [
-                            { kind: 'Field', name: { kind: 'Name', value: 'nonce' } },
-                            { kind: 'Field', name: { kind: 'Name', value: 'deadline' } },
-                            { kind: 'Field', name: { kind: 'Name', value: 'tokenId' } }
-                          ]
-                        }
-                      }
-                    ]
-                  }
-                }
-              ]
-            }
-          }
-        ]
-      }
-    }
-  ]
-} as unknown as DocumentNode<CreateUnfollowTypedDataMutation, CreateUnfollowTypedDataMutationVariables>
-export const HidePublicationDocument = {
-  kind: 'Document',
-  definitions: [
-    {
-      kind: 'OperationDefinition',
-      operation: 'mutation',
-      name: { kind: 'Name', value: 'HidePublication' },
-      variableDefinitions: [
-        {
-          kind: 'VariableDefinition',
-          variable: { kind: 'Variable', name: { kind: 'Name', value: 'request' } },
-          type: {
-            kind: 'NonNullType',
-            type: { kind: 'NamedType', name: { kind: 'Name', value: 'HidePublicationRequest' } }
-          }
-        }
-      ],
-      selectionSet: {
-        kind: 'SelectionSet',
-        selections: [
-          {
-            kind: 'Field',
-            name: { kind: 'Name', value: 'hidePublication' },
-            arguments: [
-              {
-                kind: 'Argument',
-                name: { kind: 'Name', value: 'request' },
-                value: { kind: 'Variable', name: { kind: 'Name', value: 'request' } }
-              }
-            ]
-          }
-        ]
-      }
-    }
-  ]
-} as unknown as DocumentNode<HidePublicationMutation, HidePublicationMutationVariables>
-export const ProxyActionDocument = {
-  kind: 'Document',
-  definitions: [
-    {
-      kind: 'OperationDefinition',
-      operation: 'mutation',
-      name: { kind: 'Name', value: 'ProxyAction' },
-      variableDefinitions: [
-        {
-          kind: 'VariableDefinition',
-          variable: { kind: 'Variable', name: { kind: 'Name', value: 'request' } },
-          type: {
-            kind: 'NonNullType',
-            type: { kind: 'NamedType', name: { kind: 'Name', value: 'ProxyActionRequest' } }
-          }
-        }
-      ],
-      selectionSet: {
-        kind: 'SelectionSet',
-        selections: [
-          {
-            kind: 'Field',
-            name: { kind: 'Name', value: 'proxyAction' },
-            arguments: [
-              {
-                kind: 'Argument',
-                name: { kind: 'Name', value: 'request' },
-                value: { kind: 'Variable', name: { kind: 'Name', value: 'request' } }
-              }
-            ]
-          }
-        ]
-      }
-    }
-  ]
-} as unknown as DocumentNode<ProxyActionMutation, ProxyActionMutationVariables>
-export const RemoveReactionDocument = {
-  kind: 'Document',
-  definitions: [
-    {
-      kind: 'OperationDefinition',
-      operation: 'mutation',
-      name: { kind: 'Name', value: 'RemoveReaction' },
-      variableDefinitions: [
-        {
-          kind: 'VariableDefinition',
-          variable: { kind: 'Variable', name: { kind: 'Name', value: 'request' } },
-          type: {
-            kind: 'NonNullType',
-            type: { kind: 'NamedType', name: { kind: 'Name', value: 'ReactionRequest' } }
-          }
-        }
-      ],
-      selectionSet: {
-        kind: 'SelectionSet',
-        selections: [
-          {
-            kind: 'Field',
-            name: { kind: 'Name', value: 'removeReaction' },
-            arguments: [
-              {
-                kind: 'Argument',
-                name: { kind: 'Name', value: 'request' },
-                value: { kind: 'Variable', name: { kind: 'Name', value: 'request' } }
-              }
-            ]
-          }
-        ]
-      }
-    }
-  ]
-} as unknown as DocumentNode<RemoveReactionMutation, RemoveReactionMutationVariables>
-export const ReportPublicationDocument = {
-  kind: 'Document',
-  definitions: [
-    {
-      kind: 'OperationDefinition',
-      operation: 'mutation',
-      name: { kind: 'Name', value: 'ReportPublication' },
-      variableDefinitions: [
-        {
-          kind: 'VariableDefinition',
-          variable: { kind: 'Variable', name: { kind: 'Name', value: 'request' } },
-          type: {
-            kind: 'NonNullType',
-            type: { kind: 'NamedType', name: { kind: 'Name', value: 'ReportPublicationRequest' } }
-          }
-        }
-      ],
-      selectionSet: {
-        kind: 'SelectionSet',
-        selections: [
-          {
-            kind: 'Field',
-            name: { kind: 'Name', value: 'reportPublication' },
-            arguments: [
-              {
-                kind: 'Argument',
-                name: { kind: 'Name', value: 'request' },
-                value: { kind: 'Variable', name: { kind: 'Name', value: 'request' } }
-              }
-            ]
-          }
-        ]
-      }
-    }
-  ]
-} as unknown as DocumentNode<ReportPublicationMutation, ReportPublicationMutationVariables>
-export const ApprovedModuleAllowanceAmountDocument = {
-  kind: 'Document',
-  definitions: [
-    {
-      kind: 'OperationDefinition',
-      operation: 'query',
-      name: { kind: 'Name', value: 'ApprovedModuleAllowanceAmount' },
-      variableDefinitions: [
-        {
-          kind: 'VariableDefinition',
-          variable: { kind: 'Variable', name: { kind: 'Name', value: 'request' } },
-          type: {
-            kind: 'NonNullType',
-            type: { kind: 'NamedType', name: { kind: 'Name', value: 'ApprovedModuleAllowanceAmountRequest' } }
-          }
-        }
-      ],
-      selectionSet: {
-        kind: 'SelectionSet',
-        selections: [
-          {
-            kind: 'Field',
-            name: { kind: 'Name', value: 'approvedModuleAllowanceAmount' },
-            arguments: [
-              {
-                kind: 'Argument',
-                name: { kind: 'Name', value: 'request' },
-                value: { kind: 'Variable', name: { kind: 'Name', value: 'request' } }
-              }
-            ],
-            selectionSet: {
-              kind: 'SelectionSet',
-              selections: [
-                { kind: 'Field', name: { kind: 'Name', value: 'currency' } },
-                { kind: 'Field', name: { kind: 'Name', value: 'module' } },
-                { kind: 'Field', name: { kind: 'Name', value: 'allowance' } },
-                { kind: 'Field', name: { kind: 'Name', value: 'contractAddress' } }
-              ]
-            }
-          },
-          {
-            kind: 'Field',
-            name: { kind: 'Name', value: 'enabledModuleCurrencies' },
-            selectionSet: {
-              kind: 'SelectionSet',
-              selections: [
-                { kind: 'Field', name: { kind: 'Name', value: 'name' } },
-                { kind: 'Field', name: { kind: 'Name', value: 'symbol' } },
-                { kind: 'Field', name: { kind: 'Name', value: 'decimals' } },
-                { kind: 'Field', name: { kind: 'Name', value: 'address' } }
-              ]
-            }
-          }
-        ]
-      }
-    }
-  ]
-} as unknown as DocumentNode<ApprovedModuleAllowanceAmountQuery, ApprovedModuleAllowanceAmountQueryVariables>
-export const BCharityStatsDocument = {
-  kind: 'Document',
-  definitions: [
-    {
-      kind: 'OperationDefinition',
-      operation: 'query',
-      name: { kind: 'Name', value: 'BCharityStats' },
-      selectionSet: {
-        kind: 'SelectionSet',
-        selections: [
-          {
-            kind: 'Field',
-            name: { kind: 'Name', value: 'globalProtocolStats' },
-            arguments: [
-              {
-                kind: 'Argument',
-                name: { kind: 'Name', value: 'request' },
-                value: {
-                  kind: 'ObjectValue',
-                  fields: [
-                    {
-                      kind: 'ObjectField',
-                      name: { kind: 'Name', value: 'sources' },
-                      value: { kind: 'StringValue', value: 'BCharity', block: false }
-                    }
-                  ]
-                }
-              }
-            ],
-            selectionSet: {
-              kind: 'SelectionSet',
-              selections: [
-                { kind: 'Field', name: { kind: 'Name', value: 'totalProfiles' } },
-                { kind: 'Field', name: { kind: 'Name', value: 'totalPosts' } },
-                { kind: 'Field', name: { kind: 'Name', value: 'totalBurntProfiles' } },
-                { kind: 'Field', name: { kind: 'Name', value: 'totalMirrors' } },
-                { kind: 'Field', name: { kind: 'Name', value: 'totalComments' } },
-                { kind: 'Field', name: { kind: 'Name', value: 'totalCollects' } },
-                { kind: 'Field', name: { kind: 'Name', value: 'totalFollows' } }
-              ]
-            }
-          },
-          {
-            kind: 'Field',
-            alias: { kind: 'Name', value: 'fundraiseStats' },
-            name: { kind: 'Name', value: 'globalProtocolStats' },
-            arguments: [
-              {
-                kind: 'Argument',
-                name: { kind: 'Name', value: 'request' },
-                value: {
-                  kind: 'ObjectValue',
-                  fields: [
-                    {
-                      kind: 'ObjectField',
-                      name: { kind: 'Name', value: 'sources' },
-                      value: { kind: 'StringValue', value: '${APP_NAME} Fundraise', block: false }
-                    }
-                  ]
-                }
-              }
-            ],
-            selectionSet: {
-              kind: 'SelectionSet',
-              selections: [{ kind: 'Field', name: { kind: 'Name', value: 'totalPosts' } }]
-            }
-          }
-        ]
-      }
-    }
-  ]
-} as unknown as DocumentNode<BCharityStatsQuery, BCharityStatsQueryVariables>
-export const ChallengeDocument = {
-  kind: 'Document',
-  definitions: [
-    {
-      kind: 'OperationDefinition',
-      operation: 'query',
-      name: { kind: 'Name', value: 'Challenge' },
-      variableDefinitions: [
-        {
-          kind: 'VariableDefinition',
-          variable: { kind: 'Variable', name: { kind: 'Name', value: 'request' } },
-          type: {
-            kind: 'NonNullType',
-            type: { kind: 'NamedType', name: { kind: 'Name', value: 'ChallengeRequest' } }
-          }
-        }
-      ],
-      selectionSet: {
-        kind: 'SelectionSet',
-        selections: [
-          {
-            kind: 'Field',
-            name: { kind: 'Name', value: 'challenge' },
-            arguments: [
-              {
-                kind: 'Argument',
-                name: { kind: 'Name', value: 'request' },
-                value: { kind: 'Variable', name: { kind: 'Name', value: 'request' } }
-              }
-            ],
-            selectionSet: {
-              kind: 'SelectionSet',
-              selections: [{ kind: 'Field', name: { kind: 'Name', value: 'text' } }]
-            }
-          }
-        ]
-      }
-    }
-  ]
-} as unknown as DocumentNode<ChallengeQuery, ChallengeQueryVariables>
-export const CollectModuleDocument = {
-  kind: 'Document',
-  definitions: [
-    {
-      kind: 'OperationDefinition',
-      operation: 'query',
-      name: { kind: 'Name', value: 'CollectModule' },
-      variableDefinitions: [
-        {
-          kind: 'VariableDefinition',
-          variable: { kind: 'Variable', name: { kind: 'Name', value: 'request' } },
-          type: {
-            kind: 'NonNullType',
-            type: { kind: 'NamedType', name: { kind: 'Name', value: 'PublicationQueryRequest' } }
-          }
-        }
-      ],
-      selectionSet: {
-        kind: 'SelectionSet',
-        selections: [
-          {
-            kind: 'Field',
-            name: { kind: 'Name', value: 'publication' },
-            arguments: [
-              {
-                kind: 'Argument',
-                name: { kind: 'Name', value: 'request' },
-                value: { kind: 'Variable', name: { kind: 'Name', value: 'request' } }
-              }
-            ],
-            selectionSet: {
-              kind: 'SelectionSet',
-              selections: [
-                {
-                  kind: 'InlineFragment',
-                  typeCondition: { kind: 'NamedType', name: { kind: 'Name', value: 'Post' } },
-                  selectionSet: {
-                    kind: 'SelectionSet',
-                    selections: [
-                      { kind: 'Field', name: { kind: 'Name', value: 'collectNftAddress' } },
-                      {
-                        kind: 'Field',
-                        name: { kind: 'Name', value: 'collectModule' },
-                        selectionSet: {
-                          kind: 'SelectionSet',
-                          selections: [
-                            { kind: 'FragmentSpread', name: { kind: 'Name', value: 'CollectModuleFields' } }
-                          ]
-                        }
-                      }
-                    ]
-                  }
-                },
-                {
-                  kind: 'InlineFragment',
-                  typeCondition: { kind: 'NamedType', name: { kind: 'Name', value: 'Comment' } },
-                  selectionSet: {
-                    kind: 'SelectionSet',
-                    selections: [
-                      { kind: 'Field', name: { kind: 'Name', value: 'collectNftAddress' } },
-                      {
-                        kind: 'Field',
-                        name: { kind: 'Name', value: 'collectModule' },
-                        selectionSet: {
-                          kind: 'SelectionSet',
-                          selections: [
-                            { kind: 'FragmentSpread', name: { kind: 'Name', value: 'CollectModuleFields' } }
-                          ]
-                        }
-                      }
-                    ]
-                  }
-                },
-                {
-                  kind: 'InlineFragment',
-                  typeCondition: { kind: 'NamedType', name: { kind: 'Name', value: 'Mirror' } },
-                  selectionSet: {
-                    kind: 'SelectionSet',
-                    selections: [
-                      { kind: 'Field', name: { kind: 'Name', value: 'collectNftAddress' } },
-                      {
-                        kind: 'Field',
-                        name: { kind: 'Name', value: 'collectModule' },
-                        selectionSet: {
-                          kind: 'SelectionSet',
-                          selections: [
-                            { kind: 'FragmentSpread', name: { kind: 'Name', value: 'CollectModuleFields' } }
-                          ]
-                        }
-                      }
-                    ]
-                  }
-                }
-              ]
-            }
-          }
-        ]
-      }
-    },
-    ...CollectModuleFieldsFragmentDoc.definitions
-  ]
-} as unknown as DocumentNode<CollectModuleQuery, CollectModuleQueryVariables>
-export const CollectorsDocument = {
-  kind: 'Document',
-  definitions: [
-    {
-      kind: 'OperationDefinition',
-      operation: 'query',
-      name: { kind: 'Name', value: 'Collectors' },
-      variableDefinitions: [
-        {
-          kind: 'VariableDefinition',
-          variable: { kind: 'Variable', name: { kind: 'Name', value: 'request' } },
-          type: {
-            kind: 'NonNullType',
-            type: { kind: 'NamedType', name: { kind: 'Name', value: 'WhoCollectedPublicationRequest' } }
-          }
-        }
-      ],
-      selectionSet: {
-        kind: 'SelectionSet',
-        selections: [
-          {
-            kind: 'Field',
-            name: { kind: 'Name', value: 'whoCollectedPublication' },
-            arguments: [
-              {
-                kind: 'Argument',
-                name: { kind: 'Name', value: 'request' },
-                value: { kind: 'Variable', name: { kind: 'Name', value: 'request' } }
-              }
-            ],
-            selectionSet: {
-              kind: 'SelectionSet',
-              selections: [
-                {
-                  kind: 'Field',
-                  name: { kind: 'Name', value: 'items' },
-                  selectionSet: {
-                    kind: 'SelectionSet',
-                    selections: [
-                      { kind: 'Field', name: { kind: 'Name', value: 'address' } },
-                      {
-                        kind: 'Field',
-                        name: { kind: 'Name', value: 'defaultProfile' },
-                        selectionSet: {
-                          kind: 'SelectionSet',
-                          selections: [
-                            { kind: 'FragmentSpread', name: { kind: 'Name', value: 'ProfileFields' } },
-                            { kind: 'Field', name: { kind: 'Name', value: 'isFollowedByMe' } }
-                          ]
-                        }
-                      }
-                    ]
-                  }
-                },
-                {
-                  kind: 'Field',
-                  name: { kind: 'Name', value: 'pageInfo' },
-                  selectionSet: {
-                    kind: 'SelectionSet',
-                    selections: [
-                      { kind: 'Field', name: { kind: 'Name', value: 'next' } },
-                      { kind: 'Field', name: { kind: 'Name', value: 'totalCount' } }
-                    ]
-                  }
-                }
-              ]
-            }
-          }
-        ]
-      }
-    },
-    ...ProfileFieldsFragmentDoc.definitions
-  ]
-} as unknown as DocumentNode<CollectorsQuery, CollectorsQueryVariables>
-export const CommentFeedDocument = {
-  kind: 'Document',
-  definitions: [
-    {
-      kind: 'OperationDefinition',
-      operation: 'query',
-      name: { kind: 'Name', value: 'CommentFeed' },
-      variableDefinitions: [
-        {
-          kind: 'VariableDefinition',
-          variable: { kind: 'Variable', name: { kind: 'Name', value: 'request' } },
-          type: {
-            kind: 'NonNullType',
-            type: { kind: 'NamedType', name: { kind: 'Name', value: 'PublicationsQueryRequest' } }
-          }
-        },
-        {
-          kind: 'VariableDefinition',
-          variable: { kind: 'Variable', name: { kind: 'Name', value: 'reactionRequest' } },
-          type: { kind: 'NamedType', name: { kind: 'Name', value: 'ReactionFieldResolverRequest' } }
-        },
-        {
-          kind: 'VariableDefinition',
-          variable: { kind: 'Variable', name: { kind: 'Name', value: 'profileId' } },
-          type: { kind: 'NamedType', name: { kind: 'Name', value: 'ProfileId' } }
-        }
-      ],
-      selectionSet: {
-        kind: 'SelectionSet',
-        selections: [
-          {
-            kind: 'Field',
-            name: { kind: 'Name', value: 'publications' },
-            arguments: [
-              {
-                kind: 'Argument',
-                name: { kind: 'Name', value: 'request' },
-                value: { kind: 'Variable', name: { kind: 'Name', value: 'request' } }
-              }
-            ],
-            selectionSet: {
-              kind: 'SelectionSet',
-              selections: [
-                {
-                  kind: 'Field',
-                  name: { kind: 'Name', value: 'items' },
-                  selectionSet: {
-                    kind: 'SelectionSet',
-                    selections: [
-                      {
-                        kind: 'InlineFragment',
-                        typeCondition: { kind: 'NamedType', name: { kind: 'Name', value: 'Comment' } },
-                        selectionSet: {
-                          kind: 'SelectionSet',
-                          selections: [
-                            { kind: 'FragmentSpread', name: { kind: 'Name', value: 'CommentFields' } }
-                          ]
-                        }
-                      }
-                    ]
-                  }
-                },
-                {
-                  kind: 'Field',
-                  name: { kind: 'Name', value: 'pageInfo' },
-                  selectionSet: {
-                    kind: 'SelectionSet',
-                    selections: [
-                      { kind: 'Field', name: { kind: 'Name', value: 'totalCount' } },
-                      { kind: 'Field', name: { kind: 'Name', value: 'next' } }
-                    ]
-                  }
-                }
-              ]
-            }
-          }
-        ]
-      }
-    },
-    ...CommentFieldsFragmentDoc.definitions,
-    ...ProfileFieldsFragmentDoc.definitions,
-    ...CollectModuleFieldsFragmentDoc.definitions,
-    ...StatsFieldsFragmentDoc.definitions,
-    ...MetadataFieldsFragmentDoc.definitions,
-    ...PostFieldsFragmentDoc.definitions,
-    ...MirrorFieldsFragmentDoc.definitions
-  ]
-} as unknown as DocumentNode<CommentFeedQuery, CommentFeedQueryVariables>
-export const EnabledCurrencyModulesDocument = {
-  kind: 'Document',
-  definitions: [
-    {
-      kind: 'OperationDefinition',
-      operation: 'query',
-      name: { kind: 'Name', value: 'EnabledCurrencyModules' },
-      selectionSet: {
-        kind: 'SelectionSet',
-        selections: [
-          {
-            kind: 'Field',
-            name: { kind: 'Name', value: 'enabledModuleCurrencies' },
-            selectionSet: {
-              kind: 'SelectionSet',
-              selections: [
-                { kind: 'Field', name: { kind: 'Name', value: 'name' } },
-                { kind: 'Field', name: { kind: 'Name', value: 'symbol' } },
-                { kind: 'Field', name: { kind: 'Name', value: 'decimals' } },
-                { kind: 'Field', name: { kind: 'Name', value: 'address' } }
-              ]
-            }
-          }
-        ]
-      }
-    }
-  ]
-} as unknown as DocumentNode<EnabledCurrencyModulesQuery, EnabledCurrencyModulesQueryVariables>
-export const EnabledCurrencyModulesWithProfileDocument = {
-  kind: 'Document',
-  definitions: [
-    {
-      kind: 'OperationDefinition',
-      operation: 'query',
-      name: { kind: 'Name', value: 'EnabledCurrencyModulesWithProfile' },
-      variableDefinitions: [
-        {
-          kind: 'VariableDefinition',
-          variable: { kind: 'Variable', name: { kind: 'Name', value: 'request' } },
-          type: {
-            kind: 'NonNullType',
-            type: { kind: 'NamedType', name: { kind: 'Name', value: 'SingleProfileQueryRequest' } }
-          }
-        }
-      ],
-      selectionSet: {
-        kind: 'SelectionSet',
-        selections: [
-          {
-            kind: 'Field',
-            name: { kind: 'Name', value: 'enabledModuleCurrencies' },
-            selectionSet: {
-              kind: 'SelectionSet',
-              selections: [
-                { kind: 'Field', name: { kind: 'Name', value: 'name' } },
-                { kind: 'Field', name: { kind: 'Name', value: 'symbol' } },
-                { kind: 'Field', name: { kind: 'Name', value: 'decimals' } },
-                { kind: 'Field', name: { kind: 'Name', value: 'address' } }
-              ]
-            }
-          },
-          {
-            kind: 'Field',
-            name: { kind: 'Name', value: 'profile' },
-            arguments: [
-              {
-                kind: 'Argument',
-                name: { kind: 'Name', value: 'request' },
-                value: { kind: 'Variable', name: { kind: 'Name', value: 'request' } }
-              }
-            ],
-            selectionSet: {
-              kind: 'SelectionSet',
-              selections: [
-                {
-                  kind: 'Field',
-                  name: { kind: 'Name', value: 'followModule' },
-                  selectionSet: {
-                    kind: 'SelectionSet',
-                    selections: [{ kind: 'Field', name: { kind: 'Name', value: '__typename' } }]
-                  }
-                }
-              ]
-            }
-          }
-        ]
-      }
-    }
-  ]
-} as unknown as DocumentNode<
-  EnabledCurrencyModulesWithProfileQuery,
-  EnabledCurrencyModulesWithProfileQueryVariables
->
-export const EnabledModulesDocument = {
-  kind: 'Document',
-  definitions: [
-    {
-      kind: 'OperationDefinition',
-      operation: 'query',
-      name: { kind: 'Name', value: 'EnabledModules' },
-      selectionSet: {
-        kind: 'SelectionSet',
-        selections: [
-          {
-            kind: 'Field',
-            name: { kind: 'Name', value: 'enabledModules' },
-            selectionSet: {
-              kind: 'SelectionSet',
-              selections: [
-                {
-                  kind: 'Field',
-                  name: { kind: 'Name', value: 'collectModules' },
-                  selectionSet: {
-                    kind: 'SelectionSet',
-                    selections: [
-                      { kind: 'Field', name: { kind: 'Name', value: 'moduleName' } },
-                      { kind: 'Field', name: { kind: 'Name', value: 'contractAddress' } }
-                    ]
-                  }
-                }
-              ]
-            }
-          },
-          {
-            kind: 'Field',
-            name: { kind: 'Name', value: 'enabledModuleCurrencies' },
-            selectionSet: {
-              kind: 'SelectionSet',
-              selections: [
-                { kind: 'Field', name: { kind: 'Name', value: 'name' } },
-                { kind: 'Field', name: { kind: 'Name', value: 'symbol' } },
-                { kind: 'Field', name: { kind: 'Name', value: 'decimals' } },
-                { kind: 'Field', name: { kind: 'Name', value: 'address' } }
-              ]
-            }
-          }
-        ]
-      }
-    }
-  ]
-} as unknown as DocumentNode<EnabledModulesQuery, EnabledModulesQueryVariables>
-export const ExploreFeedDocument = {
-  kind: 'Document',
-  definitions: [
-    {
-      kind: 'OperationDefinition',
-      operation: 'query',
-      name: { kind: 'Name', value: 'ExploreFeed' },
-      variableDefinitions: [
-        {
-          kind: 'VariableDefinition',
-          variable: { kind: 'Variable', name: { kind: 'Name', value: 'request' } },
-          type: {
-            kind: 'NonNullType',
-            type: { kind: 'NamedType', name: { kind: 'Name', value: 'ExplorePublicationRequest' } }
-          }
-        },
-        {
-          kind: 'VariableDefinition',
-          variable: { kind: 'Variable', name: { kind: 'Name', value: 'reactionRequest' } },
-          type: { kind: 'NamedType', name: { kind: 'Name', value: 'ReactionFieldResolverRequest' } }
-        },
-        {
-          kind: 'VariableDefinition',
-          variable: { kind: 'Variable', name: { kind: 'Name', value: 'profileId' } },
-          type: { kind: 'NamedType', name: { kind: 'Name', value: 'ProfileId' } }
-        }
-      ],
-      selectionSet: {
-        kind: 'SelectionSet',
-        selections: [
-          {
-            kind: 'Field',
-            name: { kind: 'Name', value: 'explorePublications' },
-            arguments: [
-              {
-                kind: 'Argument',
-                name: { kind: 'Name', value: 'request' },
-                value: { kind: 'Variable', name: { kind: 'Name', value: 'request' } }
-              }
-            ],
-            selectionSet: {
-              kind: 'SelectionSet',
-              selections: [
-                {
-                  kind: 'Field',
-                  name: { kind: 'Name', value: 'items' },
-                  selectionSet: {
-                    kind: 'SelectionSet',
-                    selections: [
-                      {
-                        kind: 'InlineFragment',
-                        typeCondition: { kind: 'NamedType', name: { kind: 'Name', value: 'Post' } },
-                        selectionSet: {
-                          kind: 'SelectionSet',
-                          selections: [
-                            { kind: 'FragmentSpread', name: { kind: 'Name', value: 'PostFields' } }
-                          ]
-                        }
-                      },
-                      {
-                        kind: 'InlineFragment',
-                        typeCondition: { kind: 'NamedType', name: { kind: 'Name', value: 'Comment' } },
-                        selectionSet: {
-                          kind: 'SelectionSet',
-                          selections: [
-                            { kind: 'FragmentSpread', name: { kind: 'Name', value: 'CommentFields' } }
-                          ]
-                        }
-                      },
-                      {
-                        kind: 'InlineFragment',
-                        typeCondition: { kind: 'NamedType', name: { kind: 'Name', value: 'Mirror' } },
-                        selectionSet: {
-                          kind: 'SelectionSet',
-                          selections: [
-                            { kind: 'FragmentSpread', name: { kind: 'Name', value: 'MirrorFields' } }
-                          ]
-                        }
-                      }
-                    ]
-                  }
-                },
-                {
-                  kind: 'Field',
-                  name: { kind: 'Name', value: 'pageInfo' },
-                  selectionSet: {
-                    kind: 'SelectionSet',
-                    selections: [
-                      { kind: 'Field', name: { kind: 'Name', value: 'totalCount' } },
-                      { kind: 'Field', name: { kind: 'Name', value: 'next' } }
-                    ]
-                  }
-                }
-              ]
-            }
-          }
-        ]
-      }
-    },
-    ...PostFieldsFragmentDoc.definitions,
-    ...ProfileFieldsFragmentDoc.definitions,
-    ...CollectModuleFieldsFragmentDoc.definitions,
-    ...StatsFieldsFragmentDoc.definitions,
-    ...MetadataFieldsFragmentDoc.definitions,
-    ...CommentFieldsFragmentDoc.definitions,
-    ...MirrorFieldsFragmentDoc.definitions
-  ]
-} as unknown as DocumentNode<ExploreFeedQuery, ExploreFeedQueryVariables>
-export const FeedHighlightsDocument = {
-  kind: 'Document',
-  definitions: [
-    {
-      kind: 'OperationDefinition',
-      operation: 'query',
-      name: { kind: 'Name', value: 'FeedHighlights' },
-      variableDefinitions: [
-        {
-          kind: 'VariableDefinition',
-          variable: { kind: 'Variable', name: { kind: 'Name', value: 'request' } },
-          type: {
-            kind: 'NonNullType',
-            type: { kind: 'NamedType', name: { kind: 'Name', value: 'FeedHighlightsRequest' } }
-          }
-        },
-        {
-          kind: 'VariableDefinition',
-          variable: { kind: 'Variable', name: { kind: 'Name', value: 'reactionRequest' } },
-          type: { kind: 'NamedType', name: { kind: 'Name', value: 'ReactionFieldResolverRequest' } }
-        },
-        {
-          kind: 'VariableDefinition',
-          variable: { kind: 'Variable', name: { kind: 'Name', value: 'profileId' } },
-          type: { kind: 'NamedType', name: { kind: 'Name', value: 'ProfileId' } }
-        }
-      ],
-      selectionSet: {
-        kind: 'SelectionSet',
-        selections: [
-          {
-            kind: 'Field',
-            name: { kind: 'Name', value: 'feedHighlights' },
-            arguments: [
-              {
-                kind: 'Argument',
-                name: { kind: 'Name', value: 'request' },
-                value: { kind: 'Variable', name: { kind: 'Name', value: 'request' } }
-              }
-            ],
-            selectionSet: {
-              kind: 'SelectionSet',
-              selections: [
-                {
-                  kind: 'Field',
-                  name: { kind: 'Name', value: 'items' },
-                  selectionSet: {
-                    kind: 'SelectionSet',
-                    selections: [
-                      {
-                        kind: 'InlineFragment',
-                        typeCondition: { kind: 'NamedType', name: { kind: 'Name', value: 'Post' } },
-                        selectionSet: {
-                          kind: 'SelectionSet',
-                          selections: [
-                            { kind: 'FragmentSpread', name: { kind: 'Name', value: 'PostFields' } }
-                          ]
-                        }
-                      },
-                      {
-                        kind: 'InlineFragment',
-                        typeCondition: { kind: 'NamedType', name: { kind: 'Name', value: 'Comment' } },
-                        selectionSet: {
-                          kind: 'SelectionSet',
-                          selections: [
-                            { kind: 'FragmentSpread', name: { kind: 'Name', value: 'CommentFields' } }
-                          ]
-                        }
-                      },
-                      {
-                        kind: 'InlineFragment',
-                        typeCondition: { kind: 'NamedType', name: { kind: 'Name', value: 'Mirror' } },
-                        selectionSet: {
-                          kind: 'SelectionSet',
-                          selections: [
-                            { kind: 'FragmentSpread', name: { kind: 'Name', value: 'MirrorFields' } }
-                          ]
-                        }
-                      }
-                    ]
-                  }
-                },
-                {
-                  kind: 'Field',
-                  name: { kind: 'Name', value: 'pageInfo' },
-                  selectionSet: {
-                    kind: 'SelectionSet',
-                    selections: [
-                      { kind: 'Field', name: { kind: 'Name', value: 'totalCount' } },
-                      { kind: 'Field', name: { kind: 'Name', value: 'next' } }
-                    ]
-                  }
-                }
-              ]
-            }
-          }
-        ]
-      }
-    },
-    ...PostFieldsFragmentDoc.definitions,
-    ...ProfileFieldsFragmentDoc.definitions,
-    ...CollectModuleFieldsFragmentDoc.definitions,
-    ...StatsFieldsFragmentDoc.definitions,
-    ...MetadataFieldsFragmentDoc.definitions,
-    ...CommentFieldsFragmentDoc.definitions,
-    ...MirrorFieldsFragmentDoc.definitions
-  ]
-} as unknown as DocumentNode<FeedHighlightsQuery, FeedHighlightsQueryVariables>
-export const FollowersDocument = {
-  kind: 'Document',
-  definitions: [
-    {
-      kind: 'OperationDefinition',
-      operation: 'query',
-      name: { kind: 'Name', value: 'Followers' },
-      variableDefinitions: [
-        {
-          kind: 'VariableDefinition',
-          variable: { kind: 'Variable', name: { kind: 'Name', value: 'request' } },
-          type: {
-            kind: 'NonNullType',
-            type: { kind: 'NamedType', name: { kind: 'Name', value: 'FollowersRequest' } }
-          }
-        }
-      ],
-      selectionSet: {
-        kind: 'SelectionSet',
-        selections: [
-          {
-            kind: 'Field',
-            name: { kind: 'Name', value: 'followers' },
-            arguments: [
-              {
-                kind: 'Argument',
-                name: { kind: 'Name', value: 'request' },
-                value: { kind: 'Variable', name: { kind: 'Name', value: 'request' } }
-              }
-            ],
-            selectionSet: {
-              kind: 'SelectionSet',
-              selections: [
-                {
-                  kind: 'Field',
-                  name: { kind: 'Name', value: 'items' },
-                  selectionSet: {
-                    kind: 'SelectionSet',
-                    selections: [
-                      {
-                        kind: 'Field',
-                        name: { kind: 'Name', value: 'wallet' },
-                        selectionSet: {
-                          kind: 'SelectionSet',
-                          selections: [
-                            { kind: 'Field', name: { kind: 'Name', value: 'address' } },
-                            {
-                              kind: 'Field',
-                              name: { kind: 'Name', value: 'defaultProfile' },
-                              selectionSet: {
-                                kind: 'SelectionSet',
-                                selections: [
-                                  { kind: 'FragmentSpread', name: { kind: 'Name', value: 'ProfileFields' } },
-                                  { kind: 'Field', name: { kind: 'Name', value: 'isFollowedByMe' } }
-                                ]
-                              }
-                            }
-                          ]
-                        }
-                      },
-                      { kind: 'Field', name: { kind: 'Name', value: 'totalAmountOfTimesFollowed' } }
-                    ]
-                  }
-                },
-                {
-                  kind: 'Field',
-                  name: { kind: 'Name', value: 'pageInfo' },
-                  selectionSet: {
-                    kind: 'SelectionSet',
-                    selections: [
-                      { kind: 'Field', name: { kind: 'Name', value: 'next' } },
-                      { kind: 'Field', name: { kind: 'Name', value: 'totalCount' } }
-                    ]
-                  }
-                }
-              ]
-            }
-          }
-        ]
-      }
-    },
-    ...ProfileFieldsFragmentDoc.definitions
-  ]
-} as unknown as DocumentNode<FollowersQuery, FollowersQueryVariables>
-export const FollowingDocument = {
-  kind: 'Document',
-  definitions: [
-    {
-      kind: 'OperationDefinition',
-      operation: 'query',
-      name: { kind: 'Name', value: 'Following' },
-      variableDefinitions: [
-        {
-          kind: 'VariableDefinition',
-          variable: { kind: 'Variable', name: { kind: 'Name', value: 'request' } },
-          type: {
-            kind: 'NonNullType',
-            type: { kind: 'NamedType', name: { kind: 'Name', value: 'FollowingRequest' } }
-          }
-        }
-      ],
-      selectionSet: {
-        kind: 'SelectionSet',
-        selections: [
-          {
-            kind: 'Field',
-            name: { kind: 'Name', value: 'following' },
-            arguments: [
-              {
-                kind: 'Argument',
-                name: { kind: 'Name', value: 'request' },
-                value: { kind: 'Variable', name: { kind: 'Name', value: 'request' } }
-              }
-            ],
-            selectionSet: {
-              kind: 'SelectionSet',
-              selections: [
-                {
-                  kind: 'Field',
-                  name: { kind: 'Name', value: 'items' },
-                  selectionSet: {
-                    kind: 'SelectionSet',
-                    selections: [
-                      {
-                        kind: 'Field',
-                        name: { kind: 'Name', value: 'profile' },
-                        selectionSet: {
-                          kind: 'SelectionSet',
-                          selections: [
-                            { kind: 'FragmentSpread', name: { kind: 'Name', value: 'ProfileFields' } },
-                            { kind: 'Field', name: { kind: 'Name', value: 'isFollowedByMe' } }
-                          ]
-                        }
-                      },
-                      { kind: 'Field', name: { kind: 'Name', value: 'totalAmountOfTimesFollowing' } }
-                    ]
-                  }
-                },
-                {
-                  kind: 'Field',
-                  name: { kind: 'Name', value: 'pageInfo' },
-                  selectionSet: {
-                    kind: 'SelectionSet',
-                    selections: [
-                      { kind: 'Field', name: { kind: 'Name', value: 'next' } },
-                      { kind: 'Field', name: { kind: 'Name', value: 'totalCount' } }
-                    ]
-                  }
-                }
-              ]
-            }
-          }
-        ]
-      }
-    },
-    ...ProfileFieldsFragmentDoc.definitions
-  ]
-} as unknown as DocumentNode<FollowingQuery, FollowingQueryVariables>
-export const GenerateModuleCurrencyApprovalDataDocument = {
-  kind: 'Document',
-  definitions: [
-    {
-      kind: 'OperationDefinition',
-      operation: 'query',
-      name: { kind: 'Name', value: 'GenerateModuleCurrencyApprovalData' },
-      variableDefinitions: [
-        {
-          kind: 'VariableDefinition',
-          variable: { kind: 'Variable', name: { kind: 'Name', value: 'request' } },
-          type: {
-            kind: 'NonNullType',
-            type: {
-              kind: 'NamedType',
-              name: { kind: 'Name', value: 'GenerateModuleCurrencyApprovalDataRequest' }
-            }
-          }
-        }
-      ],
-      selectionSet: {
-        kind: 'SelectionSet',
-        selections: [
-          {
-            kind: 'Field',
-            name: { kind: 'Name', value: 'generateModuleCurrencyApprovalData' },
-            arguments: [
-              {
-                kind: 'Argument',
-                name: { kind: 'Name', value: 'request' },
-                value: { kind: 'Variable', name: { kind: 'Name', value: 'request' } }
-              }
-            ],
-            selectionSet: {
-              kind: 'SelectionSet',
-              selections: [
-                { kind: 'Field', name: { kind: 'Name', value: 'to' } },
-                { kind: 'Field', name: { kind: 'Name', value: 'from' } },
-                { kind: 'Field', name: { kind: 'Name', value: 'data' } }
-              ]
-            }
-          }
-        ]
-      }
-    }
-  ]
-} as unknown as DocumentNode<
-  GenerateModuleCurrencyApprovalDataQuery,
-  GenerateModuleCurrencyApprovalDataQueryVariables
->
-export const GroupDocument = {
-  kind: 'Document',
-  definitions: [
-    {
-      kind: 'OperationDefinition',
-      operation: 'query',
-      name: { kind: 'Name', value: 'Group' },
-      variableDefinitions: [
-        {
-          kind: 'VariableDefinition',
-          variable: { kind: 'Variable', name: { kind: 'Name', value: 'topCommented' } },
-          type: {
-            kind: 'NonNullType',
-            type: { kind: 'NamedType', name: { kind: 'Name', value: 'ExplorePublicationRequest' } }
-          }
-        },
-        {
-          kind: 'VariableDefinition',
-          variable: { kind: 'Variable', name: { kind: 'Name', value: 'topCollected' } },
-          type: {
-            kind: 'NonNullType',
-            type: { kind: 'NamedType', name: { kind: 'Name', value: 'ExplorePublicationRequest' } }
-          }
-        },
-        {
-          kind: 'VariableDefinition',
-          variable: { kind: 'Variable', name: { kind: 'Name', value: 'latest' } },
-          type: {
-            kind: 'NonNullType',
-            type: { kind: 'NamedType', name: { kind: 'Name', value: 'ExplorePublicationRequest' } }
-          }
-        }
-      ],
-      selectionSet: {
-        kind: 'SelectionSet',
-        selections: [
-          {
-            kind: 'Field',
-            alias: { kind: 'Name', value: 'topCommented' },
-            name: { kind: 'Name', value: 'explorePublications' },
-            arguments: [
-              {
-                kind: 'Argument',
-                name: { kind: 'Name', value: 'request' },
-                value: { kind: 'Variable', name: { kind: 'Name', value: 'topCommented' } }
-              }
-            ],
-            selectionSet: {
-              kind: 'SelectionSet',
-              selections: [
-                {
-                  kind: 'Field',
-                  name: { kind: 'Name', value: 'items' },
-                  selectionSet: {
-                    kind: 'SelectionSet',
-                    selections: [
-                      {
-                        kind: 'InlineFragment',
-                        typeCondition: { kind: 'NamedType', name: { kind: 'Name', value: 'Post' } },
-                        selectionSet: {
-                          kind: 'SelectionSet',
-                          selections: [
-                            { kind: 'FragmentSpread', name: { kind: 'Name', value: 'GroupFields' } }
-                          ]
-                        }
-                      }
-                    ]
-                  }
-                }
-              ]
-            }
-          },
-          {
-            kind: 'Field',
-            alias: { kind: 'Name', value: 'topCollected' },
-            name: { kind: 'Name', value: 'explorePublications' },
-            arguments: [
-              {
-                kind: 'Argument',
-                name: { kind: 'Name', value: 'request' },
-                value: { kind: 'Variable', name: { kind: 'Name', value: 'topCollected' } }
-              }
-            ],
-            selectionSet: {
-              kind: 'SelectionSet',
-              selections: [
-                {
-                  kind: 'Field',
-                  name: { kind: 'Name', value: 'items' },
-                  selectionSet: {
-                    kind: 'SelectionSet',
-                    selections: [
-                      {
-                        kind: 'InlineFragment',
-                        typeCondition: { kind: 'NamedType', name: { kind: 'Name', value: 'Post' } },
-                        selectionSet: {
-                          kind: 'SelectionSet',
-                          selections: [
-                            { kind: 'FragmentSpread', name: { kind: 'Name', value: 'GroupFields' } }
-                          ]
-                        }
-                      }
-                    ]
-                  }
-                }
-              ]
-            }
-          },
-          {
-            kind: 'Field',
-            alias: { kind: 'Name', value: 'latest' },
-            name: { kind: 'Name', value: 'explorePublications' },
-            arguments: [
-              {
-                kind: 'Argument',
-                name: { kind: 'Name', value: 'request' },
-                value: { kind: 'Variable', name: { kind: 'Name', value: 'latest' } }
-              }
-            ],
-            selectionSet: {
-              kind: 'SelectionSet',
-              selections: [
-                {
-                  kind: 'Field',
-                  name: { kind: 'Name', value: 'items' },
-                  selectionSet: {
-                    kind: 'SelectionSet',
-                    selections: [
-                      {
-                        kind: 'InlineFragment',
-                        typeCondition: { kind: 'NamedType', name: { kind: 'Name', value: 'Post' } },
-                        selectionSet: {
-                          kind: 'SelectionSet',
-                          selections: [
-                            { kind: 'FragmentSpread', name: { kind: 'Name', value: 'GroupFields' } }
-                          ]
-                        }
-                      }
-                    ]
-                  }
-                }
-              ]
-            }
-          }
-        ]
-      }
-    },
-    ...GroupFieldsFragmentDoc.definitions
-  ]
-} as unknown as DocumentNode<GroupQuery, GroupQueryVariables>
-export const HasTxHashBeenIndexedDocument = {
-  kind: 'Document',
-  definitions: [
-    {
-      kind: 'OperationDefinition',
-      operation: 'query',
-      name: { kind: 'Name', value: 'HasTxHashBeenIndexed' },
-      variableDefinitions: [
-        {
-          kind: 'VariableDefinition',
-          variable: { kind: 'Variable', name: { kind: 'Name', value: 'request' } },
-          type: {
-            kind: 'NonNullType',
-            type: { kind: 'NamedType', name: { kind: 'Name', value: 'HasTxHashBeenIndexedRequest' } }
-          }
-        }
-      ],
-      selectionSet: {
-        kind: 'SelectionSet',
-        selections: [
-          {
-            kind: 'Field',
-            name: { kind: 'Name', value: 'hasTxHashBeenIndexed' },
-            arguments: [
-              {
-                kind: 'Argument',
-                name: { kind: 'Name', value: 'request' },
-                value: { kind: 'Variable', name: { kind: 'Name', value: 'request' } }
-              }
-            ],
-            selectionSet: {
-              kind: 'SelectionSet',
-              selections: [
-                {
-                  kind: 'InlineFragment',
-                  typeCondition: {
-                    kind: 'NamedType',
-                    name: { kind: 'Name', value: 'TransactionIndexedResult' }
-                  },
-                  selectionSet: {
-                    kind: 'SelectionSet',
-                    selections: [
-                      {
-                        kind: 'Field',
-                        name: { kind: 'Name', value: 'metadataStatus' },
-                        selectionSet: {
-                          kind: 'SelectionSet',
-                          selections: [{ kind: 'Field', name: { kind: 'Name', value: 'status' } }]
-                        }
-                      },
-                      { kind: 'Field', name: { kind: 'Name', value: 'txHash' } },
-                      { kind: 'Field', name: { kind: 'Name', value: 'indexed' } }
-                    ]
-                  }
-                },
-                {
-                  kind: 'InlineFragment',
-                  typeCondition: { kind: 'NamedType', name: { kind: 'Name', value: 'TransactionError' } },
-                  selectionSet: {
-                    kind: 'SelectionSet',
-                    selections: [{ kind: 'Field', name: { kind: 'Name', value: 'reason' } }]
-                  }
-                }
-              ]
-            }
-          }
-        ]
-      }
-    }
-  ]
-} as unknown as DocumentNode<HasTxHashBeenIndexedQuery, HasTxHashBeenIndexedQueryVariables>
-export const LikesDocument = {
-  kind: 'Document',
-  definitions: [
-    {
-      kind: 'OperationDefinition',
-      operation: 'query',
-      name: { kind: 'Name', value: 'Likes' },
-      variableDefinitions: [
-        {
-          kind: 'VariableDefinition',
-          variable: { kind: 'Variable', name: { kind: 'Name', value: 'request' } },
-          type: {
-            kind: 'NonNullType',
-            type: { kind: 'NamedType', name: { kind: 'Name', value: 'WhoReactedPublicationRequest' } }
-          }
-        }
-      ],
-      selectionSet: {
-        kind: 'SelectionSet',
-        selections: [
-          {
-            kind: 'Field',
-            name: { kind: 'Name', value: 'whoReactedPublication' },
-            arguments: [
-              {
-                kind: 'Argument',
-                name: { kind: 'Name', value: 'request' },
-                value: { kind: 'Variable', name: { kind: 'Name', value: 'request' } }
-              }
-            ],
-            selectionSet: {
-              kind: 'SelectionSet',
-              selections: [
-                {
-                  kind: 'Field',
-                  name: { kind: 'Name', value: 'items' },
-                  selectionSet: {
-                    kind: 'SelectionSet',
-                    selections: [
-                      { kind: 'Field', name: { kind: 'Name', value: 'reactionId' } },
-                      {
-                        kind: 'Field',
-                        name: { kind: 'Name', value: 'profile' },
-                        selectionSet: {
-                          kind: 'SelectionSet',
-                          selections: [
-                            { kind: 'FragmentSpread', name: { kind: 'Name', value: 'ProfileFields' } },
-                            { kind: 'Field', name: { kind: 'Name', value: 'isFollowedByMe' } }
-                          ]
-                        }
-                      }
-                    ]
-                  }
-                },
-                {
-                  kind: 'Field',
-                  name: { kind: 'Name', value: 'pageInfo' },
-                  selectionSet: {
-                    kind: 'SelectionSet',
-                    selections: [
-                      { kind: 'Field', name: { kind: 'Name', value: 'next' } },
-                      { kind: 'Field', name: { kind: 'Name', value: 'totalCount' } }
-                    ]
-                  }
-                }
-              ]
-            }
-          }
-        ]
-      }
-    },
-    ...ProfileFieldsFragmentDoc.definitions
-  ]
-} as unknown as DocumentNode<LikesQuery, LikesQueryVariables>
-export const MirrorsDocument = {
-  kind: 'Document',
-  definitions: [
-    {
-      kind: 'OperationDefinition',
-      operation: 'query',
-      name: { kind: 'Name', value: 'Mirrors' },
-      variableDefinitions: [
-        {
-          kind: 'VariableDefinition',
-          variable: { kind: 'Variable', name: { kind: 'Name', value: 'request' } },
-          type: {
-            kind: 'NonNullType',
-            type: { kind: 'NamedType', name: { kind: 'Name', value: 'ProfileQueryRequest' } }
-          }
-        }
-      ],
-      selectionSet: {
-        kind: 'SelectionSet',
-        selections: [
-          {
-            kind: 'Field',
-            name: { kind: 'Name', value: 'profiles' },
-            arguments: [
-              {
-                kind: 'Argument',
-                name: { kind: 'Name', value: 'request' },
-                value: { kind: 'Variable', name: { kind: 'Name', value: 'request' } }
-              }
-            ],
-            selectionSet: {
-              kind: 'SelectionSet',
-              selections: [
-                {
-                  kind: 'Field',
-                  name: { kind: 'Name', value: 'items' },
-                  selectionSet: {
-                    kind: 'SelectionSet',
-                    selections: [
-                      { kind: 'FragmentSpread', name: { kind: 'Name', value: 'ProfileFields' } },
-                      { kind: 'Field', name: { kind: 'Name', value: 'isFollowedByMe' } }
-                    ]
-                  }
-                },
-                {
-                  kind: 'Field',
-                  name: { kind: 'Name', value: 'pageInfo' },
-                  selectionSet: {
-                    kind: 'SelectionSet',
-                    selections: [
-                      { kind: 'Field', name: { kind: 'Name', value: 'next' } },
-                      { kind: 'Field', name: { kind: 'Name', value: 'totalCount' } }
-                    ]
-                  }
-                }
-              ]
-            }
-          }
-        ]
-      }
-    },
-    ...ProfileFieldsFragmentDoc.definitions
-  ]
-} as unknown as DocumentNode<MirrorsQuery, MirrorsQueryVariables>
-export const MutualFollowersDocument = {
-  kind: 'Document',
-  definitions: [
-    {
-      kind: 'OperationDefinition',
-      operation: 'query',
-      name: { kind: 'Name', value: 'MutualFollowers' },
-      variableDefinitions: [
-        {
-          kind: 'VariableDefinition',
-          variable: { kind: 'Variable', name: { kind: 'Name', value: 'request' } },
-          type: {
-            kind: 'NonNullType',
-            type: { kind: 'NamedType', name: { kind: 'Name', value: 'MutualFollowersProfilesQueryRequest' } }
-          }
-        }
-      ],
-      selectionSet: {
-        kind: 'SelectionSet',
-        selections: [
-          {
-            kind: 'Field',
-            name: { kind: 'Name', value: 'mutualFollowersProfiles' },
-            arguments: [
-              {
-                kind: 'Argument',
-                name: { kind: 'Name', value: 'request' },
-                value: { kind: 'Variable', name: { kind: 'Name', value: 'request' } }
-              }
-            ],
-            selectionSet: {
-              kind: 'SelectionSet',
-              selections: [
-                {
-                  kind: 'Field',
-                  name: { kind: 'Name', value: 'items' },
-                  selectionSet: {
-                    kind: 'SelectionSet',
-                    selections: [
-                      { kind: 'Field', name: { kind: 'Name', value: 'handle' } },
-                      { kind: 'Field', name: { kind: 'Name', value: 'name' } },
-                      {
-                        kind: 'Field',
-                        name: { kind: 'Name', value: 'picture' },
-                        selectionSet: {
-                          kind: 'SelectionSet',
-                          selections: [
-                            {
-                              kind: 'InlineFragment',
-                              typeCondition: { kind: 'NamedType', name: { kind: 'Name', value: 'MediaSet' } },
-                              selectionSet: {
-                                kind: 'SelectionSet',
-                                selections: [
-                                  {
-                                    kind: 'Field',
-                                    name: { kind: 'Name', value: 'original' },
-                                    selectionSet: {
-                                      kind: 'SelectionSet',
-                                      selections: [{ kind: 'Field', name: { kind: 'Name', value: 'url' } }]
-                                    }
-                                  }
-                                ]
-                              }
-                            },
-                            {
-                              kind: 'InlineFragment',
-                              typeCondition: { kind: 'NamedType', name: { kind: 'Name', value: 'NftImage' } },
-                              selectionSet: {
-                                kind: 'SelectionSet',
-                                selections: [{ kind: 'Field', name: { kind: 'Name', value: 'uri' } }]
-                              }
-                            }
-                          ]
-                        }
-                      }
-                    ]
-                  }
-                },
-                {
-                  kind: 'Field',
-                  name: { kind: 'Name', value: 'pageInfo' },
-                  selectionSet: {
-                    kind: 'SelectionSet',
-                    selections: [{ kind: 'Field', name: { kind: 'Name', value: 'totalCount' } }]
-                  }
-                }
-              ]
-            }
-          }
-        ]
-      }
-    }
-  ]
-} as unknown as DocumentNode<MutualFollowersQuery, MutualFollowersQueryVariables>
-export const MutualFollowersListDocument = {
-  kind: 'Document',
-  definitions: [
-    {
-      kind: 'OperationDefinition',
-      operation: 'query',
-      name: { kind: 'Name', value: 'MutualFollowersList' },
-      variableDefinitions: [
-        {
-          kind: 'VariableDefinition',
-          variable: { kind: 'Variable', name: { kind: 'Name', value: 'request' } },
-          type: {
-            kind: 'NonNullType',
-            type: { kind: 'NamedType', name: { kind: 'Name', value: 'MutualFollowersProfilesQueryRequest' } }
-          }
-        }
-      ],
-      selectionSet: {
-        kind: 'SelectionSet',
-        selections: [
-          {
-            kind: 'Field',
-            name: { kind: 'Name', value: 'mutualFollowersProfiles' },
-            arguments: [
-              {
-                kind: 'Argument',
-                name: { kind: 'Name', value: 'request' },
-                value: { kind: 'Variable', name: { kind: 'Name', value: 'request' } }
-              }
-            ],
-            selectionSet: {
-              kind: 'SelectionSet',
-              selections: [
-                {
-                  kind: 'Field',
-                  name: { kind: 'Name', value: 'items' },
-                  selectionSet: {
-                    kind: 'SelectionSet',
-                    selections: [
-                      { kind: 'FragmentSpread', name: { kind: 'Name', value: 'ProfileFields' } },
-                      { kind: 'Field', name: { kind: 'Name', value: 'isFollowedByMe' } }
-                    ]
-                  }
-                },
-                {
-                  kind: 'Field',
-                  name: { kind: 'Name', value: 'pageInfo' },
-                  selectionSet: {
-                    kind: 'SelectionSet',
-                    selections: [
-                      { kind: 'Field', name: { kind: 'Name', value: 'next' } },
-                      { kind: 'Field', name: { kind: 'Name', value: 'totalCount' } }
-                    ]
-                  }
-                }
-              ]
-            }
-          }
-        ]
-      }
-    },
-    ...ProfileFieldsFragmentDoc.definitions
-  ]
-} as unknown as DocumentNode<MutualFollowersListQuery, MutualFollowersListQueryVariables>
-export const NftChallengeDocument = {
-  kind: 'Document',
-  definitions: [
-    {
-      kind: 'OperationDefinition',
-      operation: 'query',
-      name: { kind: 'Name', value: 'NFTChallenge' },
-      variableDefinitions: [
-        {
-          kind: 'VariableDefinition',
-          variable: { kind: 'Variable', name: { kind: 'Name', value: 'request' } },
-          type: {
-            kind: 'NonNullType',
-            type: { kind: 'NamedType', name: { kind: 'Name', value: 'NftOwnershipChallengeRequest' } }
-          }
-        }
-      ],
-      selectionSet: {
-        kind: 'SelectionSet',
-        selections: [
-          {
-            kind: 'Field',
-            name: { kind: 'Name', value: 'nftOwnershipChallenge' },
-            arguments: [
-              {
-                kind: 'Argument',
-                name: { kind: 'Name', value: 'request' },
-                value: { kind: 'Variable', name: { kind: 'Name', value: 'request' } }
-              }
-            ],
-            selectionSet: {
-              kind: 'SelectionSet',
-              selections: [
-                { kind: 'Field', name: { kind: 'Name', value: 'id' } },
-                { kind: 'Field', name: { kind: 'Name', value: 'text' } }
-              ]
-            }
-          }
-        ]
-      }
-    }
-  ]
-} as unknown as DocumentNode<NftChallengeQuery, NftChallengeQueryVariables>
-export const NftFeedDocument = {
-  kind: 'Document',
-  definitions: [
-    {
-      kind: 'OperationDefinition',
-      operation: 'query',
-      name: { kind: 'Name', value: 'NFTFeed' },
-      variableDefinitions: [
-        {
-          kind: 'VariableDefinition',
-          variable: { kind: 'Variable', name: { kind: 'Name', value: 'request' } },
-          type: {
-            kind: 'NonNullType',
-            type: { kind: 'NamedType', name: { kind: 'Name', value: 'NFTsRequest' } }
-          }
-        }
-      ],
-      selectionSet: {
-        kind: 'SelectionSet',
-        selections: [
-          {
-            kind: 'Field',
-            name: { kind: 'Name', value: 'nfts' },
-            arguments: [
-              {
-                kind: 'Argument',
-                name: { kind: 'Name', value: 'request' },
-                value: { kind: 'Variable', name: { kind: 'Name', value: 'request' } }
-              }
-            ],
-            selectionSet: {
-              kind: 'SelectionSet',
-              selections: [
-                {
-                  kind: 'Field',
-                  name: { kind: 'Name', value: 'items' },
-                  selectionSet: {
-                    kind: 'SelectionSet',
-                    selections: [
-                      { kind: 'Field', name: { kind: 'Name', value: 'name' } },
-                      { kind: 'Field', name: { kind: 'Name', value: 'collectionName' } },
-                      { kind: 'Field', name: { kind: 'Name', value: 'contractAddress' } },
-                      { kind: 'Field', name: { kind: 'Name', value: 'tokenId' } },
-                      { kind: 'Field', name: { kind: 'Name', value: 'chainId' } },
-                      {
-                        kind: 'Field',
-                        name: { kind: 'Name', value: 'originalContent' },
-                        selectionSet: {
-                          kind: 'SelectionSet',
-                          selections: [
-                            { kind: 'Field', name: { kind: 'Name', value: 'uri' } },
-                            { kind: 'Field', name: { kind: 'Name', value: 'animatedUrl' } }
-                          ]
-                        }
-                      }
-                    ]
-                  }
-                },
-                {
-                  kind: 'Field',
-                  name: { kind: 'Name', value: 'pageInfo' },
-                  selectionSet: {
-                    kind: 'SelectionSet',
-                    selections: [
-                      { kind: 'Field', name: { kind: 'Name', value: 'next' } },
-                      { kind: 'Field', name: { kind: 'Name', value: 'totalCount' } }
-                    ]
-                  }
-                }
-              ]
-            }
-          }
-        ]
-      }
-    }
-  ]
-} as unknown as DocumentNode<NftFeedQuery, NftFeedQueryVariables>
-export const NotificationCountDocument = {
-  kind: 'Document',
-  definitions: [
-    {
-      kind: 'OperationDefinition',
-      operation: 'query',
-      name: { kind: 'Name', value: 'NotificationCount' },
-      variableDefinitions: [
-        {
-          kind: 'VariableDefinition',
-          variable: { kind: 'Variable', name: { kind: 'Name', value: 'request' } },
-          type: {
-            kind: 'NonNullType',
-            type: { kind: 'NamedType', name: { kind: 'Name', value: 'NotificationRequest' } }
-          }
-        }
-      ],
-      selectionSet: {
-        kind: 'SelectionSet',
-        selections: [
-          {
-            kind: 'Field',
-            name: { kind: 'Name', value: 'notifications' },
-            arguments: [
-              {
-                kind: 'Argument',
-                name: { kind: 'Name', value: 'request' },
-                value: { kind: 'Variable', name: { kind: 'Name', value: 'request' } }
-              }
-            ],
-            selectionSet: {
-              kind: 'SelectionSet',
-              selections: [
-                {
-                  kind: 'Field',
-                  name: { kind: 'Name', value: 'pageInfo' },
-                  selectionSet: {
-                    kind: 'SelectionSet',
-                    selections: [{ kind: 'Field', name: { kind: 'Name', value: 'totalCount' } }]
-                  }
-                }
-              ]
-            }
-          }
-        ]
-      }
-    }
-  ]
-} as unknown as DocumentNode<NotificationCountQuery, NotificationCountQueryVariables>
-export const NotificationsDocument = {
-  kind: 'Document',
-  definitions: [
-    {
-      kind: 'OperationDefinition',
-      operation: 'query',
-      name: { kind: 'Name', value: 'Notifications' },
-      variableDefinitions: [
-        {
-          kind: 'VariableDefinition',
-          variable: { kind: 'Variable', name: { kind: 'Name', value: 'request' } },
-          type: {
-            kind: 'NonNullType',
-            type: { kind: 'NamedType', name: { kind: 'Name', value: 'NotificationRequest' } }
-          }
-        }
-      ],
-      selectionSet: {
-        kind: 'SelectionSet',
-        selections: [
-          {
-            kind: 'Field',
-            name: { kind: 'Name', value: 'notifications' },
-            arguments: [
-              {
-                kind: 'Argument',
-                name: { kind: 'Name', value: 'request' },
-                value: { kind: 'Variable', name: { kind: 'Name', value: 'request' } }
-              }
-            ],
-            selectionSet: {
-              kind: 'SelectionSet',
-              selections: [
-                {
-                  kind: 'Field',
-                  name: { kind: 'Name', value: 'items' },
-                  selectionSet: {
-                    kind: 'SelectionSet',
-                    selections: [
-                      {
-                        kind: 'InlineFragment',
-                        typeCondition: {
-                          kind: 'NamedType',
-                          name: { kind: 'Name', value: 'NewFollowerNotification' }
-                        },
-                        selectionSet: {
-                          kind: 'SelectionSet',
-                          selections: [
-                            { kind: 'Field', name: { kind: 'Name', value: 'notificationId' } },
-                            {
-                              kind: 'Field',
-                              name: { kind: 'Name', value: 'wallet' },
-                              selectionSet: {
-                                kind: 'SelectionSet',
-                                selections: [
-                                  { kind: 'Field', name: { kind: 'Name', value: 'address' } },
-                                  {
-                                    kind: 'Field',
-                                    name: { kind: 'Name', value: 'defaultProfile' },
-                                    selectionSet: {
-                                      kind: 'SelectionSet',
-                                      selections: [
-                                        {
-                                          kind: 'FragmentSpread',
-                                          name: { kind: 'Name', value: 'ProfileFields' }
-                                        }
-                                      ]
-                                    }
-                                  }
-                                ]
-                              }
-                            },
-                            { kind: 'Field', name: { kind: 'Name', value: 'createdAt' } }
-                          ]
-                        }
-                      },
-                      {
-                        kind: 'InlineFragment',
-                        typeCondition: {
-                          kind: 'NamedType',
-                          name: { kind: 'Name', value: 'NewMentionNotification' }
-                        },
-                        selectionSet: {
-                          kind: 'SelectionSet',
-                          selections: [
-                            { kind: 'Field', name: { kind: 'Name', value: 'notificationId' } },
-                            {
-                              kind: 'Field',
-                              name: { kind: 'Name', value: 'mentionPublication' },
-                              selectionSet: {
-                                kind: 'SelectionSet',
-                                selections: [
-                                  {
-                                    kind: 'InlineFragment',
-                                    typeCondition: {
-                                      kind: 'NamedType',
-                                      name: { kind: 'Name', value: 'Post' }
-                                    },
-                                    selectionSet: {
-                                      kind: 'SelectionSet',
-                                      selections: [
-                                        { kind: 'Field', name: { kind: 'Name', value: 'id' } },
-                                        {
-                                          kind: 'Field',
-                                          name: { kind: 'Name', value: 'profile' },
-                                          selectionSet: {
-                                            kind: 'SelectionSet',
-                                            selections: [
-                                              {
-                                                kind: 'FragmentSpread',
-                                                name: { kind: 'Name', value: 'ProfileFields' }
-                                              }
-                                            ]
-                                          }
-                                        },
-                                        {
-                                          kind: 'Field',
-                                          name: { kind: 'Name', value: 'metadata' },
-                                          selectionSet: {
-                                            kind: 'SelectionSet',
-                                            selections: [
-                                              { kind: 'Field', name: { kind: 'Name', value: 'content' } }
-                                            ]
-                                          }
-                                        }
-                                      ]
-                                    }
-                                  },
-                                  {
-                                    kind: 'InlineFragment',
-                                    typeCondition: {
-                                      kind: 'NamedType',
-                                      name: { kind: 'Name', value: 'Comment' }
-                                    },
-                                    selectionSet: {
-                                      kind: 'SelectionSet',
-                                      selections: [
-                                        { kind: 'Field', name: { kind: 'Name', value: 'id' } },
-                                        {
-                                          kind: 'Field',
-                                          name: { kind: 'Name', value: 'profile' },
-                                          selectionSet: {
-                                            kind: 'SelectionSet',
-                                            selections: [
-                                              {
-                                                kind: 'FragmentSpread',
-                                                name: { kind: 'Name', value: 'ProfileFields' }
-                                              }
-                                            ]
-                                          }
-                                        },
-                                        {
-                                          kind: 'Field',
-                                          name: { kind: 'Name', value: 'metadata' },
-                                          selectionSet: {
-                                            kind: 'SelectionSet',
-                                            selections: [
-                                              { kind: 'Field', name: { kind: 'Name', value: 'content' } }
-                                            ]
-                                          }
-                                        }
-                                      ]
-                                    }
-                                  }
-                                ]
-                              }
-                            },
-                            { kind: 'Field', name: { kind: 'Name', value: 'createdAt' } }
-                          ]
-                        }
-                      },
-                      {
-                        kind: 'InlineFragment',
-                        typeCondition: {
-                          kind: 'NamedType',
-                          name: { kind: 'Name', value: 'NewReactionNotification' }
-                        },
-                        selectionSet: {
-                          kind: 'SelectionSet',
-                          selections: [
-                            { kind: 'Field', name: { kind: 'Name', value: 'notificationId' } },
-                            {
-                              kind: 'Field',
-                              name: { kind: 'Name', value: 'profile' },
-                              selectionSet: {
-                                kind: 'SelectionSet',
-                                selections: [
-                                  { kind: 'FragmentSpread', name: { kind: 'Name', value: 'ProfileFields' } }
-                                ]
-                              }
-                            },
-                            {
-                              kind: 'Field',
-                              name: { kind: 'Name', value: 'publication' },
-                              selectionSet: {
-                                kind: 'SelectionSet',
-                                selections: [
-                                  {
-                                    kind: 'InlineFragment',
-                                    typeCondition: {
-                                      kind: 'NamedType',
-                                      name: { kind: 'Name', value: 'Post' }
-                                    },
-                                    selectionSet: {
-                                      kind: 'SelectionSet',
-                                      selections: [
-                                        { kind: 'Field', name: { kind: 'Name', value: 'id' } },
-                                        {
-                                          kind: 'Field',
-                                          name: { kind: 'Name', value: 'metadata' },
-                                          selectionSet: {
-                                            kind: 'SelectionSet',
-                                            selections: [
-                                              { kind: 'Field', name: { kind: 'Name', value: 'content' } }
-                                            ]
-                                          }
-                                        }
-                                      ]
-                                    }
-                                  },
-                                  {
-                                    kind: 'InlineFragment',
-                                    typeCondition: {
-                                      kind: 'NamedType',
-                                      name: { kind: 'Name', value: 'Comment' }
-                                    },
-                                    selectionSet: {
-                                      kind: 'SelectionSet',
-                                      selections: [
-                                        { kind: 'Field', name: { kind: 'Name', value: 'id' } },
-                                        {
-                                          kind: 'Field',
-                                          name: { kind: 'Name', value: 'metadata' },
-                                          selectionSet: {
-                                            kind: 'SelectionSet',
-                                            selections: [
-                                              { kind: 'Field', name: { kind: 'Name', value: 'content' } }
-                                            ]
-                                          }
-                                        }
-                                      ]
-                                    }
-                                  },
-                                  {
-                                    kind: 'InlineFragment',
-                                    typeCondition: {
-                                      kind: 'NamedType',
-                                      name: { kind: 'Name', value: 'Mirror' }
-                                    },
-                                    selectionSet: {
-                                      kind: 'SelectionSet',
-                                      selections: [
-                                        { kind: 'Field', name: { kind: 'Name', value: 'id' } },
-                                        {
-                                          kind: 'Field',
-                                          name: { kind: 'Name', value: 'metadata' },
-                                          selectionSet: {
-                                            kind: 'SelectionSet',
-                                            selections: [
-                                              { kind: 'Field', name: { kind: 'Name', value: 'content' } }
-                                            ]
-                                          }
-                                        }
-                                      ]
-                                    }
-                                  }
-                                ]
-                              }
-                            },
-                            { kind: 'Field', name: { kind: 'Name', value: 'createdAt' } }
-                          ]
-                        }
-                      },
-                      {
-                        kind: 'InlineFragment',
-                        typeCondition: {
-                          kind: 'NamedType',
-                          name: { kind: 'Name', value: 'NewCommentNotification' }
-                        },
-                        selectionSet: {
-                          kind: 'SelectionSet',
-                          selections: [
-                            { kind: 'Field', name: { kind: 'Name', value: 'notificationId' } },
-                            {
-                              kind: 'Field',
-                              name: { kind: 'Name', value: 'profile' },
-                              selectionSet: {
-                                kind: 'SelectionSet',
-                                selections: [
-                                  { kind: 'FragmentSpread', name: { kind: 'Name', value: 'ProfileFields' } }
-                                ]
-                              }
-                            },
-                            {
-                              kind: 'Field',
-                              name: { kind: 'Name', value: 'comment' },
-                              selectionSet: {
-                                kind: 'SelectionSet',
-                                selections: [
-                                  { kind: 'Field', name: { kind: 'Name', value: 'id' } },
-                                  {
-                                    kind: 'Field',
-                                    name: { kind: 'Name', value: 'metadata' },
-                                    selectionSet: {
-                                      kind: 'SelectionSet',
-                                      selections: [
-                                        { kind: 'Field', name: { kind: 'Name', value: 'content' } }
-                                      ]
-                                    }
-                                  },
-                                  {
-                                    kind: 'Field',
-                                    name: { kind: 'Name', value: 'commentOn' },
-                                    selectionSet: {
-                                      kind: 'SelectionSet',
-                                      selections: [
-                                        {
-                                          kind: 'InlineFragment',
-                                          typeCondition: {
-                                            kind: 'NamedType',
-                                            name: { kind: 'Name', value: 'Post' }
-                                          },
-                                          selectionSet: {
-                                            kind: 'SelectionSet',
-                                            selections: [
-                                              { kind: 'Field', name: { kind: 'Name', value: 'id' } }
-                                            ]
-                                          }
-                                        },
-                                        {
-                                          kind: 'InlineFragment',
-                                          typeCondition: {
-                                            kind: 'NamedType',
-                                            name: { kind: 'Name', value: 'Comment' }
-                                          },
-                                          selectionSet: {
-                                            kind: 'SelectionSet',
-                                            selections: [
-                                              { kind: 'Field', name: { kind: 'Name', value: 'id' } }
-                                            ]
-                                          }
-                                        },
-                                        {
-                                          kind: 'InlineFragment',
-                                          typeCondition: {
-                                            kind: 'NamedType',
-                                            name: { kind: 'Name', value: 'Mirror' }
-                                          },
-                                          selectionSet: {
-                                            kind: 'SelectionSet',
-                                            selections: [
-                                              { kind: 'Field', name: { kind: 'Name', value: 'id' } }
-                                            ]
-                                          }
-                                        }
-                                      ]
-                                    }
-                                  }
-                                ]
-                              }
-                            },
-                            { kind: 'Field', name: { kind: 'Name', value: 'createdAt' } }
-                          ]
-                        }
-                      },
-                      {
-                        kind: 'InlineFragment',
-                        typeCondition: {
-                          kind: 'NamedType',
-                          name: { kind: 'Name', value: 'NewMirrorNotification' }
-                        },
-                        selectionSet: {
-                          kind: 'SelectionSet',
-                          selections: [
-                            { kind: 'Field', name: { kind: 'Name', value: 'notificationId' } },
-                            {
-                              kind: 'Field',
-                              name: { kind: 'Name', value: 'profile' },
-                              selectionSet: {
-                                kind: 'SelectionSet',
-                                selections: [
-                                  { kind: 'FragmentSpread', name: { kind: 'Name', value: 'ProfileFields' } }
-                                ]
-                              }
-                            },
-                            {
-                              kind: 'Field',
-                              name: { kind: 'Name', value: 'publication' },
-                              selectionSet: {
-                                kind: 'SelectionSet',
-                                selections: [
-                                  {
-                                    kind: 'InlineFragment',
-                                    typeCondition: {
-                                      kind: 'NamedType',
-                                      name: { kind: 'Name', value: 'Post' }
-                                    },
-                                    selectionSet: {
-                                      kind: 'SelectionSet',
-                                      selections: [
-                                        { kind: 'Field', name: { kind: 'Name', value: 'id' } },
-                                        {
-                                          kind: 'Field',
-                                          name: { kind: 'Name', value: 'metadata' },
-                                          selectionSet: {
-                                            kind: 'SelectionSet',
-                                            selections: [
-                                              { kind: 'Field', name: { kind: 'Name', value: 'content' } }
-                                            ]
-                                          }
-                                        }
-                                      ]
-                                    }
-                                  },
-                                  {
-                                    kind: 'InlineFragment',
-                                    typeCondition: {
-                                      kind: 'NamedType',
-                                      name: { kind: 'Name', value: 'Comment' }
-                                    },
-                                    selectionSet: {
-                                      kind: 'SelectionSet',
-                                      selections: [
-                                        { kind: 'Field', name: { kind: 'Name', value: 'id' } },
-                                        {
-                                          kind: 'Field',
-                                          name: { kind: 'Name', value: 'metadata' },
-                                          selectionSet: {
-                                            kind: 'SelectionSet',
-                                            selections: [
-                                              { kind: 'Field', name: { kind: 'Name', value: 'content' } }
-                                            ]
-                                          }
-                                        }
-                                      ]
-                                    }
-                                  }
-                                ]
-                              }
-                            },
-                            { kind: 'Field', name: { kind: 'Name', value: 'createdAt' } }
-                          ]
-                        }
-                      },
-                      {
-                        kind: 'InlineFragment',
-                        typeCondition: {
-                          kind: 'NamedType',
-                          name: { kind: 'Name', value: 'NewCollectNotification' }
-                        },
-                        selectionSet: {
-                          kind: 'SelectionSet',
-                          selections: [
-                            { kind: 'Field', name: { kind: 'Name', value: 'notificationId' } },
-                            {
-                              kind: 'Field',
-                              name: { kind: 'Name', value: 'wallet' },
-                              selectionSet: {
-                                kind: 'SelectionSet',
-                                selections: [
-                                  { kind: 'Field', name: { kind: 'Name', value: 'address' } },
-                                  {
-                                    kind: 'Field',
-                                    name: { kind: 'Name', value: 'defaultProfile' },
-                                    selectionSet: {
-                                      kind: 'SelectionSet',
-                                      selections: [
-                                        {
-                                          kind: 'FragmentSpread',
-                                          name: { kind: 'Name', value: 'ProfileFields' }
-                                        }
-                                      ]
-                                    }
-                                  }
-                                ]
-                              }
-                            },
-                            {
-                              kind: 'Field',
-                              name: { kind: 'Name', value: 'collectedPublication' },
-                              selectionSet: {
-                                kind: 'SelectionSet',
-                                selections: [
-                                  {
-                                    kind: 'InlineFragment',
-                                    typeCondition: {
-                                      kind: 'NamedType',
-                                      name: { kind: 'Name', value: 'Post' }
-                                    },
-                                    selectionSet: {
-                                      kind: 'SelectionSet',
-                                      selections: [
-                                        { kind: 'Field', name: { kind: 'Name', value: 'id' } },
-                                        {
-                                          kind: 'Field',
-                                          name: { kind: 'Name', value: 'metadata' },
-                                          selectionSet: {
-                                            kind: 'SelectionSet',
-                                            selections: [
-                                              { kind: 'Field', name: { kind: 'Name', value: 'content' } }
-                                            ]
-                                          }
-                                        },
-                                        {
-                                          kind: 'Field',
-                                          name: { kind: 'Name', value: 'collectModule' },
-                                          selectionSet: {
-                                            kind: 'SelectionSet',
-                                            selections: [
-                                              {
-                                                kind: 'FragmentSpread',
-                                                name: { kind: 'Name', value: 'CollectModuleFields' }
-                                              }
-                                            ]
-                                          }
-                                        }
-                                      ]
-                                    }
-                                  },
-                                  {
-                                    kind: 'InlineFragment',
-                                    typeCondition: {
-                                      kind: 'NamedType',
-                                      name: { kind: 'Name', value: 'Comment' }
-                                    },
-                                    selectionSet: {
-                                      kind: 'SelectionSet',
-                                      selections: [
-                                        { kind: 'Field', name: { kind: 'Name', value: 'id' } },
-                                        {
-                                          kind: 'Field',
-                                          name: { kind: 'Name', value: 'metadata' },
-                                          selectionSet: {
-                                            kind: 'SelectionSet',
-                                            selections: [
-                                              { kind: 'Field', name: { kind: 'Name', value: 'content' } }
-                                            ]
-                                          }
-                                        },
-                                        {
-                                          kind: 'Field',
-                                          name: { kind: 'Name', value: 'collectModule' },
-                                          selectionSet: {
-                                            kind: 'SelectionSet',
-                                            selections: [
-                                              {
-                                                kind: 'FragmentSpread',
-                                                name: { kind: 'Name', value: 'CollectModuleFields' }
-                                              }
-                                            ]
-                                          }
-                                        }
-                                      ]
-                                    }
-                                  }
-                                ]
-                              }
-                            },
-                            { kind: 'Field', name: { kind: 'Name', value: 'createdAt' } }
-                          ]
-                        }
-                      }
-                    ]
-                  }
-                },
-                {
-                  kind: 'Field',
-                  name: { kind: 'Name', value: 'pageInfo' },
-                  selectionSet: {
-                    kind: 'SelectionSet',
-                    selections: [
-                      { kind: 'Field', name: { kind: 'Name', value: 'totalCount' } },
-                      { kind: 'Field', name: { kind: 'Name', value: 'next' } }
-                    ]
-                  }
-                }
-              ]
-            }
-          }
-        ]
-      }
-    },
-    ...ProfileFieldsFragmentDoc.definitions,
-    ...CollectModuleFieldsFragmentDoc.definitions
-  ]
-} as unknown as DocumentNode<NotificationsQuery, NotificationsQueryVariables>
-export const ProfileDocument = {
-  kind: 'Document',
-  definitions: [
-    {
-      kind: 'OperationDefinition',
-      operation: 'query',
-      name: { kind: 'Name', value: 'Profile' },
-      variableDefinitions: [
-        {
-          kind: 'VariableDefinition',
-          variable: { kind: 'Variable', name: { kind: 'Name', value: 'request' } },
-          type: {
-            kind: 'NonNullType',
-            type: { kind: 'NamedType', name: { kind: 'Name', value: 'SingleProfileQueryRequest' } }
-          }
-        },
-        {
-          kind: 'VariableDefinition',
-          variable: { kind: 'Variable', name: { kind: 'Name', value: 'who' } },
-          type: { kind: 'NamedType', name: { kind: 'Name', value: 'ProfileId' } }
-        }
-      ],
-      selectionSet: {
-        kind: 'SelectionSet',
-        selections: [
-          {
-            kind: 'Field',
-            name: { kind: 'Name', value: 'profile' },
-            arguments: [
-              {
-                kind: 'Argument',
-                name: { kind: 'Name', value: 'request' },
-                value: { kind: 'Variable', name: { kind: 'Name', value: 'request' } }
-              }
-            ],
-            selectionSet: {
-              kind: 'SelectionSet',
-              selections: [
-                { kind: 'Field', name: { kind: 'Name', value: 'id' } },
-                { kind: 'Field', name: { kind: 'Name', value: 'handle' } },
-                { kind: 'Field', name: { kind: 'Name', value: 'ownedBy' } },
-                { kind: 'Field', name: { kind: 'Name', value: 'name' } },
-                { kind: 'Field', name: { kind: 'Name', value: 'bio' } },
-                { kind: 'Field', name: { kind: 'Name', value: 'metadata' } },
-                { kind: 'Field', name: { kind: 'Name', value: 'followNftAddress' } },
-                { kind: 'Field', name: { kind: 'Name', value: 'isFollowedByMe' } },
-                {
-                  kind: 'Field',
-                  name: { kind: 'Name', value: 'isFollowing' },
-                  arguments: [
-                    {
-                      kind: 'Argument',
-                      name: { kind: 'Name', value: 'who' },
-                      value: { kind: 'Variable', name: { kind: 'Name', value: 'who' } }
-                    }
-                  ]
-                },
-                {
-                  kind: 'Field',
-                  name: { kind: 'Name', value: 'attributes' },
-                  selectionSet: {
-                    kind: 'SelectionSet',
-                    selections: [
-                      { kind: 'Field', name: { kind: 'Name', value: 'key' } },
-                      { kind: 'Field', name: { kind: 'Name', value: 'value' } }
-                    ]
-                  }
-                },
-                {
-                  kind: 'Field',
-                  name: { kind: 'Name', value: 'dispatcher' },
-                  selectionSet: {
-                    kind: 'SelectionSet',
-                    selections: [{ kind: 'Field', name: { kind: 'Name', value: 'canUseRelay' } }]
-                  }
-                },
-                {
-                  kind: 'Field',
-                  name: { kind: 'Name', value: 'onChainIdentity' },
-                  selectionSet: {
-                    kind: 'SelectionSet',
-                    selections: [
-                      { kind: 'Field', name: { kind: 'Name', value: 'proofOfHumanity' } },
-                      {
-                        kind: 'Field',
-                        name: { kind: 'Name', value: 'sybilDotOrg' },
-                        selectionSet: {
-                          kind: 'SelectionSet',
-                          selections: [
-                            { kind: 'Field', name: { kind: 'Name', value: 'verified' } },
-                            {
-                              kind: 'Field',
-                              name: { kind: 'Name', value: 'source' },
-                              selectionSet: {
-                                kind: 'SelectionSet',
-                                selections: [
-                                  {
-                                    kind: 'Field',
-                                    name: { kind: 'Name', value: 'twitter' },
-                                    selectionSet: {
-                                      kind: 'SelectionSet',
-                                      selections: [{ kind: 'Field', name: { kind: 'Name', value: 'handle' } }]
-                                    }
-                                  }
-                                ]
-                              }
-                            }
-                          ]
-                        }
-                      },
-                      {
-                        kind: 'Field',
-                        name: { kind: 'Name', value: 'ens' },
-                        selectionSet: {
-                          kind: 'SelectionSet',
-                          selections: [{ kind: 'Field', name: { kind: 'Name', value: 'name' } }]
-                        }
-                      },
-                      {
-                        kind: 'Field',
-                        name: { kind: 'Name', value: 'worldcoin' },
-                        selectionSet: {
-                          kind: 'SelectionSet',
-                          selections: [{ kind: 'Field', name: { kind: 'Name', value: 'isHuman' } }]
-                        }
-                      }
-                    ]
-                  }
-                },
-                {
-                  kind: 'Field',
-                  name: { kind: 'Name', value: 'stats' },
-                  selectionSet: {
-                    kind: 'SelectionSet',
-                    selections: [
-                      { kind: 'Field', name: { kind: 'Name', value: 'totalFollowers' } },
-                      { kind: 'Field', name: { kind: 'Name', value: 'totalFollowing' } },
-                      { kind: 'Field', name: { kind: 'Name', value: 'totalPosts' } },
-                      { kind: 'Field', name: { kind: 'Name', value: 'totalComments' } },
-                      { kind: 'Field', name: { kind: 'Name', value: 'totalMirrors' } }
-                    ]
-                  }
-                },
-                {
-                  kind: 'Field',
-                  name: { kind: 'Name', value: 'picture' },
-                  selectionSet: {
-                    kind: 'SelectionSet',
-                    selections: [
-                      {
-                        kind: 'InlineFragment',
-                        typeCondition: { kind: 'NamedType', name: { kind: 'Name', value: 'MediaSet' } },
-                        selectionSet: {
-                          kind: 'SelectionSet',
-                          selections: [
-                            {
-                              kind: 'Field',
-                              name: { kind: 'Name', value: 'original' },
-                              selectionSet: {
-                                kind: 'SelectionSet',
-                                selections: [{ kind: 'Field', name: { kind: 'Name', value: 'url' } }]
-                              }
-                            }
-                          ]
-                        }
-                      },
-                      {
-                        kind: 'InlineFragment',
-                        typeCondition: { kind: 'NamedType', name: { kind: 'Name', value: 'NftImage' } },
-                        selectionSet: {
-                          kind: 'SelectionSet',
-                          selections: [{ kind: 'Field', name: { kind: 'Name', value: 'uri' } }]
-                        }
-                      }
-                    ]
-                  }
-                },
-                {
-                  kind: 'Field',
-                  name: { kind: 'Name', value: 'coverPicture' },
-                  selectionSet: {
-                    kind: 'SelectionSet',
-                    selections: [
-                      {
-                        kind: 'InlineFragment',
-                        typeCondition: { kind: 'NamedType', name: { kind: 'Name', value: 'MediaSet' } },
-                        selectionSet: {
-                          kind: 'SelectionSet',
-                          selections: [
-                            {
-                              kind: 'Field',
-                              name: { kind: 'Name', value: 'original' },
-                              selectionSet: {
-                                kind: 'SelectionSet',
-                                selections: [{ kind: 'Field', name: { kind: 'Name', value: 'url' } }]
-                              }
-                            }
-                          ]
-                        }
-                      }
-                    ]
-                  }
-                },
-                {
-                  kind: 'Field',
-                  name: { kind: 'Name', value: 'followModule' },
-                  selectionSet: {
-                    kind: 'SelectionSet',
-                    selections: [{ kind: 'Field', name: { kind: 'Name', value: '__typename' } }]
-                  }
-                }
-              ]
-            }
-          }
-        ]
-      }
-    }
-  ]
-} as unknown as DocumentNode<ProfileQuery, ProfileQueryVariables>
-export const ProfileAddressDocument = {
-  kind: 'Document',
-  definitions: [
-    {
-      kind: 'OperationDefinition',
-      operation: 'query',
-      name: { kind: 'Name', value: 'ProfileAddress' },
-      variableDefinitions: [
-        {
-          kind: 'VariableDefinition',
-          variable: { kind: 'Variable', name: { kind: 'Name', value: 'request' } },
-          type: {
-            kind: 'NonNullType',
-            type: { kind: 'NamedType', name: { kind: 'Name', value: 'SingleProfileQueryRequest' } }
-          }
-        }
-      ],
-      selectionSet: {
-        kind: 'SelectionSet',
-        selections: [
-          {
-            kind: 'Field',
-            name: { kind: 'Name', value: 'profile' },
-            arguments: [
-              {
-                kind: 'Argument',
-                name: { kind: 'Name', value: 'request' },
-                value: { kind: 'Variable', name: { kind: 'Name', value: 'request' } }
-              }
-            ],
-            selectionSet: {
-              kind: 'SelectionSet',
-              selections: [
-                { kind: 'Field', name: { kind: 'Name', value: 'id' } },
-                { kind: 'Field', name: { kind: 'Name', value: 'ownedBy' } }
-              ]
-            }
-          }
-        ]
-      }
-    }
-  ]
-} as unknown as DocumentNode<ProfileAddressQuery, ProfileAddressQueryVariables>
-export const ProfileFeedDocument = {
-  kind: 'Document',
-  definitions: [
-    {
-      kind: 'OperationDefinition',
-      operation: 'query',
-      name: { kind: 'Name', value: 'ProfileFeed' },
-      variableDefinitions: [
-        {
-          kind: 'VariableDefinition',
-          variable: { kind: 'Variable', name: { kind: 'Name', value: 'request' } },
-          type: {
-            kind: 'NonNullType',
-            type: { kind: 'NamedType', name: { kind: 'Name', value: 'PublicationsQueryRequest' } }
-          }
-        },
-        {
-          kind: 'VariableDefinition',
-          variable: { kind: 'Variable', name: { kind: 'Name', value: 'reactionRequest' } },
-          type: { kind: 'NamedType', name: { kind: 'Name', value: 'ReactionFieldResolverRequest' } }
-        },
-        {
-          kind: 'VariableDefinition',
-          variable: { kind: 'Variable', name: { kind: 'Name', value: 'profileId' } },
-          type: { kind: 'NamedType', name: { kind: 'Name', value: 'ProfileId' } }
-        }
-      ],
-      selectionSet: {
-        kind: 'SelectionSet',
-        selections: [
-          {
-            kind: 'Field',
-            name: { kind: 'Name', value: 'publications' },
-            arguments: [
-              {
-                kind: 'Argument',
-                name: { kind: 'Name', value: 'request' },
-                value: { kind: 'Variable', name: { kind: 'Name', value: 'request' } }
-              }
-            ],
-            selectionSet: {
-              kind: 'SelectionSet',
-              selections: [
-                {
-                  kind: 'Field',
-                  name: { kind: 'Name', value: 'items' },
-                  selectionSet: {
-                    kind: 'SelectionSet',
-                    selections: [
-                      {
-                        kind: 'InlineFragment',
-                        typeCondition: { kind: 'NamedType', name: { kind: 'Name', value: 'Post' } },
-                        selectionSet: {
-                          kind: 'SelectionSet',
-                          selections: [
-                            { kind: 'FragmentSpread', name: { kind: 'Name', value: 'PostFields' } }
-                          ]
-                        }
-                      },
-                      {
-                        kind: 'InlineFragment',
-                        typeCondition: { kind: 'NamedType', name: { kind: 'Name', value: 'Comment' } },
-                        selectionSet: {
-                          kind: 'SelectionSet',
-                          selections: [
-                            { kind: 'FragmentSpread', name: { kind: 'Name', value: 'CommentFields' } }
-                          ]
-                        }
-                      },
-                      {
-                        kind: 'InlineFragment',
-                        typeCondition: { kind: 'NamedType', name: { kind: 'Name', value: 'Mirror' } },
-                        selectionSet: {
-                          kind: 'SelectionSet',
-                          selections: [
-                            { kind: 'FragmentSpread', name: { kind: 'Name', value: 'MirrorFields' } }
-                          ]
-                        }
-                      }
-                    ]
-                  }
-                },
-                {
-                  kind: 'Field',
-                  name: { kind: 'Name', value: 'pageInfo' },
-                  selectionSet: {
-                    kind: 'SelectionSet',
-                    selections: [
-                      { kind: 'Field', name: { kind: 'Name', value: 'totalCount' } },
-                      { kind: 'Field', name: { kind: 'Name', value: 'next' } }
-                    ]
-                  }
-                }
-              ]
-            }
-          }
-        ]
-      }
-    },
-    ...PostFieldsFragmentDoc.definitions,
-    ...ProfileFieldsFragmentDoc.definitions,
-    ...CollectModuleFieldsFragmentDoc.definitions,
-    ...StatsFieldsFragmentDoc.definitions,
-    ...MetadataFieldsFragmentDoc.definitions,
-    ...CommentFieldsFragmentDoc.definitions,
-    ...MirrorFieldsFragmentDoc.definitions
-  ]
-} as unknown as DocumentNode<ProfileFeedQuery, ProfileFeedQueryVariables>
-export const ProfileNftFeedDocument = {
-  kind: 'Document',
-  definitions: [
-    {
-      kind: 'OperationDefinition',
-      operation: 'query',
-      name: { kind: 'Name', value: 'ProfileNFTFeed' },
-      variableDefinitions: [
-        {
-          kind: 'VariableDefinition',
-          variable: { kind: 'Variable', name: { kind: 'Name', value: 'request' } },
-          type: {
-            kind: 'NonNullType',
-            type: { kind: 'NamedType', name: { kind: 'Name', value: 'NFTsRequest' } }
-          }
-        }
-      ],
-      selectionSet: {
-        kind: 'SelectionSet',
-        selections: [
-          {
-            kind: 'Field',
-            name: { kind: 'Name', value: 'nfts' },
-            arguments: [
-              {
-                kind: 'Argument',
-                name: { kind: 'Name', value: 'request' },
-                value: { kind: 'Variable', name: { kind: 'Name', value: 'request' } }
-              }
-            ],
-            selectionSet: {
-              kind: 'SelectionSet',
-              selections: [
-                {
-                  kind: 'Field',
-                  name: { kind: 'Name', value: 'items' },
-                  selectionSet: {
-                    kind: 'SelectionSet',
-                    selections: [{ kind: 'Field', name: { kind: 'Name', value: 'contentURI' } }]
-                  }
-                },
-                {
-                  kind: 'Field',
-                  name: { kind: 'Name', value: 'pageInfo' },
-                  selectionSet: {
-                    kind: 'SelectionSet',
-                    selections: [
-                      { kind: 'Field', name: { kind: 'Name', value: 'next' } },
-                      { kind: 'Field', name: { kind: 'Name', value: 'totalCount' } }
-                    ]
-                  }
-                }
-              ]
-            }
-          }
-        ]
-      }
-    }
-  ]
-} as unknown as DocumentNode<ProfileNftFeedQuery, ProfileNftFeedQueryVariables>
-export const ProfileSettingsDocument = {
-  kind: 'Document',
-  definitions: [
-    {
-      kind: 'OperationDefinition',
-      operation: 'query',
-      name: { kind: 'Name', value: 'ProfileSettings' },
-      variableDefinitions: [
-        {
-          kind: 'VariableDefinition',
-          variable: { kind: 'Variable', name: { kind: 'Name', value: 'request' } },
-          type: {
-            kind: 'NonNullType',
-            type: { kind: 'NamedType', name: { kind: 'Name', value: 'SingleProfileQueryRequest' } }
-          }
-        }
-      ],
-      selectionSet: {
-        kind: 'SelectionSet',
-        selections: [
-          {
-            kind: 'Field',
-            name: { kind: 'Name', value: 'profile' },
-            arguments: [
-              {
-                kind: 'Argument',
-                name: { kind: 'Name', value: 'request' },
-                value: { kind: 'Variable', name: { kind: 'Name', value: 'request' } }
-              }
-            ],
-            selectionSet: {
-              kind: 'SelectionSet',
-              selections: [
-                { kind: 'Field', name: { kind: 'Name', value: 'id' } },
-                { kind: 'Field', name: { kind: 'Name', value: 'name' } },
-                { kind: 'Field', name: { kind: 'Name', value: 'bio' } },
-                {
-                  kind: 'Field',
-                  name: { kind: 'Name', value: 'attributes' },
-                  selectionSet: {
-                    kind: 'SelectionSet',
-                    selections: [
-                      { kind: 'Field', name: { kind: 'Name', value: 'key' } },
-                      { kind: 'Field', name: { kind: 'Name', value: 'value' } }
-                    ]
-                  }
-                },
-                {
-                  kind: 'Field',
-                  name: { kind: 'Name', value: 'coverPicture' },
-                  selectionSet: {
-                    kind: 'SelectionSet',
-                    selections: [
-                      {
-                        kind: 'InlineFragment',
-                        typeCondition: { kind: 'NamedType', name: { kind: 'Name', value: 'MediaSet' } },
-                        selectionSet: {
-                          kind: 'SelectionSet',
-                          selections: [
-                            {
-                              kind: 'Field',
-                              name: { kind: 'Name', value: 'original' },
-                              selectionSet: {
-                                kind: 'SelectionSet',
-                                selections: [{ kind: 'Field', name: { kind: 'Name', value: 'url' } }]
-                              }
-                            }
-                          ]
-                        }
-                      }
-                    ]
-                  }
-                },
-                {
-                  kind: 'Field',
-                  name: { kind: 'Name', value: 'picture' },
-                  selectionSet: {
-                    kind: 'SelectionSet',
-                    selections: [
-                      {
-                        kind: 'InlineFragment',
-                        typeCondition: { kind: 'NamedType', name: { kind: 'Name', value: 'MediaSet' } },
-                        selectionSet: {
-                          kind: 'SelectionSet',
-                          selections: [
-                            {
-                              kind: 'Field',
-                              name: { kind: 'Name', value: 'original' },
-                              selectionSet: {
-                                kind: 'SelectionSet',
-                                selections: [{ kind: 'Field', name: { kind: 'Name', value: 'url' } }]
-                              }
-                            }
-                          ]
-                        }
-                      },
-                      {
-                        kind: 'InlineFragment',
-                        typeCondition: { kind: 'NamedType', name: { kind: 'Name', value: 'NftImage' } },
-                        selectionSet: {
-                          kind: 'SelectionSet',
-                          selections: [
-                            { kind: 'Field', name: { kind: 'Name', value: 'uri' } },
-                            { kind: 'Field', name: { kind: 'Name', value: 'tokenId' } },
-                            { kind: 'Field', name: { kind: 'Name', value: 'contractAddress' } }
-                          ]
-                        }
-                      }
-                    ]
-                  }
-                }
-              ]
-            }
-          }
-        ]
-      }
-    }
-  ]
-} as unknown as DocumentNode<ProfileSettingsQuery, ProfileSettingsQueryVariables>
-export const ProfilesDocument = {
-  kind: 'Document',
-  definitions: [
-    {
-      kind: 'OperationDefinition',
-      operation: 'query',
-      name: { kind: 'Name', value: 'Profiles' },
-      variableDefinitions: [
-        {
-          kind: 'VariableDefinition',
-          variable: { kind: 'Variable', name: { kind: 'Name', value: 'request' } },
-          type: {
-            kind: 'NonNullType',
-            type: { kind: 'NamedType', name: { kind: 'Name', value: 'ProfileQueryRequest' } }
-          }
-        }
-      ],
-      selectionSet: {
-        kind: 'SelectionSet',
-        selections: [
-          {
-            kind: 'Field',
-            name: { kind: 'Name', value: 'profiles' },
-            arguments: [
-              {
-                kind: 'Argument',
-                name: { kind: 'Name', value: 'request' },
-                value: { kind: 'Variable', name: { kind: 'Name', value: 'request' } }
-              }
-            ],
-            selectionSet: {
-              kind: 'SelectionSet',
-              selections: [
-                {
-                  kind: 'Field',
-                  name: { kind: 'Name', value: 'items' },
-                  selectionSet: {
-                    kind: 'SelectionSet',
-                    selections: [
-                      { kind: 'FragmentSpread', name: { kind: 'Name', value: 'ProfileFields' } },
-                      { kind: 'Field', name: { kind: 'Name', value: 'isDefault' } },
-                      { kind: 'Field', name: { kind: 'Name', value: 'isFollowedByMe' } }
-                    ]
-                  }
-                },
-                {
-                  kind: 'Field',
-                  name: { kind: 'Name', value: 'pageInfo' },
-                  selectionSet: {
-                    kind: 'SelectionSet',
-                    selections: [
-                      { kind: 'Field', name: { kind: 'Name', value: 'next' } },
-                      { kind: 'Field', name: { kind: 'Name', value: 'totalCount' } }
-                    ]
-                  }
-                }
-              ]
-            }
-          }
-        ]
-      }
-    },
-    ...ProfileFieldsFragmentDoc.definitions
-  ]
-} as unknown as DocumentNode<ProfilesQuery, ProfilesQueryVariables>
-export const PublicationDocument = {
-  kind: 'Document',
-  definitions: [
-    {
-      kind: 'OperationDefinition',
-      operation: 'query',
-      name: { kind: 'Name', value: 'Publication' },
-      variableDefinitions: [
-        {
-          kind: 'VariableDefinition',
-          variable: { kind: 'Variable', name: { kind: 'Name', value: 'request' } },
-          type: {
-            kind: 'NonNullType',
-            type: { kind: 'NamedType', name: { kind: 'Name', value: 'PublicationQueryRequest' } }
-          }
-        },
-        {
-          kind: 'VariableDefinition',
-          variable: { kind: 'Variable', name: { kind: 'Name', value: 'reactionRequest' } },
-          type: { kind: 'NamedType', name: { kind: 'Name', value: 'ReactionFieldResolverRequest' } }
-        },
-        {
-          kind: 'VariableDefinition',
-          variable: { kind: 'Variable', name: { kind: 'Name', value: 'profileId' } },
-          type: { kind: 'NamedType', name: { kind: 'Name', value: 'ProfileId' } }
-        }
-      ],
-      selectionSet: {
-        kind: 'SelectionSet',
-        selections: [
-          {
-            kind: 'Field',
-            name: { kind: 'Name', value: 'publication' },
-            arguments: [
-              {
-                kind: 'Argument',
-                name: { kind: 'Name', value: 'request' },
-                value: { kind: 'Variable', name: { kind: 'Name', value: 'request' } }
-              }
-            ],
-            selectionSet: {
-              kind: 'SelectionSet',
-              selections: [
-                {
-                  kind: 'InlineFragment',
-                  typeCondition: { kind: 'NamedType', name: { kind: 'Name', value: 'Post' } },
-                  selectionSet: {
-                    kind: 'SelectionSet',
-                    selections: [
-                      { kind: 'FragmentSpread', name: { kind: 'Name', value: 'PostFields' } },
-                      { kind: 'Field', name: { kind: 'Name', value: 'onChainContentURI' } },
-                      { kind: 'Field', name: { kind: 'Name', value: 'collectNftAddress' } },
-                      {
-                        kind: 'Field',
-                        name: { kind: 'Name', value: 'profile' },
-                        selectionSet: {
-                          kind: 'SelectionSet',
-                          selections: [{ kind: 'Field', name: { kind: 'Name', value: 'isFollowedByMe' } }]
-                        }
-                      },
-                      {
-                        kind: 'Field',
-                        name: { kind: 'Name', value: 'referenceModule' },
-                        selectionSet: {
-                          kind: 'SelectionSet',
-                          selections: [{ kind: 'Field', name: { kind: 'Name', value: '__typename' } }]
-                        }
-                      }
-                    ]
-                  }
-                },
-                {
-                  kind: 'InlineFragment',
-                  typeCondition: { kind: 'NamedType', name: { kind: 'Name', value: 'Comment' } },
-                  selectionSet: {
-                    kind: 'SelectionSet',
-                    selections: [
-                      { kind: 'FragmentSpread', name: { kind: 'Name', value: 'CommentFields' } },
-                      { kind: 'Field', name: { kind: 'Name', value: 'onChainContentURI' } },
-                      { kind: 'Field', name: { kind: 'Name', value: 'collectNftAddress' } },
-                      {
-                        kind: 'Field',
-                        name: { kind: 'Name', value: 'profile' },
-                        selectionSet: {
-                          kind: 'SelectionSet',
-                          selections: [{ kind: 'Field', name: { kind: 'Name', value: 'isFollowedByMe' } }]
-                        }
-                      },
-                      {
-                        kind: 'Field',
-                        name: { kind: 'Name', value: 'referenceModule' },
-                        selectionSet: {
-                          kind: 'SelectionSet',
-                          selections: [{ kind: 'Field', name: { kind: 'Name', value: '__typename' } }]
-                        }
-                      }
-                    ]
-                  }
-                },
-                {
-                  kind: 'InlineFragment',
-                  typeCondition: { kind: 'NamedType', name: { kind: 'Name', value: 'Mirror' } },
-                  selectionSet: {
-                    kind: 'SelectionSet',
-                    selections: [
-                      { kind: 'FragmentSpread', name: { kind: 'Name', value: 'MirrorFields' } },
-                      { kind: 'Field', name: { kind: 'Name', value: 'onChainContentURI' } },
-                      { kind: 'Field', name: { kind: 'Name', value: 'collectNftAddress' } },
-                      {
-                        kind: 'Field',
-                        name: { kind: 'Name', value: 'profile' },
-                        selectionSet: {
-                          kind: 'SelectionSet',
-                          selections: [{ kind: 'Field', name: { kind: 'Name', value: 'isFollowedByMe' } }]
-                        }
-                      },
-                      {
-                        kind: 'Field',
-                        name: { kind: 'Name', value: 'referenceModule' },
-                        selectionSet: {
-                          kind: 'SelectionSet',
-                          selections: [{ kind: 'Field', name: { kind: 'Name', value: '__typename' } }]
-                        }
-                      }
-                    ]
-                  }
-                }
-              ]
-            }
-          }
-        ]
-      }
-    },
-    ...PostFieldsFragmentDoc.definitions,
-    ...ProfileFieldsFragmentDoc.definitions,
-    ...CollectModuleFieldsFragmentDoc.definitions,
-    ...StatsFieldsFragmentDoc.definitions,
-    ...MetadataFieldsFragmentDoc.definitions,
-    ...CommentFieldsFragmentDoc.definitions,
-    ...MirrorFieldsFragmentDoc.definitions
-  ]
-} as unknown as DocumentNode<PublicationQuery, PublicationQueryVariables>
-export const PublicationRevenueDocument = {
-  kind: 'Document',
-  definitions: [
-    {
-      kind: 'OperationDefinition',
-      operation: 'query',
-      name: { kind: 'Name', value: 'PublicationRevenue' },
-      variableDefinitions: [
-        {
-          kind: 'VariableDefinition',
-          variable: { kind: 'Variable', name: { kind: 'Name', value: 'request' } },
-          type: {
-            kind: 'NonNullType',
-            type: { kind: 'NamedType', name: { kind: 'Name', value: 'PublicationRevenueQueryRequest' } }
-          }
-        }
-      ],
-      selectionSet: {
-        kind: 'SelectionSet',
-        selections: [
-          {
-            kind: 'Field',
-            name: { kind: 'Name', value: 'publicationRevenue' },
-            arguments: [
-              {
-                kind: 'Argument',
-                name: { kind: 'Name', value: 'request' },
-                value: { kind: 'Variable', name: { kind: 'Name', value: 'request' } }
-              }
-            ],
-            selectionSet: {
-              kind: 'SelectionSet',
-              selections: [
-                {
-                  kind: 'Field',
-                  name: { kind: 'Name', value: 'revenue' },
-                  selectionSet: {
-                    kind: 'SelectionSet',
-                    selections: [
-                      {
-                        kind: 'Field',
-                        name: { kind: 'Name', value: 'total' },
-                        selectionSet: {
-                          kind: 'SelectionSet',
-                          selections: [{ kind: 'Field', name: { kind: 'Name', value: 'value' } }]
-                        }
-                      }
-                    ]
-                  }
-                }
-              ]
-            }
-          }
-        ]
-      }
-    }
-  ]
-} as unknown as DocumentNode<PublicationRevenueQuery, PublicationRevenueQueryVariables>
-export const RecommendedProfilesDocument = {
-  kind: 'Document',
-  definitions: [
-    {
-      kind: 'OperationDefinition',
-      operation: 'query',
-      name: { kind: 'Name', value: 'RecommendedProfiles' },
-      selectionSet: {
-        kind: 'SelectionSet',
-        selections: [
-          {
-            kind: 'Field',
-            name: { kind: 'Name', value: 'recommendedProfiles' },
-            selectionSet: {
-              kind: 'SelectionSet',
-              selections: [
-                { kind: 'FragmentSpread', name: { kind: 'Name', value: 'ProfileFields' } },
-                { kind: 'Field', name: { kind: 'Name', value: 'isFollowedByMe' } }
-              ]
-            }
-          }
-        ]
-      }
-    },
-    ...ProfileFieldsFragmentDoc.definitions
-  ]
-} as unknown as DocumentNode<RecommendedProfilesQuery, RecommendedProfilesQueryVariables>
-export const RelevantPeopleDocument = {
-  kind: 'Document',
-  definitions: [
-    {
-      kind: 'OperationDefinition',
-      operation: 'query',
-      name: { kind: 'Name', value: 'RelevantPeople' },
-      variableDefinitions: [
-        {
-          kind: 'VariableDefinition',
-          variable: { kind: 'Variable', name: { kind: 'Name', value: 'request' } },
-          type: {
-            kind: 'NonNullType',
-            type: { kind: 'NamedType', name: { kind: 'Name', value: 'ProfileQueryRequest' } }
-          }
-        }
-      ],
-      selectionSet: {
-        kind: 'SelectionSet',
-        selections: [
-          {
-            kind: 'Field',
-            name: { kind: 'Name', value: 'profiles' },
-            arguments: [
-              {
-                kind: 'Argument',
-                name: { kind: 'Name', value: 'request' },
-                value: { kind: 'Variable', name: { kind: 'Name', value: 'request' } }
-              }
-            ],
-            selectionSet: {
-              kind: 'SelectionSet',
-              selections: [
-                {
-                  kind: 'Field',
-                  name: { kind: 'Name', value: 'items' },
-                  selectionSet: {
-                    kind: 'SelectionSet',
-                    selections: [
-                      { kind: 'FragmentSpread', name: { kind: 'Name', value: 'ProfileFields' } },
-                      { kind: 'Field', name: { kind: 'Name', value: 'isFollowedByMe' } }
-                    ]
-                  }
-                }
-              ]
-            }
-          }
-        ]
-      }
-    },
-    ...ProfileFieldsFragmentDoc.definitions
-  ]
-} as unknown as DocumentNode<RelevantPeopleQuery, RelevantPeopleQueryVariables>
-export const SearchProfilesDocument = {
-  kind: 'Document',
-  definitions: [
-    {
-      kind: 'OperationDefinition',
-      operation: 'query',
-      name: { kind: 'Name', value: 'SearchProfiles' },
-      variableDefinitions: [
-        {
-          kind: 'VariableDefinition',
-          variable: { kind: 'Variable', name: { kind: 'Name', value: 'request' } },
-          type: {
-            kind: 'NonNullType',
-            type: { kind: 'NamedType', name: { kind: 'Name', value: 'SearchQueryRequest' } }
-          }
-        }
-      ],
-      selectionSet: {
-        kind: 'SelectionSet',
-        selections: [
-          {
-            kind: 'Field',
-            name: { kind: 'Name', value: 'search' },
-            arguments: [
-              {
-                kind: 'Argument',
-                name: { kind: 'Name', value: 'request' },
-                value: { kind: 'Variable', name: { kind: 'Name', value: 'request' } }
-              }
-            ],
-            selectionSet: {
-              kind: 'SelectionSet',
-              selections: [
-                {
-                  kind: 'InlineFragment',
-                  typeCondition: { kind: 'NamedType', name: { kind: 'Name', value: 'ProfileSearchResult' } },
-                  selectionSet: {
-                    kind: 'SelectionSet',
-                    selections: [
-                      {
-                        kind: 'Field',
-                        name: { kind: 'Name', value: 'items' },
-                        selectionSet: {
-                          kind: 'SelectionSet',
-                          selections: [
-                            { kind: 'FragmentSpread', name: { kind: 'Name', value: 'ProfileFields' } }
-                          ]
-                        }
-                      },
-                      {
-                        kind: 'Field',
-                        name: { kind: 'Name', value: 'pageInfo' },
-                        selectionSet: {
-                          kind: 'SelectionSet',
-                          selections: [
-                            { kind: 'Field', name: { kind: 'Name', value: 'next' } },
-                            { kind: 'Field', name: { kind: 'Name', value: 'totalCount' } }
-                          ]
-                        }
-                      }
-                    ]
-                  }
-                }
-              ]
-            }
-          }
-        ]
-      }
-    },
-    ...ProfileFieldsFragmentDoc.definitions
-  ]
-} as unknown as DocumentNode<SearchProfilesQuery, SearchProfilesQueryVariables>
-export const SearchPublicationsDocument = {
-  kind: 'Document',
-  definitions: [
-    {
-      kind: 'OperationDefinition',
-      operation: 'query',
-      name: { kind: 'Name', value: 'SearchPublications' },
-      variableDefinitions: [
-        {
-          kind: 'VariableDefinition',
-          variable: { kind: 'Variable', name: { kind: 'Name', value: 'request' } },
-          type: {
-            kind: 'NonNullType',
-            type: { kind: 'NamedType', name: { kind: 'Name', value: 'SearchQueryRequest' } }
-          }
-        },
-        {
-          kind: 'VariableDefinition',
-          variable: { kind: 'Variable', name: { kind: 'Name', value: 'reactionRequest' } },
-          type: { kind: 'NamedType', name: { kind: 'Name', value: 'ReactionFieldResolverRequest' } }
-        },
-        {
-          kind: 'VariableDefinition',
-          variable: { kind: 'Variable', name: { kind: 'Name', value: 'profileId' } },
-          type: { kind: 'NamedType', name: { kind: 'Name', value: 'ProfileId' } }
-        }
-      ],
-      selectionSet: {
-        kind: 'SelectionSet',
-        selections: [
-          {
-            kind: 'Field',
-            name: { kind: 'Name', value: 'search' },
-            arguments: [
-              {
-                kind: 'Argument',
-                name: { kind: 'Name', value: 'request' },
-                value: { kind: 'Variable', name: { kind: 'Name', value: 'request' } }
-              }
-            ],
-            selectionSet: {
-              kind: 'SelectionSet',
-              selections: [
-                {
-                  kind: 'InlineFragment',
-                  typeCondition: {
-                    kind: 'NamedType',
-                    name: { kind: 'Name', value: 'PublicationSearchResult' }
-                  },
-                  selectionSet: {
-                    kind: 'SelectionSet',
-                    selections: [
-                      {
-                        kind: 'Field',
-                        name: { kind: 'Name', value: 'items' },
-                        selectionSet: {
-                          kind: 'SelectionSet',
-                          selections: [
-                            {
-                              kind: 'InlineFragment',
-                              typeCondition: { kind: 'NamedType', name: { kind: 'Name', value: 'Post' } },
-                              selectionSet: {
-                                kind: 'SelectionSet',
-                                selections: [
-                                  { kind: 'FragmentSpread', name: { kind: 'Name', value: 'PostFields' } }
-                                ]
-                              }
-                            },
-                            {
-                              kind: 'InlineFragment',
-                              typeCondition: { kind: 'NamedType', name: { kind: 'Name', value: 'Comment' } },
-                              selectionSet: {
-                                kind: 'SelectionSet',
-                                selections: [
-                                  { kind: 'FragmentSpread', name: { kind: 'Name', value: 'CommentFields' } }
-                                ]
-                              }
-                            }
-                          ]
-                        }
-                      },
-                      {
-                        kind: 'Field',
-                        name: { kind: 'Name', value: 'pageInfo' },
-                        selectionSet: {
-                          kind: 'SelectionSet',
-                          selections: [
-                            { kind: 'Field', name: { kind: 'Name', value: 'next' } },
-                            { kind: 'Field', name: { kind: 'Name', value: 'totalCount' } }
-                          ]
-                        }
-                      }
-                    ]
-                  }
-                }
-              ]
-            }
-          }
-        ]
-      }
-    },
-    ...PostFieldsFragmentDoc.definitions,
-    ...ProfileFieldsFragmentDoc.definitions,
-    ...CollectModuleFieldsFragmentDoc.definitions,
-    ...StatsFieldsFragmentDoc.definitions,
-    ...MetadataFieldsFragmentDoc.definitions,
-    ...CommentFieldsFragmentDoc.definitions,
-    ...MirrorFieldsFragmentDoc.definitions
-  ]
-} as unknown as DocumentNode<SearchPublicationsQuery, SearchPublicationsQueryVariables>
-export const SuperFollowDocument = {
-  kind: 'Document',
-  definitions: [
-    {
-      kind: 'OperationDefinition',
-      operation: 'query',
-      name: { kind: 'Name', value: 'SuperFollow' },
-      variableDefinitions: [
-        {
-          kind: 'VariableDefinition',
-          variable: { kind: 'Variable', name: { kind: 'Name', value: 'request' } },
-          type: {
-            kind: 'NonNullType',
-            type: { kind: 'NamedType', name: { kind: 'Name', value: 'SingleProfileQueryRequest' } }
-          }
-        }
-      ],
-      selectionSet: {
-        kind: 'SelectionSet',
-        selections: [
-          {
-            kind: 'Field',
-            name: { kind: 'Name', value: 'profile' },
-            arguments: [
-              {
-                kind: 'Argument',
-                name: { kind: 'Name', value: 'request' },
-                value: { kind: 'Variable', name: { kind: 'Name', value: 'request' } }
-              }
-            ],
-            selectionSet: {
-              kind: 'SelectionSet',
-              selections: [
-                { kind: 'Field', name: { kind: 'Name', value: 'id' } },
-                {
-                  kind: 'Field',
-                  name: { kind: 'Name', value: 'followModule' },
-                  selectionSet: {
-                    kind: 'SelectionSet',
-                    selections: [
-                      {
-                        kind: 'InlineFragment',
-                        typeCondition: {
-                          kind: 'NamedType',
-                          name: { kind: 'Name', value: 'FeeFollowModuleSettings' }
-                        },
-                        selectionSet: {
-                          kind: 'SelectionSet',
-                          selections: [
-                            {
-                              kind: 'Field',
-                              name: { kind: 'Name', value: 'amount' },
-                              selectionSet: {
-                                kind: 'SelectionSet',
-                                selections: [
-                                  {
-                                    kind: 'Field',
-                                    name: { kind: 'Name', value: 'asset' },
-                                    selectionSet: {
-                                      kind: 'SelectionSet',
-                                      selections: [
-                                        { kind: 'Field', name: { kind: 'Name', value: 'name' } },
-                                        { kind: 'Field', name: { kind: 'Name', value: 'symbol' } },
-                                        { kind: 'Field', name: { kind: 'Name', value: 'decimals' } },
-                                        { kind: 'Field', name: { kind: 'Name', value: 'address' } }
-                                      ]
-                                    }
-                                  },
-                                  { kind: 'Field', name: { kind: 'Name', value: 'value' } }
-                                ]
-                              }
-                            },
-                            { kind: 'Field', name: { kind: 'Name', value: 'recipient' } }
-                          ]
-                        }
-                      }
-                    ]
-                  }
-                }
-              ]
-            }
-          }
-        ]
-      }
-    }
-  ]
-} as unknown as DocumentNode<SuperFollowQuery, SuperFollowQueryVariables>
-export const TimelineDocument = {
-  kind: 'Document',
-  definitions: [
-    {
-      kind: 'OperationDefinition',
-      operation: 'query',
-      name: { kind: 'Name', value: 'Timeline' },
-      variableDefinitions: [
-        {
-          kind: 'VariableDefinition',
-          variable: { kind: 'Variable', name: { kind: 'Name', value: 'request' } },
-          type: {
-            kind: 'NonNullType',
-            type: { kind: 'NamedType', name: { kind: 'Name', value: 'FeedRequest' } }
-          }
-        },
-        {
-          kind: 'VariableDefinition',
-          variable: { kind: 'Variable', name: { kind: 'Name', value: 'reactionRequest' } },
-          type: { kind: 'NamedType', name: { kind: 'Name', value: 'ReactionFieldResolverRequest' } }
-        },
-        {
-          kind: 'VariableDefinition',
-          variable: { kind: 'Variable', name: { kind: 'Name', value: 'profileId' } },
-          type: { kind: 'NamedType', name: { kind: 'Name', value: 'ProfileId' } }
-        }
-      ],
-      selectionSet: {
-        kind: 'SelectionSet',
-        selections: [
-          {
-            kind: 'Field',
-            name: { kind: 'Name', value: 'feed' },
-            arguments: [
-              {
-                kind: 'Argument',
-                name: { kind: 'Name', value: 'request' },
-                value: { kind: 'Variable', name: { kind: 'Name', value: 'request' } }
-              }
-            ],
-            selectionSet: {
-              kind: 'SelectionSet',
-              selections: [
-                {
-                  kind: 'Field',
-                  name: { kind: 'Name', value: 'items' },
-                  selectionSet: {
-                    kind: 'SelectionSet',
-                    selections: [
-                      {
-                        kind: 'Field',
-                        name: { kind: 'Name', value: 'root' },
-                        selectionSet: {
-                          kind: 'SelectionSet',
-                          selections: [
-                            {
-                              kind: 'InlineFragment',
-                              typeCondition: { kind: 'NamedType', name: { kind: 'Name', value: 'Post' } },
-                              selectionSet: {
-                                kind: 'SelectionSet',
-                                selections: [
-                                  { kind: 'FragmentSpread', name: { kind: 'Name', value: 'PostFields' } }
-                                ]
-                              }
-                            },
-                            {
-                              kind: 'InlineFragment',
-                              typeCondition: { kind: 'NamedType', name: { kind: 'Name', value: 'Comment' } },
-                              selectionSet: {
-                                kind: 'SelectionSet',
-                                selections: [
-                                  { kind: 'FragmentSpread', name: { kind: 'Name', value: 'CommentFields' } }
-                                ]
-                              }
-                            }
-                          ]
-                        }
-                      },
-                      {
-                        kind: 'Field',
-                        name: { kind: 'Name', value: 'electedMirror' },
-                        selectionSet: {
-                          kind: 'SelectionSet',
-                          selections: [
-                            { kind: 'Field', name: { kind: 'Name', value: 'mirrorId' } },
-                            {
-                              kind: 'Field',
-                              name: { kind: 'Name', value: 'profile' },
-                              selectionSet: {
-                                kind: 'SelectionSet',
-                                selections: [
-                                  { kind: 'FragmentSpread', name: { kind: 'Name', value: 'ProfileFields' } }
-                                ]
-                              }
-                            },
-                            { kind: 'Field', name: { kind: 'Name', value: 'timestamp' } }
-                          ]
-                        }
-                      },
-                      {
-                        kind: 'Field',
-                        name: { kind: 'Name', value: 'mirrors' },
-                        selectionSet: {
-                          kind: 'SelectionSet',
-                          selections: [
-                            {
-                              kind: 'Field',
-                              name: { kind: 'Name', value: 'profile' },
-                              selectionSet: {
-                                kind: 'SelectionSet',
-                                selections: [
-                                  { kind: 'FragmentSpread', name: { kind: 'Name', value: 'ProfileFields' } }
-                                ]
-                              }
-                            },
-                            { kind: 'Field', name: { kind: 'Name', value: 'timestamp' } }
-                          ]
-                        }
-                      },
-                      {
-                        kind: 'Field',
-                        name: { kind: 'Name', value: 'collects' },
-                        selectionSet: {
-                          kind: 'SelectionSet',
-                          selections: [
-                            {
-                              kind: 'Field',
-                              name: { kind: 'Name', value: 'profile' },
-                              selectionSet: {
-                                kind: 'SelectionSet',
-                                selections: [
-                                  { kind: 'FragmentSpread', name: { kind: 'Name', value: 'ProfileFields' } }
-                                ]
-                              }
-                            },
-                            { kind: 'Field', name: { kind: 'Name', value: 'timestamp' } }
-                          ]
-                        }
-                      },
-                      {
-                        kind: 'Field',
-                        name: { kind: 'Name', value: 'reactions' },
-                        selectionSet: {
-                          kind: 'SelectionSet',
-                          selections: [
-                            {
-                              kind: 'Field',
-                              name: { kind: 'Name', value: 'profile' },
-                              selectionSet: {
-                                kind: 'SelectionSet',
-                                selections: [
-                                  { kind: 'FragmentSpread', name: { kind: 'Name', value: 'ProfileFields' } }
-                                ]
-                              }
-                            },
-                            { kind: 'Field', name: { kind: 'Name', value: 'reaction' } },
-                            { kind: 'Field', name: { kind: 'Name', value: 'timestamp' } }
-                          ]
-                        }
-                      },
-                      {
-                        kind: 'Field',
-                        name: { kind: 'Name', value: 'comments' },
-                        selectionSet: {
-                          kind: 'SelectionSet',
-                          selections: [
-                            { kind: 'FragmentSpread', name: { kind: 'Name', value: 'CommentFields' } }
-                          ]
-                        }
-                      }
-                    ]
-                  }
-                },
-                {
-                  kind: 'Field',
-                  name: { kind: 'Name', value: 'pageInfo' },
-                  selectionSet: {
-                    kind: 'SelectionSet',
-                    selections: [
-                      { kind: 'Field', name: { kind: 'Name', value: 'next' } },
-                      { kind: 'Field', name: { kind: 'Name', value: 'totalCount' } }
-                    ]
-                  }
-                }
-              ]
-            }
-          }
-        ]
-      }
-    },
-    ...PostFieldsFragmentDoc.definitions,
-    ...ProfileFieldsFragmentDoc.definitions,
-    ...CollectModuleFieldsFragmentDoc.definitions,
-    ...StatsFieldsFragmentDoc.definitions,
-    ...MetadataFieldsFragmentDoc.definitions,
-    ...CommentFieldsFragmentDoc.definitions,
-    ...MirrorFieldsFragmentDoc.definitions
-  ]
-} as unknown as DocumentNode<TimelineQuery, TimelineQueryVariables>
-export const TrendingDocument = {
-  kind: 'Document',
-  definitions: [
-    {
-      kind: 'OperationDefinition',
-      operation: 'query',
-      name: { kind: 'Name', value: 'Trending' },
-      variableDefinitions: [
-        {
-          kind: 'VariableDefinition',
-          variable: { kind: 'Variable', name: { kind: 'Name', value: 'request' } },
-          type: {
-            kind: 'NonNullType',
-            type: { kind: 'NamedType', name: { kind: 'Name', value: 'AllPublicationsTagsRequest' } }
-          }
-        }
-      ],
-      selectionSet: {
-        kind: 'SelectionSet',
-        selections: [
-          {
-            kind: 'Field',
-            name: { kind: 'Name', value: 'allPublicationsTags' },
-            arguments: [
-              {
-                kind: 'Argument',
-                name: { kind: 'Name', value: 'request' },
-                value: { kind: 'Variable', name: { kind: 'Name', value: 'request' } }
-              }
-            ],
-            selectionSet: {
-              kind: 'SelectionSet',
-              selections: [
-                {
-                  kind: 'Field',
-                  name: { kind: 'Name', value: 'items' },
-                  selectionSet: {
-                    kind: 'SelectionSet',
-                    selections: [
-                      { kind: 'Field', name: { kind: 'Name', value: 'tag' } },
-                      { kind: 'Field', name: { kind: 'Name', value: 'total' } }
-                    ]
-                  }
-                }
-              ]
-            }
-          }
-        ]
-      }
-    }
-  ]
-} as unknown as DocumentNode<TrendingQuery, TrendingQueryVariables>
-export const UserProfilesDocument = {
-  kind: 'Document',
-  definitions: [
-    {
-      kind: 'OperationDefinition',
-      operation: 'query',
-      name: { kind: 'Name', value: 'UserProfiles' },
-      variableDefinitions: [
-        {
-          kind: 'VariableDefinition',
-          variable: { kind: 'Variable', name: { kind: 'Name', value: 'ownedBy' } },
-          type: {
-            kind: 'ListType',
-            type: {
-              kind: 'NonNullType',
-              type: { kind: 'NamedType', name: { kind: 'Name', value: 'EthereumAddress' } }
-            }
-          }
-        }
-      ],
-      selectionSet: {
-        kind: 'SelectionSet',
-        selections: [
-          {
-            kind: 'Field',
-            name: { kind: 'Name', value: 'profiles' },
-            arguments: [
-              {
-                kind: 'Argument',
-                name: { kind: 'Name', value: 'request' },
-                value: {
-                  kind: 'ObjectValue',
-                  fields: [
-                    {
-                      kind: 'ObjectField',
-                      name: { kind: 'Name', value: 'ownedBy' },
-                      value: { kind: 'Variable', name: { kind: 'Name', value: 'ownedBy' } }
-                    }
-                  ]
-                }
-              }
-            ],
-            selectionSet: {
-              kind: 'SelectionSet',
-              selections: [
-                {
-                  kind: 'Field',
-                  name: { kind: 'Name', value: 'items' },
-                  selectionSet: {
-                    kind: 'SelectionSet',
-                    selections: [
-                      { kind: 'FragmentSpread', name: { kind: 'Name', value: 'ProfileFields' } },
-                      {
-                        kind: 'Field',
-                        name: { kind: 'Name', value: 'stats' },
-                        selectionSet: {
-                          kind: 'SelectionSet',
-                          selections: [{ kind: 'Field', name: { kind: 'Name', value: 'totalFollowing' } }]
-                        }
-                      },
-                      { kind: 'Field', name: { kind: 'Name', value: 'isDefault' } },
-                      {
-                        kind: 'Field',
-                        name: { kind: 'Name', value: 'dispatcher' },
-                        selectionSet: {
-                          kind: 'SelectionSet',
-                          selections: [{ kind: 'Field', name: { kind: 'Name', value: 'canUseRelay' } }]
-                        }
-                      }
-                    ]
-                  }
-                }
-              ]
-            }
-          },
-          {
-            kind: 'Field',
-            name: { kind: 'Name', value: 'userSigNonces' },
-            selectionSet: {
-              kind: 'SelectionSet',
-              selections: [{ kind: 'Field', name: { kind: 'Name', value: 'lensHubOnChainSigNonce' } }]
-            }
-          }
-        ]
-      }
-    },
-    ...ProfileFieldsFragmentDoc.definitions
-  ]
-} as unknown as DocumentNode<UserProfilesQuery, UserProfilesQueryVariables>
 
 export interface PossibleTypesResultData {
   possibleTypes: {
@@ -25675,3 +19600,4185 @@ const result: PossibleTypesResultData = {
   }
 }
 export default result
+
+export const ProfileFieldsFragmentDoc = gql`
+  fragment ProfileFields on Profile {
+    id
+    name
+    handle
+    bio
+    ownedBy
+    isFollowedByMe
+    stats {
+      totalFollowers
+      totalFollowing
+    }
+    attributes {
+      key
+      value
+    }
+    picture {
+      ... on MediaSet {
+        original {
+          url
+        }
+      }
+      ... on NftImage {
+        uri
+      }
+    }
+    followModule {
+      __typename
+    }
+  }
+`
+export const CollectModuleFieldsFragmentDoc = gql`
+  fragment CollectModuleFields on CollectModule {
+    ... on FreeCollectModuleSettings {
+      type
+      contractAddress
+      followerOnly
+    }
+    ... on FeeCollectModuleSettings {
+      type
+      referralFee
+      contractAddress
+      followerOnly
+      amount {
+        asset {
+          symbol
+          decimals
+          address
+        }
+        value
+      }
+    }
+    ... on LimitedFeeCollectModuleSettings {
+      type
+      collectLimit
+      referralFee
+      contractAddress
+      followerOnly
+      amount {
+        asset {
+          symbol
+          decimals
+          address
+        }
+        value
+      }
+    }
+    ... on LimitedTimedFeeCollectModuleSettings {
+      type
+      collectLimit
+      endTimestamp
+      referralFee
+      contractAddress
+      followerOnly
+      amount {
+        asset {
+          symbol
+          decimals
+          address
+        }
+        value
+      }
+    }
+    ... on TimedFeeCollectModuleSettings {
+      type
+      endTimestamp
+      referralFee
+      contractAddress
+      followerOnly
+      amount {
+        asset {
+          symbol
+          decimals
+          address
+        }
+        value
+      }
+    }
+  }
+`
+export const StatsFieldsFragmentDoc = gql`
+  fragment StatsFields on PublicationStats {
+    totalUpvotes
+    totalAmountOfMirrors
+    totalAmountOfCollects
+    totalAmountOfComments
+  }
+`
+export const MetadataFieldsFragmentDoc = gql`
+  fragment MetadataFields on MetadataOutput {
+    name
+    description
+    content
+    image
+    attributes {
+      traitType
+      value
+    }
+    cover {
+      original {
+        url
+      }
+    }
+    media {
+      original {
+        url
+        mimeType
+      }
+    }
+  }
+`
+export const PostFieldsFragmentDoc = gql`
+  fragment PostFields on Post {
+    id
+    profile {
+      ...ProfileFields
+    }
+    reaction(request: $reactionRequest)
+    mirrors(by: $profileId)
+    canComment(profileId: $profileId) {
+      result
+    }
+    canMirror(profileId: $profileId) {
+      result
+    }
+    hasCollectedByMe
+    collectedBy {
+      address
+      defaultProfile {
+        ...ProfileFields
+      }
+    }
+    collectModule {
+      ...CollectModuleFields
+    }
+    stats {
+      ...StatsFields
+    }
+    metadata {
+      ...MetadataFields
+    }
+    hidden
+    createdAt
+    appId
+  }
+  ${ProfileFieldsFragmentDoc}
+  ${CollectModuleFieldsFragmentDoc}
+  ${StatsFieldsFragmentDoc}
+  ${MetadataFieldsFragmentDoc}
+`
+export const MirrorFieldsFragmentDoc = gql`
+  fragment MirrorFields on Mirror {
+    id
+    profile {
+      ...ProfileFields
+    }
+    reaction(request: $reactionRequest)
+    canComment(profileId: $profileId) {
+      result
+    }
+    canMirror(profileId: $profileId) {
+      result
+    }
+    collectModule {
+      ...CollectModuleFields
+    }
+    stats {
+      ...StatsFields
+    }
+    metadata {
+      ...MetadataFields
+    }
+    hidden
+    mirrorOf {
+      ... on Post {
+        ...PostFields
+      }
+      ... on Comment {
+        id
+        profile {
+          ...ProfileFields
+        }
+        reaction(request: $reactionRequest)
+        mirrors(by: $profileId)
+        canComment(profileId: $profileId) {
+          result
+        }
+        canMirror(profileId: $profileId) {
+          result
+        }
+        stats {
+          ...StatsFields
+        }
+        createdAt
+      }
+    }
+    createdAt
+    appId
+  }
+  ${ProfileFieldsFragmentDoc}
+  ${CollectModuleFieldsFragmentDoc}
+  ${StatsFieldsFragmentDoc}
+  ${MetadataFieldsFragmentDoc}
+  ${PostFieldsFragmentDoc}
+`
+export const CommentFieldsFragmentDoc = gql`
+  fragment CommentFields on Comment {
+    id
+    profile {
+      ...ProfileFields
+    }
+    reaction(request: $reactionRequest)
+    mirrors(by: $profileId)
+    canComment(profileId: $profileId) {
+      result
+    }
+    canMirror(profileId: $profileId) {
+      result
+    }
+    hasCollectedByMe
+    collectedBy {
+      address
+      defaultProfile {
+        ...ProfileFields
+      }
+    }
+    collectModule {
+      ...CollectModuleFields
+    }
+    stats {
+      ...StatsFields
+    }
+    metadata {
+      ...MetadataFields
+    }
+    hidden
+    createdAt
+    appId
+    commentOn {
+      ... on Post {
+        ...PostFields
+      }
+      ... on Comment {
+        id
+        profile {
+          ...ProfileFields
+        }
+        reaction(request: $reactionRequest)
+        mirrors(by: $profileId)
+        canComment(profileId: $profileId) {
+          result
+        }
+        canMirror(profileId: $profileId) {
+          result
+        }
+        hasCollectedByMe
+        collectedBy {
+          address
+          defaultProfile {
+            handle
+          }
+        }
+        collectModule {
+          ...CollectModuleFields
+        }
+        metadata {
+          ...MetadataFields
+        }
+        stats {
+          ...StatsFields
+        }
+        mainPost {
+          ... on Post {
+            ...PostFields
+          }
+          ... on Mirror {
+            ...MirrorFields
+          }
+        }
+        hidden
+        createdAt
+      }
+      ... on Mirror {
+        ...MirrorFields
+      }
+    }
+  }
+  ${ProfileFieldsFragmentDoc}
+  ${CollectModuleFieldsFragmentDoc}
+  ${StatsFieldsFragmentDoc}
+  ${MetadataFieldsFragmentDoc}
+  ${PostFieldsFragmentDoc}
+  ${MirrorFieldsFragmentDoc}
+`
+export const GroupFieldsFragmentDoc = gql`
+  fragment GroupFields on Post {
+    id
+    profile {
+      id
+    }
+    metadata {
+      name
+      description
+      content
+      attributes {
+        value
+      }
+      cover {
+        original {
+          url
+        }
+      }
+    }
+    stats {
+      totalAmountOfCollects
+      totalAmountOfComments
+    }
+    createdAt
+  }
+`
+export const RelayerResultFieldsFragmentDoc = gql`
+  fragment RelayerResultFields on RelayResult {
+    ... on RelayerResult {
+      txHash
+      txId
+    }
+    ... on RelayError {
+      reason
+    }
+  }
+`
+export const AddReactionDocument = gql`
+  mutation AddReaction($request: ReactionRequest!) {
+    addReaction(request: $request)
+  }
+`
+export type AddReactionMutationFn = Apollo.MutationFunction<AddReactionMutation, AddReactionMutationVariables>
+
+/**
+ * __useAddReactionMutation__
+ *
+ * To run a mutation, you first call `useAddReactionMutation` within a React component and pass it any options that fit your needs.
+ * When your component renders, `useAddReactionMutation` returns a tuple that includes:
+ * - A mutate function that you can call at any time to execute the mutation
+ * - An object with fields that represent the current status of the mutation's execution
+ *
+ * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
+ *
+ * @example
+ * const [addReactionMutation, { data, loading, error }] = useAddReactionMutation({
+ *   variables: {
+ *      request: // value for 'request'
+ *   },
+ * });
+ */
+export function useAddReactionMutation(
+  baseOptions?: Apollo.MutationHookOptions<AddReactionMutation, AddReactionMutationVariables>
+) {
+  const options = { ...defaultOptions, ...baseOptions }
+  return Apollo.useMutation<AddReactionMutation, AddReactionMutationVariables>(AddReactionDocument, options)
+}
+export type AddReactionMutationHookResult = ReturnType<typeof useAddReactionMutation>
+export type AddReactionMutationResult = Apollo.MutationResult<AddReactionMutation>
+export type AddReactionMutationOptions = Apollo.BaseMutationOptions<
+  AddReactionMutation,
+  AddReactionMutationVariables
+>
+export const AuthenticateDocument = gql`
+  mutation Authenticate($request: SignedAuthChallenge!) {
+    authenticate(request: $request) {
+      accessToken
+      refreshToken
+    }
+  }
+`
+export type AuthenticateMutationFn = Apollo.MutationFunction<
+  AuthenticateMutation,
+  AuthenticateMutationVariables
+>
+
+/**
+ * __useAuthenticateMutation__
+ *
+ * To run a mutation, you first call `useAuthenticateMutation` within a React component and pass it any options that fit your needs.
+ * When your component renders, `useAuthenticateMutation` returns a tuple that includes:
+ * - A mutate function that you can call at any time to execute the mutation
+ * - An object with fields that represent the current status of the mutation's execution
+ *
+ * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
+ *
+ * @example
+ * const [authenticateMutation, { data, loading, error }] = useAuthenticateMutation({
+ *   variables: {
+ *      request: // value for 'request'
+ *   },
+ * });
+ */
+export function useAuthenticateMutation(
+  baseOptions?: Apollo.MutationHookOptions<AuthenticateMutation, AuthenticateMutationVariables>
+) {
+  const options = { ...defaultOptions, ...baseOptions }
+  return Apollo.useMutation<AuthenticateMutation, AuthenticateMutationVariables>(
+    AuthenticateDocument,
+    options
+  )
+}
+export type AuthenticateMutationHookResult = ReturnType<typeof useAuthenticateMutation>
+export type AuthenticateMutationResult = Apollo.MutationResult<AuthenticateMutation>
+export type AuthenticateMutationOptions = Apollo.BaseMutationOptions<
+  AuthenticateMutation,
+  AuthenticateMutationVariables
+>
+export const BroadcastDocument = gql`
+  mutation Broadcast($request: BroadcastRequest!) {
+    broadcast(request: $request) {
+      ... on RelayerResult {
+        txHash
+        txId
+      }
+      ... on RelayError {
+        reason
+      }
+    }
+  }
+`
+export type BroadcastMutationFn = Apollo.MutationFunction<BroadcastMutation, BroadcastMutationVariables>
+
+/**
+ * __useBroadcastMutation__
+ *
+ * To run a mutation, you first call `useBroadcastMutation` within a React component and pass it any options that fit your needs.
+ * When your component renders, `useBroadcastMutation` returns a tuple that includes:
+ * - A mutate function that you can call at any time to execute the mutation
+ * - An object with fields that represent the current status of the mutation's execution
+ *
+ * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
+ *
+ * @example
+ * const [broadcastMutation, { data, loading, error }] = useBroadcastMutation({
+ *   variables: {
+ *      request: // value for 'request'
+ *   },
+ * });
+ */
+export function useBroadcastMutation(
+  baseOptions?: Apollo.MutationHookOptions<BroadcastMutation, BroadcastMutationVariables>
+) {
+  const options = { ...defaultOptions, ...baseOptions }
+  return Apollo.useMutation<BroadcastMutation, BroadcastMutationVariables>(BroadcastDocument, options)
+}
+export type BroadcastMutationHookResult = ReturnType<typeof useBroadcastMutation>
+export type BroadcastMutationResult = Apollo.MutationResult<BroadcastMutation>
+export type BroadcastMutationOptions = Apollo.BaseMutationOptions<
+  BroadcastMutation,
+  BroadcastMutationVariables
+>
+export const CreateBurnProfileTypedDataDocument = gql`
+  mutation CreateBurnProfileTypedData($options: TypedDataOptions, $request: BurnProfileRequest!) {
+    createBurnProfileTypedData(options: $options, request: $request) {
+      id
+      expiresAt
+      typedData {
+        domain {
+          name
+          chainId
+          version
+          verifyingContract
+        }
+        types {
+          BurnWithSig {
+            name
+            type
+          }
+        }
+        value {
+          nonce
+          deadline
+          tokenId
+        }
+      }
+    }
+  }
+`
+export type CreateBurnProfileTypedDataMutationFn = Apollo.MutationFunction<
+  CreateBurnProfileTypedDataMutation,
+  CreateBurnProfileTypedDataMutationVariables
+>
+
+/**
+ * __useCreateBurnProfileTypedDataMutation__
+ *
+ * To run a mutation, you first call `useCreateBurnProfileTypedDataMutation` within a React component and pass it any options that fit your needs.
+ * When your component renders, `useCreateBurnProfileTypedDataMutation` returns a tuple that includes:
+ * - A mutate function that you can call at any time to execute the mutation
+ * - An object with fields that represent the current status of the mutation's execution
+ *
+ * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
+ *
+ * @example
+ * const [createBurnProfileTypedDataMutation, { data, loading, error }] = useCreateBurnProfileTypedDataMutation({
+ *   variables: {
+ *      options: // value for 'options'
+ *      request: // value for 'request'
+ *   },
+ * });
+ */
+export function useCreateBurnProfileTypedDataMutation(
+  baseOptions?: Apollo.MutationHookOptions<
+    CreateBurnProfileTypedDataMutation,
+    CreateBurnProfileTypedDataMutationVariables
+  >
+) {
+  const options = { ...defaultOptions, ...baseOptions }
+  return Apollo.useMutation<CreateBurnProfileTypedDataMutation, CreateBurnProfileTypedDataMutationVariables>(
+    CreateBurnProfileTypedDataDocument,
+    options
+  )
+}
+export type CreateBurnProfileTypedDataMutationHookResult = ReturnType<
+  typeof useCreateBurnProfileTypedDataMutation
+>
+export type CreateBurnProfileTypedDataMutationResult =
+  Apollo.MutationResult<CreateBurnProfileTypedDataMutation>
+export type CreateBurnProfileTypedDataMutationOptions = Apollo.BaseMutationOptions<
+  CreateBurnProfileTypedDataMutation,
+  CreateBurnProfileTypedDataMutationVariables
+>
+export const CreateCollectTypedDataDocument = gql`
+  mutation CreateCollectTypedData($options: TypedDataOptions, $request: CreateCollectRequest!) {
+    createCollectTypedData(options: $options, request: $request) {
+      id
+      expiresAt
+      typedData {
+        types {
+          CollectWithSig {
+            name
+            type
+          }
+        }
+        domain {
+          name
+          chainId
+          version
+          verifyingContract
+        }
+        value {
+          nonce
+          deadline
+          profileId
+          pubId
+          data
+        }
+      }
+    }
+  }
+`
+export type CreateCollectTypedDataMutationFn = Apollo.MutationFunction<
+  CreateCollectTypedDataMutation,
+  CreateCollectTypedDataMutationVariables
+>
+
+/**
+ * __useCreateCollectTypedDataMutation__
+ *
+ * To run a mutation, you first call `useCreateCollectTypedDataMutation` within a React component and pass it any options that fit your needs.
+ * When your component renders, `useCreateCollectTypedDataMutation` returns a tuple that includes:
+ * - A mutate function that you can call at any time to execute the mutation
+ * - An object with fields that represent the current status of the mutation's execution
+ *
+ * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
+ *
+ * @example
+ * const [createCollectTypedDataMutation, { data, loading, error }] = useCreateCollectTypedDataMutation({
+ *   variables: {
+ *      options: // value for 'options'
+ *      request: // value for 'request'
+ *   },
+ * });
+ */
+export function useCreateCollectTypedDataMutation(
+  baseOptions?: Apollo.MutationHookOptions<
+    CreateCollectTypedDataMutation,
+    CreateCollectTypedDataMutationVariables
+  >
+) {
+  const options = { ...defaultOptions, ...baseOptions }
+  return Apollo.useMutation<CreateCollectTypedDataMutation, CreateCollectTypedDataMutationVariables>(
+    CreateCollectTypedDataDocument,
+    options
+  )
+}
+export type CreateCollectTypedDataMutationHookResult = ReturnType<typeof useCreateCollectTypedDataMutation>
+export type CreateCollectTypedDataMutationResult = Apollo.MutationResult<CreateCollectTypedDataMutation>
+export type CreateCollectTypedDataMutationOptions = Apollo.BaseMutationOptions<
+  CreateCollectTypedDataMutation,
+  CreateCollectTypedDataMutationVariables
+>
+export const CreateCommentTypedDataDocument = gql`
+  mutation CreateCommentTypedData($options: TypedDataOptions, $request: CreatePublicCommentRequest!) {
+    createCommentTypedData(options: $options, request: $request) {
+      id
+      expiresAt
+      typedData {
+        types {
+          CommentWithSig {
+            name
+            type
+          }
+        }
+        domain {
+          name
+          chainId
+          version
+          verifyingContract
+        }
+        value {
+          nonce
+          deadline
+          profileId
+          profileIdPointed
+          pubIdPointed
+          contentURI
+          collectModule
+          collectModuleInitData
+          referenceModule
+          referenceModuleData
+          referenceModuleInitData
+        }
+      }
+    }
+  }
+`
+export type CreateCommentTypedDataMutationFn = Apollo.MutationFunction<
+  CreateCommentTypedDataMutation,
+  CreateCommentTypedDataMutationVariables
+>
+
+/**
+ * __useCreateCommentTypedDataMutation__
+ *
+ * To run a mutation, you first call `useCreateCommentTypedDataMutation` within a React component and pass it any options that fit your needs.
+ * When your component renders, `useCreateCommentTypedDataMutation` returns a tuple that includes:
+ * - A mutate function that you can call at any time to execute the mutation
+ * - An object with fields that represent the current status of the mutation's execution
+ *
+ * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
+ *
+ * @example
+ * const [createCommentTypedDataMutation, { data, loading, error }] = useCreateCommentTypedDataMutation({
+ *   variables: {
+ *      options: // value for 'options'
+ *      request: // value for 'request'
+ *   },
+ * });
+ */
+export function useCreateCommentTypedDataMutation(
+  baseOptions?: Apollo.MutationHookOptions<
+    CreateCommentTypedDataMutation,
+    CreateCommentTypedDataMutationVariables
+  >
+) {
+  const options = { ...defaultOptions, ...baseOptions }
+  return Apollo.useMutation<CreateCommentTypedDataMutation, CreateCommentTypedDataMutationVariables>(
+    CreateCommentTypedDataDocument,
+    options
+  )
+}
+export type CreateCommentTypedDataMutationHookResult = ReturnType<typeof useCreateCommentTypedDataMutation>
+export type CreateCommentTypedDataMutationResult = Apollo.MutationResult<CreateCommentTypedDataMutation>
+export type CreateCommentTypedDataMutationOptions = Apollo.BaseMutationOptions<
+  CreateCommentTypedDataMutation,
+  CreateCommentTypedDataMutationVariables
+>
+export const CreateCommentViaDispatcherDocument = gql`
+  mutation CreateCommentViaDispatcher($request: CreatePublicCommentRequest!) {
+    createCommentViaDispatcher(request: $request) {
+      ...RelayerResultFields
+    }
+  }
+  ${RelayerResultFieldsFragmentDoc}
+`
+export type CreateCommentViaDispatcherMutationFn = Apollo.MutationFunction<
+  CreateCommentViaDispatcherMutation,
+  CreateCommentViaDispatcherMutationVariables
+>
+
+/**
+ * __useCreateCommentViaDispatcherMutation__
+ *
+ * To run a mutation, you first call `useCreateCommentViaDispatcherMutation` within a React component and pass it any options that fit your needs.
+ * When your component renders, `useCreateCommentViaDispatcherMutation` returns a tuple that includes:
+ * - A mutate function that you can call at any time to execute the mutation
+ * - An object with fields that represent the current status of the mutation's execution
+ *
+ * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
+ *
+ * @example
+ * const [createCommentViaDispatcherMutation, { data, loading, error }] = useCreateCommentViaDispatcherMutation({
+ *   variables: {
+ *      request: // value for 'request'
+ *   },
+ * });
+ */
+export function useCreateCommentViaDispatcherMutation(
+  baseOptions?: Apollo.MutationHookOptions<
+    CreateCommentViaDispatcherMutation,
+    CreateCommentViaDispatcherMutationVariables
+  >
+) {
+  const options = { ...defaultOptions, ...baseOptions }
+  return Apollo.useMutation<CreateCommentViaDispatcherMutation, CreateCommentViaDispatcherMutationVariables>(
+    CreateCommentViaDispatcherDocument,
+    options
+  )
+}
+export type CreateCommentViaDispatcherMutationHookResult = ReturnType<
+  typeof useCreateCommentViaDispatcherMutation
+>
+export type CreateCommentViaDispatcherMutationResult =
+  Apollo.MutationResult<CreateCommentViaDispatcherMutation>
+export type CreateCommentViaDispatcherMutationOptions = Apollo.BaseMutationOptions<
+  CreateCommentViaDispatcherMutation,
+  CreateCommentViaDispatcherMutationVariables
+>
+export const CreateFollowTypedDataDocument = gql`
+  mutation CreateFollowTypedData($options: TypedDataOptions, $request: FollowRequest!) {
+    createFollowTypedData(options: $options, request: $request) {
+      id
+      expiresAt
+      typedData {
+        domain {
+          name
+          chainId
+          version
+          verifyingContract
+        }
+        types {
+          FollowWithSig {
+            name
+            type
+          }
+        }
+        value {
+          nonce
+          deadline
+          profileIds
+          datas
+        }
+      }
+    }
+  }
+`
+export type CreateFollowTypedDataMutationFn = Apollo.MutationFunction<
+  CreateFollowTypedDataMutation,
+  CreateFollowTypedDataMutationVariables
+>
+
+/**
+ * __useCreateFollowTypedDataMutation__
+ *
+ * To run a mutation, you first call `useCreateFollowTypedDataMutation` within a React component and pass it any options that fit your needs.
+ * When your component renders, `useCreateFollowTypedDataMutation` returns a tuple that includes:
+ * - A mutate function that you can call at any time to execute the mutation
+ * - An object with fields that represent the current status of the mutation's execution
+ *
+ * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
+ *
+ * @example
+ * const [createFollowTypedDataMutation, { data, loading, error }] = useCreateFollowTypedDataMutation({
+ *   variables: {
+ *      options: // value for 'options'
+ *      request: // value for 'request'
+ *   },
+ * });
+ */
+export function useCreateFollowTypedDataMutation(
+  baseOptions?: Apollo.MutationHookOptions<
+    CreateFollowTypedDataMutation,
+    CreateFollowTypedDataMutationVariables
+  >
+) {
+  const options = { ...defaultOptions, ...baseOptions }
+  return Apollo.useMutation<CreateFollowTypedDataMutation, CreateFollowTypedDataMutationVariables>(
+    CreateFollowTypedDataDocument,
+    options
+  )
+}
+export type CreateFollowTypedDataMutationHookResult = ReturnType<typeof useCreateFollowTypedDataMutation>
+export type CreateFollowTypedDataMutationResult = Apollo.MutationResult<CreateFollowTypedDataMutation>
+export type CreateFollowTypedDataMutationOptions = Apollo.BaseMutationOptions<
+  CreateFollowTypedDataMutation,
+  CreateFollowTypedDataMutationVariables
+>
+export const CreateMirrorTypedDataDocument = gql`
+  mutation CreateMirrorTypedData($options: TypedDataOptions, $request: CreateMirrorRequest!) {
+    createMirrorTypedData(options: $options, request: $request) {
+      id
+      expiresAt
+      typedData {
+        types {
+          MirrorWithSig {
+            name
+            type
+          }
+        }
+        domain {
+          name
+          chainId
+          version
+          verifyingContract
+        }
+        value {
+          nonce
+          deadline
+          profileId
+          profileIdPointed
+          pubIdPointed
+          referenceModule
+          referenceModuleData
+          referenceModuleInitData
+        }
+      }
+    }
+  }
+`
+export type CreateMirrorTypedDataMutationFn = Apollo.MutationFunction<
+  CreateMirrorTypedDataMutation,
+  CreateMirrorTypedDataMutationVariables
+>
+
+/**
+ * __useCreateMirrorTypedDataMutation__
+ *
+ * To run a mutation, you first call `useCreateMirrorTypedDataMutation` within a React component and pass it any options that fit your needs.
+ * When your component renders, `useCreateMirrorTypedDataMutation` returns a tuple that includes:
+ * - A mutate function that you can call at any time to execute the mutation
+ * - An object with fields that represent the current status of the mutation's execution
+ *
+ * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
+ *
+ * @example
+ * const [createMirrorTypedDataMutation, { data, loading, error }] = useCreateMirrorTypedDataMutation({
+ *   variables: {
+ *      options: // value for 'options'
+ *      request: // value for 'request'
+ *   },
+ * });
+ */
+export function useCreateMirrorTypedDataMutation(
+  baseOptions?: Apollo.MutationHookOptions<
+    CreateMirrorTypedDataMutation,
+    CreateMirrorTypedDataMutationVariables
+  >
+) {
+  const options = { ...defaultOptions, ...baseOptions }
+  return Apollo.useMutation<CreateMirrorTypedDataMutation, CreateMirrorTypedDataMutationVariables>(
+    CreateMirrorTypedDataDocument,
+    options
+  )
+}
+export type CreateMirrorTypedDataMutationHookResult = ReturnType<typeof useCreateMirrorTypedDataMutation>
+export type CreateMirrorTypedDataMutationResult = Apollo.MutationResult<CreateMirrorTypedDataMutation>
+export type CreateMirrorTypedDataMutationOptions = Apollo.BaseMutationOptions<
+  CreateMirrorTypedDataMutation,
+  CreateMirrorTypedDataMutationVariables
+>
+export const CreateMirrorViaDispatcherDocument = gql`
+  mutation CreateMirrorViaDispatcher($request: CreateMirrorRequest!) {
+    createMirrorViaDispatcher(request: $request) {
+      ...RelayerResultFields
+    }
+  }
+  ${RelayerResultFieldsFragmentDoc}
+`
+export type CreateMirrorViaDispatcherMutationFn = Apollo.MutationFunction<
+  CreateMirrorViaDispatcherMutation,
+  CreateMirrorViaDispatcherMutationVariables
+>
+
+/**
+ * __useCreateMirrorViaDispatcherMutation__
+ *
+ * To run a mutation, you first call `useCreateMirrorViaDispatcherMutation` within a React component and pass it any options that fit your needs.
+ * When your component renders, `useCreateMirrorViaDispatcherMutation` returns a tuple that includes:
+ * - A mutate function that you can call at any time to execute the mutation
+ * - An object with fields that represent the current status of the mutation's execution
+ *
+ * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
+ *
+ * @example
+ * const [createMirrorViaDispatcherMutation, { data, loading, error }] = useCreateMirrorViaDispatcherMutation({
+ *   variables: {
+ *      request: // value for 'request'
+ *   },
+ * });
+ */
+export function useCreateMirrorViaDispatcherMutation(
+  baseOptions?: Apollo.MutationHookOptions<
+    CreateMirrorViaDispatcherMutation,
+    CreateMirrorViaDispatcherMutationVariables
+  >
+) {
+  const options = { ...defaultOptions, ...baseOptions }
+  return Apollo.useMutation<CreateMirrorViaDispatcherMutation, CreateMirrorViaDispatcherMutationVariables>(
+    CreateMirrorViaDispatcherDocument,
+    options
+  )
+}
+export type CreateMirrorViaDispatcherMutationHookResult = ReturnType<
+  typeof useCreateMirrorViaDispatcherMutation
+>
+export type CreateMirrorViaDispatcherMutationResult = Apollo.MutationResult<CreateMirrorViaDispatcherMutation>
+export type CreateMirrorViaDispatcherMutationOptions = Apollo.BaseMutationOptions<
+  CreateMirrorViaDispatcherMutation,
+  CreateMirrorViaDispatcherMutationVariables
+>
+export const CreatePostTypedDataDocument = gql`
+  mutation CreatePostTypedData($options: TypedDataOptions, $request: CreatePublicPostRequest!) {
+    createPostTypedData(options: $options, request: $request) {
+      id
+      expiresAt
+      typedData {
+        types {
+          PostWithSig {
+            name
+            type
+          }
+        }
+        domain {
+          name
+          chainId
+          version
+          verifyingContract
+        }
+        value {
+          nonce
+          deadline
+          profileId
+          contentURI
+          collectModule
+          collectModuleInitData
+          referenceModule
+          referenceModuleInitData
+        }
+      }
+    }
+  }
+`
+export type CreatePostTypedDataMutationFn = Apollo.MutationFunction<
+  CreatePostTypedDataMutation,
+  CreatePostTypedDataMutationVariables
+>
+
+/**
+ * __useCreatePostTypedDataMutation__
+ *
+ * To run a mutation, you first call `useCreatePostTypedDataMutation` within a React component and pass it any options that fit your needs.
+ * When your component renders, `useCreatePostTypedDataMutation` returns a tuple that includes:
+ * - A mutate function that you can call at any time to execute the mutation
+ * - An object with fields that represent the current status of the mutation's execution
+ *
+ * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
+ *
+ * @example
+ * const [createPostTypedDataMutation, { data, loading, error }] = useCreatePostTypedDataMutation({
+ *   variables: {
+ *      options: // value for 'options'
+ *      request: // value for 'request'
+ *   },
+ * });
+ */
+export function useCreatePostTypedDataMutation(
+  baseOptions?: Apollo.MutationHookOptions<CreatePostTypedDataMutation, CreatePostTypedDataMutationVariables>
+) {
+  const options = { ...defaultOptions, ...baseOptions }
+  return Apollo.useMutation<CreatePostTypedDataMutation, CreatePostTypedDataMutationVariables>(
+    CreatePostTypedDataDocument,
+    options
+  )
+}
+export type CreatePostTypedDataMutationHookResult = ReturnType<typeof useCreatePostTypedDataMutation>
+export type CreatePostTypedDataMutationResult = Apollo.MutationResult<CreatePostTypedDataMutation>
+export type CreatePostTypedDataMutationOptions = Apollo.BaseMutationOptions<
+  CreatePostTypedDataMutation,
+  CreatePostTypedDataMutationVariables
+>
+export const CreatePostViaDispatcherDocument = gql`
+  mutation CreatePostViaDispatcher($request: CreatePublicPostRequest!) {
+    createPostViaDispatcher(request: $request) {
+      ...RelayerResultFields
+    }
+  }
+  ${RelayerResultFieldsFragmentDoc}
+`
+export type CreatePostViaDispatcherMutationFn = Apollo.MutationFunction<
+  CreatePostViaDispatcherMutation,
+  CreatePostViaDispatcherMutationVariables
+>
+
+/**
+ * __useCreatePostViaDispatcherMutation__
+ *
+ * To run a mutation, you first call `useCreatePostViaDispatcherMutation` within a React component and pass it any options that fit your needs.
+ * When your component renders, `useCreatePostViaDispatcherMutation` returns a tuple that includes:
+ * - A mutate function that you can call at any time to execute the mutation
+ * - An object with fields that represent the current status of the mutation's execution
+ *
+ * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
+ *
+ * @example
+ * const [createPostViaDispatcherMutation, { data, loading, error }] = useCreatePostViaDispatcherMutation({
+ *   variables: {
+ *      request: // value for 'request'
+ *   },
+ * });
+ */
+export function useCreatePostViaDispatcherMutation(
+  baseOptions?: Apollo.MutationHookOptions<
+    CreatePostViaDispatcherMutation,
+    CreatePostViaDispatcherMutationVariables
+  >
+) {
+  const options = { ...defaultOptions, ...baseOptions }
+  return Apollo.useMutation<CreatePostViaDispatcherMutation, CreatePostViaDispatcherMutationVariables>(
+    CreatePostViaDispatcherDocument,
+    options
+  )
+}
+export type CreatePostViaDispatcherMutationHookResult = ReturnType<typeof useCreatePostViaDispatcherMutation>
+export type CreatePostViaDispatcherMutationResult = Apollo.MutationResult<CreatePostViaDispatcherMutation>
+export type CreatePostViaDispatcherMutationOptions = Apollo.BaseMutationOptions<
+  CreatePostViaDispatcherMutation,
+  CreatePostViaDispatcherMutationVariables
+>
+export const CreateProfileDocument = gql`
+  mutation CreateProfile($request: CreateProfileRequest!) {
+    createProfile(request: $request) {
+      ...RelayerResultFields
+    }
+  }
+  ${RelayerResultFieldsFragmentDoc}
+`
+export type CreateProfileMutationFn = Apollo.MutationFunction<
+  CreateProfileMutation,
+  CreateProfileMutationVariables
+>
+
+/**
+ * __useCreateProfileMutation__
+ *
+ * To run a mutation, you first call `useCreateProfileMutation` within a React component and pass it any options that fit your needs.
+ * When your component renders, `useCreateProfileMutation` returns a tuple that includes:
+ * - A mutate function that you can call at any time to execute the mutation
+ * - An object with fields that represent the current status of the mutation's execution
+ *
+ * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
+ *
+ * @example
+ * const [createProfileMutation, { data, loading, error }] = useCreateProfileMutation({
+ *   variables: {
+ *      request: // value for 'request'
+ *   },
+ * });
+ */
+export function useCreateProfileMutation(
+  baseOptions?: Apollo.MutationHookOptions<CreateProfileMutation, CreateProfileMutationVariables>
+) {
+  const options = { ...defaultOptions, ...baseOptions }
+  return Apollo.useMutation<CreateProfileMutation, CreateProfileMutationVariables>(
+    CreateProfileDocument,
+    options
+  )
+}
+export type CreateProfileMutationHookResult = ReturnType<typeof useCreateProfileMutation>
+export type CreateProfileMutationResult = Apollo.MutationResult<CreateProfileMutation>
+export type CreateProfileMutationOptions = Apollo.BaseMutationOptions<
+  CreateProfileMutation,
+  CreateProfileMutationVariables
+>
+export const CreateSetDefaultProfileTypedDataDocument = gql`
+  mutation CreateSetDefaultProfileTypedData(
+    $options: TypedDataOptions
+    $request: CreateSetDefaultProfileRequest!
+  ) {
+    createSetDefaultProfileTypedData(options: $options, request: $request) {
+      id
+      expiresAt
+      typedData {
+        domain {
+          name
+          chainId
+          version
+          verifyingContract
+        }
+        types {
+          SetDefaultProfileWithSig {
+            name
+            type
+          }
+        }
+        value {
+          nonce
+          deadline
+          wallet
+          profileId
+        }
+      }
+    }
+  }
+`
+export type CreateSetDefaultProfileTypedDataMutationFn = Apollo.MutationFunction<
+  CreateSetDefaultProfileTypedDataMutation,
+  CreateSetDefaultProfileTypedDataMutationVariables
+>
+
+/**
+ * __useCreateSetDefaultProfileTypedDataMutation__
+ *
+ * To run a mutation, you first call `useCreateSetDefaultProfileTypedDataMutation` within a React component and pass it any options that fit your needs.
+ * When your component renders, `useCreateSetDefaultProfileTypedDataMutation` returns a tuple that includes:
+ * - A mutate function that you can call at any time to execute the mutation
+ * - An object with fields that represent the current status of the mutation's execution
+ *
+ * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
+ *
+ * @example
+ * const [createSetDefaultProfileTypedDataMutation, { data, loading, error }] = useCreateSetDefaultProfileTypedDataMutation({
+ *   variables: {
+ *      options: // value for 'options'
+ *      request: // value for 'request'
+ *   },
+ * });
+ */
+export function useCreateSetDefaultProfileTypedDataMutation(
+  baseOptions?: Apollo.MutationHookOptions<
+    CreateSetDefaultProfileTypedDataMutation,
+    CreateSetDefaultProfileTypedDataMutationVariables
+  >
+) {
+  const options = { ...defaultOptions, ...baseOptions }
+  return Apollo.useMutation<
+    CreateSetDefaultProfileTypedDataMutation,
+    CreateSetDefaultProfileTypedDataMutationVariables
+  >(CreateSetDefaultProfileTypedDataDocument, options)
+}
+export type CreateSetDefaultProfileTypedDataMutationHookResult = ReturnType<
+  typeof useCreateSetDefaultProfileTypedDataMutation
+>
+export type CreateSetDefaultProfileTypedDataMutationResult =
+  Apollo.MutationResult<CreateSetDefaultProfileTypedDataMutation>
+export type CreateSetDefaultProfileTypedDataMutationOptions = Apollo.BaseMutationOptions<
+  CreateSetDefaultProfileTypedDataMutation,
+  CreateSetDefaultProfileTypedDataMutationVariables
+>
+export const CreateSetDispatcherTypedDataDocument = gql`
+  mutation CreateSetDispatcherTypedData($options: TypedDataOptions, $request: SetDispatcherRequest!) {
+    createSetDispatcherTypedData(options: $options, request: $request) {
+      id
+      expiresAt
+      typedData {
+        types {
+          SetDispatcherWithSig {
+            name
+            type
+          }
+        }
+        domain {
+          name
+          chainId
+          version
+          verifyingContract
+        }
+        value {
+          nonce
+          deadline
+          profileId
+          dispatcher
+        }
+      }
+    }
+  }
+`
+export type CreateSetDispatcherTypedDataMutationFn = Apollo.MutationFunction<
+  CreateSetDispatcherTypedDataMutation,
+  CreateSetDispatcherTypedDataMutationVariables
+>
+
+/**
+ * __useCreateSetDispatcherTypedDataMutation__
+ *
+ * To run a mutation, you first call `useCreateSetDispatcherTypedDataMutation` within a React component and pass it any options that fit your needs.
+ * When your component renders, `useCreateSetDispatcherTypedDataMutation` returns a tuple that includes:
+ * - A mutate function that you can call at any time to execute the mutation
+ * - An object with fields that represent the current status of the mutation's execution
+ *
+ * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
+ *
+ * @example
+ * const [createSetDispatcherTypedDataMutation, { data, loading, error }] = useCreateSetDispatcherTypedDataMutation({
+ *   variables: {
+ *      options: // value for 'options'
+ *      request: // value for 'request'
+ *   },
+ * });
+ */
+export function useCreateSetDispatcherTypedDataMutation(
+  baseOptions?: Apollo.MutationHookOptions<
+    CreateSetDispatcherTypedDataMutation,
+    CreateSetDispatcherTypedDataMutationVariables
+  >
+) {
+  const options = { ...defaultOptions, ...baseOptions }
+  return Apollo.useMutation<
+    CreateSetDispatcherTypedDataMutation,
+    CreateSetDispatcherTypedDataMutationVariables
+  >(CreateSetDispatcherTypedDataDocument, options)
+}
+export type CreateSetDispatcherTypedDataMutationHookResult = ReturnType<
+  typeof useCreateSetDispatcherTypedDataMutation
+>
+export type CreateSetDispatcherTypedDataMutationResult =
+  Apollo.MutationResult<CreateSetDispatcherTypedDataMutation>
+export type CreateSetDispatcherTypedDataMutationOptions = Apollo.BaseMutationOptions<
+  CreateSetDispatcherTypedDataMutation,
+  CreateSetDispatcherTypedDataMutationVariables
+>
+export const CreateSetFollowModuleTypedDataDocument = gql`
+  mutation CreateSetFollowModuleTypedData(
+    $options: TypedDataOptions
+    $request: CreateSetFollowModuleRequest!
+  ) {
+    createSetFollowModuleTypedData(options: $options, request: $request) {
+      id
+      expiresAt
+      typedData {
+        types {
+          SetFollowModuleWithSig {
+            name
+            type
+          }
+        }
+        domain {
+          name
+          chainId
+          version
+          verifyingContract
+        }
+        value {
+          nonce
+          deadline
+          profileId
+          followModule
+          followModuleInitData
+        }
+      }
+    }
+  }
+`
+export type CreateSetFollowModuleTypedDataMutationFn = Apollo.MutationFunction<
+  CreateSetFollowModuleTypedDataMutation,
+  CreateSetFollowModuleTypedDataMutationVariables
+>
+
+/**
+ * __useCreateSetFollowModuleTypedDataMutation__
+ *
+ * To run a mutation, you first call `useCreateSetFollowModuleTypedDataMutation` within a React component and pass it any options that fit your needs.
+ * When your component renders, `useCreateSetFollowModuleTypedDataMutation` returns a tuple that includes:
+ * - A mutate function that you can call at any time to execute the mutation
+ * - An object with fields that represent the current status of the mutation's execution
+ *
+ * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
+ *
+ * @example
+ * const [createSetFollowModuleTypedDataMutation, { data, loading, error }] = useCreateSetFollowModuleTypedDataMutation({
+ *   variables: {
+ *      options: // value for 'options'
+ *      request: // value for 'request'
+ *   },
+ * });
+ */
+export function useCreateSetFollowModuleTypedDataMutation(
+  baseOptions?: Apollo.MutationHookOptions<
+    CreateSetFollowModuleTypedDataMutation,
+    CreateSetFollowModuleTypedDataMutationVariables
+  >
+) {
+  const options = { ...defaultOptions, ...baseOptions }
+  return Apollo.useMutation<
+    CreateSetFollowModuleTypedDataMutation,
+    CreateSetFollowModuleTypedDataMutationVariables
+  >(CreateSetFollowModuleTypedDataDocument, options)
+}
+export type CreateSetFollowModuleTypedDataMutationHookResult = ReturnType<
+  typeof useCreateSetFollowModuleTypedDataMutation
+>
+export type CreateSetFollowModuleTypedDataMutationResult =
+  Apollo.MutationResult<CreateSetFollowModuleTypedDataMutation>
+export type CreateSetFollowModuleTypedDataMutationOptions = Apollo.BaseMutationOptions<
+  CreateSetFollowModuleTypedDataMutation,
+  CreateSetFollowModuleTypedDataMutationVariables
+>
+export const CreateSetProfileImageUriTypedDataDocument = gql`
+  mutation CreateSetProfileImageURITypedData(
+    $options: TypedDataOptions
+    $request: UpdateProfileImageRequest!
+  ) {
+    createSetProfileImageURITypedData(options: $options, request: $request) {
+      id
+      expiresAt
+      typedData {
+        domain {
+          name
+          chainId
+          version
+          verifyingContract
+        }
+        types {
+          SetProfileImageURIWithSig {
+            name
+            type
+          }
+        }
+        value {
+          nonce
+          deadline
+          imageURI
+          profileId
+        }
+      }
+    }
+  }
+`
+export type CreateSetProfileImageUriTypedDataMutationFn = Apollo.MutationFunction<
+  CreateSetProfileImageUriTypedDataMutation,
+  CreateSetProfileImageUriTypedDataMutationVariables
+>
+
+/**
+ * __useCreateSetProfileImageUriTypedDataMutation__
+ *
+ * To run a mutation, you first call `useCreateSetProfileImageUriTypedDataMutation` within a React component and pass it any options that fit your needs.
+ * When your component renders, `useCreateSetProfileImageUriTypedDataMutation` returns a tuple that includes:
+ * - A mutate function that you can call at any time to execute the mutation
+ * - An object with fields that represent the current status of the mutation's execution
+ *
+ * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
+ *
+ * @example
+ * const [createSetProfileImageUriTypedDataMutation, { data, loading, error }] = useCreateSetProfileImageUriTypedDataMutation({
+ *   variables: {
+ *      options: // value for 'options'
+ *      request: // value for 'request'
+ *   },
+ * });
+ */
+export function useCreateSetProfileImageUriTypedDataMutation(
+  baseOptions?: Apollo.MutationHookOptions<
+    CreateSetProfileImageUriTypedDataMutation,
+    CreateSetProfileImageUriTypedDataMutationVariables
+  >
+) {
+  const options = { ...defaultOptions, ...baseOptions }
+  return Apollo.useMutation<
+    CreateSetProfileImageUriTypedDataMutation,
+    CreateSetProfileImageUriTypedDataMutationVariables
+  >(CreateSetProfileImageUriTypedDataDocument, options)
+}
+export type CreateSetProfileImageUriTypedDataMutationHookResult = ReturnType<
+  typeof useCreateSetProfileImageUriTypedDataMutation
+>
+export type CreateSetProfileImageUriTypedDataMutationResult =
+  Apollo.MutationResult<CreateSetProfileImageUriTypedDataMutation>
+export type CreateSetProfileImageUriTypedDataMutationOptions = Apollo.BaseMutationOptions<
+  CreateSetProfileImageUriTypedDataMutation,
+  CreateSetProfileImageUriTypedDataMutationVariables
+>
+export const CreateSetProfileImageUriViaDispatcherDocument = gql`
+  mutation CreateSetProfileImageURIViaDispatcher($request: UpdateProfileImageRequest!) {
+    createSetProfileImageURIViaDispatcher(request: $request) {
+      ...RelayerResultFields
+    }
+  }
+  ${RelayerResultFieldsFragmentDoc}
+`
+export type CreateSetProfileImageUriViaDispatcherMutationFn = Apollo.MutationFunction<
+  CreateSetProfileImageUriViaDispatcherMutation,
+  CreateSetProfileImageUriViaDispatcherMutationVariables
+>
+
+/**
+ * __useCreateSetProfileImageUriViaDispatcherMutation__
+ *
+ * To run a mutation, you first call `useCreateSetProfileImageUriViaDispatcherMutation` within a React component and pass it any options that fit your needs.
+ * When your component renders, `useCreateSetProfileImageUriViaDispatcherMutation` returns a tuple that includes:
+ * - A mutate function that you can call at any time to execute the mutation
+ * - An object with fields that represent the current status of the mutation's execution
+ *
+ * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
+ *
+ * @example
+ * const [createSetProfileImageUriViaDispatcherMutation, { data, loading, error }] = useCreateSetProfileImageUriViaDispatcherMutation({
+ *   variables: {
+ *      request: // value for 'request'
+ *   },
+ * });
+ */
+export function useCreateSetProfileImageUriViaDispatcherMutation(
+  baseOptions?: Apollo.MutationHookOptions<
+    CreateSetProfileImageUriViaDispatcherMutation,
+    CreateSetProfileImageUriViaDispatcherMutationVariables
+  >
+) {
+  const options = { ...defaultOptions, ...baseOptions }
+  return Apollo.useMutation<
+    CreateSetProfileImageUriViaDispatcherMutation,
+    CreateSetProfileImageUriViaDispatcherMutationVariables
+  >(CreateSetProfileImageUriViaDispatcherDocument, options)
+}
+export type CreateSetProfileImageUriViaDispatcherMutationHookResult = ReturnType<
+  typeof useCreateSetProfileImageUriViaDispatcherMutation
+>
+export type CreateSetProfileImageUriViaDispatcherMutationResult =
+  Apollo.MutationResult<CreateSetProfileImageUriViaDispatcherMutation>
+export type CreateSetProfileImageUriViaDispatcherMutationOptions = Apollo.BaseMutationOptions<
+  CreateSetProfileImageUriViaDispatcherMutation,
+  CreateSetProfileImageUriViaDispatcherMutationVariables
+>
+export const CreateSetProfileMetadataTypedDataDocument = gql`
+  mutation CreateSetProfileMetadataTypedData(
+    $options: TypedDataOptions
+    $request: CreatePublicSetProfileMetadataURIRequest!
+  ) {
+    createSetProfileMetadataTypedData(options: $options, request: $request) {
+      id
+      expiresAt
+      typedData {
+        types {
+          SetProfileMetadataURIWithSig {
+            name
+            type
+          }
+        }
+        domain {
+          name
+          chainId
+          version
+          verifyingContract
+        }
+        value {
+          nonce
+          deadline
+          profileId
+          metadata
+        }
+      }
+    }
+  }
+`
+export type CreateSetProfileMetadataTypedDataMutationFn = Apollo.MutationFunction<
+  CreateSetProfileMetadataTypedDataMutation,
+  CreateSetProfileMetadataTypedDataMutationVariables
+>
+
+/**
+ * __useCreateSetProfileMetadataTypedDataMutation__
+ *
+ * To run a mutation, you first call `useCreateSetProfileMetadataTypedDataMutation` within a React component and pass it any options that fit your needs.
+ * When your component renders, `useCreateSetProfileMetadataTypedDataMutation` returns a tuple that includes:
+ * - A mutate function that you can call at any time to execute the mutation
+ * - An object with fields that represent the current status of the mutation's execution
+ *
+ * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
+ *
+ * @example
+ * const [createSetProfileMetadataTypedDataMutation, { data, loading, error }] = useCreateSetProfileMetadataTypedDataMutation({
+ *   variables: {
+ *      options: // value for 'options'
+ *      request: // value for 'request'
+ *   },
+ * });
+ */
+export function useCreateSetProfileMetadataTypedDataMutation(
+  baseOptions?: Apollo.MutationHookOptions<
+    CreateSetProfileMetadataTypedDataMutation,
+    CreateSetProfileMetadataTypedDataMutationVariables
+  >
+) {
+  const options = { ...defaultOptions, ...baseOptions }
+  return Apollo.useMutation<
+    CreateSetProfileMetadataTypedDataMutation,
+    CreateSetProfileMetadataTypedDataMutationVariables
+  >(CreateSetProfileMetadataTypedDataDocument, options)
+}
+export type CreateSetProfileMetadataTypedDataMutationHookResult = ReturnType<
+  typeof useCreateSetProfileMetadataTypedDataMutation
+>
+export type CreateSetProfileMetadataTypedDataMutationResult =
+  Apollo.MutationResult<CreateSetProfileMetadataTypedDataMutation>
+export type CreateSetProfileMetadataTypedDataMutationOptions = Apollo.BaseMutationOptions<
+  CreateSetProfileMetadataTypedDataMutation,
+  CreateSetProfileMetadataTypedDataMutationVariables
+>
+export const CreateSetProfileMetadataViaDispatcherDocument = gql`
+  mutation CreateSetProfileMetadataViaDispatcher($request: CreatePublicSetProfileMetadataURIRequest!) {
+    createSetProfileMetadataViaDispatcher(request: $request) {
+      ...RelayerResultFields
+    }
+  }
+  ${RelayerResultFieldsFragmentDoc}
+`
+export type CreateSetProfileMetadataViaDispatcherMutationFn = Apollo.MutationFunction<
+  CreateSetProfileMetadataViaDispatcherMutation,
+  CreateSetProfileMetadataViaDispatcherMutationVariables
+>
+
+/**
+ * __useCreateSetProfileMetadataViaDispatcherMutation__
+ *
+ * To run a mutation, you first call `useCreateSetProfileMetadataViaDispatcherMutation` within a React component and pass it any options that fit your needs.
+ * When your component renders, `useCreateSetProfileMetadataViaDispatcherMutation` returns a tuple that includes:
+ * - A mutate function that you can call at any time to execute the mutation
+ * - An object with fields that represent the current status of the mutation's execution
+ *
+ * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
+ *
+ * @example
+ * const [createSetProfileMetadataViaDispatcherMutation, { data, loading, error }] = useCreateSetProfileMetadataViaDispatcherMutation({
+ *   variables: {
+ *      request: // value for 'request'
+ *   },
+ * });
+ */
+export function useCreateSetProfileMetadataViaDispatcherMutation(
+  baseOptions?: Apollo.MutationHookOptions<
+    CreateSetProfileMetadataViaDispatcherMutation,
+    CreateSetProfileMetadataViaDispatcherMutationVariables
+  >
+) {
+  const options = { ...defaultOptions, ...baseOptions }
+  return Apollo.useMutation<
+    CreateSetProfileMetadataViaDispatcherMutation,
+    CreateSetProfileMetadataViaDispatcherMutationVariables
+  >(CreateSetProfileMetadataViaDispatcherDocument, options)
+}
+export type CreateSetProfileMetadataViaDispatcherMutationHookResult = ReturnType<
+  typeof useCreateSetProfileMetadataViaDispatcherMutation
+>
+export type CreateSetProfileMetadataViaDispatcherMutationResult =
+  Apollo.MutationResult<CreateSetProfileMetadataViaDispatcherMutation>
+export type CreateSetProfileMetadataViaDispatcherMutationOptions = Apollo.BaseMutationOptions<
+  CreateSetProfileMetadataViaDispatcherMutation,
+  CreateSetProfileMetadataViaDispatcherMutationVariables
+>
+export const CreateUnfollowTypedDataDocument = gql`
+  mutation CreateUnfollowTypedData($request: UnfollowRequest!) {
+    createUnfollowTypedData(request: $request) {
+      id
+      expiresAt
+      typedData {
+        domain {
+          name
+          chainId
+          version
+          verifyingContract
+        }
+        types {
+          BurnWithSig {
+            name
+            type
+          }
+        }
+        value {
+          nonce
+          deadline
+          tokenId
+        }
+      }
+    }
+  }
+`
+export type CreateUnfollowTypedDataMutationFn = Apollo.MutationFunction<
+  CreateUnfollowTypedDataMutation,
+  CreateUnfollowTypedDataMutationVariables
+>
+
+/**
+ * __useCreateUnfollowTypedDataMutation__
+ *
+ * To run a mutation, you first call `useCreateUnfollowTypedDataMutation` within a React component and pass it any options that fit your needs.
+ * When your component renders, `useCreateUnfollowTypedDataMutation` returns a tuple that includes:
+ * - A mutate function that you can call at any time to execute the mutation
+ * - An object with fields that represent the current status of the mutation's execution
+ *
+ * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
+ *
+ * @example
+ * const [createUnfollowTypedDataMutation, { data, loading, error }] = useCreateUnfollowTypedDataMutation({
+ *   variables: {
+ *      request: // value for 'request'
+ *   },
+ * });
+ */
+export function useCreateUnfollowTypedDataMutation(
+  baseOptions?: Apollo.MutationHookOptions<
+    CreateUnfollowTypedDataMutation,
+    CreateUnfollowTypedDataMutationVariables
+  >
+) {
+  const options = { ...defaultOptions, ...baseOptions }
+  return Apollo.useMutation<CreateUnfollowTypedDataMutation, CreateUnfollowTypedDataMutationVariables>(
+    CreateUnfollowTypedDataDocument,
+    options
+  )
+}
+export type CreateUnfollowTypedDataMutationHookResult = ReturnType<typeof useCreateUnfollowTypedDataMutation>
+export type CreateUnfollowTypedDataMutationResult = Apollo.MutationResult<CreateUnfollowTypedDataMutation>
+export type CreateUnfollowTypedDataMutationOptions = Apollo.BaseMutationOptions<
+  CreateUnfollowTypedDataMutation,
+  CreateUnfollowTypedDataMutationVariables
+>
+export const HidePublicationDocument = gql`
+  mutation HidePublication($request: HidePublicationRequest!) {
+    hidePublication(request: $request)
+  }
+`
+export type HidePublicationMutationFn = Apollo.MutationFunction<
+  HidePublicationMutation,
+  HidePublicationMutationVariables
+>
+
+/**
+ * __useHidePublicationMutation__
+ *
+ * To run a mutation, you first call `useHidePublicationMutation` within a React component and pass it any options that fit your needs.
+ * When your component renders, `useHidePublicationMutation` returns a tuple that includes:
+ * - A mutate function that you can call at any time to execute the mutation
+ * - An object with fields that represent the current status of the mutation's execution
+ *
+ * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
+ *
+ * @example
+ * const [hidePublicationMutation, { data, loading, error }] = useHidePublicationMutation({
+ *   variables: {
+ *      request: // value for 'request'
+ *   },
+ * });
+ */
+export function useHidePublicationMutation(
+  baseOptions?: Apollo.MutationHookOptions<HidePublicationMutation, HidePublicationMutationVariables>
+) {
+  const options = { ...defaultOptions, ...baseOptions }
+  return Apollo.useMutation<HidePublicationMutation, HidePublicationMutationVariables>(
+    HidePublicationDocument,
+    options
+  )
+}
+export type HidePublicationMutationHookResult = ReturnType<typeof useHidePublicationMutation>
+export type HidePublicationMutationResult = Apollo.MutationResult<HidePublicationMutation>
+export type HidePublicationMutationOptions = Apollo.BaseMutationOptions<
+  HidePublicationMutation,
+  HidePublicationMutationVariables
+>
+export const ProxyActionDocument = gql`
+  mutation ProxyAction($request: ProxyActionRequest!) {
+    proxyAction(request: $request)
+  }
+`
+export type ProxyActionMutationFn = Apollo.MutationFunction<ProxyActionMutation, ProxyActionMutationVariables>
+
+/**
+ * __useProxyActionMutation__
+ *
+ * To run a mutation, you first call `useProxyActionMutation` within a React component and pass it any options that fit your needs.
+ * When your component renders, `useProxyActionMutation` returns a tuple that includes:
+ * - A mutate function that you can call at any time to execute the mutation
+ * - An object with fields that represent the current status of the mutation's execution
+ *
+ * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
+ *
+ * @example
+ * const [proxyActionMutation, { data, loading, error }] = useProxyActionMutation({
+ *   variables: {
+ *      request: // value for 'request'
+ *   },
+ * });
+ */
+export function useProxyActionMutation(
+  baseOptions?: Apollo.MutationHookOptions<ProxyActionMutation, ProxyActionMutationVariables>
+) {
+  const options = { ...defaultOptions, ...baseOptions }
+  return Apollo.useMutation<ProxyActionMutation, ProxyActionMutationVariables>(ProxyActionDocument, options)
+}
+export type ProxyActionMutationHookResult = ReturnType<typeof useProxyActionMutation>
+export type ProxyActionMutationResult = Apollo.MutationResult<ProxyActionMutation>
+export type ProxyActionMutationOptions = Apollo.BaseMutationOptions<
+  ProxyActionMutation,
+  ProxyActionMutationVariables
+>
+export const RemoveReactionDocument = gql`
+  mutation RemoveReaction($request: ReactionRequest!) {
+    removeReaction(request: $request)
+  }
+`
+export type RemoveReactionMutationFn = Apollo.MutationFunction<
+  RemoveReactionMutation,
+  RemoveReactionMutationVariables
+>
+
+/**
+ * __useRemoveReactionMutation__
+ *
+ * To run a mutation, you first call `useRemoveReactionMutation` within a React component and pass it any options that fit your needs.
+ * When your component renders, `useRemoveReactionMutation` returns a tuple that includes:
+ * - A mutate function that you can call at any time to execute the mutation
+ * - An object with fields that represent the current status of the mutation's execution
+ *
+ * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
+ *
+ * @example
+ * const [removeReactionMutation, { data, loading, error }] = useRemoveReactionMutation({
+ *   variables: {
+ *      request: // value for 'request'
+ *   },
+ * });
+ */
+export function useRemoveReactionMutation(
+  baseOptions?: Apollo.MutationHookOptions<RemoveReactionMutation, RemoveReactionMutationVariables>
+) {
+  const options = { ...defaultOptions, ...baseOptions }
+  return Apollo.useMutation<RemoveReactionMutation, RemoveReactionMutationVariables>(
+    RemoveReactionDocument,
+    options
+  )
+}
+export type RemoveReactionMutationHookResult = ReturnType<typeof useRemoveReactionMutation>
+export type RemoveReactionMutationResult = Apollo.MutationResult<RemoveReactionMutation>
+export type RemoveReactionMutationOptions = Apollo.BaseMutationOptions<
+  RemoveReactionMutation,
+  RemoveReactionMutationVariables
+>
+export const ReportPublicationDocument = gql`
+  mutation ReportPublication($request: ReportPublicationRequest!) {
+    reportPublication(request: $request)
+  }
+`
+export type ReportPublicationMutationFn = Apollo.MutationFunction<
+  ReportPublicationMutation,
+  ReportPublicationMutationVariables
+>
+
+/**
+ * __useReportPublicationMutation__
+ *
+ * To run a mutation, you first call `useReportPublicationMutation` within a React component and pass it any options that fit your needs.
+ * When your component renders, `useReportPublicationMutation` returns a tuple that includes:
+ * - A mutate function that you can call at any time to execute the mutation
+ * - An object with fields that represent the current status of the mutation's execution
+ *
+ * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
+ *
+ * @example
+ * const [reportPublicationMutation, { data, loading, error }] = useReportPublicationMutation({
+ *   variables: {
+ *      request: // value for 'request'
+ *   },
+ * });
+ */
+export function useReportPublicationMutation(
+  baseOptions?: Apollo.MutationHookOptions<ReportPublicationMutation, ReportPublicationMutationVariables>
+) {
+  const options = { ...defaultOptions, ...baseOptions }
+  return Apollo.useMutation<ReportPublicationMutation, ReportPublicationMutationVariables>(
+    ReportPublicationDocument,
+    options
+  )
+}
+export type ReportPublicationMutationHookResult = ReturnType<typeof useReportPublicationMutation>
+export type ReportPublicationMutationResult = Apollo.MutationResult<ReportPublicationMutation>
+export type ReportPublicationMutationOptions = Apollo.BaseMutationOptions<
+  ReportPublicationMutation,
+  ReportPublicationMutationVariables
+>
+export const ApprovedModuleAllowanceAmountDocument = gql`
+  query ApprovedModuleAllowanceAmount($request: ApprovedModuleAllowanceAmountRequest!) {
+    approvedModuleAllowanceAmount(request: $request) {
+      currency
+      module
+      allowance
+      contractAddress
+    }
+    enabledModuleCurrencies {
+      name
+      symbol
+      decimals
+      address
+    }
+  }
+`
+
+/**
+ * __useApprovedModuleAllowanceAmountQuery__
+ *
+ * To run a query within a React component, call `useApprovedModuleAllowanceAmountQuery` and pass it any options that fit your needs.
+ * When your component renders, `useApprovedModuleAllowanceAmountQuery` returns an object from Apollo Client that contains loading, error, and data properties
+ * you can use to render your UI.
+ *
+ * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
+ *
+ * @example
+ * const { data, loading, error } = useApprovedModuleAllowanceAmountQuery({
+ *   variables: {
+ *      request: // value for 'request'
+ *   },
+ * });
+ */
+export function useApprovedModuleAllowanceAmountQuery(
+  baseOptions: Apollo.QueryHookOptions<
+    ApprovedModuleAllowanceAmountQuery,
+    ApprovedModuleAllowanceAmountQueryVariables
+  >
+) {
+  const options = { ...defaultOptions, ...baseOptions }
+  return Apollo.useQuery<ApprovedModuleAllowanceAmountQuery, ApprovedModuleAllowanceAmountQueryVariables>(
+    ApprovedModuleAllowanceAmountDocument,
+    options
+  )
+}
+export function useApprovedModuleAllowanceAmountLazyQuery(
+  baseOptions?: Apollo.LazyQueryHookOptions<
+    ApprovedModuleAllowanceAmountQuery,
+    ApprovedModuleAllowanceAmountQueryVariables
+  >
+) {
+  const options = { ...defaultOptions, ...baseOptions }
+  return Apollo.useLazyQuery<ApprovedModuleAllowanceAmountQuery, ApprovedModuleAllowanceAmountQueryVariables>(
+    ApprovedModuleAllowanceAmountDocument,
+    options
+  )
+}
+export type ApprovedModuleAllowanceAmountQueryHookResult = ReturnType<
+  typeof useApprovedModuleAllowanceAmountQuery
+>
+export type ApprovedModuleAllowanceAmountLazyQueryHookResult = ReturnType<
+  typeof useApprovedModuleAllowanceAmountLazyQuery
+>
+export type ApprovedModuleAllowanceAmountQueryResult = Apollo.QueryResult<
+  ApprovedModuleAllowanceAmountQuery,
+  ApprovedModuleAllowanceAmountQueryVariables
+>
+export const BCharityStatsDocument = gql`
+  query BCharityStats {
+    globalProtocolStats(request: { sources: "BCharity" }) {
+      totalProfiles
+      totalPosts
+      totalBurntProfiles
+      totalMirrors
+      totalComments
+      totalCollects
+      totalFollows
+    }
+  }
+`
+
+/**
+ * __useBCharityStatsQuery__
+ *
+ * To run a query within a React component, call `useBCharityStatsQuery` and pass it any options that fit your needs.
+ * When your component renders, `useBCharityStatsQuery` returns an object from Apollo Client that contains loading, error, and data properties
+ * you can use to render your UI.
+ *
+ * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
+ *
+ * @example
+ * const { data, loading, error } = useBCharityStatsQuery({
+ *   variables: {
+ *   },
+ * });
+ */
+export function useBCharityStatsQuery(
+  baseOptions?: Apollo.QueryHookOptions<BCharityStatsQuery, BCharityStatsQueryVariables>
+) {
+  const options = { ...defaultOptions, ...baseOptions }
+  return Apollo.useQuery<BCharityStatsQuery, BCharityStatsQueryVariables>(BCharityStatsDocument, options)
+}
+export function useBCharityStatsLazyQuery(
+  baseOptions?: Apollo.LazyQueryHookOptions<BCharityStatsQuery, BCharityStatsQueryVariables>
+) {
+  const options = { ...defaultOptions, ...baseOptions }
+  return Apollo.useLazyQuery<BCharityStatsQuery, BCharityStatsQueryVariables>(BCharityStatsDocument, options)
+}
+export type BCharityStatsQueryHookResult = ReturnType<typeof useBCharityStatsQuery>
+export type BCharityStatsLazyQueryHookResult = ReturnType<typeof useBCharityStatsLazyQuery>
+export type BCharityStatsQueryResult = Apollo.QueryResult<BCharityStatsQuery, BCharityStatsQueryVariables>
+export const ChallengeDocument = gql`
+  query Challenge($request: ChallengeRequest!) {
+    challenge(request: $request) {
+      text
+    }
+  }
+`
+
+/**
+ * __useChallengeQuery__
+ *
+ * To run a query within a React component, call `useChallengeQuery` and pass it any options that fit your needs.
+ * When your component renders, `useChallengeQuery` returns an object from Apollo Client that contains loading, error, and data properties
+ * you can use to render your UI.
+ *
+ * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
+ *
+ * @example
+ * const { data, loading, error } = useChallengeQuery({
+ *   variables: {
+ *      request: // value for 'request'
+ *   },
+ * });
+ */
+export function useChallengeQuery(
+  baseOptions: Apollo.QueryHookOptions<ChallengeQuery, ChallengeQueryVariables>
+) {
+  const options = { ...defaultOptions, ...baseOptions }
+  return Apollo.useQuery<ChallengeQuery, ChallengeQueryVariables>(ChallengeDocument, options)
+}
+export function useChallengeLazyQuery(
+  baseOptions?: Apollo.LazyQueryHookOptions<ChallengeQuery, ChallengeQueryVariables>
+) {
+  const options = { ...defaultOptions, ...baseOptions }
+  return Apollo.useLazyQuery<ChallengeQuery, ChallengeQueryVariables>(ChallengeDocument, options)
+}
+export type ChallengeQueryHookResult = ReturnType<typeof useChallengeQuery>
+export type ChallengeLazyQueryHookResult = ReturnType<typeof useChallengeLazyQuery>
+export type ChallengeQueryResult = Apollo.QueryResult<ChallengeQuery, ChallengeQueryVariables>
+export const CollectModuleDocument = gql`
+  query CollectModule($request: PublicationQueryRequest!) {
+    publication(request: $request) {
+      ... on Post {
+        collectNftAddress
+        collectModule {
+          ...CollectModuleFields
+        }
+      }
+      ... on Comment {
+        collectNftAddress
+        collectModule {
+          ...CollectModuleFields
+        }
+      }
+      ... on Mirror {
+        collectNftAddress
+        collectModule {
+          ...CollectModuleFields
+        }
+      }
+    }
+  }
+  ${CollectModuleFieldsFragmentDoc}
+`
+
+/**
+ * __useCollectModuleQuery__
+ *
+ * To run a query within a React component, call `useCollectModuleQuery` and pass it any options that fit your needs.
+ * When your component renders, `useCollectModuleQuery` returns an object from Apollo Client that contains loading, error, and data properties
+ * you can use to render your UI.
+ *
+ * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
+ *
+ * @example
+ * const { data, loading, error } = useCollectModuleQuery({
+ *   variables: {
+ *      request: // value for 'request'
+ *   },
+ * });
+ */
+export function useCollectModuleQuery(
+  baseOptions: Apollo.QueryHookOptions<CollectModuleQuery, CollectModuleQueryVariables>
+) {
+  const options = { ...defaultOptions, ...baseOptions }
+  return Apollo.useQuery<CollectModuleQuery, CollectModuleQueryVariables>(CollectModuleDocument, options)
+}
+export function useCollectModuleLazyQuery(
+  baseOptions?: Apollo.LazyQueryHookOptions<CollectModuleQuery, CollectModuleQueryVariables>
+) {
+  const options = { ...defaultOptions, ...baseOptions }
+  return Apollo.useLazyQuery<CollectModuleQuery, CollectModuleQueryVariables>(CollectModuleDocument, options)
+}
+export type CollectModuleQueryHookResult = ReturnType<typeof useCollectModuleQuery>
+export type CollectModuleLazyQueryHookResult = ReturnType<typeof useCollectModuleLazyQuery>
+export type CollectModuleQueryResult = Apollo.QueryResult<CollectModuleQuery, CollectModuleQueryVariables>
+export const CollectorsDocument = gql`
+  query Collectors($request: WhoCollectedPublicationRequest!) {
+    whoCollectedPublication(request: $request) {
+      items {
+        address
+        defaultProfile {
+          ...ProfileFields
+          isFollowedByMe
+        }
+      }
+      pageInfo {
+        next
+        totalCount
+      }
+    }
+  }
+  ${ProfileFieldsFragmentDoc}
+`
+
+/**
+ * __useCollectorsQuery__
+ *
+ * To run a query within a React component, call `useCollectorsQuery` and pass it any options that fit your needs.
+ * When your component renders, `useCollectorsQuery` returns an object from Apollo Client that contains loading, error, and data properties
+ * you can use to render your UI.
+ *
+ * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
+ *
+ * @example
+ * const { data, loading, error } = useCollectorsQuery({
+ *   variables: {
+ *      request: // value for 'request'
+ *   },
+ * });
+ */
+export function useCollectorsQuery(
+  baseOptions: Apollo.QueryHookOptions<CollectorsQuery, CollectorsQueryVariables>
+) {
+  const options = { ...defaultOptions, ...baseOptions }
+  return Apollo.useQuery<CollectorsQuery, CollectorsQueryVariables>(CollectorsDocument, options)
+}
+export function useCollectorsLazyQuery(
+  baseOptions?: Apollo.LazyQueryHookOptions<CollectorsQuery, CollectorsQueryVariables>
+) {
+  const options = { ...defaultOptions, ...baseOptions }
+  return Apollo.useLazyQuery<CollectorsQuery, CollectorsQueryVariables>(CollectorsDocument, options)
+}
+export type CollectorsQueryHookResult = ReturnType<typeof useCollectorsQuery>
+export type CollectorsLazyQueryHookResult = ReturnType<typeof useCollectorsLazyQuery>
+export type CollectorsQueryResult = Apollo.QueryResult<CollectorsQuery, CollectorsQueryVariables>
+export const CommentFeedDocument = gql`
+  query CommentFeed(
+    $request: PublicationsQueryRequest!
+    $reactionRequest: ReactionFieldResolverRequest
+    $profileId: ProfileId
+  ) {
+    publications(request: $request) {
+      items {
+        ... on Comment {
+          ...CommentFields
+        }
+      }
+      pageInfo {
+        totalCount
+        next
+      }
+    }
+  }
+  ${CommentFieldsFragmentDoc}
+`
+
+/**
+ * __useCommentFeedQuery__
+ *
+ * To run a query within a React component, call `useCommentFeedQuery` and pass it any options that fit your needs.
+ * When your component renders, `useCommentFeedQuery` returns an object from Apollo Client that contains loading, error, and data properties
+ * you can use to render your UI.
+ *
+ * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
+ *
+ * @example
+ * const { data, loading, error } = useCommentFeedQuery({
+ *   variables: {
+ *      request: // value for 'request'
+ *      reactionRequest: // value for 'reactionRequest'
+ *      profileId: // value for 'profileId'
+ *   },
+ * });
+ */
+export function useCommentFeedQuery(
+  baseOptions: Apollo.QueryHookOptions<CommentFeedQuery, CommentFeedQueryVariables>
+) {
+  const options = { ...defaultOptions, ...baseOptions }
+  return Apollo.useQuery<CommentFeedQuery, CommentFeedQueryVariables>(CommentFeedDocument, options)
+}
+export function useCommentFeedLazyQuery(
+  baseOptions?: Apollo.LazyQueryHookOptions<CommentFeedQuery, CommentFeedQueryVariables>
+) {
+  const options = { ...defaultOptions, ...baseOptions }
+  return Apollo.useLazyQuery<CommentFeedQuery, CommentFeedQueryVariables>(CommentFeedDocument, options)
+}
+export type CommentFeedQueryHookResult = ReturnType<typeof useCommentFeedQuery>
+export type CommentFeedLazyQueryHookResult = ReturnType<typeof useCommentFeedLazyQuery>
+export type CommentFeedQueryResult = Apollo.QueryResult<CommentFeedQuery, CommentFeedQueryVariables>
+export const EnabledCurrencyModulesDocument = gql`
+  query EnabledCurrencyModules {
+    enabledModuleCurrencies {
+      name
+      symbol
+      decimals
+      address
+    }
+  }
+`
+
+/**
+ * __useEnabledCurrencyModulesQuery__
+ *
+ * To run a query within a React component, call `useEnabledCurrencyModulesQuery` and pass it any options that fit your needs.
+ * When your component renders, `useEnabledCurrencyModulesQuery` returns an object from Apollo Client that contains loading, error, and data properties
+ * you can use to render your UI.
+ *
+ * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
+ *
+ * @example
+ * const { data, loading, error } = useEnabledCurrencyModulesQuery({
+ *   variables: {
+ *   },
+ * });
+ */
+export function useEnabledCurrencyModulesQuery(
+  baseOptions?: Apollo.QueryHookOptions<EnabledCurrencyModulesQuery, EnabledCurrencyModulesQueryVariables>
+) {
+  const options = { ...defaultOptions, ...baseOptions }
+  return Apollo.useQuery<EnabledCurrencyModulesQuery, EnabledCurrencyModulesQueryVariables>(
+    EnabledCurrencyModulesDocument,
+    options
+  )
+}
+export function useEnabledCurrencyModulesLazyQuery(
+  baseOptions?: Apollo.LazyQueryHookOptions<EnabledCurrencyModulesQuery, EnabledCurrencyModulesQueryVariables>
+) {
+  const options = { ...defaultOptions, ...baseOptions }
+  return Apollo.useLazyQuery<EnabledCurrencyModulesQuery, EnabledCurrencyModulesQueryVariables>(
+    EnabledCurrencyModulesDocument,
+    options
+  )
+}
+export type EnabledCurrencyModulesQueryHookResult = ReturnType<typeof useEnabledCurrencyModulesQuery>
+export type EnabledCurrencyModulesLazyQueryHookResult = ReturnType<typeof useEnabledCurrencyModulesLazyQuery>
+export type EnabledCurrencyModulesQueryResult = Apollo.QueryResult<
+  EnabledCurrencyModulesQuery,
+  EnabledCurrencyModulesQueryVariables
+>
+export const EnabledCurrencyModulesWithProfileDocument = gql`
+  query EnabledCurrencyModulesWithProfile($request: SingleProfileQueryRequest!) {
+    enabledModuleCurrencies {
+      name
+      symbol
+      decimals
+      address
+    }
+    profile(request: $request) {
+      followModule {
+        __typename
+      }
+    }
+  }
+`
+
+/**
+ * __useEnabledCurrencyModulesWithProfileQuery__
+ *
+ * To run a query within a React component, call `useEnabledCurrencyModulesWithProfileQuery` and pass it any options that fit your needs.
+ * When your component renders, `useEnabledCurrencyModulesWithProfileQuery` returns an object from Apollo Client that contains loading, error, and data properties
+ * you can use to render your UI.
+ *
+ * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
+ *
+ * @example
+ * const { data, loading, error } = useEnabledCurrencyModulesWithProfileQuery({
+ *   variables: {
+ *      request: // value for 'request'
+ *   },
+ * });
+ */
+export function useEnabledCurrencyModulesWithProfileQuery(
+  baseOptions: Apollo.QueryHookOptions<
+    EnabledCurrencyModulesWithProfileQuery,
+    EnabledCurrencyModulesWithProfileQueryVariables
+  >
+) {
+  const options = { ...defaultOptions, ...baseOptions }
+  return Apollo.useQuery<
+    EnabledCurrencyModulesWithProfileQuery,
+    EnabledCurrencyModulesWithProfileQueryVariables
+  >(EnabledCurrencyModulesWithProfileDocument, options)
+}
+export function useEnabledCurrencyModulesWithProfileLazyQuery(
+  baseOptions?: Apollo.LazyQueryHookOptions<
+    EnabledCurrencyModulesWithProfileQuery,
+    EnabledCurrencyModulesWithProfileQueryVariables
+  >
+) {
+  const options = { ...defaultOptions, ...baseOptions }
+  return Apollo.useLazyQuery<
+    EnabledCurrencyModulesWithProfileQuery,
+    EnabledCurrencyModulesWithProfileQueryVariables
+  >(EnabledCurrencyModulesWithProfileDocument, options)
+}
+export type EnabledCurrencyModulesWithProfileQueryHookResult = ReturnType<
+  typeof useEnabledCurrencyModulesWithProfileQuery
+>
+export type EnabledCurrencyModulesWithProfileLazyQueryHookResult = ReturnType<
+  typeof useEnabledCurrencyModulesWithProfileLazyQuery
+>
+export type EnabledCurrencyModulesWithProfileQueryResult = Apollo.QueryResult<
+  EnabledCurrencyModulesWithProfileQuery,
+  EnabledCurrencyModulesWithProfileQueryVariables
+>
+export const EnabledModulesDocument = gql`
+  query EnabledModules {
+    enabledModules {
+      collectModules {
+        moduleName
+        contractAddress
+      }
+    }
+    enabledModuleCurrencies {
+      name
+      symbol
+      decimals
+      address
+    }
+  }
+`
+
+/**
+ * __useEnabledModulesQuery__
+ *
+ * To run a query within a React component, call `useEnabledModulesQuery` and pass it any options that fit your needs.
+ * When your component renders, `useEnabledModulesQuery` returns an object from Apollo Client that contains loading, error, and data properties
+ * you can use to render your UI.
+ *
+ * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
+ *
+ * @example
+ * const { data, loading, error } = useEnabledModulesQuery({
+ *   variables: {
+ *   },
+ * });
+ */
+export function useEnabledModulesQuery(
+  baseOptions?: Apollo.QueryHookOptions<EnabledModulesQuery, EnabledModulesQueryVariables>
+) {
+  const options = { ...defaultOptions, ...baseOptions }
+  return Apollo.useQuery<EnabledModulesQuery, EnabledModulesQueryVariables>(EnabledModulesDocument, options)
+}
+export function useEnabledModulesLazyQuery(
+  baseOptions?: Apollo.LazyQueryHookOptions<EnabledModulesQuery, EnabledModulesQueryVariables>
+) {
+  const options = { ...defaultOptions, ...baseOptions }
+  return Apollo.useLazyQuery<EnabledModulesQuery, EnabledModulesQueryVariables>(
+    EnabledModulesDocument,
+    options
+  )
+}
+export type EnabledModulesQueryHookResult = ReturnType<typeof useEnabledModulesQuery>
+export type EnabledModulesLazyQueryHookResult = ReturnType<typeof useEnabledModulesLazyQuery>
+export type EnabledModulesQueryResult = Apollo.QueryResult<EnabledModulesQuery, EnabledModulesQueryVariables>
+export const ExploreFeedDocument = gql`
+  query ExploreFeed(
+    $request: ExplorePublicationRequest!
+    $reactionRequest: ReactionFieldResolverRequest
+    $profileId: ProfileId
+  ) {
+    explorePublications(request: $request) {
+      items {
+        ... on Post {
+          ...PostFields
+        }
+        ... on Comment {
+          ...CommentFields
+        }
+        ... on Mirror {
+          ...MirrorFields
+        }
+      }
+      pageInfo {
+        totalCount
+        next
+      }
+    }
+  }
+  ${PostFieldsFragmentDoc}
+  ${CommentFieldsFragmentDoc}
+  ${MirrorFieldsFragmentDoc}
+`
+
+/**
+ * __useExploreFeedQuery__
+ *
+ * To run a query within a React component, call `useExploreFeedQuery` and pass it any options that fit your needs.
+ * When your component renders, `useExploreFeedQuery` returns an object from Apollo Client that contains loading, error, and data properties
+ * you can use to render your UI.
+ *
+ * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
+ *
+ * @example
+ * const { data, loading, error } = useExploreFeedQuery({
+ *   variables: {
+ *      request: // value for 'request'
+ *      reactionRequest: // value for 'reactionRequest'
+ *      profileId: // value for 'profileId'
+ *   },
+ * });
+ */
+export function useExploreFeedQuery(
+  baseOptions: Apollo.QueryHookOptions<ExploreFeedQuery, ExploreFeedQueryVariables>
+) {
+  const options = { ...defaultOptions, ...baseOptions }
+  return Apollo.useQuery<ExploreFeedQuery, ExploreFeedQueryVariables>(ExploreFeedDocument, options)
+}
+export function useExploreFeedLazyQuery(
+  baseOptions?: Apollo.LazyQueryHookOptions<ExploreFeedQuery, ExploreFeedQueryVariables>
+) {
+  const options = { ...defaultOptions, ...baseOptions }
+  return Apollo.useLazyQuery<ExploreFeedQuery, ExploreFeedQueryVariables>(ExploreFeedDocument, options)
+}
+export type ExploreFeedQueryHookResult = ReturnType<typeof useExploreFeedQuery>
+export type ExploreFeedLazyQueryHookResult = ReturnType<typeof useExploreFeedLazyQuery>
+export type ExploreFeedQueryResult = Apollo.QueryResult<ExploreFeedQuery, ExploreFeedQueryVariables>
+export const FeedHighlightsDocument = gql`
+  query FeedHighlights(
+    $request: FeedHighlightsRequest!
+    $reactionRequest: ReactionFieldResolverRequest
+    $profileId: ProfileId
+  ) {
+    feedHighlights(request: $request) {
+      items {
+        ... on Post {
+          ...PostFields
+        }
+        ... on Comment {
+          ...CommentFields
+        }
+        ... on Mirror {
+          ...MirrorFields
+        }
+      }
+      pageInfo {
+        totalCount
+        next
+      }
+    }
+  }
+  ${PostFieldsFragmentDoc}
+  ${CommentFieldsFragmentDoc}
+  ${MirrorFieldsFragmentDoc}
+`
+
+/**
+ * __useFeedHighlightsQuery__
+ *
+ * To run a query within a React component, call `useFeedHighlightsQuery` and pass it any options that fit your needs.
+ * When your component renders, `useFeedHighlightsQuery` returns an object from Apollo Client that contains loading, error, and data properties
+ * you can use to render your UI.
+ *
+ * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
+ *
+ * @example
+ * const { data, loading, error } = useFeedHighlightsQuery({
+ *   variables: {
+ *      request: // value for 'request'
+ *      reactionRequest: // value for 'reactionRequest'
+ *      profileId: // value for 'profileId'
+ *   },
+ * });
+ */
+export function useFeedHighlightsQuery(
+  baseOptions: Apollo.QueryHookOptions<FeedHighlightsQuery, FeedHighlightsQueryVariables>
+) {
+  const options = { ...defaultOptions, ...baseOptions }
+  return Apollo.useQuery<FeedHighlightsQuery, FeedHighlightsQueryVariables>(FeedHighlightsDocument, options)
+}
+export function useFeedHighlightsLazyQuery(
+  baseOptions?: Apollo.LazyQueryHookOptions<FeedHighlightsQuery, FeedHighlightsQueryVariables>
+) {
+  const options = { ...defaultOptions, ...baseOptions }
+  return Apollo.useLazyQuery<FeedHighlightsQuery, FeedHighlightsQueryVariables>(
+    FeedHighlightsDocument,
+    options
+  )
+}
+export type FeedHighlightsQueryHookResult = ReturnType<typeof useFeedHighlightsQuery>
+export type FeedHighlightsLazyQueryHookResult = ReturnType<typeof useFeedHighlightsLazyQuery>
+export type FeedHighlightsQueryResult = Apollo.QueryResult<FeedHighlightsQuery, FeedHighlightsQueryVariables>
+export const FollowersDocument = gql`
+  query Followers($request: FollowersRequest!) {
+    followers(request: $request) {
+      items {
+        wallet {
+          address
+          defaultProfile {
+            ...ProfileFields
+            isFollowedByMe
+          }
+        }
+        totalAmountOfTimesFollowed
+      }
+      pageInfo {
+        next
+        totalCount
+      }
+    }
+  }
+  ${ProfileFieldsFragmentDoc}
+`
+
+/**
+ * __useFollowersQuery__
+ *
+ * To run a query within a React component, call `useFollowersQuery` and pass it any options that fit your needs.
+ * When your component renders, `useFollowersQuery` returns an object from Apollo Client that contains loading, error, and data properties
+ * you can use to render your UI.
+ *
+ * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
+ *
+ * @example
+ * const { data, loading, error } = useFollowersQuery({
+ *   variables: {
+ *      request: // value for 'request'
+ *   },
+ * });
+ */
+export function useFollowersQuery(
+  baseOptions: Apollo.QueryHookOptions<FollowersQuery, FollowersQueryVariables>
+) {
+  const options = { ...defaultOptions, ...baseOptions }
+  return Apollo.useQuery<FollowersQuery, FollowersQueryVariables>(FollowersDocument, options)
+}
+export function useFollowersLazyQuery(
+  baseOptions?: Apollo.LazyQueryHookOptions<FollowersQuery, FollowersQueryVariables>
+) {
+  const options = { ...defaultOptions, ...baseOptions }
+  return Apollo.useLazyQuery<FollowersQuery, FollowersQueryVariables>(FollowersDocument, options)
+}
+export type FollowersQueryHookResult = ReturnType<typeof useFollowersQuery>
+export type FollowersLazyQueryHookResult = ReturnType<typeof useFollowersLazyQuery>
+export type FollowersQueryResult = Apollo.QueryResult<FollowersQuery, FollowersQueryVariables>
+export const FollowingDocument = gql`
+  query Following($request: FollowingRequest!) {
+    following(request: $request) {
+      items {
+        profile {
+          ...ProfileFields
+          isFollowedByMe
+        }
+        totalAmountOfTimesFollowing
+      }
+      pageInfo {
+        next
+        totalCount
+      }
+    }
+  }
+  ${ProfileFieldsFragmentDoc}
+`
+
+/**
+ * __useFollowingQuery__
+ *
+ * To run a query within a React component, call `useFollowingQuery` and pass it any options that fit your needs.
+ * When your component renders, `useFollowingQuery` returns an object from Apollo Client that contains loading, error, and data properties
+ * you can use to render your UI.
+ *
+ * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
+ *
+ * @example
+ * const { data, loading, error } = useFollowingQuery({
+ *   variables: {
+ *      request: // value for 'request'
+ *   },
+ * });
+ */
+export function useFollowingQuery(
+  baseOptions: Apollo.QueryHookOptions<FollowingQuery, FollowingQueryVariables>
+) {
+  const options = { ...defaultOptions, ...baseOptions }
+  return Apollo.useQuery<FollowingQuery, FollowingQueryVariables>(FollowingDocument, options)
+}
+export function useFollowingLazyQuery(
+  baseOptions?: Apollo.LazyQueryHookOptions<FollowingQuery, FollowingQueryVariables>
+) {
+  const options = { ...defaultOptions, ...baseOptions }
+  return Apollo.useLazyQuery<FollowingQuery, FollowingQueryVariables>(FollowingDocument, options)
+}
+export type FollowingQueryHookResult = ReturnType<typeof useFollowingQuery>
+export type FollowingLazyQueryHookResult = ReturnType<typeof useFollowingLazyQuery>
+export type FollowingQueryResult = Apollo.QueryResult<FollowingQuery, FollowingQueryVariables>
+export const GenerateModuleCurrencyApprovalDataDocument = gql`
+  query GenerateModuleCurrencyApprovalData($request: GenerateModuleCurrencyApprovalDataRequest!) {
+    generateModuleCurrencyApprovalData(request: $request) {
+      to
+      from
+      data
+    }
+  }
+`
+
+/**
+ * __useGenerateModuleCurrencyApprovalDataQuery__
+ *
+ * To run a query within a React component, call `useGenerateModuleCurrencyApprovalDataQuery` and pass it any options that fit your needs.
+ * When your component renders, `useGenerateModuleCurrencyApprovalDataQuery` returns an object from Apollo Client that contains loading, error, and data properties
+ * you can use to render your UI.
+ *
+ * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
+ *
+ * @example
+ * const { data, loading, error } = useGenerateModuleCurrencyApprovalDataQuery({
+ *   variables: {
+ *      request: // value for 'request'
+ *   },
+ * });
+ */
+export function useGenerateModuleCurrencyApprovalDataQuery(
+  baseOptions: Apollo.QueryHookOptions<
+    GenerateModuleCurrencyApprovalDataQuery,
+    GenerateModuleCurrencyApprovalDataQueryVariables
+  >
+) {
+  const options = { ...defaultOptions, ...baseOptions }
+  return Apollo.useQuery<
+    GenerateModuleCurrencyApprovalDataQuery,
+    GenerateModuleCurrencyApprovalDataQueryVariables
+  >(GenerateModuleCurrencyApprovalDataDocument, options)
+}
+export function useGenerateModuleCurrencyApprovalDataLazyQuery(
+  baseOptions?: Apollo.LazyQueryHookOptions<
+    GenerateModuleCurrencyApprovalDataQuery,
+    GenerateModuleCurrencyApprovalDataQueryVariables
+  >
+) {
+  const options = { ...defaultOptions, ...baseOptions }
+  return Apollo.useLazyQuery<
+    GenerateModuleCurrencyApprovalDataQuery,
+    GenerateModuleCurrencyApprovalDataQueryVariables
+  >(GenerateModuleCurrencyApprovalDataDocument, options)
+}
+export type GenerateModuleCurrencyApprovalDataQueryHookResult = ReturnType<
+  typeof useGenerateModuleCurrencyApprovalDataQuery
+>
+export type GenerateModuleCurrencyApprovalDataLazyQueryHookResult = ReturnType<
+  typeof useGenerateModuleCurrencyApprovalDataLazyQuery
+>
+export type GenerateModuleCurrencyApprovalDataQueryResult = Apollo.QueryResult<
+  GenerateModuleCurrencyApprovalDataQuery,
+  GenerateModuleCurrencyApprovalDataQueryVariables
+>
+export const GroupDocument = gql`
+  query Group(
+    $topCommented: ExplorePublicationRequest!
+    $topCollected: ExplorePublicationRequest!
+    $latest: ExplorePublicationRequest!
+  ) {
+    topCommented: explorePublications(request: $topCommented) {
+      items {
+        ... on Post {
+          ...GroupFields
+        }
+      }
+    }
+    topCollected: explorePublications(request: $topCollected) {
+      items {
+        ... on Post {
+          ...GroupFields
+        }
+      }
+    }
+    latest: explorePublications(request: $latest) {
+      items {
+        ... on Post {
+          ...GroupFields
+        }
+      }
+    }
+  }
+  ${GroupFieldsFragmentDoc}
+`
+
+/**
+ * __useGroupQuery__
+ *
+ * To run a query within a React component, call `useGroupQuery` and pass it any options that fit your needs.
+ * When your component renders, `useGroupQuery` returns an object from Apollo Client that contains loading, error, and data properties
+ * you can use to render your UI.
+ *
+ * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
+ *
+ * @example
+ * const { data, loading, error } = useGroupQuery({
+ *   variables: {
+ *      topCommented: // value for 'topCommented'
+ *      topCollected: // value for 'topCollected'
+ *      latest: // value for 'latest'
+ *   },
+ * });
+ */
+export function useGroupQuery(baseOptions: Apollo.QueryHookOptions<GroupQuery, GroupQueryVariables>) {
+  const options = { ...defaultOptions, ...baseOptions }
+  return Apollo.useQuery<GroupQuery, GroupQueryVariables>(GroupDocument, options)
+}
+export function useGroupLazyQuery(
+  baseOptions?: Apollo.LazyQueryHookOptions<GroupQuery, GroupQueryVariables>
+) {
+  const options = { ...defaultOptions, ...baseOptions }
+  return Apollo.useLazyQuery<GroupQuery, GroupQueryVariables>(GroupDocument, options)
+}
+export type GroupQueryHookResult = ReturnType<typeof useGroupQuery>
+export type GroupLazyQueryHookResult = ReturnType<typeof useGroupLazyQuery>
+export type GroupQueryResult = Apollo.QueryResult<GroupQuery, GroupQueryVariables>
+export const HasTxHashBeenIndexedDocument = gql`
+  query HasTxHashBeenIndexed($request: HasTxHashBeenIndexedRequest!) {
+    hasTxHashBeenIndexed(request: $request) {
+      ... on TransactionIndexedResult {
+        metadataStatus {
+          status
+        }
+        txHash
+        indexed
+      }
+      ... on TransactionError {
+        reason
+      }
+    }
+  }
+`
+
+/**
+ * __useHasTxHashBeenIndexedQuery__
+ *
+ * To run a query within a React component, call `useHasTxHashBeenIndexedQuery` and pass it any options that fit your needs.
+ * When your component renders, `useHasTxHashBeenIndexedQuery` returns an object from Apollo Client that contains loading, error, and data properties
+ * you can use to render your UI.
+ *
+ * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
+ *
+ * @example
+ * const { data, loading, error } = useHasTxHashBeenIndexedQuery({
+ *   variables: {
+ *      request: // value for 'request'
+ *   },
+ * });
+ */
+export function useHasTxHashBeenIndexedQuery(
+  baseOptions: Apollo.QueryHookOptions<HasTxHashBeenIndexedQuery, HasTxHashBeenIndexedQueryVariables>
+) {
+  const options = { ...defaultOptions, ...baseOptions }
+  return Apollo.useQuery<HasTxHashBeenIndexedQuery, HasTxHashBeenIndexedQueryVariables>(
+    HasTxHashBeenIndexedDocument,
+    options
+  )
+}
+export function useHasTxHashBeenIndexedLazyQuery(
+  baseOptions?: Apollo.LazyQueryHookOptions<HasTxHashBeenIndexedQuery, HasTxHashBeenIndexedQueryVariables>
+) {
+  const options = { ...defaultOptions, ...baseOptions }
+  return Apollo.useLazyQuery<HasTxHashBeenIndexedQuery, HasTxHashBeenIndexedQueryVariables>(
+    HasTxHashBeenIndexedDocument,
+    options
+  )
+}
+export type HasTxHashBeenIndexedQueryHookResult = ReturnType<typeof useHasTxHashBeenIndexedQuery>
+export type HasTxHashBeenIndexedLazyQueryHookResult = ReturnType<typeof useHasTxHashBeenIndexedLazyQuery>
+export type HasTxHashBeenIndexedQueryResult = Apollo.QueryResult<
+  HasTxHashBeenIndexedQuery,
+  HasTxHashBeenIndexedQueryVariables
+>
+export const LikesDocument = gql`
+  query Likes($request: WhoReactedPublicationRequest!) {
+    whoReactedPublication(request: $request) {
+      items {
+        reactionId
+        profile {
+          ...ProfileFields
+          isFollowedByMe
+        }
+      }
+      pageInfo {
+        next
+        totalCount
+      }
+    }
+  }
+  ${ProfileFieldsFragmentDoc}
+`
+
+/**
+ * __useLikesQuery__
+ *
+ * To run a query within a React component, call `useLikesQuery` and pass it any options that fit your needs.
+ * When your component renders, `useLikesQuery` returns an object from Apollo Client that contains loading, error, and data properties
+ * you can use to render your UI.
+ *
+ * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
+ *
+ * @example
+ * const { data, loading, error } = useLikesQuery({
+ *   variables: {
+ *      request: // value for 'request'
+ *   },
+ * });
+ */
+export function useLikesQuery(baseOptions: Apollo.QueryHookOptions<LikesQuery, LikesQueryVariables>) {
+  const options = { ...defaultOptions, ...baseOptions }
+  return Apollo.useQuery<LikesQuery, LikesQueryVariables>(LikesDocument, options)
+}
+export function useLikesLazyQuery(
+  baseOptions?: Apollo.LazyQueryHookOptions<LikesQuery, LikesQueryVariables>
+) {
+  const options = { ...defaultOptions, ...baseOptions }
+  return Apollo.useLazyQuery<LikesQuery, LikesQueryVariables>(LikesDocument, options)
+}
+export type LikesQueryHookResult = ReturnType<typeof useLikesQuery>
+export type LikesLazyQueryHookResult = ReturnType<typeof useLikesLazyQuery>
+export type LikesQueryResult = Apollo.QueryResult<LikesQuery, LikesQueryVariables>
+export const MirrorsDocument = gql`
+  query Mirrors($request: ProfileQueryRequest!) {
+    profiles(request: $request) {
+      items {
+        ...ProfileFields
+        isFollowedByMe
+      }
+      pageInfo {
+        next
+        totalCount
+      }
+    }
+  }
+  ${ProfileFieldsFragmentDoc}
+`
+
+/**
+ * __useMirrorsQuery__
+ *
+ * To run a query within a React component, call `useMirrorsQuery` and pass it any options that fit your needs.
+ * When your component renders, `useMirrorsQuery` returns an object from Apollo Client that contains loading, error, and data properties
+ * you can use to render your UI.
+ *
+ * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
+ *
+ * @example
+ * const { data, loading, error } = useMirrorsQuery({
+ *   variables: {
+ *      request: // value for 'request'
+ *   },
+ * });
+ */
+export function useMirrorsQuery(baseOptions: Apollo.QueryHookOptions<MirrorsQuery, MirrorsQueryVariables>) {
+  const options = { ...defaultOptions, ...baseOptions }
+  return Apollo.useQuery<MirrorsQuery, MirrorsQueryVariables>(MirrorsDocument, options)
+}
+export function useMirrorsLazyQuery(
+  baseOptions?: Apollo.LazyQueryHookOptions<MirrorsQuery, MirrorsQueryVariables>
+) {
+  const options = { ...defaultOptions, ...baseOptions }
+  return Apollo.useLazyQuery<MirrorsQuery, MirrorsQueryVariables>(MirrorsDocument, options)
+}
+export type MirrorsQueryHookResult = ReturnType<typeof useMirrorsQuery>
+export type MirrorsLazyQueryHookResult = ReturnType<typeof useMirrorsLazyQuery>
+export type MirrorsQueryResult = Apollo.QueryResult<MirrorsQuery, MirrorsQueryVariables>
+export const MutualFollowersDocument = gql`
+  query MutualFollowers($request: MutualFollowersProfilesQueryRequest!) {
+    mutualFollowersProfiles(request: $request) {
+      items {
+        handle
+        name
+        picture {
+          ... on MediaSet {
+            original {
+              url
+            }
+          }
+          ... on NftImage {
+            uri
+          }
+        }
+      }
+      pageInfo {
+        totalCount
+      }
+    }
+  }
+`
+
+/**
+ * __useMutualFollowersQuery__
+ *
+ * To run a query within a React component, call `useMutualFollowersQuery` and pass it any options that fit your needs.
+ * When your component renders, `useMutualFollowersQuery` returns an object from Apollo Client that contains loading, error, and data properties
+ * you can use to render your UI.
+ *
+ * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
+ *
+ * @example
+ * const { data, loading, error } = useMutualFollowersQuery({
+ *   variables: {
+ *      request: // value for 'request'
+ *   },
+ * });
+ */
+export function useMutualFollowersQuery(
+  baseOptions: Apollo.QueryHookOptions<MutualFollowersQuery, MutualFollowersQueryVariables>
+) {
+  const options = { ...defaultOptions, ...baseOptions }
+  return Apollo.useQuery<MutualFollowersQuery, MutualFollowersQueryVariables>(
+    MutualFollowersDocument,
+    options
+  )
+}
+export function useMutualFollowersLazyQuery(
+  baseOptions?: Apollo.LazyQueryHookOptions<MutualFollowersQuery, MutualFollowersQueryVariables>
+) {
+  const options = { ...defaultOptions, ...baseOptions }
+  return Apollo.useLazyQuery<MutualFollowersQuery, MutualFollowersQueryVariables>(
+    MutualFollowersDocument,
+    options
+  )
+}
+export type MutualFollowersQueryHookResult = ReturnType<typeof useMutualFollowersQuery>
+export type MutualFollowersLazyQueryHookResult = ReturnType<typeof useMutualFollowersLazyQuery>
+export type MutualFollowersQueryResult = Apollo.QueryResult<
+  MutualFollowersQuery,
+  MutualFollowersQueryVariables
+>
+export const MutualFollowersListDocument = gql`
+  query MutualFollowersList($request: MutualFollowersProfilesQueryRequest!) {
+    mutualFollowersProfiles(request: $request) {
+      items {
+        ...ProfileFields
+        isFollowedByMe
+      }
+      pageInfo {
+        next
+        totalCount
+      }
+    }
+  }
+  ${ProfileFieldsFragmentDoc}
+`
+
+/**
+ * __useMutualFollowersListQuery__
+ *
+ * To run a query within a React component, call `useMutualFollowersListQuery` and pass it any options that fit your needs.
+ * When your component renders, `useMutualFollowersListQuery` returns an object from Apollo Client that contains loading, error, and data properties
+ * you can use to render your UI.
+ *
+ * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
+ *
+ * @example
+ * const { data, loading, error } = useMutualFollowersListQuery({
+ *   variables: {
+ *      request: // value for 'request'
+ *   },
+ * });
+ */
+export function useMutualFollowersListQuery(
+  baseOptions: Apollo.QueryHookOptions<MutualFollowersListQuery, MutualFollowersListQueryVariables>
+) {
+  const options = { ...defaultOptions, ...baseOptions }
+  return Apollo.useQuery<MutualFollowersListQuery, MutualFollowersListQueryVariables>(
+    MutualFollowersListDocument,
+    options
+  )
+}
+export function useMutualFollowersListLazyQuery(
+  baseOptions?: Apollo.LazyQueryHookOptions<MutualFollowersListQuery, MutualFollowersListQueryVariables>
+) {
+  const options = { ...defaultOptions, ...baseOptions }
+  return Apollo.useLazyQuery<MutualFollowersListQuery, MutualFollowersListQueryVariables>(
+    MutualFollowersListDocument,
+    options
+  )
+}
+export type MutualFollowersListQueryHookResult = ReturnType<typeof useMutualFollowersListQuery>
+export type MutualFollowersListLazyQueryHookResult = ReturnType<typeof useMutualFollowersListLazyQuery>
+export type MutualFollowersListQueryResult = Apollo.QueryResult<
+  MutualFollowersListQuery,
+  MutualFollowersListQueryVariables
+>
+export const NftChallengeDocument = gql`
+  query NFTChallenge($request: NftOwnershipChallengeRequest!) {
+    nftOwnershipChallenge(request: $request) {
+      id
+      text
+    }
+  }
+`
+
+/**
+ * __useNftChallengeQuery__
+ *
+ * To run a query within a React component, call `useNftChallengeQuery` and pass it any options that fit your needs.
+ * When your component renders, `useNftChallengeQuery` returns an object from Apollo Client that contains loading, error, and data properties
+ * you can use to render your UI.
+ *
+ * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
+ *
+ * @example
+ * const { data, loading, error } = useNftChallengeQuery({
+ *   variables: {
+ *      request: // value for 'request'
+ *   },
+ * });
+ */
+export function useNftChallengeQuery(
+  baseOptions: Apollo.QueryHookOptions<NftChallengeQuery, NftChallengeQueryVariables>
+) {
+  const options = { ...defaultOptions, ...baseOptions }
+  return Apollo.useQuery<NftChallengeQuery, NftChallengeQueryVariables>(NftChallengeDocument, options)
+}
+export function useNftChallengeLazyQuery(
+  baseOptions?: Apollo.LazyQueryHookOptions<NftChallengeQuery, NftChallengeQueryVariables>
+) {
+  const options = { ...defaultOptions, ...baseOptions }
+  return Apollo.useLazyQuery<NftChallengeQuery, NftChallengeQueryVariables>(NftChallengeDocument, options)
+}
+export type NftChallengeQueryHookResult = ReturnType<typeof useNftChallengeQuery>
+export type NftChallengeLazyQueryHookResult = ReturnType<typeof useNftChallengeLazyQuery>
+export type NftChallengeQueryResult = Apollo.QueryResult<NftChallengeQuery, NftChallengeQueryVariables>
+export const NftFeedDocument = gql`
+  query NFTFeed($request: NFTsRequest!) {
+    nfts(request: $request) {
+      items {
+        name
+        collectionName
+        contractAddress
+        tokenId
+        chainId
+        originalContent {
+          uri
+          animatedUrl
+        }
+      }
+      pageInfo {
+        next
+        totalCount
+      }
+    }
+  }
+`
+
+/**
+ * __useNftFeedQuery__
+ *
+ * To run a query within a React component, call `useNftFeedQuery` and pass it any options that fit your needs.
+ * When your component renders, `useNftFeedQuery` returns an object from Apollo Client that contains loading, error, and data properties
+ * you can use to render your UI.
+ *
+ * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
+ *
+ * @example
+ * const { data, loading, error } = useNftFeedQuery({
+ *   variables: {
+ *      request: // value for 'request'
+ *   },
+ * });
+ */
+export function useNftFeedQuery(baseOptions: Apollo.QueryHookOptions<NftFeedQuery, NftFeedQueryVariables>) {
+  const options = { ...defaultOptions, ...baseOptions }
+  return Apollo.useQuery<NftFeedQuery, NftFeedQueryVariables>(NftFeedDocument, options)
+}
+export function useNftFeedLazyQuery(
+  baseOptions?: Apollo.LazyQueryHookOptions<NftFeedQuery, NftFeedQueryVariables>
+) {
+  const options = { ...defaultOptions, ...baseOptions }
+  return Apollo.useLazyQuery<NftFeedQuery, NftFeedQueryVariables>(NftFeedDocument, options)
+}
+export type NftFeedQueryHookResult = ReturnType<typeof useNftFeedQuery>
+export type NftFeedLazyQueryHookResult = ReturnType<typeof useNftFeedLazyQuery>
+export type NftFeedQueryResult = Apollo.QueryResult<NftFeedQuery, NftFeedQueryVariables>
+export const NotificationCountDocument = gql`
+  query NotificationCount($request: NotificationRequest!) {
+    notifications(request: $request) {
+      pageInfo {
+        totalCount
+      }
+    }
+  }
+`
+
+/**
+ * __useNotificationCountQuery__
+ *
+ * To run a query within a React component, call `useNotificationCountQuery` and pass it any options that fit your needs.
+ * When your component renders, `useNotificationCountQuery` returns an object from Apollo Client that contains loading, error, and data properties
+ * you can use to render your UI.
+ *
+ * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
+ *
+ * @example
+ * const { data, loading, error } = useNotificationCountQuery({
+ *   variables: {
+ *      request: // value for 'request'
+ *   },
+ * });
+ */
+export function useNotificationCountQuery(
+  baseOptions: Apollo.QueryHookOptions<NotificationCountQuery, NotificationCountQueryVariables>
+) {
+  const options = { ...defaultOptions, ...baseOptions }
+  return Apollo.useQuery<NotificationCountQuery, NotificationCountQueryVariables>(
+    NotificationCountDocument,
+    options
+  )
+}
+export function useNotificationCountLazyQuery(
+  baseOptions?: Apollo.LazyQueryHookOptions<NotificationCountQuery, NotificationCountQueryVariables>
+) {
+  const options = { ...defaultOptions, ...baseOptions }
+  return Apollo.useLazyQuery<NotificationCountQuery, NotificationCountQueryVariables>(
+    NotificationCountDocument,
+    options
+  )
+}
+export type NotificationCountQueryHookResult = ReturnType<typeof useNotificationCountQuery>
+export type NotificationCountLazyQueryHookResult = ReturnType<typeof useNotificationCountLazyQuery>
+export type NotificationCountQueryResult = Apollo.QueryResult<
+  NotificationCountQuery,
+  NotificationCountQueryVariables
+>
+export const NotificationsDocument = gql`
+  query Notifications($request: NotificationRequest!) {
+    notifications(request: $request) {
+      items {
+        ... on NewFollowerNotification {
+          notificationId
+          wallet {
+            address
+            defaultProfile {
+              ...ProfileFields
+            }
+          }
+          createdAt
+        }
+        ... on NewMentionNotification {
+          notificationId
+          mentionPublication {
+            ... on Post {
+              id
+              profile {
+                ...ProfileFields
+              }
+              metadata {
+                content
+              }
+            }
+            ... on Comment {
+              id
+              profile {
+                ...ProfileFields
+              }
+              metadata {
+                content
+              }
+            }
+          }
+          createdAt
+        }
+        ... on NewReactionNotification {
+          notificationId
+          profile {
+            ...ProfileFields
+          }
+          publication {
+            ... on Post {
+              id
+              metadata {
+                content
+              }
+            }
+            ... on Comment {
+              id
+              metadata {
+                content
+              }
+            }
+            ... on Mirror {
+              id
+              metadata {
+                content
+              }
+            }
+          }
+          createdAt
+        }
+        ... on NewCommentNotification {
+          notificationId
+          profile {
+            ...ProfileFields
+          }
+          comment {
+            id
+            metadata {
+              content
+            }
+            commentOn {
+              ... on Post {
+                id
+              }
+              ... on Comment {
+                id
+              }
+              ... on Mirror {
+                id
+              }
+            }
+          }
+          createdAt
+        }
+        ... on NewMirrorNotification {
+          notificationId
+          profile {
+            ...ProfileFields
+          }
+          publication {
+            ... on Post {
+              id
+              metadata {
+                content
+              }
+            }
+            ... on Comment {
+              id
+              metadata {
+                content
+              }
+            }
+          }
+          createdAt
+        }
+        ... on NewCollectNotification {
+          notificationId
+          wallet {
+            address
+            defaultProfile {
+              ...ProfileFields
+            }
+          }
+          collectedPublication {
+            ... on Post {
+              id
+              metadata {
+                content
+              }
+              collectModule {
+                ...CollectModuleFields
+              }
+            }
+            ... on Comment {
+              id
+              metadata {
+                content
+              }
+              collectModule {
+                ...CollectModuleFields
+              }
+            }
+          }
+          createdAt
+        }
+      }
+      pageInfo {
+        totalCount
+        next
+      }
+    }
+  }
+  ${ProfileFieldsFragmentDoc}
+  ${CollectModuleFieldsFragmentDoc}
+`
+
+/**
+ * __useNotificationsQuery__
+ *
+ * To run a query within a React component, call `useNotificationsQuery` and pass it any options that fit your needs.
+ * When your component renders, `useNotificationsQuery` returns an object from Apollo Client that contains loading, error, and data properties
+ * you can use to render your UI.
+ *
+ * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
+ *
+ * @example
+ * const { data, loading, error } = useNotificationsQuery({
+ *   variables: {
+ *      request: // value for 'request'
+ *   },
+ * });
+ */
+export function useNotificationsQuery(
+  baseOptions: Apollo.QueryHookOptions<NotificationsQuery, NotificationsQueryVariables>
+) {
+  const options = { ...defaultOptions, ...baseOptions }
+  return Apollo.useQuery<NotificationsQuery, NotificationsQueryVariables>(NotificationsDocument, options)
+}
+export function useNotificationsLazyQuery(
+  baseOptions?: Apollo.LazyQueryHookOptions<NotificationsQuery, NotificationsQueryVariables>
+) {
+  const options = { ...defaultOptions, ...baseOptions }
+  return Apollo.useLazyQuery<NotificationsQuery, NotificationsQueryVariables>(NotificationsDocument, options)
+}
+export type NotificationsQueryHookResult = ReturnType<typeof useNotificationsQuery>
+export type NotificationsLazyQueryHookResult = ReturnType<typeof useNotificationsLazyQuery>
+export type NotificationsQueryResult = Apollo.QueryResult<NotificationsQuery, NotificationsQueryVariables>
+export const ProfileDocument = gql`
+  query Profile($request: SingleProfileQueryRequest!, $who: ProfileId) {
+    profile(request: $request) {
+      id
+      handle
+      ownedBy
+      name
+      bio
+      metadata
+      followNftAddress
+      isFollowedByMe
+      isFollowing(who: $who)
+      attributes {
+        key
+        value
+      }
+      dispatcher {
+        canUseRelay
+      }
+      onChainIdentity {
+        proofOfHumanity
+        sybilDotOrg {
+          verified
+          source {
+            twitter {
+              handle
+            }
+          }
+        }
+        ens {
+          name
+        }
+        worldcoin {
+          isHuman
+        }
+      }
+      stats {
+        totalFollowers
+        totalFollowing
+        totalPosts
+        totalComments
+        totalMirrors
+      }
+      picture {
+        ... on MediaSet {
+          original {
+            url
+          }
+        }
+        ... on NftImage {
+          uri
+        }
+      }
+      coverPicture {
+        ... on MediaSet {
+          original {
+            url
+          }
+        }
+      }
+      followModule {
+        __typename
+      }
+    }
+  }
+`
+
+/**
+ * __useProfileQuery__
+ *
+ * To run a query within a React component, call `useProfileQuery` and pass it any options that fit your needs.
+ * When your component renders, `useProfileQuery` returns an object from Apollo Client that contains loading, error, and data properties
+ * you can use to render your UI.
+ *
+ * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
+ *
+ * @example
+ * const { data, loading, error } = useProfileQuery({
+ *   variables: {
+ *      request: // value for 'request'
+ *      who: // value for 'who'
+ *   },
+ * });
+ */
+export function useProfileQuery(baseOptions: Apollo.QueryHookOptions<ProfileQuery, ProfileQueryVariables>) {
+  const options = { ...defaultOptions, ...baseOptions }
+  return Apollo.useQuery<ProfileQuery, ProfileQueryVariables>(ProfileDocument, options)
+}
+export function useProfileLazyQuery(
+  baseOptions?: Apollo.LazyQueryHookOptions<ProfileQuery, ProfileQueryVariables>
+) {
+  const options = { ...defaultOptions, ...baseOptions }
+  return Apollo.useLazyQuery<ProfileQuery, ProfileQueryVariables>(ProfileDocument, options)
+}
+export type ProfileQueryHookResult = ReturnType<typeof useProfileQuery>
+export type ProfileLazyQueryHookResult = ReturnType<typeof useProfileLazyQuery>
+export type ProfileQueryResult = Apollo.QueryResult<ProfileQuery, ProfileQueryVariables>
+export const ProfileAddressDocument = gql`
+  query ProfileAddress($request: SingleProfileQueryRequest!) {
+    profile(request: $request) {
+      id
+      ownedBy
+    }
+  }
+`
+
+/**
+ * __useProfileAddressQuery__
+ *
+ * To run a query within a React component, call `useProfileAddressQuery` and pass it any options that fit your needs.
+ * When your component renders, `useProfileAddressQuery` returns an object from Apollo Client that contains loading, error, and data properties
+ * you can use to render your UI.
+ *
+ * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
+ *
+ * @example
+ * const { data, loading, error } = useProfileAddressQuery({
+ *   variables: {
+ *      request: // value for 'request'
+ *   },
+ * });
+ */
+export function useProfileAddressQuery(
+  baseOptions: Apollo.QueryHookOptions<ProfileAddressQuery, ProfileAddressQueryVariables>
+) {
+  const options = { ...defaultOptions, ...baseOptions }
+  return Apollo.useQuery<ProfileAddressQuery, ProfileAddressQueryVariables>(ProfileAddressDocument, options)
+}
+export function useProfileAddressLazyQuery(
+  baseOptions?: Apollo.LazyQueryHookOptions<ProfileAddressQuery, ProfileAddressQueryVariables>
+) {
+  const options = { ...defaultOptions, ...baseOptions }
+  return Apollo.useLazyQuery<ProfileAddressQuery, ProfileAddressQueryVariables>(
+    ProfileAddressDocument,
+    options
+  )
+}
+export type ProfileAddressQueryHookResult = ReturnType<typeof useProfileAddressQuery>
+export type ProfileAddressLazyQueryHookResult = ReturnType<typeof useProfileAddressLazyQuery>
+export type ProfileAddressQueryResult = Apollo.QueryResult<ProfileAddressQuery, ProfileAddressQueryVariables>
+export const ProfileFeedDocument = gql`
+  query ProfileFeed(
+    $request: PublicationsQueryRequest!
+    $reactionRequest: ReactionFieldResolverRequest
+    $profileId: ProfileId
+  ) {
+    publications(request: $request) {
+      items {
+        ... on Post {
+          ...PostFields
+        }
+        ... on Comment {
+          ...CommentFields
+        }
+        ... on Mirror {
+          ...MirrorFields
+        }
+      }
+      pageInfo {
+        totalCount
+        next
+      }
+    }
+  }
+  ${PostFieldsFragmentDoc}
+  ${CommentFieldsFragmentDoc}
+  ${MirrorFieldsFragmentDoc}
+`
+
+/**
+ * __useProfileFeedQuery__
+ *
+ * To run a query within a React component, call `useProfileFeedQuery` and pass it any options that fit your needs.
+ * When your component renders, `useProfileFeedQuery` returns an object from Apollo Client that contains loading, error, and data properties
+ * you can use to render your UI.
+ *
+ * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
+ *
+ * @example
+ * const { data, loading, error } = useProfileFeedQuery({
+ *   variables: {
+ *      request: // value for 'request'
+ *      reactionRequest: // value for 'reactionRequest'
+ *      profileId: // value for 'profileId'
+ *   },
+ * });
+ */
+export function useProfileFeedQuery(
+  baseOptions: Apollo.QueryHookOptions<ProfileFeedQuery, ProfileFeedQueryVariables>
+) {
+  const options = { ...defaultOptions, ...baseOptions }
+  return Apollo.useQuery<ProfileFeedQuery, ProfileFeedQueryVariables>(ProfileFeedDocument, options)
+}
+export function useProfileFeedLazyQuery(
+  baseOptions?: Apollo.LazyQueryHookOptions<ProfileFeedQuery, ProfileFeedQueryVariables>
+) {
+  const options = { ...defaultOptions, ...baseOptions }
+  return Apollo.useLazyQuery<ProfileFeedQuery, ProfileFeedQueryVariables>(ProfileFeedDocument, options)
+}
+export type ProfileFeedQueryHookResult = ReturnType<typeof useProfileFeedQuery>
+export type ProfileFeedLazyQueryHookResult = ReturnType<typeof useProfileFeedLazyQuery>
+export type ProfileFeedQueryResult = Apollo.QueryResult<ProfileFeedQuery, ProfileFeedQueryVariables>
+export const ProfileNftFeedDocument = gql`
+  query ProfileNFTFeed($request: NFTsRequest!) {
+    nfts(request: $request) {
+      items {
+        contentURI
+      }
+      pageInfo {
+        next
+        totalCount
+      }
+    }
+  }
+`
+
+/**
+ * __useProfileNftFeedQuery__
+ *
+ * To run a query within a React component, call `useProfileNftFeedQuery` and pass it any options that fit your needs.
+ * When your component renders, `useProfileNftFeedQuery` returns an object from Apollo Client that contains loading, error, and data properties
+ * you can use to render your UI.
+ *
+ * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
+ *
+ * @example
+ * const { data, loading, error } = useProfileNftFeedQuery({
+ *   variables: {
+ *      request: // value for 'request'
+ *   },
+ * });
+ */
+export function useProfileNftFeedQuery(
+  baseOptions: Apollo.QueryHookOptions<ProfileNftFeedQuery, ProfileNftFeedQueryVariables>
+) {
+  const options = { ...defaultOptions, ...baseOptions }
+  return Apollo.useQuery<ProfileNftFeedQuery, ProfileNftFeedQueryVariables>(ProfileNftFeedDocument, options)
+}
+export function useProfileNftFeedLazyQuery(
+  baseOptions?: Apollo.LazyQueryHookOptions<ProfileNftFeedQuery, ProfileNftFeedQueryVariables>
+) {
+  const options = { ...defaultOptions, ...baseOptions }
+  return Apollo.useLazyQuery<ProfileNftFeedQuery, ProfileNftFeedQueryVariables>(
+    ProfileNftFeedDocument,
+    options
+  )
+}
+export type ProfileNftFeedQueryHookResult = ReturnType<typeof useProfileNftFeedQuery>
+export type ProfileNftFeedLazyQueryHookResult = ReturnType<typeof useProfileNftFeedLazyQuery>
+export type ProfileNftFeedQueryResult = Apollo.QueryResult<ProfileNftFeedQuery, ProfileNftFeedQueryVariables>
+export const ProfileSettingsDocument = gql`
+  query ProfileSettings($request: SingleProfileQueryRequest!) {
+    profile(request: $request) {
+      id
+      name
+      bio
+      attributes {
+        key
+        value
+      }
+      coverPicture {
+        ... on MediaSet {
+          original {
+            url
+          }
+        }
+      }
+      picture {
+        ... on MediaSet {
+          original {
+            url
+          }
+        }
+        ... on NftImage {
+          uri
+          tokenId
+          contractAddress
+        }
+      }
+    }
+  }
+`
+
+/**
+ * __useProfileSettingsQuery__
+ *
+ * To run a query within a React component, call `useProfileSettingsQuery` and pass it any options that fit your needs.
+ * When your component renders, `useProfileSettingsQuery` returns an object from Apollo Client that contains loading, error, and data properties
+ * you can use to render your UI.
+ *
+ * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
+ *
+ * @example
+ * const { data, loading, error } = useProfileSettingsQuery({
+ *   variables: {
+ *      request: // value for 'request'
+ *   },
+ * });
+ */
+export function useProfileSettingsQuery(
+  baseOptions: Apollo.QueryHookOptions<ProfileSettingsQuery, ProfileSettingsQueryVariables>
+) {
+  const options = { ...defaultOptions, ...baseOptions }
+  return Apollo.useQuery<ProfileSettingsQuery, ProfileSettingsQueryVariables>(
+    ProfileSettingsDocument,
+    options
+  )
+}
+export function useProfileSettingsLazyQuery(
+  baseOptions?: Apollo.LazyQueryHookOptions<ProfileSettingsQuery, ProfileSettingsQueryVariables>
+) {
+  const options = { ...defaultOptions, ...baseOptions }
+  return Apollo.useLazyQuery<ProfileSettingsQuery, ProfileSettingsQueryVariables>(
+    ProfileSettingsDocument,
+    options
+  )
+}
+export type ProfileSettingsQueryHookResult = ReturnType<typeof useProfileSettingsQuery>
+export type ProfileSettingsLazyQueryHookResult = ReturnType<typeof useProfileSettingsLazyQuery>
+export type ProfileSettingsQueryResult = Apollo.QueryResult<
+  ProfileSettingsQuery,
+  ProfileSettingsQueryVariables
+>
+export const ProfilesDocument = gql`
+  query Profiles($request: ProfileQueryRequest!) {
+    profiles(request: $request) {
+      items {
+        ...ProfileFields
+        isDefault
+        isFollowedByMe
+      }
+      pageInfo {
+        next
+        totalCount
+      }
+    }
+  }
+  ${ProfileFieldsFragmentDoc}
+`
+
+/**
+ * __useProfilesQuery__
+ *
+ * To run a query within a React component, call `useProfilesQuery` and pass it any options that fit your needs.
+ * When your component renders, `useProfilesQuery` returns an object from Apollo Client that contains loading, error, and data properties
+ * you can use to render your UI.
+ *
+ * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
+ *
+ * @example
+ * const { data, loading, error } = useProfilesQuery({
+ *   variables: {
+ *      request: // value for 'request'
+ *   },
+ * });
+ */
+export function useProfilesQuery(
+  baseOptions: Apollo.QueryHookOptions<ProfilesQuery, ProfilesQueryVariables>
+) {
+  const options = { ...defaultOptions, ...baseOptions }
+  return Apollo.useQuery<ProfilesQuery, ProfilesQueryVariables>(ProfilesDocument, options)
+}
+export function useProfilesLazyQuery(
+  baseOptions?: Apollo.LazyQueryHookOptions<ProfilesQuery, ProfilesQueryVariables>
+) {
+  const options = { ...defaultOptions, ...baseOptions }
+  return Apollo.useLazyQuery<ProfilesQuery, ProfilesQueryVariables>(ProfilesDocument, options)
+}
+export type ProfilesQueryHookResult = ReturnType<typeof useProfilesQuery>
+export type ProfilesLazyQueryHookResult = ReturnType<typeof useProfilesLazyQuery>
+export type ProfilesQueryResult = Apollo.QueryResult<ProfilesQuery, ProfilesQueryVariables>
+export const PublicationDocument = gql`
+  query Publication(
+    $request: PublicationQueryRequest!
+    $reactionRequest: ReactionFieldResolverRequest
+    $profileId: ProfileId
+  ) {
+    publication(request: $request) {
+      ... on Post {
+        ...PostFields
+        onChainContentURI
+        collectNftAddress
+        profile {
+          isFollowedByMe
+        }
+        referenceModule {
+          __typename
+        }
+      }
+      ... on Comment {
+        ...CommentFields
+        onChainContentURI
+        collectNftAddress
+        profile {
+          isFollowedByMe
+        }
+        referenceModule {
+          __typename
+        }
+      }
+      ... on Mirror {
+        ...MirrorFields
+        onChainContentURI
+        collectNftAddress
+        profile {
+          isFollowedByMe
+        }
+        referenceModule {
+          __typename
+        }
+      }
+    }
+  }
+  ${PostFieldsFragmentDoc}
+  ${CommentFieldsFragmentDoc}
+  ${MirrorFieldsFragmentDoc}
+`
+
+/**
+ * __usePublicationQuery__
+ *
+ * To run a query within a React component, call `usePublicationQuery` and pass it any options that fit your needs.
+ * When your component renders, `usePublicationQuery` returns an object from Apollo Client that contains loading, error, and data properties
+ * you can use to render your UI.
+ *
+ * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
+ *
+ * @example
+ * const { data, loading, error } = usePublicationQuery({
+ *   variables: {
+ *      request: // value for 'request'
+ *      reactionRequest: // value for 'reactionRequest'
+ *      profileId: // value for 'profileId'
+ *   },
+ * });
+ */
+export function usePublicationQuery(
+  baseOptions: Apollo.QueryHookOptions<PublicationQuery, PublicationQueryVariables>
+) {
+  const options = { ...defaultOptions, ...baseOptions }
+  return Apollo.useQuery<PublicationQuery, PublicationQueryVariables>(PublicationDocument, options)
+}
+export function usePublicationLazyQuery(
+  baseOptions?: Apollo.LazyQueryHookOptions<PublicationQuery, PublicationQueryVariables>
+) {
+  const options = { ...defaultOptions, ...baseOptions }
+  return Apollo.useLazyQuery<PublicationQuery, PublicationQueryVariables>(PublicationDocument, options)
+}
+export type PublicationQueryHookResult = ReturnType<typeof usePublicationQuery>
+export type PublicationLazyQueryHookResult = ReturnType<typeof usePublicationLazyQuery>
+export type PublicationQueryResult = Apollo.QueryResult<PublicationQuery, PublicationQueryVariables>
+export const PublicationRevenueDocument = gql`
+  query PublicationRevenue($request: PublicationRevenueQueryRequest!) {
+    publicationRevenue(request: $request) {
+      revenue {
+        total {
+          value
+        }
+      }
+    }
+  }
+`
+
+/**
+ * __usePublicationRevenueQuery__
+ *
+ * To run a query within a React component, call `usePublicationRevenueQuery` and pass it any options that fit your needs.
+ * When your component renders, `usePublicationRevenueQuery` returns an object from Apollo Client that contains loading, error, and data properties
+ * you can use to render your UI.
+ *
+ * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
+ *
+ * @example
+ * const { data, loading, error } = usePublicationRevenueQuery({
+ *   variables: {
+ *      request: // value for 'request'
+ *   },
+ * });
+ */
+export function usePublicationRevenueQuery(
+  baseOptions: Apollo.QueryHookOptions<PublicationRevenueQuery, PublicationRevenueQueryVariables>
+) {
+  const options = { ...defaultOptions, ...baseOptions }
+  return Apollo.useQuery<PublicationRevenueQuery, PublicationRevenueQueryVariables>(
+    PublicationRevenueDocument,
+    options
+  )
+}
+export function usePublicationRevenueLazyQuery(
+  baseOptions?: Apollo.LazyQueryHookOptions<PublicationRevenueQuery, PublicationRevenueQueryVariables>
+) {
+  const options = { ...defaultOptions, ...baseOptions }
+  return Apollo.useLazyQuery<PublicationRevenueQuery, PublicationRevenueQueryVariables>(
+    PublicationRevenueDocument,
+    options
+  )
+}
+export type PublicationRevenueQueryHookResult = ReturnType<typeof usePublicationRevenueQuery>
+export type PublicationRevenueLazyQueryHookResult = ReturnType<typeof usePublicationRevenueLazyQuery>
+export type PublicationRevenueQueryResult = Apollo.QueryResult<
+  PublicationRevenueQuery,
+  PublicationRevenueQueryVariables
+>
+export const RecommendedProfilesDocument = gql`
+  query RecommendedProfiles($options: RecommendedProfileOptions) {
+    recommendedProfiles(options: $options) {
+      ...ProfileFields
+      isFollowedByMe
+    }
+  }
+  ${ProfileFieldsFragmentDoc}
+`
+
+/**
+ * __useRecommendedProfilesQuery__
+ *
+ * To run a query within a React component, call `useRecommendedProfilesQuery` and pass it any options that fit your needs.
+ * When your component renders, `useRecommendedProfilesQuery` returns an object from Apollo Client that contains loading, error, and data properties
+ * you can use to render your UI.
+ *
+ * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
+ *
+ * @example
+ * const { data, loading, error } = useRecommendedProfilesQuery({
+ *   variables: {
+ *      options: // value for 'options'
+ *   },
+ * });
+ */
+export function useRecommendedProfilesQuery(
+  baseOptions?: Apollo.QueryHookOptions<RecommendedProfilesQuery, RecommendedProfilesQueryVariables>
+) {
+  const options = { ...defaultOptions, ...baseOptions }
+  return Apollo.useQuery<RecommendedProfilesQuery, RecommendedProfilesQueryVariables>(
+    RecommendedProfilesDocument,
+    options
+  )
+}
+export function useRecommendedProfilesLazyQuery(
+  baseOptions?: Apollo.LazyQueryHookOptions<RecommendedProfilesQuery, RecommendedProfilesQueryVariables>
+) {
+  const options = { ...defaultOptions, ...baseOptions }
+  return Apollo.useLazyQuery<RecommendedProfilesQuery, RecommendedProfilesQueryVariables>(
+    RecommendedProfilesDocument,
+    options
+  )
+}
+export type RecommendedProfilesQueryHookResult = ReturnType<typeof useRecommendedProfilesQuery>
+export type RecommendedProfilesLazyQueryHookResult = ReturnType<typeof useRecommendedProfilesLazyQuery>
+export type RecommendedProfilesQueryResult = Apollo.QueryResult<
+  RecommendedProfilesQuery,
+  RecommendedProfilesQueryVariables
+>
+export const RelevantPeopleDocument = gql`
+  query RelevantPeople($request: ProfileQueryRequest!) {
+    profiles(request: $request) {
+      items {
+        ...ProfileFields
+        isFollowedByMe
+      }
+    }
+  }
+  ${ProfileFieldsFragmentDoc}
+`
+
+/**
+ * __useRelevantPeopleQuery__
+ *
+ * To run a query within a React component, call `useRelevantPeopleQuery` and pass it any options that fit your needs.
+ * When your component renders, `useRelevantPeopleQuery` returns an object from Apollo Client that contains loading, error, and data properties
+ * you can use to render your UI.
+ *
+ * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
+ *
+ * @example
+ * const { data, loading, error } = useRelevantPeopleQuery({
+ *   variables: {
+ *      request: // value for 'request'
+ *   },
+ * });
+ */
+export function useRelevantPeopleQuery(
+  baseOptions: Apollo.QueryHookOptions<RelevantPeopleQuery, RelevantPeopleQueryVariables>
+) {
+  const options = { ...defaultOptions, ...baseOptions }
+  return Apollo.useQuery<RelevantPeopleQuery, RelevantPeopleQueryVariables>(RelevantPeopleDocument, options)
+}
+export function useRelevantPeopleLazyQuery(
+  baseOptions?: Apollo.LazyQueryHookOptions<RelevantPeopleQuery, RelevantPeopleQueryVariables>
+) {
+  const options = { ...defaultOptions, ...baseOptions }
+  return Apollo.useLazyQuery<RelevantPeopleQuery, RelevantPeopleQueryVariables>(
+    RelevantPeopleDocument,
+    options
+  )
+}
+export type RelevantPeopleQueryHookResult = ReturnType<typeof useRelevantPeopleQuery>
+export type RelevantPeopleLazyQueryHookResult = ReturnType<typeof useRelevantPeopleLazyQuery>
+export type RelevantPeopleQueryResult = Apollo.QueryResult<RelevantPeopleQuery, RelevantPeopleQueryVariables>
+export const SearchProfilesDocument = gql`
+  query SearchProfiles($request: SearchQueryRequest!) {
+    search(request: $request) {
+      ... on ProfileSearchResult {
+        items {
+          ...ProfileFields
+        }
+        pageInfo {
+          next
+          totalCount
+        }
+      }
+    }
+  }
+  ${ProfileFieldsFragmentDoc}
+`
+
+/**
+ * __useSearchProfilesQuery__
+ *
+ * To run a query within a React component, call `useSearchProfilesQuery` and pass it any options that fit your needs.
+ * When your component renders, `useSearchProfilesQuery` returns an object from Apollo Client that contains loading, error, and data properties
+ * you can use to render your UI.
+ *
+ * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
+ *
+ * @example
+ * const { data, loading, error } = useSearchProfilesQuery({
+ *   variables: {
+ *      request: // value for 'request'
+ *   },
+ * });
+ */
+export function useSearchProfilesQuery(
+  baseOptions: Apollo.QueryHookOptions<SearchProfilesQuery, SearchProfilesQueryVariables>
+) {
+  const options = { ...defaultOptions, ...baseOptions }
+  return Apollo.useQuery<SearchProfilesQuery, SearchProfilesQueryVariables>(SearchProfilesDocument, options)
+}
+export function useSearchProfilesLazyQuery(
+  baseOptions?: Apollo.LazyQueryHookOptions<SearchProfilesQuery, SearchProfilesQueryVariables>
+) {
+  const options = { ...defaultOptions, ...baseOptions }
+  return Apollo.useLazyQuery<SearchProfilesQuery, SearchProfilesQueryVariables>(
+    SearchProfilesDocument,
+    options
+  )
+}
+export type SearchProfilesQueryHookResult = ReturnType<typeof useSearchProfilesQuery>
+export type SearchProfilesLazyQueryHookResult = ReturnType<typeof useSearchProfilesLazyQuery>
+export type SearchProfilesQueryResult = Apollo.QueryResult<SearchProfilesQuery, SearchProfilesQueryVariables>
+export const SearchPublicationsDocument = gql`
+  query SearchPublications(
+    $request: SearchQueryRequest!
+    $reactionRequest: ReactionFieldResolverRequest
+    $profileId: ProfileId
+  ) {
+    search(request: $request) {
+      ... on PublicationSearchResult {
+        items {
+          ... on Post {
+            ...PostFields
+          }
+          ... on Comment {
+            ...CommentFields
+          }
+        }
+        pageInfo {
+          next
+          totalCount
+        }
+      }
+    }
+  }
+  ${PostFieldsFragmentDoc}
+  ${CommentFieldsFragmentDoc}
+`
+
+/**
+ * __useSearchPublicationsQuery__
+ *
+ * To run a query within a React component, call `useSearchPublicationsQuery` and pass it any options that fit your needs.
+ * When your component renders, `useSearchPublicationsQuery` returns an object from Apollo Client that contains loading, error, and data properties
+ * you can use to render your UI.
+ *
+ * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
+ *
+ * @example
+ * const { data, loading, error } = useSearchPublicationsQuery({
+ *   variables: {
+ *      request: // value for 'request'
+ *      reactionRequest: // value for 'reactionRequest'
+ *      profileId: // value for 'profileId'
+ *   },
+ * });
+ */
+export function useSearchPublicationsQuery(
+  baseOptions: Apollo.QueryHookOptions<SearchPublicationsQuery, SearchPublicationsQueryVariables>
+) {
+  const options = { ...defaultOptions, ...baseOptions }
+  return Apollo.useQuery<SearchPublicationsQuery, SearchPublicationsQueryVariables>(
+    SearchPublicationsDocument,
+    options
+  )
+}
+export function useSearchPublicationsLazyQuery(
+  baseOptions?: Apollo.LazyQueryHookOptions<SearchPublicationsQuery, SearchPublicationsQueryVariables>
+) {
+  const options = { ...defaultOptions, ...baseOptions }
+  return Apollo.useLazyQuery<SearchPublicationsQuery, SearchPublicationsQueryVariables>(
+    SearchPublicationsDocument,
+    options
+  )
+}
+export type SearchPublicationsQueryHookResult = ReturnType<typeof useSearchPublicationsQuery>
+export type SearchPublicationsLazyQueryHookResult = ReturnType<typeof useSearchPublicationsLazyQuery>
+export type SearchPublicationsQueryResult = Apollo.QueryResult<
+  SearchPublicationsQuery,
+  SearchPublicationsQueryVariables
+>
+export const SuperFollowDocument = gql`
+  query SuperFollow($request: SingleProfileQueryRequest!) {
+    profile(request: $request) {
+      id
+      followModule {
+        ... on FeeFollowModuleSettings {
+          amount {
+            asset {
+              name
+              symbol
+              decimals
+              address
+            }
+            value
+          }
+          recipient
+        }
+      }
+    }
+  }
+`
+
+/**
+ * __useSuperFollowQuery__
+ *
+ * To run a query within a React component, call `useSuperFollowQuery` and pass it any options that fit your needs.
+ * When your component renders, `useSuperFollowQuery` returns an object from Apollo Client that contains loading, error, and data properties
+ * you can use to render your UI.
+ *
+ * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
+ *
+ * @example
+ * const { data, loading, error } = useSuperFollowQuery({
+ *   variables: {
+ *      request: // value for 'request'
+ *   },
+ * });
+ */
+export function useSuperFollowQuery(
+  baseOptions: Apollo.QueryHookOptions<SuperFollowQuery, SuperFollowQueryVariables>
+) {
+  const options = { ...defaultOptions, ...baseOptions }
+  return Apollo.useQuery<SuperFollowQuery, SuperFollowQueryVariables>(SuperFollowDocument, options)
+}
+export function useSuperFollowLazyQuery(
+  baseOptions?: Apollo.LazyQueryHookOptions<SuperFollowQuery, SuperFollowQueryVariables>
+) {
+  const options = { ...defaultOptions, ...baseOptions }
+  return Apollo.useLazyQuery<SuperFollowQuery, SuperFollowQueryVariables>(SuperFollowDocument, options)
+}
+export type SuperFollowQueryHookResult = ReturnType<typeof useSuperFollowQuery>
+export type SuperFollowLazyQueryHookResult = ReturnType<typeof useSuperFollowLazyQuery>
+export type SuperFollowQueryResult = Apollo.QueryResult<SuperFollowQuery, SuperFollowQueryVariables>
+export const TimelineDocument = gql`
+  query Timeline(
+    $request: FeedRequest!
+    $reactionRequest: ReactionFieldResolverRequest
+    $profileId: ProfileId
+  ) {
+    feed(request: $request) {
+      items {
+        root {
+          ... on Post {
+            ...PostFields
+          }
+          ... on Comment {
+            ...CommentFields
+          }
+        }
+        electedMirror {
+          mirrorId
+          profile {
+            ...ProfileFields
+          }
+          timestamp
+        }
+        mirrors {
+          profile {
+            ...ProfileFields
+          }
+          timestamp
+        }
+        collects {
+          profile {
+            ...ProfileFields
+          }
+          timestamp
+        }
+        reactions {
+          profile {
+            ...ProfileFields
+          }
+          reaction
+          timestamp
+        }
+        comments {
+          ...CommentFields
+        }
+      }
+      pageInfo {
+        next
+        totalCount
+      }
+    }
+  }
+  ${PostFieldsFragmentDoc}
+  ${CommentFieldsFragmentDoc}
+  ${ProfileFieldsFragmentDoc}
+`
+
+/**
+ * __useTimelineQuery__
+ *
+ * To run a query within a React component, call `useTimelineQuery` and pass it any options that fit your needs.
+ * When your component renders, `useTimelineQuery` returns an object from Apollo Client that contains loading, error, and data properties
+ * you can use to render your UI.
+ *
+ * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
+ *
+ * @example
+ * const { data, loading, error } = useTimelineQuery({
+ *   variables: {
+ *      request: // value for 'request'
+ *      reactionRequest: // value for 'reactionRequest'
+ *      profileId: // value for 'profileId'
+ *   },
+ * });
+ */
+export function useTimelineQuery(
+  baseOptions: Apollo.QueryHookOptions<TimelineQuery, TimelineQueryVariables>
+) {
+  const options = { ...defaultOptions, ...baseOptions }
+  return Apollo.useQuery<TimelineQuery, TimelineQueryVariables>(TimelineDocument, options)
+}
+export function useTimelineLazyQuery(
+  baseOptions?: Apollo.LazyQueryHookOptions<TimelineQuery, TimelineQueryVariables>
+) {
+  const options = { ...defaultOptions, ...baseOptions }
+  return Apollo.useLazyQuery<TimelineQuery, TimelineQueryVariables>(TimelineDocument, options)
+}
+export type TimelineQueryHookResult = ReturnType<typeof useTimelineQuery>
+export type TimelineLazyQueryHookResult = ReturnType<typeof useTimelineLazyQuery>
+export type TimelineQueryResult = Apollo.QueryResult<TimelineQuery, TimelineQueryVariables>
+export const TrendingDocument = gql`
+  query Trending($request: AllPublicationsTagsRequest!) {
+    allPublicationsTags(request: $request) {
+      items {
+        tag
+        total
+      }
+    }
+  }
+`
+
+/**
+ * __useTrendingQuery__
+ *
+ * To run a query within a React component, call `useTrendingQuery` and pass it any options that fit your needs.
+ * When your component renders, `useTrendingQuery` returns an object from Apollo Client that contains loading, error, and data properties
+ * you can use to render your UI.
+ *
+ * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
+ *
+ * @example
+ * const { data, loading, error } = useTrendingQuery({
+ *   variables: {
+ *      request: // value for 'request'
+ *   },
+ * });
+ */
+export function useTrendingQuery(
+  baseOptions: Apollo.QueryHookOptions<TrendingQuery, TrendingQueryVariables>
+) {
+  const options = { ...defaultOptions, ...baseOptions }
+  return Apollo.useQuery<TrendingQuery, TrendingQueryVariables>(TrendingDocument, options)
+}
+export function useTrendingLazyQuery(
+  baseOptions?: Apollo.LazyQueryHookOptions<TrendingQuery, TrendingQueryVariables>
+) {
+  const options = { ...defaultOptions, ...baseOptions }
+  return Apollo.useLazyQuery<TrendingQuery, TrendingQueryVariables>(TrendingDocument, options)
+}
+export type TrendingQueryHookResult = ReturnType<typeof useTrendingQuery>
+export type TrendingLazyQueryHookResult = ReturnType<typeof useTrendingLazyQuery>
+export type TrendingQueryResult = Apollo.QueryResult<TrendingQuery, TrendingQueryVariables>
+export const UserProfilesDocument = gql`
+  query UserProfiles($ownedBy: [EthereumAddress!]) {
+    profiles(request: { ownedBy: $ownedBy }) {
+      items {
+        ...ProfileFields
+        stats {
+          totalFollowing
+        }
+        isDefault
+        dispatcher {
+          canUseRelay
+        }
+      }
+    }
+    userSigNonces {
+      lensHubOnChainSigNonce
+    }
+  }
+  ${ProfileFieldsFragmentDoc}
+`
+
+/**
+ * __useUserProfilesQuery__
+ *
+ * To run a query within a React component, call `useUserProfilesQuery` and pass it any options that fit your needs.
+ * When your component renders, `useUserProfilesQuery` returns an object from Apollo Client that contains loading, error, and data properties
+ * you can use to render your UI.
+ *
+ * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
+ *
+ * @example
+ * const { data, loading, error } = useUserProfilesQuery({
+ *   variables: {
+ *      ownedBy: // value for 'ownedBy'
+ *   },
+ * });
+ */
+export function useUserProfilesQuery(
+  baseOptions?: Apollo.QueryHookOptions<UserProfilesQuery, UserProfilesQueryVariables>
+) {
+  const options = { ...defaultOptions, ...baseOptions }
+  return Apollo.useQuery<UserProfilesQuery, UserProfilesQueryVariables>(UserProfilesDocument, options)
+}
+export function useUserProfilesLazyQuery(
+  baseOptions?: Apollo.LazyQueryHookOptions<UserProfilesQuery, UserProfilesQueryVariables>
+) {
+  const options = { ...defaultOptions, ...baseOptions }
+  return Apollo.useLazyQuery<UserProfilesQuery, UserProfilesQueryVariables>(UserProfilesDocument, options)
+}
+export type UserProfilesQueryHookResult = ReturnType<typeof useUserProfilesQuery>
+export type UserProfilesLazyQueryHookResult = ReturnType<typeof useUserProfilesLazyQuery>
+export type UserProfilesQueryResult = Apollo.QueryResult<UserProfilesQuery, UserProfilesQueryVariables>

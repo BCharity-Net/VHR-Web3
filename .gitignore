@@ -34,9 +34,6 @@ scratch/
 .env.test.local
 .env.production.local
 
-# Sentry
-.sentryclirc
-
 # IDE settings
 .idea/
 .vscode

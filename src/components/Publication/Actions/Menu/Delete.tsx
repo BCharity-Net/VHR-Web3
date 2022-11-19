@@ -1,13 +1,13 @@
-import { useMutation } from '@apollo/client'
 import type { BCharityPublication } from '@generated/bcharitytypes'
-import type { Mutation } from '@generated/types'
-import { HidePublicationDocument } from '@generated/types'
+import { useHidePublicationMutation } from '@generated/types'
 import { Menu } from '@headlessui/react'
 import { TrashIcon } from '@heroicons/react/outline'
+import { Leafwatch } from '@lib/leafwatch'
 import clsx from 'clsx'
 import { useRouter } from 'next/router'
 import type { FC } from 'react'
 import { useTranslation } from 'react-i18next'
+import { PUBLICATION } from 'src/tracking'
 
 interface Props {
   publication: BCharityPublication
@@ -16,8 +16,9 @@ interface Props {
 const Delete: FC<Props> = ({ publication }) => {
   const { t } = useTranslation('common')
   const { pathname, push } = useRouter()
-  const [hidePost] = useMutation<Mutation>(HidePublicationDocument, {
+  const [hidePost] = useHidePublicationMutation({
     onCompleted: () => {
+      Leafwatch.track(PUBLICATION.DELETE)
       pathname === '/posts/[id]' ? push('/') : location.reload()
     }
   })

@@ -1,11 +1,11 @@
-import type { Maybe } from '@generated/types'
+import type { Maybe } from '@generated/types';
 
 interface Attribute {
-  key: string
-  value: string
+  key: string;
+  value: string;
 }
 
-type Query = 'hasPrideLogo' | 'app' | 'twitter' | 'location' | 'website'
+type Query = 'hasPrideLogo' | 'app' | 'twitter' | 'location' | 'website' | 'statusEmoji' | 'statusMessage';
 
 /**
  *
@@ -13,8 +13,8 @@ type Query = 'hasPrideLogo' | 'app' | 'twitter' | 'location' | 'website'
  * @param query - Query to search for
  * @returns attribute if found, otherwise undefined
  */
-const getAttribute = (attributes?: Maybe<Attribute[]>, query?: Query): string | undefined => {
-  return attributes?.find((o) => o.key === query)?.value
-}
+const getAttribute = (attributes?: Maybe<Attribute[]>, query?: Query): string => {
+  return attributes?.find((o) => o.key === query)?.value || '';
+};
 
-export default getAttribute
+export default getAttribute;

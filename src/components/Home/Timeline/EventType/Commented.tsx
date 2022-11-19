@@ -1,21 +1,21 @@
-import ThreadBody from '@components/Publication/ThreadBody'
-import type { BCharityPublication } from '@generated/bcharitytypes'
-import type { Comment, FeedItem } from '@generated/types'
-import type { FC } from 'react'
+import ThreadBody from '@components/Publication/ThreadBody';
+import type { BCharityPublication } from '@generated/bcharitytypes';
+import type { Comment, FeedItem } from '@generated/types';
+import type { FC } from 'react';
 
 interface Props {
-  feedItem: FeedItem
+  feedItem: FeedItem;
 }
 
 const Commented: FC<Props> = ({ feedItem }) => {
-  const publication = feedItem.root as Comment
-  const firstComment = feedItem.comments && feedItem.comments[0]
+  const publication = feedItem.root as Comment;
+  const firstComment = feedItem.comments && feedItem.comments[0];
 
   return firstComment ? (
     <ThreadBody publication={publication as BCharityPublication} />
   ) : publication?.commentOn ? (
     <ThreadBody publication={publication?.commentOn as BCharityPublication} />
-  ) : null
-}
+  ) : null;
+};
 
-export default Commented
+export default Commented;

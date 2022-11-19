@@ -6,12 +6,14 @@ import MetaTags from '@components/utils/MetaTags'
 import { PublicationSortCriteria } from '@generated/types'
 import { Tab } from '@headlessui/react'
 import isFeatureEnabled from '@lib/isFeatureEnabled'
+import { Leafwatch } from '@lib/leafwatch'
 import clsx from 'clsx'
 import type { NextPage } from 'next'
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { APP_NAME, STATIC_ASSETS } from 'src/constants'
+import { APP_NAME, STATIC_IMAGES_URL } from 'src/constants'
 import { useAppStore } from 'src/store/app'
+import { PAGEVIEW } from 'src/tracking'
 
 import Feed from './Feed'
 import FeedType from './FeedType'
@@ -20,6 +22,10 @@ const Explore: NextPage = () => {
   const { t } = useTranslation('common')
   const currentProfile = useAppStore((state) => state.currentProfile)
   const [focus, setFocus] = useState<any>()
+
+  useEffect(() => {
+    Leafwatch.track('Pageview', { path: PAGEVIEW.EXPLORE })
+  }, [])
 
   const tabs = [
     { name: 'For you', emoji: 'leaf-fluttering-in-wind.png', type: PublicationSortCriteria.CuratedProfiles },
@@ -38,6 +44,9 @@ const Explore: NextPage = () => {
               <Tab
                 key={index}
                 defaultChecked={index === 1}
+                onClick={() => {
+                  Leafwatch.track(`Switch to ${tab.type?.toLowerCase()} tab in explore`)
+                }}
                 className={({ selected }) =>
                   clsx(
                     { 'border-b-2 border-brand-500 !text-black dark:!text-white': selected },
@@ -47,7 +56,7 @@ const Explore: NextPage = () => {
               >
                 <span className="flex items-center space-x-2">
                   <span className="hidden sm:block">{tab.name}</span>
-                  <img className="h-4" src={`${STATIC_ASSETS}/emojis/${tab.emoji}`} alt={tab.name} />
+                  <img className="h-4" src={`${STATIC_IMAGES_URL}/emojis/${tab.emoji}`} alt={tab.name} />
                 </span>
               </Tab>
             ))}

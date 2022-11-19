@@ -11,7 +11,10 @@ const getThumbnailUrl = (publication: BCharityPublication | undefined): string =
   if (!publication) {
     return ''
   }
-  const url = publication.metadata?.cover?.original.url || publication.metadata?.image
+  const url =
+    publication.metadata?.cover?.original.url ||
+    publication.metadata?.image ||
+    `https://ik.imagekit.io/bcharityimg/placeholder.webp`
 
   return getIPFSLink(url)
 }

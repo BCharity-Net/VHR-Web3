@@ -5,6 +5,7 @@ import { Menu, Transition } from '@headlessui/react'
 import {
   CheckCircleIcon,
   CogIcon,
+  EmojiHappyIcon,
   LogoutIcon,
   MoonIcon,
   ShieldCheckIcon,
@@ -13,15 +14,20 @@ import {
   SwitchHorizontalIcon,
   UserIcon
 } from '@heroicons/react/outline'
+import getAttribute from '@lib/getAttribute'
 import getAvatar from '@lib/getAvatar'
 import isGardener from '@lib/isGardener'
 import isStaff from '@lib/isStaff'
+import { Leafwatch } from '@lib/leafwatch'
 import resetAuthData from '@lib/resetAuthData'
 import clsx from 'clsx'
+import { useRouter } from 'next/router'
 import { useTheme } from 'next-themes'
 import type { FC } from 'react'
 import { Fragment } from 'react'
 import { useAppPersistStore, useAppStore } from 'src/store/app'
+import { useGlobalModalStateStore } from 'src/store/modals'
+import { PROFILE, STAFFTOOLS, SYSTEM } from 'src/tracking'
 import { useDisconnect } from 'wagmi'
 
 import pkg from '../../../../package.json'
@@ -29,19 +35,35 @@ import Slug from '../Slug'
 import { NextLink } from './MenuItems'
 
 const SignedUser: FC = () => {
+  const router = useRouter()
   const profiles = useAppStore((state) => state.profiles)
   const currentProfile = useAppStore((state) => state.currentProfile)
   const setCurrentProfile = useAppStore((state) => state.setCurrentProfile)
   const setProfileId = useAppPersistStore((state) => state.setProfileId)
-  const setHandle = useAppPersistStore((state) => state.setHandle)
   const setStaffMode = useAppPersistStore((state) => state.setStaffMode)
+  const setShowStatusModal = useGlobalModalStateStore((state) => state.setShowStatusModal)
   const { allowed: staffMode } = useStaffMode()
   const { theme, setTheme } = useTheme()
   const { disconnect } = useDisconnect()
   const disconnectXmtp = useDisconnectXmtp()
 
+  const statusEmoji = getAttribute(currentProfile?.attributes, 'statusEmoji')
+  const statusMessage = getAttribute(currentProfile?.attributes, 'statusMessage')
+  const hasStatus = statusEmoji && statusMessage
+
   const toggleStaffMode = () => {
     setStaffMode(!staffMode)
+    Leafwatch.track(STAFFTOOLS.TOGGLE_MODE)
+  }
+
+  const logout = () => {
+    Leafwatch.track(PROFILE.LOGOUT)
+    disconnectXmtp()
+    setCurrentProfile(null)
+    setProfileId(null)
+    resetAuthData()
+    disconnect?.()
+    router.push('/')
   }
 
   return (
@@ -78,6 +100,28 @@ const SignedUser: FC = () => {
                 <div>Logged in as</div>
                 <div className="truncate">
                   <Slug className="font-bold" slug={currentProfile?.handle} prefix="@" />
+                </div>
+              </Menu.Item>
+              <div className="divider" />
+              <Menu.Item
+                as="a"
+                onClick={() => setShowStatusModal(true)}
+                className={({ active }: { active: boolean }) =>
+                  clsx({ 'dropdown-active': active }, 'menu-item border dark:border-gray-700/80')
+                }
+              >
+                <div className="flex items-center space-x-2">
+                  {hasStatus ? (
+                    <>
+                      <span>{statusEmoji}</span>
+                      <span className="truncate">{statusMessage}</span>
+                    </>
+                  ) : (
+                    <>
+                      <EmojiHappyIcon className="w-4 h-4" />
+                      <span>Set status</span>
+                    </>
+                  )}
                 </div>
               </Menu.Item>
               <div className="divider" />
@@ -121,14 +165,7 @@ const SignedUser: FC = () => {
               )}
               <Menu.Item
                 as="a"
-                onClick={() => {
-                  disconnectXmtp()
-                  setCurrentProfile(null)
-                  setProfileId(null)
-                  setHandle(null)
-                  resetAuthData()
-                  disconnect?.()
-                }}
+                onClick={logout}
                 className={({ active }) => clsx({ 'dropdown-active': active }, 'menu-item')}
               >
                 <div className="flex items-center space-x-1.5">
@@ -156,7 +193,7 @@ const SignedUser: FC = () => {
                             const selectedProfile = profiles[index]
                             setCurrentProfile(selectedProfile)
                             setProfileId(selectedProfile.id)
-                            setHandle(selectedProfile.handle)
+                            Leafwatch.track(PROFILE.SWITCH_PROFILE)
                           }}
                         >
                           {currentProfile?.id === profile?.id && (
@@ -181,6 +218,7 @@ const SignedUser: FC = () => {
                 as="a"
                 onClick={() => {
                   setTheme(theme === 'light' ? 'dark' : 'light')
+                  Leafwatch.track(theme === 'light' ? SYSTEM.SWITCH_DARK_THEME : SYSTEM.SWITCH_LIGHT_THEME)
                 }}
                 className={({ active }) => clsx({ 'dropdown-active': active }, 'menu-item')}
               >

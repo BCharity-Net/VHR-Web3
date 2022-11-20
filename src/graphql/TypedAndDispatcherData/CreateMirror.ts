@@ -1,5 +1,5 @@
 import { gql } from '@apollo/client'
-import { RelayerResultFields } from '@gql/RelayerResultFieldsq'
+import { RelayerResultFields } from '@gql/RelayerResultFields'
 
 export const CREATE_MIRROR_TYPED_DATA_MUTATION = gql`
   mutation CreateMirrorTypedData($options: TypedDataOptions, $request: CreateMirrorRequest!) {

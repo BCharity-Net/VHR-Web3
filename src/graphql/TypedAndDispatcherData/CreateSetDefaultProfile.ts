@@ -1,5 +1,5 @@
 import { gql } from '@apollo/client'
-import { RelayerResultFields } from '@gql/RelayerResultFieldsq'
+import { RelayerResultFields } from '@gql/RelayerResultFields'
 
 export const CREATE_SET_DEFAULT_PROFILE_DATA_MUTATION = gql`
   mutation CreateSetDefaultProfileTypedData(

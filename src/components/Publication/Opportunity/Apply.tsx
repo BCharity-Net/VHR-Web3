@@ -17,8 +17,8 @@ import {
   CreateCollectTypedDataDocument,
   CreateCommentTypedDataDocument
 } from '@generated/types'
-import { CollectModuleFields } from '@gql/CollectModuleFieldsq'
-import { CommentFields } from '@gql/CommentFieldsq'
+import { CollectModuleFields } from '@gql/CollectModuleFields'
+import { CommentFields } from '@gql/CommentFields'
 import { CheckCircleIcon } from '@heroicons/react/outline'
 import getSignature from '@lib/getSignature'
 import Logger from '@lib/logger'

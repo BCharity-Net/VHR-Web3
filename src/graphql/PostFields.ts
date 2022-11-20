@@ -1,9 +1,9 @@
 import { gql } from '@apollo/client'
 
-import { MinimalCollectModuleFields } from './CollectModuleFieldsq'
-import { MetadataFields } from './MetadataFieldsq'
-import { ProfileFields } from './ProfileFieldsq'
-import { StatsFields } from './StatsFieldsq'
+import { MinimalCollectModuleFields } from './CollectModuleFields'
+import { MetadataFields } from './MetadataFields'
+import { ProfileFields } from './ProfileFields'
+import { StatsFields } from './StatsFields'
 
 export const PostFields = gql`
   fragment PostFields on Post {

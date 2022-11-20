@@ -1,11 +1,11 @@
 import { gql } from '@apollo/client'
 
-import { MinimalCollectModuleFields } from './CollectModuleFieldsq'
-import { MetadataFields } from './MetadataFieldsq'
-import { MirrorFields } from './MirrorFieldsq'
-import { PostFields } from './PostFieldsq'
-import { ProfileFields } from './ProfileFieldsq'
-import { StatsFields } from './StatsFieldsq'
+import { MinimalCollectModuleFields } from './CollectModuleFields'
+import { MetadataFields } from './MetadataFields'
+import { MirrorFields } from './MirrorFields'
+import { PostFields } from './PostFields'
+import { ProfileFields } from './ProfileFields'
+import { StatsFields } from './StatsFields'
 
 export const CommentFields = gql`
   fragment CommentFields on Comment {

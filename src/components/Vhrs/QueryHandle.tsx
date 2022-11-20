@@ -1,6 +1,6 @@
 import { useQuery } from '@apollo/client'
 import { UserProfilesDocument } from '@generated/types'
-import { ProfileFields } from '@gql/ProfileFieldsq'
+import { ProfileFields } from '@gql/ProfileFields'
 import type { FC } from 'react'
 
 interface Props {

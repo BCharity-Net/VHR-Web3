@@ -52,6 +52,7 @@ We encourage you to contribute to BCharity! Please check out the [Contributing g
 ### Using Local Environment
 
 ```sh
+cd apps/web
 cp .env.example .env
 yarn
 yarn dev

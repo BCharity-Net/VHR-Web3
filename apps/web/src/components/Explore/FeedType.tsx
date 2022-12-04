@@ -19,7 +19,7 @@ const FeedType: FC<Props> = ({ setFocus, focus }) => {
       type="button"
       onClick={() => {
         setFocus(type)
-        Leafwatch.track(`Select ${(type ?? 'all_posts')?.toLowerCase()} filter in explore`)
+        Leafwatch.track(`select ${(type ?? 'all_posts')?.toLowerCase()} filter in explore`)
       }}
       className={clsx(
         { '!bg-brand-500 !text-white': focus === type },

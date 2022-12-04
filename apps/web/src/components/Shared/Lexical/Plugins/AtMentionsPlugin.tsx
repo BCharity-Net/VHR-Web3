@@ -9,7 +9,7 @@ import getIPFSLink from '@lib/getIPFSLink';
 import getStampFyiURL from '@lib/getStampFyiURL';
 import imageProxy from '@lib/imageProxy';
 import { AVATAR } from 'data/constants';
-import type { MediaSet, NftImage, Profile } from 'lens';
+import type { MediaSet, NftImage, Profile, ProfileSearchResult } from 'lens';
 import { SearchRequestTypes, useSearchProfilesLazyQuery } from 'lens';
 import type { TextNode } from 'lexical';
 import type { FC } from 'react';
@@ -25,10 +25,6 @@ const DocumentMentionsRegex = {
   NAME,
   PUNCTUATION
 };
-
-const CapitalizedNameMentionsRegex = new RegExp(
-  '(^|[^#])((?:' + DocumentMentionsRegex.NAME + '{' + 1 + ',})$)'
-);
 
 const PUNC = DocumentMentionsRegex.PUNCTUATION;
 const TRIGGERS = ['@'].join('');
@@ -56,22 +52,6 @@ const AtSignMentionsRegexAliasRegex = new RegExp(
   '(^|\\s|\\()(' + '[' + TRIGGERS + ']' + '((?:' + VALID_CHARS + '){0,' + ALIAS_LENGTH_LIMIT + '})' + ')$'
 );
 
-const checkForCapitalizedNameMentions = (text: string, minMatchLength: number): QueryMatch | null => {
-  const match = CapitalizedNameMentionsRegex.exec(text);
-  if (match !== null) {
-    const maybeLeadingWhitespace = match[1];
-    const matchingString = match[2];
-    if (matchingString != null && matchingString.length >= minMatchLength) {
-      return {
-        leadOffset: match.index + maybeLeadingWhitespace.length,
-        matchingString,
-        replaceableString: matchingString
-      };
-    }
-  }
-  return null;
-};
-
 const checkForAtSignMentions = (text: string, minMatchLength: number): QueryMatch | null => {
   let match = AtSignMentionsRegex.exec(text);
 
@@ -96,7 +76,7 @@ const checkForAtSignMentions = (text: string, minMatchLength: number): QueryMatc
 
 const getPossibleQueryMatch = (text: string): QueryMatch | null => {
   const match = checkForAtSignMentions(text, 1);
-  return match === null ? checkForCapitalizedNameMentions(text, 3) : match;
+  return match;
 };
 
 class MentionTypeaheadOption extends TypeaheadOption {
@@ -132,7 +112,7 @@ const MentionsTypeaheadMenuItem: FC<Props> = ({ isSelected, onClick, onMouseEnte
       onMouseEnter={onMouseEnter}
       onClick={onClick}
     >
-      <div className="hover:bg-gray-100 flex items-center space-x-2 m-1.5 px-3 py-1 rounded-xl">
+      <div className="hover:bg-gray-800 text-white flex items-center space-x-2 m-1.5 px-3 py-1 rounded-xl">
         <img
           className="rounded-full w-7 h-7"
           height="32"
@@ -155,19 +135,41 @@ const NewMentionsPlugin: FC = () => {
   const [editor] = useLexicalComposerContext();
   const [searchUsers] = useSearchProfilesLazyQuery();
 
+  const getUserPicture = (user: Profile | undefined) => {
+    const picture = user?.picture;
+    if (picture && picture.hasOwnProperty('original')) {
+      const mediaSet = user.picture as MediaSet;
+      return mediaSet.original?.url;
+    }
+
+    if (picture && picture.hasOwnProperty('uri')) {
+      const nftImage = user.picture as NftImage;
+      return nftImage?.uri;
+    }
+
+    return getStampFyiURL(user?.ownedBy);
+  };
+
   useEffect(() => {
-    searchUsers({
-      variables: { request: { type: SearchRequestTypes.Profile, query: queryString, limit: 5 } }
-    }).then(({ data }) => {
-      // @ts-ignore
-      let profiles = data?.search?.items ?? [];
-      profiles = profiles.map((user: Profile & { picture: MediaSet & NftImage }) => ({
-        name: user?.name,
-        handle: user?.handle,
-        picture: user?.picture?.original?.url ?? user?.picture?.uri ?? getStampFyiURL(user?.ownedBy)
-      }));
-      setResults(profiles);
-    });
+    if (queryString) {
+      searchUsers({
+        variables: { request: { type: SearchRequestTypes.Profile, query: queryString, limit: 5 } }
+      }).then(({ data }) => {
+        const search = data?.search;
+        const profileSearchResult = search as ProfileSearchResult;
+        const profiles: Profile[] =
+          search && search.hasOwnProperty('items') ? profileSearchResult?.items : [];
+        const profilesResults = profiles.map(
+          (user: Profile) =>
+            ({
+              name: user?.name,
+              handle: user?.handle,
+              picture: getUserPicture(user)
+            } as Record<string, string>)
+        );
+        setResults(profilesResults);
+      });
+    }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [queryString]);
 

@@ -1,4 +1,4 @@
-import Beta from '@components/Shared/Beta'
+import Beta from '@components/Shared/Badges/Beta'
 import { Card } from '@components/UI/Card'
 import { CheckCircleIcon, ExternalLinkIcon } from '@heroicons/react/outline'
 import { Leafwatch } from '@lib/leafwatch'
@@ -52,7 +52,7 @@ const CrossPost: FC = () => {
             href={REFLECT_URL}
             className="flex items-center space-x-1.5"
             onClick={() => {
-              Leafwatch.track(SETTINGS.ACCOUNT.OPEN_REFLECT, { purpose: 'disable' })
+              Leafwatch.track(SETTINGS.ACCOUNT.OPEN_REFLECT_DISABLE)
             }}
             target="_blank"
             rel="noreferrer noopener"
@@ -66,7 +66,7 @@ const CrossPost: FC = () => {
           href={REFLECT_URL}
           className="flex items-center space-x-1.5"
           onClick={() => {
-            Leafwatch.track(SETTINGS.ACCOUNT.OPEN_REFLECT, { purpose: 'enable' })
+            Leafwatch.track(SETTINGS.ACCOUNT.OPEN_REFLECT_ENABLE)
           }}
           target="_blank"
           rel="noreferrer noopener"

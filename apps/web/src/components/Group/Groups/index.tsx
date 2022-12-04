@@ -1,7 +1,7 @@
 import { gql, useQuery } from '@apollo/client'
+import MetaTags from '@components/Common/MetaTags'
 import { GridItemFour, GridLayout } from '@components/UI/GridLayout'
 import { PageLoading } from '@components/UI/PageLoading'
-import MetaTags from '@components/utils/MetaTags'
 import { APP_NAME } from 'data/constants'
 import { GroupFields } from 'lens/documents/GroupFields'
 import { ChartBarIcon, FireIcon, SparklesIcon } from '@heroicons/react/outline'

@@ -9,7 +9,7 @@ const SetDefaultProfile: FC = () => {
   const { t } = useTranslation('common')
   const profiles = useAppStore((state) => state.profiles)
   const currentProfile = useAppStore((state) => state.currentProfile)
-  const hasDefaultProfile = !!profiles.find((o) => o.isDefault)
+  const hasDefaultProfile = Boolean(profiles.find((o) => o.isDefault))
   const count = profiles.length
 
   if (currentProfile || hasDefaultProfile) {

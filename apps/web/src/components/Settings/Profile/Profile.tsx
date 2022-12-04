@@ -44,8 +44,6 @@ interface Props {
 
 const Profile: FC<Props> = ({ profile }) => {
   const { t } = useTranslation('common')
-  const userSigNonce = useAppStore((state) => state.userSigNonce)
-  const setUserSigNonce = useAppStore((state) => state.setUserSigNonce)
   const currentProfile = useAppStore((state) => state.currentProfile)
   const [pride, setPride] = useState(hasPrideLogo(profile))
   const [cover, setCover] = useState('')
@@ -93,7 +91,6 @@ const Profile: FC<Props> = ({ profile }) => {
             sig
           }
 
-          setUserSigNonce(userSigNonce + 1)
           if (!RELAY_ON) {
             return write?.({ recklesslySetUnpreparedArgs: [inputStruct] })
           }
@@ -119,10 +116,7 @@ const Profile: FC<Props> = ({ profile }) => {
     })
     if (data?.createSetProfileMetadataViaDispatcher?.__typename === 'RelayError') {
       createSetProfileMetadataTypedData({
-        variables: {
-          options: { overrideSigNonce: userSigNonce },
-          request
-        }
+        variables: { request }
       })
     }
   }
@@ -215,10 +209,7 @@ const Profile: FC<Props> = ({ profile }) => {
       createViaDispatcher(request)
     } else {
       createSetProfileMetadataTypedData({
-        variables: {
-          options: { overrideSigNonce: userSigNonce },
-          request
-        }
+        variables: { request }
       })
     }
   }

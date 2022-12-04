@@ -16,17 +16,17 @@ import InfiniteScroll from 'react-infinite-scroll-component'
 import { useAppStore } from 'src/store/app'
 import { useTransactionPersistStore } from 'src/store/transaction'
 
-import NewComment from '../Composer/Comment/New'
+import NewPublication from '../Composer/NewPublication'
 import CommentWarning from '../Shared/CommentWarning'
 
 interface Props {
-  publication: BCharityPublication
+  publication?: BCharityPublication
   type?: 'comment' | 'group post'
 }
 
 const Feed: FC<Props> = ({ publication, type = 'comment' }) => {
   const { t } = useTranslation('common')
-  const publicationId = publication.__typename === 'Mirror' ? publication?.mirrorOf?.id : publication?.id
+  const publicationId = publication?.__typename === 'Mirror' ? publication?.mirrorOf?.id : publication?.id
   const currentProfile = useAppStore((state) => state.currentProfile)
   const txnQueue = useTransactionPersistStore((state) => state.txnQueue)
 
@@ -58,7 +58,7 @@ const Feed: FC<Props> = ({ publication, type = 'comment' }) => {
     <>
       {currentProfile ? (
         canComment ? (
-          <NewComment publication={publication} type={type} />
+          <NewPublication publication={publication} type={type} />
         ) : (
           <CommentWarning />
         )
@@ -89,7 +89,7 @@ const Feed: FC<Props> = ({ publication, type = 'comment' }) => {
                   </div>
                 )
             )}
-            {comments?.map((comment, index: number) => (
+            {comments?.map((comment, index) => (
               <SinglePublication
                 key={`${publicationId}_${index}`}
                 publication={comment as BCharityPublication}

@@ -22,6 +22,8 @@ interface Props {
   isFollowing?: boolean;
   isBig?: boolean;
   linkToProfile?: boolean;
+  showStatus?: boolean;
+  showUserPreview?: boolean;
 }
 
 const UserProfile: FC<Props> = ({
@@ -31,7 +33,9 @@ const UserProfile: FC<Props> = ({
   followStatusLoading = false,
   isFollowing = false,
   isBig = false,
-  linkToProfile = true
+  linkToProfile = true,
+  showStatus = false,
+  showUserPreview = true
 }) => {
   const [following, setFollowing] = useState(isFollowing);
 
@@ -58,7 +62,7 @@ const UserProfile: FC<Props> = ({
       <div className="flex items-center max-w-sm truncate">
         <div className={clsx(isBig ? 'font-bold' : 'text-md')}>{profile?.name ?? profile?.handle}</div>
         {isVerified(profile?.id) && <BadgeCheckIcon className="w-4 h-4 text-brand ml-1" />}
-        {hasStatus ? (
+        {showStatus && hasStatus ? (
           <div className="flex items-center text-gray-500">
             <span className="mx-1.5">·</span>
             <span className="text-xs flex items-center space-x-1 max-w-[10rem]">
@@ -74,7 +78,12 @@ const UserProfile: FC<Props> = ({
 
   const UserInfo: FC = () => {
     return (
-      <UserPreview isBig={isBig} profile={profile} followStatusLoading={followStatusLoading}>
+      <UserPreview
+        isBig={isBig}
+        profile={profile}
+        followStatusLoading={followStatusLoading}
+        showUserPreview={showUserPreview}
+      >
         <div className="flex items-center space-x-3">
           <UserAvatar />
           <div>

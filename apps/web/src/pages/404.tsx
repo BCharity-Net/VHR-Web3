@@ -1,19 +1,13 @@
+import MetaTags from '@components/Common/MetaTags'
 import { Button } from '@components/UI/Button'
-import MetaTags from '@components/utils/MetaTags'
 import { HomeIcon } from '@heroicons/react/outline'
-import { Leafwatch } from '@lib/leafwatch'
 import { APP_NAME, STATIC_IMAGES_URL } from 'data/constants'
 import Link from 'next/link'
-import { useEffect } from 'react'
+import type { FC } from 'react'
 import { useTranslation } from 'react-i18next'
-import { PAGEVIEW } from 'src/tracking'
 
-export default function Custom404() {
+const Custom404: FC = () => {
   const { t } = useTranslation('common')
-
-  useEffect(() => {
-    Leafwatch.track('Pageview', { path: PAGEVIEW.ERROR_404 })
-  }, [])
 
   return (
     <div className="flex-col page-center">
@@ -31,3 +25,6 @@ export default function Custom404() {
     </div>
   )
 }
+
+export default Custom404
+ 

@@ -1,14 +1,14 @@
+import MetaTags from '@components/Common/MetaTags'
 import TabButton from '@components/UI/TabButton'
-import MetaTags from '@components/utils/MetaTags'
 import { AtSymbolIcon, ChatAlt2Icon, LightningBoltIcon } from '@heroicons/react/outline'
 import { Leafwatch } from '@lib/leafwatch'
 import { APP_NAME } from 'data/constants'
 import type { FC } from 'react'
-import { useEffect, useState } from 'react'
+import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import Custom404 from 'src/pages/404'
 import { useAppStore } from 'src/store/app'
-import { NOTIFICATION, PAGEVIEW } from 'src/tracking'
+import { NOTIFICATION } from 'src/tracking'
 
 import List from './List'
 
@@ -16,10 +16,6 @@ const Notification: FC = () => {
   const { t } = useTranslation('common')
   const currentProfile = useAppStore((state) => state.currentProfile)
   const [feedType, setFeedType] = useState<'ALL' | 'MENTIONS' | 'COMMENTS'>('ALL')
-
-  useEffect(() => {
-    Leafwatch.track('Pageview', { path: PAGEVIEW.NOTIFICATION })
-  }, [])
 
   if (!currentProfile) {
     return <Custom404 />

@@ -14,8 +14,13 @@ export class MDCodeMatcher extends Matcher {
   }
 
   match(value: string) {
-    return this.doMatch(value, /`(.*?)`/u, (matches) => ({
-      match: matches[1]
-    }))
+    return this.doMatch(
+      value,
+      /`(.*?)`/u,
+      (matches) => ({
+        match: matches[1]
+      }),
+      true
+    )
   }
 }

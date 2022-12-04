@@ -1,7 +1,7 @@
 import { gql, useQuery } from '@apollo/client'
+import MetaTags from '@components/Common/MetaTags'
 import PublicationsShimmer from '@components/Shared/Shimmer/PublicationsShimmer'
 import { GridItemEight, GridItemFour, GridLayout } from '@components/UI/GridLayout'
-import MetaTags from '@components/utils/MetaTags'
 import { GroupFields } from 'lens/documents/GroupFields'
 import type { NextPage } from 'next'
 import dynamic from 'next/dynamic'

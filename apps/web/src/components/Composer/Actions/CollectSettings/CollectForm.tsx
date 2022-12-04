@@ -40,12 +40,14 @@ const CollectForm: FC<Props> = ({ setShowModal }) => {
   const setPayload = useCollectModuleStore((state) => state.setPayload)
   const reset = useCollectModuleStore((state) => state.reset)
 
-  const RevertCollectModule = CollectModules.RevertCollectModule
-  const FreeCollectModule = CollectModules.FreeCollectModule
-  const FeeCollectModule = CollectModules.FeeCollectModule
-  const LimitedFeeCollectModule = CollectModules.LimitedFeeCollectModule
-  const LimitedTimedFeeCollectModule = CollectModules.LimitedTimedFeeCollectModule
-  const TimedFeeCollectModule = CollectModules.TimedFeeCollectModule
+  const {
+    RevertCollectModule,
+    FreeCollectModule,
+    FeeCollectModule,
+    LimitedFeeCollectModule,
+    LimitedTimedFeeCollectModule,
+    TimedFeeCollectModule
+  } = CollectModules
 
   useEffect(() => {
     const baseFeeData = {
@@ -141,7 +143,7 @@ const CollectForm: FC<Props> = ({ setShowModal }) => {
               <span>Charge for collecting</span>
             </div>
             <div className="flex items-center space-x-2">
-              <Toggle on={!!amount} setOn={() => setAmount(amount ? null : '0')} />
+              <Toggle on={Boolean(amount)} setOn={() => setAmount(amount ? null : '0')} />
               <div className="text-gray-500 dark:text-gray-400 text-sm font-bold">
                 Get paid whenever someone collects your post
               </div>
@@ -212,7 +214,10 @@ const CollectForm: FC<Props> = ({ setShowModal }) => {
                   <span>Limited edition</span>
                 </div>
                 <div className="flex items-center space-x-2">
-                  <Toggle on={!!collectLimit} setOn={() => setCollectLimit(collectLimit ? null : '1')} />
+                  <Toggle
+                    on={Boolean(collectLimit)}
+                    setOn={() => setCollectLimit(collectLimit ? null : '1')}
+                  />
                   <div className="text-gray-500 dark:text-gray-400 text-sm font-bold">
                     Make the collects exclusive
                   </div>

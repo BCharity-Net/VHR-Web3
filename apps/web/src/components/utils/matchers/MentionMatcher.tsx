@@ -5,13 +5,13 @@ import Link from 'next/link'
 import { createElement } from 'react'
 import { PUBLICATION } from 'src/tracking'
 
-export function Mention({ ...props }: any) {
+export const Mention = ({ ...props }: any) => {
   return (
     <Link
       href={`/u/${props.display.slice(1)}`}
       onClick={(event) => {
         event.stopPropagation()
-        Leafwatch.track(PUBLICATION.MENTION_CLICK, { username: props.display })
+        Leafwatch.track(PUBLICATION.MENTION_CLICK)
       }}
     >
       <Slug slug={props.display} />

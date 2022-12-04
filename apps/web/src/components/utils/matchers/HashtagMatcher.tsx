@@ -6,7 +6,7 @@ import Link from 'next/link'
 import { createElement } from 'react'
 import { PUBLICATION } from 'src/tracking'
 
-export function Hashtag({ ...props }: any) {
+export const Hashtag = ({ ...props }: any) => {
   const hashflag = props.display.slice(1).toLowerCase()
   const hasHashflag = hashflags.hasOwnProperty(hashflag)
 
@@ -17,7 +17,7 @@ export function Hashtag({ ...props }: any) {
           href={`/search?q=${props.display.slice(1)}&type=pubs&src=link_click`}
           onClick={(event) => {
             event.stopPropagation()
-            Leafwatch.track(PUBLICATION.HASHTAG_CLICK, { hashtag: props.display })
+            Leafwatch.track(PUBLICATION.HASHTAG_CLICK)
           }}
         >
           {props.display}

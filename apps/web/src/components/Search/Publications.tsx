@@ -7,6 +7,7 @@ import InfiniteLoader from '@components/UI/InfiniteLoader'
 import type { BCharityPublication } from '@generated/types'
 import { CollectionIcon } from '@heroicons/react/outline'
 import { SCROLL_THRESHOLD } from 'data/constants'
+import type { PublicationSearchResult } from 'lens'
 import { CustomFiltersTypes, SearchRequestTypes, useSearchPublicationsQuery } from 'lens'
 import type { FC } from 'react'
 import { useTranslation } from 'react-i18next'
@@ -35,10 +36,9 @@ const Publications: FC<Props> = ({ query }) => {
     variables: { request, reactionRequest, profileId }
   })
 
-  // @ts-ignore
-  const publications = data?.search?.items
-  // @ts-ignore
-  const pageInfo = data?.search?.pageInfo
+  const search = data?.search as PublicationSearchResult;
+  const publications = search?.items as BCharityPublication[];
+  const pageInfo = search?.pageInfo
   const hasMore = pageInfo?.next && publications?.length !== pageInfo.totalCount
 
   const loadMore = async () => {
@@ -77,8 +77,8 @@ const Publications: FC<Props> = ({ query }) => {
       loader={<InfiniteLoader />}
     >
       <Card className="divide-y-[1px] dark:divide-gray-700/80">
-        {publications?.map((post: BCharityPublication, index: number) => (
-          <SinglePublication key={`${post?.id}_${index}`} publication={post} />
+        {publications?.map((publication, index) => (
+          <SinglePublication key={`${publication?.id}_${index}`} publication={publication} />
         ))}
       </Card>
     </InfiniteScroll>

@@ -23,11 +23,6 @@ export const featureFlags = [
     ]
   },
   {
-    key: 'composer-v2',
-    name: 'Composer v2',
-    enabledFor: [...bcharityMembers]
-  },
-  {
     key: 'trending-widget',
     name: 'Trending widget',
     enabledFor: [...bcharityMembers]

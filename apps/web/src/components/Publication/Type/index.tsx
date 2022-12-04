@@ -18,7 +18,7 @@ const PublicationType: FC<Props> = ({ publication, showType, showThread }) => {
   const { pathname } = useRouter()
   const type = publication.__typename
   const publicationType = publication?.metadata?.attributes[0]?.value
-  const isCollected = !!publication?.collectedBy
+  const isCollected = Boolean(publication?.collectedBy)
 
   if (!showType) {
     return null

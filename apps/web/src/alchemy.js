@@ -1,7 +1,8 @@
 import { Alchemy, Network } from 'alchemy-sdk'
+import { ALCHEMY_KEY, IS_MAINNET, VHR_TOKEN } from 'data/constants'
 import Web3 from 'web3'
 
-import { ALCHEMY_KEY, IS_MAINNET, VHR_TOKEN } from './constants'
+// import { ALCHEMY_KEY, IS_MAINNET, VHR_TOKEN } from './constants'
 
 const config = {
   apiKey: ALCHEMY_KEY,

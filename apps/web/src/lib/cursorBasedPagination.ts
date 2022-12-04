@@ -8,9 +8,9 @@ interface CursorBasedPagination<T = StoreValue> {
 
 type SafeReadonly<T> = T extends object ? Readonly<T> : T
 
-export function cursorBasedPagination<T extends CursorBasedPagination>(
+export const cursorBasedPagination = <T extends CursorBasedPagination>(
   keyArgs: FieldPolicy['keyArgs']
-): FieldPolicy<T> {
+): FieldPolicy<T> => {
   return {
     keyArgs,
 

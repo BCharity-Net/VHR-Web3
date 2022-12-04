@@ -1,19 +1,13 @@
+import MetaTags from '@components/Common/MetaTags'
 import { Button } from '@components/UI/Button'
-import MetaTags from '@components/utils/MetaTags'
 import { HomeIcon } from '@heroicons/react/outline'
-import { Leafwatch } from '@lib/leafwatch'
 import { APP_NAME } from 'data/constants'
 import Link from 'next/link'
-import { useEffect } from 'react'
+import type { FC } from 'react'
 import { useTranslation } from 'react-i18next'
-import { PAGEVIEW } from 'src/tracking'
 
-export default function Custom500() {
+const Custom500: FC = () => {
   const { t } = useTranslation('common')
-
-  useEffect(() => {
-    Leafwatch.track('Pageview', { path: PAGEVIEW.ERROR_500 })
-  }, [])
 
   return (
     <div className="flex-col page-center">
@@ -30,3 +24,5 @@ export default function Custom500() {
     </div>
   )
 }
+
+export default Custom500

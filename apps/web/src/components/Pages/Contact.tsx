@@ -1,3 +1,4 @@
+import MetaTags from '@components/Common/MetaTags'
 import SettingsHelper from '@components/Shared/SettingsHelper'
 import { Button } from '@components/UI/Button'
 import { Card } from '@components/UI/Card'
@@ -6,16 +7,12 @@ import { Form, useZodForm } from '@components/UI/Form'
 import { GridItemEight, GridItemFour, GridLayout } from '@components/UI/GridLayout'
 import { Input } from '@components/UI/Input'
 import { TextArea } from '@components/UI/TextArea'
-import MetaTags from '@components/utils/MetaTags'
 import { PencilAltIcon } from '@heroicons/react/outline'
 import { CheckCircleIcon } from '@heroicons/react/solid'
-import { Leafwatch } from '@lib/leafwatch'
 import { APP_NAME, CONTACT_EMAIL } from 'data/constants'
 import { useRouter } from 'next/router'
 import type { FC } from 'react'
-import { useEffect } from 'react'
 import { useTranslation } from 'react-i18next'
-import { PAGEVIEW } from 'src/tracking'
 import { object, string } from 'zod'
 
 const newContactSchema = object({
@@ -30,10 +27,6 @@ const newContactSchema = object({
 const Contact: FC = () => {
   const { t } = useTranslation('common')
   const { push } = useRouter()
-
-  useEffect(() => {
-    Leafwatch.track('Pageview', { path: PAGEVIEW.CONTACT })
-  }, [])
   
   const form = useZodForm({
     schema: newContactSchema

@@ -1,8 +1,8 @@
+import MetaTags from '@components/Common/MetaTags'
 import RecommendedProfiles from '@components/Home/RecommendedProfiles'
 import Trending from '@components/Home/Trending'
 import Footer from '@components/Shared/Footer'
 import { GridItemEight, GridItemFour, GridLayout } from '@components/UI/GridLayout'
-import MetaTags from '@components/utils/MetaTags'
 import { Tab } from '@headlessui/react'
 import isFeatureEnabled from '@lib/isFeatureEnabled'
 import { Leafwatch } from '@lib/leafwatch'
@@ -10,10 +10,9 @@ import clsx from 'clsx'
 import { APP_NAME, STATIC_IMAGES_URL } from 'data/constants'
 import { PublicationSortCriteria } from 'lens'
 import type { NextPage } from 'next'
-import { useEffect, useState } from 'react'
+import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useAppStore } from 'src/store/app'
-import { PAGEVIEW } from 'src/tracking'
 
 import Feed from './Feed'
 import FeedType from './FeedType'
@@ -22,10 +21,6 @@ const Explore: NextPage = () => {
   const { t } = useTranslation('common')
   const currentProfile = useAppStore((state) => state.currentProfile)
   const [focus, setFocus] = useState<any>()
-
-  useEffect(() => {
-    Leafwatch.track('Pageview', { path: PAGEVIEW.EXPLORE })
-  }, [])
 
   const tabs = [
     { name: 'For you', emoji: 'leaf-fluttering-in-wind.png', type: PublicationSortCriteria.CuratedProfiles },
@@ -45,7 +40,7 @@ const Explore: NextPage = () => {
                 key={index}
                 defaultChecked={index === 1}
                 onClick={() => {
-                  Leafwatch.track(`Switch to ${tab.type?.toLowerCase()} tab in explore`)
+                  Leafwatch.track(`switch to ${tab.type?.toLowerCase()} tab in explore`)
                 }}
                 className={({ selected }) =>
                   clsx(

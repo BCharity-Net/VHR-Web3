@@ -9,7 +9,7 @@ import {
   PhotographIcon
 } from '@heroicons/react/outline'
 import isVerified from '@lib/isVerified'
-import { Leafwatch } from '@lib/leafwatch'
+import { Analytics } from '@lib/analytics'
 import type { Profile, ProfileStats } from 'lens'
 import type { Dispatch, FC } from 'react'
 import { useEffect, useState } from 'react'
@@ -100,7 +100,7 @@ const FeedType: FC<Props> = ({ stats, address, id, setFeedType, feedType, profil
             count={stats?.totalPosts + stats?.totalMirrors}
             onClick={() => {
               setFeedType('FEED')
-              Leafwatch.track(PROFILE.SWITCH_FEED)
+              Analytics.track(PROFILE.SWITCH_FEED)
             }}
           />
           <TabButton
@@ -110,7 +110,7 @@ const FeedType: FC<Props> = ({ stats, address, id, setFeedType, feedType, profil
             count={stats?.totalComments}
             onClick={() => {
               setFeedType('REPLIES')
-              Leafwatch.track(PROFILE.SWITCH_REPLIES)
+              Analytics.track(PROFILE.SWITCH_REPLIES)
             }}
           />
           <TabButton
@@ -119,7 +119,7 @@ const FeedType: FC<Props> = ({ stats, address, id, setFeedType, feedType, profil
             active={feedType === 'MEDIA'}
             onClick={() => {
               setFeedType('MEDIA')
-              Leafwatch.track(PROFILE.SWITCH_MEDIA)
+              Analytics.track(PROFILE.SWITCH_MEDIA)
             }}
           />
           <TabButton
@@ -128,7 +128,7 @@ const FeedType: FC<Props> = ({ stats, address, id, setFeedType, feedType, profil
             active={feedType === 'NFT'}
             onClick={() => {
               setFeedType('NFT')
-              Leafwatch.track(PROFILE.SWITCH_NFTS)
+              Analytics.track(PROFILE.SWITCH_NFTS)
             }}
           />
         </div>

@@ -3,8 +3,8 @@ import { Tooltip } from '@components/UI/Tooltip'
 import type { BCharityPublication } from '@generated/types'
 import { HeartIcon } from '@heroicons/react/outline'
 import { HeartIcon as HeartIconSolid } from '@heroicons/react/solid'
+import { Analytics } from '@lib/analytics'
 import { publicationKeyFields } from '@lib/keyFields'
-import { Leafwatch } from '@lib/leafwatch'
 import nFormatter from '@lib/nFormatter'
 import onError from '@lib/onError'
 import { SIGN_WALLET } from 'data/constants'
@@ -48,7 +48,7 @@ const Like: FC<Props> = ({ publication, isFullPublication }) => {
 
   const [addReaction] = useAddReactionMutation({
     onCompleted: () => {
-      Leafwatch.track(PUBLICATION.LIKE)
+      Analytics.track(PUBLICATION.LIKE)
     },
     onError: (error) => {
       setLiked(!liked)
@@ -60,7 +60,7 @@ const Like: FC<Props> = ({ publication, isFullPublication }) => {
 
   const [removeReaction] = useRemoveReactionMutation({
     onCompleted: () => {
-      Leafwatch.track(PUBLICATION.DISLIKE)
+      Analytics.track(PUBLICATION.DISLIKE)
     },
     onError: (error) => {
       setLiked(!liked)

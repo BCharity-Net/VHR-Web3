@@ -29,6 +29,11 @@ export interface BCharityAttachment {
   type: string
   altTag: string
 }
+export interface NewBCharityAttachment extends Omit<BCharityAttachment, 'item'> {
+  id: string;
+  item?: string;
+  previewItem?: string;
+}
 export interface UserSuggestion {
   uid: string
   id: string

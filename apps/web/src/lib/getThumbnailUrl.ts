@@ -1,4 +1,5 @@
 import type { BCharityPublication } from '@generated/types'
+import { MEDIA_PROXY_URL } from 'data/constants'
 
 import getIPFSLink from './getIPFSLink'
 
@@ -14,7 +15,7 @@ const getThumbnailUrl = (publication: BCharityPublication | undefined): string =
   const url =
     publication.metadata?.cover?.original.url ||
     publication.metadata?.image ||
-    `https://ik.imagekit.io/bcharityimg/placeholder.webp`
+    `${MEDIA_PROXY_URL}/placeholder.webp`
 
   return getIPFSLink(url)
 }

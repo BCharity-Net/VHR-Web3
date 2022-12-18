@@ -1,5 +1,5 @@
 import useStaffMode from '@components/utils/hooks/useStaffMode'
-import { Leafwatch } from '@lib/leafwatch'
+import { Analytics } from '@lib/analytics'
 import { APP_NAME } from 'data/constants'
 import Link from 'next/link'
 import type { FC } from 'react'
@@ -22,7 +22,7 @@ const Footer: FC = () => {
       <a 
         href="https://discord.gg/4vKS59q5kV" 
         target="_blank" rel="noreferrer noopener"
-        onClick={() => Leafwatch.track(FOOTER.DISCORD)}
+        onClick={() => Analytics.track(FOOTER.DISCORD)}
       >
         Discord
       </a>
@@ -32,17 +32,17 @@ const Footer: FC = () => {
       <a href="https://t.me/BCharitynet" target="_blank" rel="noreferrer noopener">
         {t('Telegram')}
       </a>
-      <a href="" target="_blank" rel="noreferrer noopener" onClick={() => Leafwatch.track(FOOTER.DONATE)}>
+      <a href="" target="_blank" rel="noreferrer noopener" onClick={() => Analytics.track(FOOTER.DONATE)}>
         {t('Donate')}
       </a>
-      <a href="" target="_blank" rel="noreferrer noopener" onClick={() => Leafwatch.track(FOOTER.STATUS)}>
+      <a href="" target="_blank" rel="noreferrer noopener" onClick={() => Analytics.track(FOOTER.STATUS)}>
         {t('Status')}
       </a>
       <a 
         href="https://snapshot.org/#/igive.eth" 
         target="_blank" 
         rel="noreferrer noopener"
-        onClick={() => Leafwatch.track(FOOTER.VOTE)}
+        onClick={() => Analytics.track(FOOTER.VOTE)}
       >
         {t('Vote')}
       </a>
@@ -50,7 +50,7 @@ const Footer: FC = () => {
         href="https://github.com/BCharity-Net/SocialFi" 
         target="_blank" 
         rel="noreferrer noopener"
-        onClick={() => Leafwatch.track(FOOTER.GITHUB)}
+        onClick={() => Analytics.track(FOOTER.GITHUB)}
       >
         GitHub
       </a>
@@ -58,7 +58,7 @@ const Footer: FC = () => {
         href="https://feedback.bcharity.net" 
         target="_blank" 
         rel="noreferrer noopener"
-        onClick={() => Leafwatch.track(FOOTER.FEEDBACK)}
+        onClick={() => Analytics.track(FOOTER.FEEDBACK)}
       >
         Feedback
       </a>

@@ -6,8 +6,8 @@ import { Input } from '@components/UI/Input'
 import { Spinner } from '@components/UI/Spinner'
 import useBroadcast from '@components/utils/hooks/useBroadcast'
 import { PencilIcon } from '@heroicons/react/outline'
+import { Analytics } from '@lib/analytics'
 import getSignature from '@lib/getSignature'
-import { Leafwatch } from '@lib/leafwatch'
 import onError from '@lib/onError'
 import splitSignature from '@lib/splitSignature'
 import { LensHubProxy } from 'abis'
@@ -24,7 +24,8 @@ import toast from 'react-hot-toast'
 import { useTranslation } from 'react-i18next'
 import { useAppStore } from 'src/store/app'
 import { SETTINGS } from 'src/tracking'
-import { chain, useContractWrite, useSignMessage, useSignTypedData } from 'wagmi'
+import { useContractWrite, useSignMessage, useSignTypedData } from 'wagmi'
+import { mainnet, polygon, polygonMumbai } from 'wagmi/chains'
 import { object, string } from 'zod'
 
 const editNftPictureSchema = object({
@@ -43,14 +44,14 @@ const NFTPicture: FC<Props> = ({ profile }) => {
   const userSigNonce = useAppStore((state) => state.userSigNonce)
   const setUserSigNonce = useAppStore((state) => state.setUserSigNonce)
   const currentProfile = useAppStore((state) => state.currentProfile)
-  const [chainId, setChainId] = useState(IS_MAINNET ? chain.polygon.id : chain.polygonMumbai.id)
+  const [chainId, setChainId] = useState(mainnet.id)
 
   const { isLoading: signLoading, signTypedDataAsync } = useSignTypedData({ onError })
   const { signMessageAsync } = useSignMessage()
 
   const onCompleted = () => {
     toast.success('Avatar updated successfully!')
-    Leafwatch.track(SETTINGS.PROFILE.SET_NFT_PICTURE)
+    Analytics.track(SETTINGS.PROFILE.SET_NFT_PICTURE)
   }
 
   const form = useZodForm({
@@ -199,8 +200,8 @@ const NFTPicture: FC<Props> = ({ profile }) => {
             onChange={(e) => setChainId(parseInt(e.target.value))}
             value={chainId}
           >
-            <option value={IS_MAINNET ? chain.polygon.id : chain.polygonMumbai.id}>
-              {IS_MAINNET ? 'Polygon' : 'Mumbai'}
+            {IS_MAINNET && <option value={mainnet.id}>Ethereum</option>}
+            <option value={IS_MAINNET ? polygon.id : polygonMumbai.id}>
             </option>
           </select>
         </div>

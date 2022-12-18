@@ -1,86 +1,90 @@
-import { Button } from '@components/UI/Button'
-import { LightBox } from '@components/UI/LightBox'
-import type { BCharityAttachment, BCharityPublication } from '@generated/types'
-import { ExternalLinkIcon, XIcon } from '@heroicons/react/outline'
-import getIPFSLink from '@lib/getIPFSLink'
-import imageProxy from '@lib/imageProxy'
-import { Leafwatch } from '@lib/leafwatch'
-import clsx from 'clsx'
-import { ALLOWED_AUDIO_TYPES, ALLOWED_VIDEO_TYPES, ATTACHMENT } from 'data/constants'
-import type { MediaSet } from 'lens'
-import type { FC } from 'react'
-import { useState } from 'react'
-import { PUBLICATION } from 'src/tracking'
+import { Button } from '@components/UI/Button';
+import { LightBox } from '@components/UI/LightBox';
+import type { BCharityPublication, NewBCharityAttachment } from '@generated/types';
+import { ExternalLinkIcon, XIcon } from '@heroicons/react/outline';
+import { Analytics } from '@lib/analytics';
+import getIPFSLink from '@lib/getIPFSLink';
+import imageProxy from '@lib/imageProxy';
+import clsx from 'clsx';
+import { ALLOWED_AUDIO_TYPES, ALLOWED_VIDEO_TYPES, ATTACHMENT } from 'data/constants';
+import type { MediaSet } from 'lens';
+import type { FC } from 'react';
+import { useState } from 'react';
+import { usePublicationStore } from 'src/store/publication';
+import { PUBLICATION } from 'src/tracking';
 
-import Audio from './Audio'
-import Video from './Video'
+import Audio from './Audio';
+import Video from './Video';
 
 const getClass = (attachments: number, isNew = false) => {
   if (attachments === 1) {
     return {
       aspect: isNew ? 'aspect-w-16 aspect-h-10' : '',
       row: 'grid-cols-1 grid-rows-1'
-    }
+    };
   } else if (attachments === 2) {
     return {
       aspect: 'aspect-w-16 aspect-h-12',
       row: 'grid-cols-2 grid-rows-1'
-    }
+    };
   } else if (attachments > 2) {
     return {
       aspect: 'aspect-w-16 aspect-h-12',
       row: 'grid-cols-2 grid-rows-2'
-    }
+    };
   }
-}
+};
 
 interface Props {
-  attachments: any
-  setAttachments?: any
-  isNew?: boolean
-  hideDelete?: boolean
-  publication?: BCharityPublication
-  txn?: any
+  attachments: any;
+  isNew?: boolean;
+  hideDelete?: boolean;
+  publication?: BCharityPublication;
+  txn?: any;
 }
 
 const Attachments: FC<Props> = ({
-  attachments,
-  setAttachments,
+  attachments = [],
   isNew = false,
   hideDelete = false,
   publication,
   txn
 }) => {
-  const [expandedImage, setExpandedImage] = useState<string | null>(null)
+  const setAttachments = usePublicationStore((state) => state.setAttachments);
+  const [expandedImage, setExpandedImage] = useState<string | null>(null);
 
   const removeAttachment = (attachment: any) => {
-    const arr = attachments
+    const arr = attachments;
     setAttachments(
       arr.filter(function (ele: any) {
-        return ele != attachment
+        return ele != attachment;
       })
-    )
-  }
+    );
+  };
 
   const slicedAttachments = isNew
     ? attachments?.slice(0, 4)
-    : attachments?.some((e: any) => ALLOWED_VIDEO_TYPES.includes(e.original.mimeType))
+    : attachments?.some((e: any) => ALLOWED_VIDEO_TYPES.includes(e?.original?.mimeType))
     ? attachments?.slice(0, 1)
-    : attachments?.slice(0, 4)
+    : attachments?.slice(0, 4);
 
   return slicedAttachments?.length !== 0 ? (
     <>
       <div className={clsx(getClass(slicedAttachments?.length)?.row, 'grid gap-2 pt-3')}>
-        {slicedAttachments?.map((attachment: BCharityAttachment & MediaSet) => {
-          const type = isNew ? attachment.type : attachment.original.mimeType
-          const url = isNew ? getIPFSLink(attachment.item) : getIPFSLink(attachment.original.url)
+        {slicedAttachments?.map((attachment: NewBCharityAttachment & MediaSet, index: number) => {
+          const type = isNew ? attachment.type : attachment.original?.mimeType;
+          const url = isNew
+            ? attachment.previewItem || getIPFSLink(attachment.item!)
+            : getIPFSLink(attachment.original?.url);
 
           return (
             <div
               className={clsx(
                 ALLOWED_VIDEO_TYPES.includes(type) || ALLOWED_AUDIO_TYPES.includes(type)
                   ? ''
-                  : getClass(slicedAttachments?.length, isNew)?.aspect,
+                  : `${getClass(slicedAttachments?.length, isNew)?.aspect} ${
+                      slicedAttachments?.length === 3 && index === 0 ? 'row-span-2' : ''
+                    }`,
                 {
                   'w-full': ALLOWED_AUDIO_TYPES.includes(type),
                   'w-2/3':
@@ -89,9 +93,9 @@ const Attachments: FC<Props> = ({
                 },
                 'relative'
               )}
-              key={url}
+              key={index + url}
               onClick={(event) => {
-                event.stopPropagation()
+                event.stopPropagation();
               }}
             >
               {type === 'image/svg+xml' ? (
@@ -99,9 +103,7 @@ const Attachments: FC<Props> = ({
                   className="text-sm"
                   variant="primary"
                   icon={<ExternalLinkIcon className="h-4 w-4" />}
-                  onClick={() => {
-                    window.open(url, '_blank')
-                  }}
+                  onClick={() => window.open(url, '_blank')}
                 >
                   <span>Open Image in new tab</span>
                 </Button>
@@ -116,11 +118,11 @@ const Attachments: FC<Props> = ({
                   height={1000}
                   width={1000}
                   onClick={() => {
-                    setExpandedImage(url)
-                    Leafwatch.track(PUBLICATION.ATTACHEMENT.IMAGE.OPEN)
+                    setExpandedImage(url);
+                    Analytics.track(PUBLICATION.ATTACHEMENT.IMAGE.OPEN);
                   }}
-                  src={imageProxy(url, ATTACHMENT)}
-                  alt={imageProxy(url, ATTACHMENT)}
+                  src={isNew ? url : imageProxy(url, ATTACHMENT)}
+                  alt={isNew ? url : imageProxy(url, ATTACHMENT)}
                 />
               )}
               {isNew && !hideDelete && (
@@ -137,12 +139,12 @@ const Attachments: FC<Props> = ({
                 </div>
               )}
             </div>
-          )
+          );
         })}
       </div>
       <LightBox show={Boolean(expandedImage)} url={expandedImage} onClose={() => setExpandedImage(null)} />
     </>
-  ) : null
-}
+  ) : null;
+};
 
-export default Attachments
+export default Attachments;

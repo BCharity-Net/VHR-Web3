@@ -2,6 +2,7 @@ import Slug from '@components/Shared/Slug'
 import { BCharityPublication } from '@generated/types'
 import { CollectionIcon } from '@heroicons/react/outline'
 import formatAddress from '@lib/formatAddress'
+import formatHandle from '@lib/formatHandle'
 import { POLYGONSCAN_URL } from 'data/constants'
 import Link from 'next/link'
 import React, { FC } from 'react'
@@ -19,11 +20,11 @@ const Collected: FC<Props> = ({ publication, type }) => {
       <CollectionIcon className="w-4 h-4" />
       <div className="space-x-1">
         {publication?.collectedBy?.defaultProfile ? (
-          <Link href={`/u/${publication?.collectedBy?.defaultProfile?.handle}`}>
+          <Link href={`/u/${formatHandle(publication?.collectedBy?.defaultProfile?.handle)}`}>
             {publication?.collectedBy?.defaultProfile?.name ? (
               <b>{publication?.collectedBy?.defaultProfile?.name}</b>
             ) : (
-              <Slug slug={publication?.collectedBy?.defaultProfile?.handle} prefix="@" />
+              <Slug slug={formatHandle(publication?.collectedBy?.defaultProfile?.handle)} prefix="@" />
             )}
           </Link>
         ) : (

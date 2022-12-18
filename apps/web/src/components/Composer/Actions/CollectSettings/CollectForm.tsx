@@ -1,44 +1,44 @@
-import { Button } from '@components/UI/Button'
-import { ErrorMessage } from '@components/UI/ErrorMessage'
-import { Input } from '@components/UI/Input'
-import { Spinner } from '@components/UI/Spinner'
-import { Toggle } from '@components/UI/Toggle'
+import { Button } from '@components/UI/Button';
+import { ErrorMessage } from '@components/UI/ErrorMessage';
+import { Input } from '@components/UI/Input';
+import { Spinner } from '@components/UI/Spinner';
+import { Toggle } from '@components/UI/Toggle';
 import {
   ClockIcon,
   CollectionIcon,
   StarIcon,
   SwitchHorizontalIcon,
   UserGroupIcon
-} from '@heroicons/react/outline'
+} from '@heroicons/react/outline';
 import type { Erc20 } from 'lens';
-import { CollectModules, useEnabledModulesQuery } from 'lens'
-import type { Dispatch, FC } from 'react'
-import { useEffect } from 'react'
-import { useAppStore } from 'src/store/app'
-import { useCollectModuleStore } from 'src/store/collect-module'
+import { CollectModules, useEnabledModulesQuery } from 'lens';
+import type { Dispatch, FC } from 'react';
+import { useEffect } from 'react';
+import { useAppStore } from 'src/store/app';
+import { useCollectModuleStore } from 'src/store/collect-module';
 
 interface Props {
-  setShowModal: Dispatch<boolean>
+  setShowModal: Dispatch<boolean>;
 }
 
 const CollectForm: FC<Props> = ({ setShowModal }) => {
-  const currentProfile = useAppStore((state) => state.currentProfile)
-  const selectedCollectModule = useCollectModuleStore((state) => state.selectedCollectModule)
-  const setSelectedCollectModule = useCollectModuleStore((state) => state.setSelectedCollectModule)
-  const amount = useCollectModuleStore((state) => state.amount)
-  const setAmount = useCollectModuleStore((state) => state.setAmount)
-  const selectedCurrency = useCollectModuleStore((state) => state.selectedCurrency)
-  const setSelectedCurrency = useCollectModuleStore((state) => state.setSelectedCurrency)
-  const referralFee = useCollectModuleStore((state) => state.referralFee)
-  const setReferralFee = useCollectModuleStore((state) => state.setReferralFee)
-  const collectLimit = useCollectModuleStore((state) => state.collectLimit)
-  const setCollectLimit = useCollectModuleStore((state) => state.setCollectLimit)
-  const hasTimeLimit = useCollectModuleStore((state) => state.hasTimeLimit)
-  const setHasTimeLimit = useCollectModuleStore((state) => state.setHasTimeLimit)
-  const followerOnly = useCollectModuleStore((state) => state.followerOnly)
-  const setFollowerOnly = useCollectModuleStore((state) => state.setFollowerOnly)
-  const setPayload = useCollectModuleStore((state) => state.setPayload)
-  const reset = useCollectModuleStore((state) => state.reset)
+  const currentProfile = useAppStore((state) => state.currentProfile);
+  const selectedCollectModule = useCollectModuleStore((state) => state.selectedCollectModule);
+  const setSelectedCollectModule = useCollectModuleStore((state) => state.setSelectedCollectModule);
+  const amount = useCollectModuleStore((state) => state.amount);
+  const setAmount = useCollectModuleStore((state) => state.setAmount);
+  const selectedCurrency = useCollectModuleStore((state) => state.selectedCurrency);
+  const setSelectedCurrency = useCollectModuleStore((state) => state.setSelectedCurrency);
+  const referralFee = useCollectModuleStore((state) => state.referralFee);
+  const setReferralFee = useCollectModuleStore((state) => state.setReferralFee);
+  const collectLimit = useCollectModuleStore((state) => state.collectLimit);
+  const setCollectLimit = useCollectModuleStore((state) => state.setCollectLimit);
+  const hasTimeLimit = useCollectModuleStore((state) => state.hasTimeLimit);
+  const setHasTimeLimit = useCollectModuleStore((state) => state.setHasTimeLimit);
+  const followerOnly = useCollectModuleStore((state) => state.followerOnly);
+  const setFollowerOnly = useCollectModuleStore((state) => state.setFollowerOnly);
+  const setPayload = useCollectModuleStore((state) => state.setPayload);
+  const reset = useCollectModuleStore((state) => state.reset);
 
   const {
     RevertCollectModule,
@@ -47,7 +47,7 @@ const CollectForm: FC<Props> = ({ setShowModal }) => {
     LimitedFeeCollectModule,
     LimitedTimedFeeCollectModule,
     TimedFeeCollectModule
-  } = CollectModules
+  } = CollectModules;
 
   useEffect(() => {
     const baseFeeData = {
@@ -58,54 +58,60 @@ const CollectForm: FC<Props> = ({ setShowModal }) => {
       recipient: currentProfile?.ownedBy,
       referralFee: parseFloat(referralFee ?? '0'),
       followerOnly
-    }
+    };
 
     switch (selectedCollectModule) {
       case RevertCollectModule:
-        setPayload({ revertCollectModule: true })
-        break
+        setPayload({ revertCollectModule: true });
+        break;
       case FreeCollectModule:
-        setPayload({ freeCollectModule: { followerOnly } })
-        break
+        setPayload({ freeCollectModule: { followerOnly } });
+        break;
       case FeeCollectModule:
         setPayload({
           feeCollectModule: { ...baseFeeData }
-        })
-        break
+        });
+        break;
       case LimitedFeeCollectModule:
       case LimitedTimedFeeCollectModule:
-        setPayload({ timedFeeCollectModule: { ...baseFeeData } })
-        break
-      case TimedFeeCollectModule:
         setPayload({
-          timedFeeCollectModule: { ...baseFeeData }
-        })
-        break
+          [selectedCollectModule === LimitedFeeCollectModule
+            ? 'limitedFeeCollectModule'
+            : 'limitedTimedFeeCollectModule']: {
+            ...baseFeeData,
+            collectLimit
+          }
+        });
+        break;
+      case TimedFeeCollectModule:
+        setPayload({ timedFeeCollectModule: { ...baseFeeData } });
+        break;
       default:
-        setPayload({ revertCollectModule: true })
+        setPayload({ revertCollectModule: true });
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [amount, referralFee, collectLimit, hasTimeLimit, followerOnly, selectedCollectModule])
+  }, [amount, referralFee, collectLimit, hasTimeLimit, followerOnly, selectedCollectModule]);
 
   useEffect(() => {
     if (hasTimeLimit) {
       if (amount) {
-        setSelectedCollectModule(collectLimit ? LimitedTimedFeeCollectModule : TimedFeeCollectModule)
+        setSelectedCollectModule(collectLimit ? LimitedTimedFeeCollectModule : TimedFeeCollectModule);
       } else {
-        setSelectedCollectModule(collectLimit ? LimitedTimedFeeCollectModule : FreeCollectModule)
+        setHasTimeLimit(false);
+        setSelectedCollectModule(collectLimit ? LimitedTimedFeeCollectModule : FreeCollectModule);
       }
     } else {
       if (amount) {
-        setSelectedCollectModule(collectLimit ? LimitedFeeCollectModule : FeeCollectModule)
+        setSelectedCollectModule(collectLimit ? LimitedFeeCollectModule : FeeCollectModule);
       } else {
-        setCollectLimit(null)
-        setSelectedCollectModule(collectLimit ? LimitedFeeCollectModule : FreeCollectModule)
+        setCollectLimit(null);
+        setSelectedCollectModule(collectLimit ? LimitedFeeCollectModule : FreeCollectModule);
       }
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [amount, collectLimit, hasTimeLimit])
+  }, [amount, collectLimit, hasTimeLimit]);
 
-  const { error, data, loading } = useEnabledModulesQuery()
+  const { error, data, loading } = useEnabledModulesQuery();
 
   if (loading) {
     return (
@@ -113,27 +119,27 @@ const CollectForm: FC<Props> = ({ setShowModal }) => {
         <Spinner size="md" className="mx-auto" />
         <div>Loading collect settings</div>
       </div>
-    )
+    );
   }
 
   if (error) {
-    return <ErrorMessage className="p-5" title="Failed to load modules" error={error} />
+    return <ErrorMessage className="p-5" title="Failed to load modules" error={error} />;
   }
 
   const toggleCollect = () => {
     if (selectedCollectModule === RevertCollectModule) {
-      return setSelectedCollectModule(FreeCollectModule)
+      return setSelectedCollectModule(FreeCollectModule);
     } else {
-      reset()
-      return setSelectedCollectModule(RevertCollectModule)
+      reset();
+      return setSelectedCollectModule(RevertCollectModule);
     }
-  }
+  };
 
   return (
     <div className="p-5 space-y-3">
       <div className="flex items-center space-x-2">
         <Toggle on={selectedCollectModule !== RevertCollectModule} setOn={toggleCollect} />
-        <div className="text-gray-500 text-sm font-bold">This post can be collected</div>
+        <div className="text-gray-500 dark:text-gray-400 text-sm font-bold">This post can be collected</div>
       </div>
       {selectedCollectModule !== RevertCollectModule && (
         <div className="ml-5">
@@ -159,7 +165,7 @@ const CollectForm: FC<Props> = ({ setShowModal }) => {
                     max="100000"
                     value={parseFloat(amount)}
                     onChange={(event) => {
-                      setAmount(event.target.value ? event.target.value : '0')
+                      setAmount(event.target.value ? event.target.value : '0');
                     }}
                   />
                   <div>
@@ -170,9 +176,9 @@ const CollectForm: FC<Props> = ({ setShowModal }) => {
                     >
                       {data?.enabledModuleCurrencies.map((currency: Erc20) => (
                         <option
-                         key={currency.address}
-                         value={currency.address}
-                         selected={currency?.address === selectedCurrency}
+                          key={currency.address}
+                          value={currency.address}
+                          selected={currency?.address === selectedCurrency}
                         >
                           {currency.name}
                         </option>
@@ -198,7 +204,7 @@ const CollectForm: FC<Props> = ({ setShowModal }) => {
                       max="100"
                       value={parseFloat(referralFee ?? '0')}
                       onChange={(event) => {
-                        setReferralFee(event.target.value ? event.target.value : '0')
+                        setReferralFee(event.target.value ? event.target.value : '0');
                       }}
                     />
                   </div>
@@ -232,7 +238,7 @@ const CollectForm: FC<Props> = ({ setShowModal }) => {
                       max="100000"
                       value={parseFloat(collectLimit)}
                       onChange={(event) => {
-                        setCollectLimit(event.target.value ? event.target.value : '1')
+                        setCollectLimit(event.target.value ? event.target.value : '1');
                       }}
                     />
                   </div>
@@ -272,8 +278,8 @@ const CollectForm: FC<Props> = ({ setShowModal }) => {
           variant="danger"
           outline
           onClick={() => {
-            reset()
-            setShowModal(false)
+            reset();
+            setShowModal(false);
           }}
         >
           Cancel
@@ -281,7 +287,7 @@ const CollectForm: FC<Props> = ({ setShowModal }) => {
         <Button onClick={() => setShowModal(false)}>Save</Button>
       </div>
     </div>
-  )
-}
+  );
+};
 
-export default CollectForm
+export default CollectForm;

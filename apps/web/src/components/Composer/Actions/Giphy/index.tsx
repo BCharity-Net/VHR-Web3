@@ -1,27 +1,27 @@
-import Loader from '@components/Shared/Loader'
-import { Modal } from '@components/UI/Modal'
-import { Tooltip } from '@components/UI/Tooltip'
-import type { IGif } from '@giphy/js-types'
-import { PhotographIcon } from '@heroicons/react/outline'
-import { Leafwatch } from '@lib/leafwatch'
-import { motion } from 'framer-motion'
-import dynamic from 'next/dynamic'
-import type { FC } from 'react'
-import { useState } from 'react'
-import { useTranslation } from 'react-i18next'
-import { PUBLICATION } from 'src/tracking'
+import Loader from '@components/Shared/Loader';
+import { Modal } from '@components/UI/Modal';
+import { Tooltip } from '@components/UI/Tooltip';
+import type { IGif } from '@giphy/js-types';
+import { PhotographIcon } from '@heroicons/react/outline';
+import { Analytics } from '@lib/analytics';
+import { motion } from 'framer-motion';
+import dynamic from 'next/dynamic';
+import type { FC } from 'react';
+import { useState } from 'react';
+import { usePublicationStore } from 'src/store/publication';
+import { PUBLICATION } from 'src/tracking';
 
 const GifSelector = dynamic(() => import('./GifSelector'), {
   loading: () => <Loader message="Loading GIFs" />
-})
+});
 
 interface Props {
-  setGifAttachment: (gif: IGif) => void
+  setGifAttachment: (gif: IGif) => void;
 }
 
 const Giphy: FC<Props> = ({ setGifAttachment }) => {
-  const { t } = useTranslation('common')
-  const [showModal, setShowModal] = useState(false)
+  const attachments = usePublicationStore((state) => state.attachments);
+  const [showModal, setShowModal] = useState(false);
 
   return (
     <>
@@ -30,10 +30,11 @@ const Giphy: FC<Props> = ({ setGifAttachment }) => {
           whileTap={{ scale: 0.9 }}
           type="button"
           onClick={() => {
-            setShowModal(!showModal)
-            Leafwatch.track(PUBLICATION.NEW.OPEN_GIF)
+            setShowModal(!showModal);
+            Analytics.track(PUBLICATION.NEW.OPEN_GIF);
           }}
-          aria-label={t('Choose gifs')}
+          disabled={attachments.length >= 4}
+          aria-label="Choose GIFs"
         >
           <div className="w-full fill-brand-500 dark:fill-brand-400">
             <svg viewBox="0 0 24 24" className="w-5 h-5">
@@ -46,7 +47,7 @@ const Giphy: FC<Props> = ({ setGifAttachment }) => {
         </motion.button>
       </Tooltip>
       <Modal
-        title={t('Select gif')}
+        title="Select GIF"
         icon={<PhotographIcon className="w-5 h-5 text-brand" />}
         show={showModal}
         onClose={() => setShowModal(false)}
@@ -54,7 +55,7 @@ const Giphy: FC<Props> = ({ setGifAttachment }) => {
         <GifSelector setShowModal={setShowModal} setGifAttachment={setGifAttachment} />
       </Modal>
     </>
-  )
-}
+  );
+};
 
-export default Giphy
+export default Giphy;

@@ -4,8 +4,8 @@ import Trending from '@components/Home/Trending'
 import Footer from '@components/Shared/Footer'
 import { GridItemEight, GridItemFour, GridLayout } from '@components/UI/GridLayout'
 import { Tab } from '@headlessui/react'
+import { Analytics } from '@lib/analytics'
 import isFeatureEnabled from '@lib/isFeatureEnabled'
-import { Leafwatch } from '@lib/leafwatch'
 import clsx from 'clsx'
 import { APP_NAME, STATIC_IMAGES_URL } from 'data/constants'
 import { PublicationSortCriteria } from 'lens'
@@ -40,7 +40,7 @@ const Explore: NextPage = () => {
                 key={index}
                 defaultChecked={index === 1}
                 onClick={() => {
-                  Leafwatch.track(`switch to ${tab.type?.toLowerCase()} tab in explore`)
+                  Analytics.track(`switch to ${tab.type?.toLowerCase()} tab in explore`)
                 }}
                 className={({ selected }) =>
                   clsx(

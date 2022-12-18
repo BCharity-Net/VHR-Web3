@@ -1,7 +1,8 @@
 import EventType from '@components/Home/Timeline/EventType'
 import UserProfile from '@components/Shared/UserProfile'
 import type { BCharityPublication } from '@generated/types'
-import { Leafwatch } from '@lib/leafwatch'
+import { Analytics } from '@lib/analytics'
+import formatTime from '@lib/formatTime'
 import clsx from 'clsx'
 import dayjs from 'dayjs'
 import relativeTime from 'dayjs/plugin/relativeTime'
@@ -55,7 +56,7 @@ const SinglePublication: FC<Props> = ({
   return (
     <article
       className={clsx(
-        { 'hover:bg-gray-100 dark:hover:bg-gray-800 cursor-pointer': !isFundraise },
+        { 'hover:bg-gray-100 dark:hover:bg-gray-900 cursor-pointer': !isFundraise },
         'first:rounded-t-xl last:rounded-b-xl p-5'
       )}
     >
@@ -68,13 +69,18 @@ const SinglePublication: FC<Props> = ({
         <span onClick={(event) => event.stopPropagation()}>
           <UserProfile profile={profile ?? publication?.collectedBy?.defaultProfile} showStatus />
         </span>
-        <span className="text-xs text-gray-500">{dayjs(new Date(timestamp)).fromNow()}</span>
+        <span className="text-xs text-gray-500" title={formatTime(timestamp)}>
+          {dayjs(new Date(timestamp)).fromNow()}
+        </span>
       </div>
       <div
         className="ml-[53px]"
         onClick={() => {
-          Leafwatch.track(PUBLICATION.OPEN)
-          push(`/posts/${rootPublication?.id}`)
+          const selection = window.getSelection()
+          if (!selection || selection.toString().length === 0) {
+            Analytics.track(PUBLICATION.OPEN)
+            push(`/posts/${rootPublication?.id}`)
+          }
         }}
       >
         {publication?.hidden ? (

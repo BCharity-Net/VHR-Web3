@@ -9,13 +9,16 @@ import useBroadcast from '@components/utils/hooks/useBroadcast';
 import type { BCharityAttachment, BCharityPublication } from '@generated/types';
 import type { IGif } from '@giphy/js-types';
 import { ChatAlt2Icon, PencilAltIcon } from '@heroicons/react/outline';
+import type { EncryptedMetadata, FollowCondition } from '@lens-protocol/sdk-gated';
+import { LensEnvironment, LensGatedSDK } from '@lens-protocol/sdk-gated';
+import type { AccessConditionOutput } from '@lens-protocol/sdk-gated/dist/graphql/types';
 import { $convertFromMarkdownString } from '@lexical/markdown';
 import { useLexicalComposerContext } from '@lexical/react/LexicalComposerContext';
+import { Analytics } from '@lib/analytics';
 import getSignature from '@lib/getSignature';
 import getTags from '@lib/getTags';
 import getTextNftUrl from '@lib/getTextNftUrl';
 import getUserLocale from '@lib/getUserLocale';
-import { Leafwatch } from '@lib/leafwatch';
 import onError from '@lib/onError';
 import splitSignature from '@lib/splitSignature';
 import trimify from '@lib/trimify';
@@ -31,9 +34,11 @@ import {
   RELAY_ON,
   SIGN_WALLET
 } from 'data/constants';
-import type { CreatePublicCommentRequest } from 'lens';
+import type { CreatePublicCommentRequest, MetadataAttributeInput, PublicationMetadataV2Input } from 'lens';
 import {
+  CollectModules,
   PublicationMainFocus,
+  PublicationMetadataDisplayTypes,
   ReferenceModules,
   useCreateCommentTypedDataMutation,
   useCreateCommentViaDispatcherMutation,
@@ -45,6 +50,7 @@ import dynamic from 'next/dynamic';
 import type { FC } from 'react';
 import { useEffect, useState } from 'react';
 import toast from 'react-hot-toast';
+import { useAccessSettingsStore } from 'src/store/access-settings';
 import { useAppStore } from 'src/store/app';
 import { useCollectModuleStore } from 'src/store/collect-module';
 import { usePublicationStore } from 'src/store/publication';
@@ -52,7 +58,7 @@ import { useReferenceModuleStore } from 'src/store/reference-module';
 import { useTransactionPersistStore } from 'src/store/transaction';
 import { COMMENT, POST } from 'src/tracking';
 import { v4 as uuid } from 'uuid';
-import { useContractWrite, useSignTypedData } from 'wagmi';
+import { useContractWrite, useProvider, useSigner, useSignTypedData } from 'wagmi';
 
 import Editor from './Editor';
 
@@ -87,12 +93,17 @@ const NewPublication: FC<Props> = ({ publication }) => {
   const setPublicationContent = usePublicationStore((state) => state.setPublicationContent);
   const audioPublication = usePublicationStore((state) => state.audioPublication);
   const setShowNewPostModal = usePublicationStore((state) => state.setShowNewPostModal);
+  const attachments = usePublicationStore((state) => state.attachments);
+  const setAttachments = usePublicationStore((state) => state.setAttachments);
+  const addAttachments = usePublicationStore((state) => state.addAttachments);
+  const isUploading = usePublicationStore((state) => state.isUploading);
 
   // Transaction persist store
   const txnQueue = useTransactionPersistStore((state) => state.txnQueue);
   const setTxnQueue = useTransactionPersistStore((state) => state.setTxnQueue);
 
   // Collect module store
+  const selectedCollectModule = useCollectModuleStore((state) => state.selectedCollectModule);
   const payload = useCollectModuleStore((state) => state.payload);
   const resetCollectSettings = useCollectModuleStore((state) => state.reset);
 
@@ -101,11 +112,15 @@ const NewPublication: FC<Props> = ({ publication }) => {
   const onlyFollowers = useReferenceModuleStore((state) => state.onlyFollowers);
   const degreesOfSeparation = useReferenceModuleStore((state) => state.degreesOfSeparation);
 
+  // Access module store
+  const restricted = useAccessSettingsStore((state) => state.restricted);
+
   // States
-  const [publicationContentError, setPublicationContentError] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [attachments, setAttachments] = useState<BCharityAttachment[]>([]);
+  const [publicationContentError, setPublicationContentError] = useState('');
   const [editor] = useLexicalComposerContext();
+  const provider = useProvider();
+  const { data: signer } = useSigner();
 
   const isComment = Boolean(publication);
   const isAudioPublication = ALLOWED_AUDIO_TYPES.includes(attachments[0]?.type);
@@ -120,7 +135,13 @@ const NewPublication: FC<Props> = ({ publication }) => {
     if (!isComment) {
       setShowNewPostModal(false);
     }
-    Leafwatch.track(isComment ? COMMENT.NEW : POST.NEW);
+
+    // Track in simple analytics
+    if (restricted) {
+      Analytics.track(isComment ? COMMENT.TOKEN_GATED : POST.TOKEN_GATED);
+    } else {
+      Analytics.track(isComment ? COMMENT.NEW : POST.NEW);
+    }
   };
 
   useEffect(() => {
@@ -275,6 +296,8 @@ const NewPublication: FC<Props> = ({ publication }) => {
         return PublicationMainFocus.Image;
       } else if (ALLOWED_VIDEO_TYPES.includes(attachments[0]?.type)) {
         return PublicationMainFocus.Video;
+      } else {
+        return PublicationMainFocus.TextOnly;
       }
     } else {
       return PublicationMainFocus.TextOnly;
@@ -297,6 +320,42 @@ const NewPublication: FC<Props> = ({ publication }) => {
 
   const getAttachmentImageMimeType = () => {
     return isAudioPublication ? audioPublication.coverMimeType : attachments[0]?.type;
+  };
+
+  const createTokenGatedMetadata = async (metadata: PublicationMetadataV2Input) => {
+    if (!currentProfile) {
+      return toast.error(SIGN_WALLET);
+    }
+
+    if (!signer) {
+      return toast.error(SIGN_WALLET);
+    }
+
+    const tokenGatedSdk = await LensGatedSDK.create({ provider, signer, env: LensEnvironment.Mumbai });
+    await tokenGatedSdk.connect({
+      address: currentProfile.ownedBy,
+      env: LensEnvironment.Mumbai
+    });
+
+    // Condition for gating the content
+    const followAccessCondition: FollowCondition = { profileId: currentProfile.id };
+    const accessCondition: AccessConditionOutput = { follow: followAccessCondition };
+
+    // Generate the encrypted metadata and upload it to Arweave
+    const { contentURI } = await tokenGatedSdk.gated.encryptMetadata(
+      metadata,
+      currentProfile.id,
+      accessCondition,
+      async (data: EncryptedMetadata) => {
+        return await uploadToArweave(data);
+      }
+    );
+
+    return contentURI;
+  };
+
+  const createMetadata = async (metadata: PublicationMetadataV2Input) => {
+    return await uploadToArweave(metadata);
   };
 
   const createPublication = async () => {
@@ -322,7 +381,7 @@ const NewPublication: FC<Props> = ({ publication }) => {
 
       setPublicationContentError('');
       let textNftImageUrl = null;
-      if (!attachments.length) {
+      if (!attachments.length && selectedCollectModule !== CollectModules.RevertCollectModule) {
         textNftImageUrl = await getTextNftUrl(
           publicationContent,
           currentProfile.handle,
@@ -330,10 +389,10 @@ const NewPublication: FC<Props> = ({ publication }) => {
         );
       }
 
-      const attributes = [
+      const attributes: MetadataAttributeInput[] = [
         {
           traitType: 'type',
-          displayType: 'string',
+          displayType: PublicationMetadataDisplayTypes.String,
           value: getMainContentFocus()?.toLowerCase()
         }
       ];
@@ -341,34 +400,48 @@ const NewPublication: FC<Props> = ({ publication }) => {
       if (isAudioPublication) {
         attributes.push({
           traitType: 'author',
-          displayType: 'string',
+          displayType: PublicationMetadataDisplayTypes.String,
           value: audioPublication.author
         });
       }
 
-      const id = await uploadToArweave({
+      const attachmentsInput: BCharityAttachment[] = attachments.map((attachment) => ({
+        type: attachment.type,
+        altTag: attachment.altTag,
+        item: attachment.item!
+      }));
+
+      const metadata: PublicationMetadataV2Input = {
         version: '2.0.0',
         metadata_id: uuid(),
         description: trimify(publicationContent),
         content: trimify(publicationContent),
         external_url: `https://lenster.xyz/u/${currentProfile?.handle}`,
-        image: attachments.length > 0 ? getAttachmentImage() : textNftImageUrl,
-        imageMimeType: attachments.length > 0 ? getAttachmentImageMimeType() : 'image/svg+xml',
-        name: isAudioPublication ? audioPublication.title : `Comment by @${currentProfile?.handle}`,
+        image: attachmentsInput.length > 0 ? getAttachmentImage() : textNftImageUrl,
+        imageMimeType: attachmentsInput.length > 0 ? getAttachmentImageMimeType() : 'image/svg+xml',
+        name: isAudioPublication
+          ? audioPublication.title
+          : `${isComment ? 'Comment' : 'Post'} by @${currentProfile?.handle}`,
         tags: getTags(publicationContent),
         animation_url: getAnimationUrl(),
         mainContentFocus: getMainContentFocus(),
         contentWarning: null,
         attributes,
-        media: attachments,
+        media: attachmentsInput,
         locale: getUserLocale(),
-        createdOn: new Date(),
         appId: APP_NAME
-      });
+      };
+
+      let arweaveId = null;
+      if (restricted) {
+        arweaveId = await createTokenGatedMetadata(metadata);
+      } else {
+        arweaveId = await createMetadata(metadata);
+      }
 
       const request = {
         profileId: currentProfile?.id,
-        contentURI: `https://arweave.net/${id}`,
+        contentURI: `https://arweave.net/${arweaveId}`,
         ...(isComment && {
           publicationId: publication.__typename === 'Mirror' ? publication?.mirrorOf?.id : publication?.id
         }),
@@ -409,11 +482,12 @@ const NewPublication: FC<Props> = ({ publication }) => {
 
   const setGifAttachment = (gif: IGif) => {
     const attachment = {
+      id: uuid(),
       item: gif.images.original.url,
       type: 'image/gif',
       altTag: gif.title
     };
-    setAttachments([...attachments, attachment]);
+    addAttachments([attachment]);
   };
 
   return (
@@ -425,7 +499,7 @@ const NewPublication: FC<Props> = ({ publication }) => {
       )}
       <div className="block items-center sm:flex px-5">
         <div className="flex items-center space-x-4">
-          <Attachment attachments={attachments} setAttachments={setAttachments} />
+          <Attachment />
           <Giphy setGifAttachment={(gif: IGif) => setGifAttachment(gif)} />
           <CollectSettings />
           <ReferenceSettings />
@@ -433,7 +507,7 @@ const NewPublication: FC<Props> = ({ publication }) => {
         </div>
         <div className="ml-auto pt-2 sm:pt-0">
           <Button
-            disabled={isSubmitting}
+            disabled={isSubmitting || isUploading}
             icon={
               isSubmitting ? (
                 <Spinner size="xs" />
@@ -450,7 +524,7 @@ const NewPublication: FC<Props> = ({ publication }) => {
         </div>
       </div>
       <div className="px-5">
-        <Attachments attachments={attachments} setAttachments={setAttachments} isNew />
+        <Attachments attachments={attachments} isNew />
       </div>
     </Card>
   );

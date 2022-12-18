@@ -2,7 +2,7 @@ import { NextLink } from '@components/Shared/Navbar/MenuItems'
 import type { BCharityPublication } from '@generated/types'
 import { Menu, Transition } from '@headlessui/react'
 import { DotsHorizontalIcon } from '@heroicons/react/outline'
-import { Leafwatch } from '@lib/leafwatch'
+import { Analytics } from '@lib/analytics'
 import clsx from 'clsx'
 import type { FC } from 'react'
 import { Fragment } from 'react'
@@ -32,7 +32,7 @@ const PublicationMenu: FC<Props> = ({ publication, isFullPublication }) => {
           <Menu.Button
             className="p-1.5 rounded-full hover:bg-gray-300 hover:bg-opacity-20"
             onClick={() => {
-              Leafwatch.track(PUBLICATION.MORE)
+              Analytics.track(PUBLICATION.MORE)
             }}
             aria-label="More"
           >

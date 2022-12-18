@@ -1,6 +1,7 @@
 import UserProfile from '@components/Shared/UserProfile'
 import type { BCharityPublication } from '@generated/types'
-import { Leafwatch } from '@lib/leafwatch'
+import { Analytics } from '@lib/analytics'
+import formatTime from '@lib/formatTime'
 import dayjs from 'dayjs'
 import relativeTime from 'dayjs/plugin/relativeTime'
 import { useRouter } from 'next/router'
@@ -34,15 +35,20 @@ const ThreadBody: FC<Props> = ({ publication }) => {
             }
           />
         </span>
-        <span className="text-xs text-gray-500">{dayjs(new Date(timestamp)).fromNow()}</span>
+        <span className="text-xs text-gray-500" title={formatTime(timestamp)}>
+          {dayjs(new Date(timestamp)).fromNow()}
+        </span>
       </div>
       <div className="flex">
         <div className="mr-8 ml-5 bg-gray-300 border-gray-300 dark:bg-gray-700 dark:border-gray-700 border-[0.8px] -my-[3px]" />
         <div
           className="pt-4 pb-5 !w-[85%] sm:w-full"
           onClick={() => {
-            Leafwatch.track(PUBLICATION.OPEN)
-            push(`/posts/${publication?.id}`)
+            const selection = window.getSelection()
+            if (!selection || selection.toString().length === 0) {
+              Analytics.track(PUBLICATION.OPEN)
+              push(`/posts/${publication?.id}`)
+            }
           }}
         >
           {publication?.hidden ? (

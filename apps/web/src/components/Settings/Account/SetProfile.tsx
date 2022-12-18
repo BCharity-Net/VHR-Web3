@@ -6,8 +6,9 @@ import { ErrorMessage } from '@components/UI/ErrorMessage'
 import { Spinner } from '@components/UI/Spinner'
 import useBroadcast from '@components/utils/hooks/useBroadcast'
 import { ExclamationIcon, PencilIcon } from '@heroicons/react/outline'
+import { Analytics } from '@lib/analytics'
+import formatHandle from '@lib/formatHandle'
 import getSignature from '@lib/getSignature'
-import { Leafwatch } from '@lib/leafwatch'
 import onError from '@lib/onError'
 import splitSignature from '@lib/splitSignature'
 import { LensHubProxy } from 'abis'
@@ -35,7 +36,7 @@ const SetProfile: FC = () => {
 
   const onCompleted = () => {
     toast.success('Default profile updated successfully!')
-    Leafwatch.track(SETTINGS.ACCOUNT.SET_DEFAULT_PROFILE)
+    Analytics.track(SETTINGS.ACCOUNT.SET_DEFAULT_PROFILE)
   }
 
   const {
@@ -147,7 +148,7 @@ const SetProfile: FC = () => {
         >
           {sortedProfiles?.map((profile: Profile) => (
             <option key={profile?.id} value={profile?.id}>
-              @{profile?.handle}
+              @{formatHandle(profile?.handle)}
             </option>
           ))}
         </select>

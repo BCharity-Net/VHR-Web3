@@ -4,6 +4,7 @@ import { EmptyState } from '@components/UI/EmptyState'
 import { ErrorMessage } from '@components/UI/ErrorMessage'
 import InfiniteLoader from '@components/UI/InfiniteLoader'
 import { UsersIcon } from '@heroicons/react/outline'
+import formatHandle from '@lib/formatHandle'
 import { SCROLL_THRESHOLD } from 'data/constants'
 import type { Profile } from 'lens';
 import { useFollowingQuery } from 'lens'
@@ -48,7 +49,7 @@ const Following: FC<Props> = ({ profile, onProfileSelected }) => {
       <EmptyState
         message={
           <div>
-            <span className="mr-1 font-bold">@{profile?.handle}</span>
+            <span className="mr-1 font-bold">@{formatHandle(profile?.handle)}</span>
             <span>{t('doesnt follow')}</span>
           </div>
         }

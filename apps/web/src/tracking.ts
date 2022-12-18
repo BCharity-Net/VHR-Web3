@@ -1,4 +1,4 @@
-// Strings used for leafwatch tracking
+// Strings used for events tracking
 
 export const USER = {
   LOGIN: 'user_login',
@@ -80,11 +80,13 @@ export const PUBLICATION = {
 };
 
 export const POST = {
-  NEW: 'new_post'
+  NEW: 'new_post',
+  TOKEN_GATED: 'new_token_gated_post'
 };
 
 export const COMMENT = {
-  NEW: 'new_comment'
+  NEW: 'new_comment',
+  TOKEN_GATED: 'new_token_gated_comment'
 };
 
 export const NOTIFICATION = {

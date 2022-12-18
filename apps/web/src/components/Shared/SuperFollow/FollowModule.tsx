@@ -5,10 +5,11 @@ import { WarningMessage } from '@components/UI/WarningMessage'
 import useBroadcast from '@components/utils/hooks/useBroadcast'
 import type { BCharityFollowModule } from '@generated/types'
 import { StarIcon, UserIcon } from '@heroicons/react/outline'
+import { Analytics } from '@lib/analytics'
 import formatAddress from '@lib/formatAddress'
+import formatHandle from '@lib/formatHandle'
 import getSignature from '@lib/getSignature'
 import getTokenImage from '@lib/getTokenImage'
-import { Leafwatch } from '@lib/leafwatch'
 import onError from '@lib/onError'
 import splitSignature from '@lib/splitSignature'
 import { LensHubProxy } from 'abis'
@@ -52,7 +53,7 @@ const FollowModule: FC<Props> = ({ profile, setFollowing, setShowFollowModal, ag
     setFollowing(true)
     setShowFollowModal(false)
     toast.success('Followed successfully!')
-    Leafwatch.track(PROFILE.SUPER_FOLLOW)
+    Analytics.track(PROFILE.SUPER_FOLLOW)
   }
 
   const { isLoading: writeLoading, write } = useContractWrite({
@@ -168,7 +169,7 @@ const FollowModule: FC<Props> = ({ profile, setFollowing, setShowFollowModal, ag
     <div className="p-5">
       <div className="pb-2 space-y-1.5">
         <div className="text-lg font-bold">
-          Super follow <Slug slug={profile?.handle} prefix="@" /> {again ? 'again' : ''}
+          Super follow <Slug slug={formatHandle(profile?.handle)} prefix="@" /> {again ? 'again' : ''}
         </div>
         <div className="text-gray-500">
           Follow {again ? 'again' : ''} {t('Get perks')}
@@ -208,14 +209,14 @@ const FollowModule: FC<Props> = ({ profile, setFollowing, setShowFollowModal, ag
           <li className="flex space-x-2 tracking-normal leading-6">
             <div>•</div>
             <div>
-              {t('You can comment on')} {profile?.handle}&rsquo;
+              {t('You can comment on')} {formatHandle(profile?.handle)}&rsquo;
               {t('s publications')}
             </div>
           </li>
           <li className="flex space-x-2 tracking-normal leading-6">
             <div>•</div>
             <div>
-              {t('You can collect')} {profile?.handle}&rsquo;
+              {t('You can collect')} {formatHandle(profile?.handle)}&rsquo;
               {t('s publications')}
             </div>
           </li>
@@ -223,7 +224,7 @@ const FollowModule: FC<Props> = ({ profile, setFollowing, setShowFollowModal, ag
             <div>•</div>
             <div>
               {t('Super follow badge')}
-              {profile?.handle}&rsquo;{t('s profile')}
+              {formatHandle(profile?.handle)}&rsquo;{t('s profile')}
             </div>
           </li>
           <li className="flex space-x-2 tracking-normal leading-6">

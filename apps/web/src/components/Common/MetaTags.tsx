@@ -15,13 +15,6 @@ const SEO: FC<Props> = ({ title = APP_NAME, description = DESCRIPTION }) => {
       <meta name="description" content={description} />
       <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=5" />
 
-      <link rel="preconnect" href="https://media.lenster.xyz" />
-      <link rel="dns-prefetch" href="https://media.lenster.xyz" />
-      <link rel="preconnect" href="https://assets.bcharity.net" />
-      <link rel="dns-prefetch" href="https://assets.bcharity.net" />
-      <link rel="preconnect" href="https://assets.bcharity.net" />
-      <link rel="dns-prefetch" href="https://assets.bcharity.net" />
-
       <meta property="og:url" content="https://bcharity.xyz" />
       <meta property="og:site_name" content={APP_NAME} />
       <meta property="og:title" content={title} />

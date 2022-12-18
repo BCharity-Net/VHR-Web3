@@ -4,6 +4,7 @@ import { EmptyState } from '@components/UI/EmptyState'
 import { ErrorMessage } from '@components/UI/ErrorMessage'
 import InfiniteLoader from '@components/UI/InfiniteLoader'
 import { CollectionIcon } from '@heroicons/react/outline'
+import formatHandle from '@lib/formatHandle'
 import { IS_MAINNET, SCROLL_THRESHOLD } from 'data/constants'
 import type { Nft, Profile } from 'lens';
 import { useNftFeedQuery } from 'lens'
@@ -51,7 +52,7 @@ const NFTFeed: FC<Props> = ({ profile }) => {
       <EmptyState
         message={
           <div>
-            <span className="mr-1 font-bold">@{profile?.handle}</span>
+            <span className="mr-1 font-bold">@{formatHandle(profile?.handle)}</span>
             <span>doesn’t have any NFTs!</span>
           </div>
         }

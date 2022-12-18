@@ -1,6 +1,5 @@
 import packageJson from '../../package.json'
 import getEnvConfig from './utils/getEnvConfig'
-import { chain } from 'wagmi'
 
 // Environments
 export const IS_PRODUCTION = process.env.NODE_ENV === 'production'
@@ -20,13 +19,10 @@ export const SERVERLESS_STAGING_SANDBOX_API_URL = 'https://api-staging-sandbox.l
 export const SERVERLESS_SANDBOX_API_URL = 'https://api-sandbox.lenster.xyz'
 export const SERVERLESS_DEVELOPMENT_API_URL = 'http://localhost:4784'
 
-export const PRO_STATUS_API_URL = 'https://pro.lenster.xyz'
-
 export const SERVERLESS_URL = getEnvConfig().serverlessEndpoint
 export const API_URL = getEnvConfig().apiEndpoint
 export const LENSHUB_PROXY = getEnvConfig().lensHubProxyAddress
 export const LENS_PERIPHERY = getEnvConfig().lensPeripheryAddress
-export const FREE_COLLECT_MODULE = getEnvConfig().freeCollectModuleAddress
 export const DEFAULT_COLLECT_TOKEN = getEnvConfig().defaultCollectToken
 
 export const IS_MAINNET = API_URL === MAINNET_API_URL
@@ -50,6 +46,8 @@ export const GIT_COMMIT_SHA = process.env.NEXT_PUBLIC_VERCEL_GIT_COMMIT_SHA?.sli
 export const CONTACT_EMAIL = 'admin@bcharity.net'
 export const RELAY_ON = 'true'
 export const ZERO_ADDRESS = '0x0000000000000000000000000000000000000000'
+export const LENSPROTOCOL_HANDLE = 'lensprotocol'
+export const HANDLE_SUFFIX = IS_MAINNET ? '.lens' : '.test'
 
 export const CATEGORIES = [
   'Education',
@@ -87,7 +85,8 @@ export const VHR_TOP_HOLDERS_URL =
   'https://mumbai.polygonscan.com/token/tokenholderchart/0x28ee241ab245699968f2980d3d1b1d23120ab8be'
 export const RARIBLE_URL = IS_MAINNET ? 'https://rarible.com' : 'https://rinkeby.rarible.com'
 export const IMAGEKIT_URL = `https://ik.imagekit.io/${IS_PRODUCTION ? 'bcharityimg' : 'bcharitydev'}`
-export const IMGPROXY_URL = 'https://media.lenster.xyz'
+export const MEDIA_PROXY_URL = 'https://media.lenster.xyz'
+export const OG_MEDIA_PROXY_URL = 'https://og-media.lenster.xyz'
 export const ARWEAVE_GATEWAY = 'https://arweave.net'
 export const IPFS_GATEWAY = 'https://lens.infura-ipfs.io/ipfs/'
 export const EVER_API = 'https://endpoint.4everland.co'
@@ -103,19 +102,7 @@ export const RPC_URL = IS_MAINNET ? 'https://rpc.ankr.com/polygon' : 'https://rp
 export const INFURA_PROJECT_ID = process.env.NEXT_PUBLIC_INFURA_PROJECT_ID
 export const INFURA_PROJECT_SECRET = process.env.NEXT_PUBLIC_INFURA_PROJECT_SECRET
 
-export const ARWEAVE_KEY = process.env.NEXT_PUBLIC_ARWEAVE_KEY
-
-export const POLYGON_MAINNET = {
-  ...chain.polygon,
-  name: 'Polygon Mainnet',
-  rpcUrls: { default: 'https://polygon-rpc.com' }
-}
-export const POLYGON_MUMBAI = {
-  ...chain.polygonMumbai,
-  name: 'Polygon Mumbai',
-  rpcUrls: { default: 'https://rpc-mumbai.maticvigil.com' }
-}
-export const CHAIN_ID = IS_MAINNET ? POLYGON_MAINNET.id : POLYGON_MUMBAI.id  
+export const ARWEAVE_KEY = process.env.NEXT_PUBLIC_ARWEAVE_KEY  
 
 // Errors
 export const ERRORS = {

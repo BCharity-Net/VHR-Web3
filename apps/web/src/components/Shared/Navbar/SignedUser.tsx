@@ -13,11 +13,12 @@ import {
   SwitchHorizontalIcon,
   UserIcon
 } from '@heroicons/react/outline'
+import { Analytics } from '@lib/analytics'
+import formatHandle from '@lib/formatHandle'
 import getAttribute from '@lib/getAttribute'
 import getAvatar from '@lib/getAvatar'
 import isGardener from '@lib/isGardener'
 import isStaff from '@lib/isStaff'
-import { Leafwatch } from '@lib/leafwatch'
 import resetAuthData from '@lib/resetAuthData'
 import clsx from 'clsx'
 import { APP_VERSION } from 'data/constants'
@@ -53,11 +54,11 @@ const SignedUser: FC = () => {
 
   const toggleStaffMode = () => {
     setStaffMode(!staffMode)
-    Leafwatch.track(STAFFTOOLS.TOGGLE_MODE)
+    Analytics.track(STAFFTOOLS.TOGGLE_MODE)
   }
 
   const logout = () => {
-    Leafwatch.track(PROFILE.LOGOUT)
+    Analytics.track(PROFILE.LOGOUT)
     disconnectXmtp()
     setCurrentProfile(null)
     setProfileId(null)
@@ -74,7 +75,7 @@ const SignedUser: FC = () => {
             as="img"
             src={getAvatar(currentProfile as Profile)}
             className="w-8 h-8 rounded-full border cursor-pointer dark:border-gray-700/80"
-            alt={currentProfile?.handle}
+            alt={formatHandle(currentProfile?.handle)}
           />
           <Transition
             show={open}
@@ -88,18 +89,18 @@ const SignedUser: FC = () => {
           >
             <Menu.Items
               static
-              className="absolute right-0 py-1 mt-2 w-48 bg-white rounded-xl border shadow-sm dark:bg-gray-900 focus:outline-none dark:border-gray-700/80"
+              className="absolute right-0 py-1 mt-2 w-48 bg-white rounded-xl border shadow-sm dark:bg-black focus:outline-none dark:border-gray-700/80"
             >
               <Menu.Item
                 as={NextLink}
-                href={`/u/${currentProfile?.handle}`}
+                href={`/u/${formatHandle(currentProfile?.handle)}`}
                 className={({ active }: { active: boolean }) =>
                   clsx({ 'dropdown-active': active }, 'menu-item')
                 }
               >
                 <div>Logged in as</div>
                 <div className="truncate">
-                  <Slug className="font-bold" slug={currentProfile?.handle} prefix="@" />
+                  <Slug className="font-bold" slug={formatHandle(currentProfile?.handle)} prefix="@" />
                 </div>
               </Menu.Item>
               <div className="divider" />
@@ -127,7 +128,7 @@ const SignedUser: FC = () => {
               <div className="divider" />
               <Menu.Item
                 as={NextLink}
-                href={`/u/${currentProfile?.handle}`}
+                href={`/u/${formatHandle(currentProfile?.handle)}`}
                 className={({ active }: { active: boolean }) =>
                   clsx({ 'dropdown-active': active }, 'menu-item')
                 }
@@ -193,7 +194,7 @@ const SignedUser: FC = () => {
                             const selectedProfile = profiles[index]
                             setCurrentProfile(selectedProfile)
                             setProfileId(selectedProfile.id)
-                            Leafwatch.track(PROFILE.SWITCH_PROFILE)
+                            Analytics.track(PROFILE.SWITCH_PROFILE)
                           }}
                         >
                           {currentProfile?.id === profile?.id && (
@@ -204,9 +205,9 @@ const SignedUser: FC = () => {
                             height={20}
                             width={20}
                             src={getAvatar(profile)}
-                            alt={profile?.handle}
+                            alt={formatHandle(profile?.handle)}
                           />
-                          <div className="truncate">{profile?.handle}</div>
+                          <div className="truncate">{formatHandle(profile?.handle)}</div>
                         </button>
                       </div>
                     ))}
@@ -218,7 +219,7 @@ const SignedUser: FC = () => {
                 as="a"
                 onClick={() => {
                   setTheme(theme === 'light' ? 'dark' : 'light')
-                  Leafwatch.track(theme === 'light' ? SYSTEM.SWITCH_DARK_THEME : SYSTEM.SWITCH_LIGHT_THEME)
+                  Analytics.track(theme === 'light' ? SYSTEM.SWITCH_DARK_THEME : SYSTEM.SWITCH_LIGHT_THEME)
                 }}
                 className={({ active }) => clsx({ 'dropdown-active': active }, 'menu-item')}
               >

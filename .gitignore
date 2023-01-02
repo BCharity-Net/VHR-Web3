@@ -1,47 +1,45 @@
+# dependencies
+node_modules
+.pnp
+.pnp.js
+
+# testing
+coverage
+
+# next.js
+.next/
+out/
+.swc
+build
+
+# misc
 .DS_Store
-yarn-error.log
+*.pem
+.eslintcache
 
-# Private files:
-config/certs/
-*.db
-
-# Logs
+# debug
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
-lerna-debug.log*
+.pnpm-debug.log*
 
-# Coverage directory used by tools like istanbul
-coverage
-*.lcov
-
-# Deps:
-node_modules/
-
-# Builds:
-.next/
-build/
-out/
-.vercel/
-.eslintcache
-tsconfig.tsbuildinfo
-scratch/
-
-# Environment Variables
-.env
+# local env files
 .env.local
 .env.development.local
 .env.test.local
 .env.production.local
+.env
 
-# Sentry
-.sentryclirc
+# turbo
+.turbo
 
-# IDE settings
-.idea/
-.vscode
+# vercel
+.vercel
 
-# PWA
-public/sw.js
-public/sw.js.map
-public/workbox-*
+# typescript
+*.tsbuildinfo
+
+# next-pwa
+**/public/workbox-*.js
+**/public/sw.js
+**/public/worker-*.js

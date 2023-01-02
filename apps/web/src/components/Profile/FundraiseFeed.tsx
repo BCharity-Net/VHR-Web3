@@ -1,10 +1,11 @@
 /* eslint-disable react/jsx-key */
+import { polygon, polygonMumbai } from '@wagmi/chains'
+import { IS_MAINNET } from 'data/constants'
 import type { Profile } from 'lens'
 import { ProfileNftFeedDocument } from 'lens'
 import type { FC } from 'react'
 import { useMemo } from 'react'
-import { CHAIN_ID, IS_MAINNET } from 'data/constants'
-import { chain } from 'wagmi'
+import { CHAIN_ID } from 'src/constants'
 
 import { PostCell, ProfileCell } from './FundraiseTable/Cells'
 import { DateSearch, FuzzySearch, fuzzyTextFilterFn, NoFilter } from './FundraiseTable/Filters'
@@ -79,7 +80,7 @@ const FundraiseFeed: FC<Props> = ({ profile }) => {
       }}
       query={ProfileNftFeedDocument}
       request={{
-        chainIds: [CHAIN_ID, IS_MAINNET ? chain.polygon.id : chain.polygonMumbai.id],
+        chainIds: [CHAIN_ID, IS_MAINNET ? polygon.id : polygonMumbai.id],
         ownerAddress: profile?.ownedBy,
         limit: tableLimit
       }}

@@ -5,6 +5,7 @@ import { ErrorMessage } from '@components/UI/ErrorMessage'
 import InfiniteLoader from '@components/UI/InfiniteLoader'
 import { CollectionIcon } from '@heroicons/react/outline'
 import formatHandle from '@lib/formatHandle'
+import { polygon, polygonMumbai } from '@wagmi/chains'
 import { IS_MAINNET, SCROLL_THRESHOLD } from 'data/constants'
 import type { Nft, Profile } from 'lens';
 import { useNftFeedQuery } from 'lens'
@@ -12,7 +13,6 @@ import type { FC } from 'react'
 import { useTranslation } from 'react-i18next'
 import InfiniteScroll from 'react-infinite-scroll-component'
 import { CHAIN_ID } from 'src/constants'
-import { chain } from 'wagmi'
 
 interface Props {
   profile: Profile
@@ -23,7 +23,7 @@ const NFTFeed: FC<Props> = ({ profile }) => {
 
   // Variables
   const request = {
-    chainIds: [CHAIN_ID, IS_MAINNET ? chain.polygon.id : chain.polygonMumbai.id],
+    chainIds: [CHAIN_ID, IS_MAINNET ? polygon.id : polygonMumbai.id],
     ownerAddress: profile?.ownedBy,
     limit: 10
   }

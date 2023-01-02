@@ -1,4 +1,4 @@
-import {
+import type {
   Comment,
   FeeCollectModuleSettings,
   FeeFollowModuleSettings,
@@ -11,45 +11,45 @@ import {
   RevertCollectModuleSettings,
   RevertFollowModuleSettings,
   TimedFeeCollectModuleSettings
-} from 'lens'
+} from 'lens';
 
-export type BCharityPublication = Post & Mirror & Comment
-export type Group = Post
-export type BCharityCollectModule = FreeCollectModuleSettings &
-  FeeCollectModuleSettings &
+export type LensterPublication = Post & Mirror & Comment;
+export type Community = Post;
+export type LensterCollectModule = FeeCollectModuleSettings &
+  FreeCollectModuleSettings &
   LimitedFeeCollectModuleSettings &
   LimitedTimedFeeCollectModuleSettings &
   RevertCollectModuleSettings &
-  TimedFeeCollectModuleSettings
-export type BCharityFollowModule = FeeFollowModuleSettings &
+  TimedFeeCollectModuleSettings;
+export type LensterFollowModule = FeeFollowModuleSettings &
   ProfileFollowModuleSettings &
-  RevertFollowModuleSettings
-export interface BCharityAttachment {
-  item: string
-  type: string
-  altTag: string
+  RevertFollowModuleSettings;
+export interface LensterAttachment {
+  item: string;
+  type: string;
+  altTag: string;
 }
-export interface NewBCharityAttachment extends Omit<BCharityAttachment, 'item'> {
+export interface NewLensterAttachment extends Omit<LensterAttachment, 'item'> {
   id: string;
   item?: string;
   previewItem?: string;
 }
 export interface UserSuggestion {
-  uid: string
-  id: string
-  display: string
-  name: string
-  picture: string
+  uid: string;
+  id: string;
+  display: string;
+  name: string;
+  picture: string;
 }
 export interface OG {
-  title: string
-  description: string
-  site: string
-  url: string
-  favicon: string
-  thumbnail: string
-  isSquare: boolean
-  html: string
+  title: string;
+  description: string;
+  site: string;
+  url: string;
+  favicon: string;
+  thumbnail: string;
+  isSquare: boolean;
+  html: string;
 }
 
 export interface ProfileInterest {

@@ -4,7 +4,7 @@ import { Analytics } from '@lib/analytics'
 import type { FC } from 'react'
 import toast from 'react-hot-toast'
 import { useTranslation } from 'react-i18next'
-import { CHAIN_ID } from 'data/constants'
+import { CHAIN_ID } from 'src/constants'
 import { SYSTEM } from 'src/tracking'
 import { useSwitchNetwork } from 'wagmi'
 

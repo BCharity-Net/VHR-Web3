@@ -92,7 +92,7 @@
       "eslint-config-prettier": "^8.5.0",
       "eslint-plugin-prettier": "^4.2.1",
       "eslint-plugin-simple-import-sort": "^8.0.0",
-      "eslint-plugin-unicorn": "^44.0.0",
+      "eslint-plugin-unicorn": "^45.0.2",
       "eslint-plugin-unused-imports": "^2.0.0",
       "lens": "*",
       "postcss": "^8.4.20",

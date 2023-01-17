@@ -8,7 +8,7 @@
       "eslint": "^8.30.0",
       "eslint-config-next": "^13.0.7",
       "eslint-plugin-prettier": "^4.2.1",
-      "eslint-plugin-simple-import-sort": "^8.0.0",
+      "eslint-plugin-simple-import-sort": "^9.0.0",
       "eslint-plugin-unicorn": "^45.0.2",
       "eslint-plugin-unused-imports": "^2.0.0"
     },

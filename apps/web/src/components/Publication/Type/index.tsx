@@ -1,4 +1,4 @@
-import type { BCharityPublication } from '@generated/types'
+import type { Publication } from 'lens'
 import { useRouter } from 'next/router'
 import type { FC } from 'react'
 
@@ -9,7 +9,7 @@ import GroupPublication from './GroupPost'
 import Mirrored from './Mirrored'
 
 interface Props {
-  publication: BCharityPublication
+  publication: Publication
   showType?: boolean
   showThread?: boolean
 }
@@ -18,7 +18,7 @@ const PublicationType: FC<Props> = ({ publication, showType, showThread }) => {
   const { pathname } = useRouter()
   const type = publication.__typename
   const publicationType = publication?.metadata?.attributes[0]?.value
-  const isCollected = Boolean(publication?.collectedBy)
+  const isCollected = (type === 'Post' || type === 'Comment') && Boolean(publication?.collectedBy)
 
   if (!showType) {
     return null

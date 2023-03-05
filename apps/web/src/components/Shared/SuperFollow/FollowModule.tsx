@@ -2,8 +2,6 @@ import AllowanceButton from '@components/Settings/Allowance/Button'
 import { Button } from '@components/UI/Button'
 import { Spinner } from '@components/UI/Spinner'
 import { WarningMessage } from '@components/UI/WarningMessage'
-import useBroadcast from '@components/utils/hooks/useBroadcast'
-import type { BCharityFollowModule } from '@generated/types'
 import { StarIcon, UserIcon } from '@heroicons/react/outline'
 import { Analytics } from '@lib/analytics'
 import formatAddress from '@lib/formatAddress'
@@ -13,11 +11,12 @@ import getTokenImage from '@lib/getTokenImage'
 import onError from '@lib/onError'
 import splitSignature from '@lib/splitSignature'
 import { LensHubProxy } from 'abis'
-import { LENSHUB_PROXY, POLYGONSCAN_URL, RELAY_ON, SIGN_WALLET } from 'data/constants'
-import type { Profile } from 'lens';
+import { LENSHUB_PROXY, POLYGONSCAN_URL, SIGN_WALLET } from 'data/constants'
+import type { ApprovedAllowanceAmount, Profile } from 'lens';
 import {
   FollowModules,
   useApprovedModuleAllowanceAmountQuery,
+  useBroadcastMutation,
   useCreateFollowTypedDataMutation,
   useSuperFollowQuery
 } from 'lens'
@@ -101,64 +100,58 @@ const FollowModule: FC<Props> = ({ profile, setFollowing, setShowFollowModal, ag
     hasAmount = true
   }
 
-  const { broadcast, loading: broadcastLoading } = useBroadcast({ onCompleted })
+  const [broadcast, { loading: broadcastLoading }] = useBroadcastMutation({
+    onCompleted
+  })
   const [createFollowTypedData, { loading: typedDataLoading }] = useCreateFollowTypedDataMutation({
     onCompleted: async ({ createFollowTypedData }) => {
-      try {
-        const { id, typedData } = createFollowTypedData
-        const { profileIds, datas: followData, deadline } = typedData.value
-        const signature = await signTypedDataAsync(getSignature(typedData))
-        const { v, r, s } = splitSignature(signature)
-        const sig = { v, r, s, deadline }
-        const inputStruct = {
-          follower: address,
-          profileIds,
-          datas: followData,
-          sig
-        }
-
-        setUserSigNonce(userSigNonce + 1)
-        if (!RELAY_ON) {
-          return write?.({ recklesslySetUnpreparedArgs: [inputStruct] })
-        }
-
-        const {
-          data: { broadcast: result }
-        } = await broadcast({ request: { id, signature } })
-
-        if ('reason' in result) {
-          write?.({ recklesslySetUnpreparedArgs: [inputStruct] });
-        }
-      } catch {}
+      const { id, typedData } = createFollowTypedData
+      const { profileIds, datas: followData, deadline } = typedData.value
+      const signature = await signTypedDataAsync(getSignature(typedData))
+      const { v, r, s } = splitSignature(signature)
+      const sig = { v, r, s, deadline }
+      const inputStruct = {
+        follower: address,
+        profileIds,
+        datas: followData,
+        sig
+      }
+      setUserSigNonce(userSigNonce + 1)
+      const { data } = await broadcast({ variables: { request: { id, signature } } })
+      if (data?.broadcast.__typename === 'RelayError') {
+        return write?.({ recklesslySetUnpreparedArgs: [inputStruct] })
+      }
     },
     onError
   })
 
-  const createFollow = () => {
+  const createFollow = async () => {
     if (!currentProfile) {
       return toast.error(SIGN_WALLET)
     }
 
-    createFollowTypedData({
-      variables: {
-        options: { overrideSigNonce: userSigNonce },
-        request: {
-          follow: [
-            {
-              profile: profile?.id,
-              followModule: {
-                feeFollowModule: {
-                  amount: {
-                    currency: followModule?.amount?.asset?.address,
-                    value: followModule?.amount?.value
+    try {
+      await createFollowTypedData({
+        variables: {
+          options: { overrideSigNonce: userSigNonce },
+          request: {
+            follow: [
+              {
+                profile: profile?.id,
+                followModule: {
+                  feeFollowModule: {
+                    amount: {
+                      currency: followModule?.amount?.asset?.address,
+                      value: followModule?.amount?.value
+                    }
                   }
                 }
               }
-            }
-          ]
+            ]
+          }
         }
-      }
-    })
+      })
+    } catch {}
   }          
 
   if (loading) {
@@ -259,16 +252,13 @@ const FollowModule: FC<Props> = ({ profile, setFollowing, setShowFollowModal, ag
               {t('Super follow')} {again ? 'again' : 'now'}
             </Button>
           ) : (
-            <WarningMessage
-              className="mt-5"
-              message={<Uniswap module={followModule as BCharityFollowModule} />}
-            />
+            <WarningMessage className="mt-5" message={<Uniswap module={followModule} />} />
           )
         ) : (
           <div className="mt-5">
             <AllowanceButton
               title={t('Allow follow module')}
-              module={allowanceData?.approvedModuleAllowanceAmount[0]}
+              module={allowanceData?.approvedModuleAllowanceAmount[0] as ApprovedAllowanceAmount}
               allowed={allowed}
               setAllowed={setAllowed}
             />

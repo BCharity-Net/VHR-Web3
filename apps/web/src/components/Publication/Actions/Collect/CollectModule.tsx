@@ -1,6 +1,5 @@
 import AllowanceButton from '@components/Settings/Allowance/Button'
 import CollectWarning from '@components/Shared/CollectWarning'
-import IndexStatus from '@components/Shared/IndexStatus'
 import Loader from '@components/Shared/Loader'
 import Markup from '@components/Shared/Markup'
 import Collectors from '@components/Shared/Modal/Collectors'
@@ -11,16 +10,12 @@ import { Modal } from '@components/UI/Modal'
 import { Spinner } from '@components/UI/Spinner'
 import { Tooltip } from '@components/UI/Tooltip'
 import { WarningMessage } from '@components/UI/WarningMessage'
-import useBroadcast from '@components/utils/hooks/useBroadcast'
-import type { BCharityPublication } from '@generated/types'
 import {
   CashIcon,
   ClockIcon,
   CollectionIcon,
   PhotographIcon,
   PuzzleIcon,
-  SwitchHorizontalIcon,
-  UserIcon,
   UsersIcon
 } from '@heroicons/react/outline'
 import { CheckCircleIcon } from '@heroicons/react/solid'
@@ -28,23 +23,25 @@ import { Analytics } from '@lib/analytics'
 import formatAddress from '@lib/formatAddress'
 import formatHandle from '@lib/formatHandle'
 import formatTime from '@lib/formatTime'
-import getAssetAddress from '@lib/getAssetAddress';
+import getAssetAddress from '@lib/getAssetAddress'
 import getCoingeckoPrice from '@lib/getCoingeckoPrice'
 import getSignature from '@lib/getSignature'
 import getTokenImage from '@lib/getTokenImage'
 import humanize from '@lib/humanize'
 import onError from '@lib/onError'
 import splitSignature from '@lib/splitSignature'
+import { useQuery } from '@tanstack/react-query'
 import { LensHubProxy, UpdateOwnableFeeCollectModule } from 'abis'
-import { LENSHUB_PROXY, POLYGONSCAN_URL, RELAY_ON, SIGN_WALLET } from 'data/constants';
+import { LENSHUB_PROXY, POLYGONSCAN_URL, SIGN_WALLET } from 'data/constants'
 import getEnvConfig from 'data/utils/getEnvConfig'
 import dayjs from 'dayjs'
 import type { BigNumber } from 'ethers'
 import { defaultAbiCoder } from 'ethers/lib/utils'
-import type { ElectedMirror } from 'lens';
+import type { ApprovedAllowanceAmount, ElectedMirror, Publication } from 'lens'
 import {
   CollectModules,
   useApprovedModuleAllowanceAmountQuery,
+  useBroadcastMutation,
   useCollectModuleQuery,
   useCreateCollectTypedDataMutation,
   useProxyActionMutation,
@@ -61,7 +58,7 @@ import { useAccount, useBalance, useContractRead, useContractWrite, useSignTyped
 interface Props {
   count: number
   setCount: Dispatch<number>
-  publication: BCharityPublication
+  publication: Publication
   electedMirror?: ElectedMirror
 }
 
@@ -74,18 +71,16 @@ const CollectModule: FC<Props> = ({ count, setCount, publication, electedMirror 
   const [hasCollectedByMe, setHasCollectedByMe] = useState(publication?.hasCollectedByMe)
   const [showCollectorsModal, setShowCollectorsModal] = useState(false)
   const [allowed, setAllowed] = useState(true)
-  const [usdPrice, setUsdPrice] = useState(0)
   const [hoursAddressDisable, setHoursAddressDisable] = useState(false)
 
   const { address } = useAccount()
   const { isLoading: signLoading, signTypedDataAsync } = useSignTypedData({ onError })
-  const isMirror = electedMirror ? false : publication.__typename === 'Mirror'
 
   const onCompleted = () => {
     setRevenue(revenue + parseFloat(collectModule?.amount?.value))
     setCount(count + 1)
     setHasCollectedByMe(true)
-    toast.success('Transaction submitted successfully!')
+    toast.success('Collected successfully!')
     Analytics.track(PUBLICATION.COLLECT_MODULE.COLLECT)
   }
 
@@ -97,11 +92,7 @@ const CollectModule: FC<Props> = ({ count, setCount, publication, electedMirror 
     enabled: false
   })
 
-  const {
-    data: writeData,
-    isLoading: writeLoading,
-    write
-  } = useContractWrite({
+  const { isLoading: writeLoading, write } = useContractWrite({
     address: LENSHUB_PROXY,
     abi: LensHubProxy,
     functionName: 'collectWithSig',
@@ -150,14 +141,14 @@ const CollectModule: FC<Props> = ({ count, setCount, publication, electedMirror 
     skip: !publication?.id
   })
 
+  const { data: usdPrice } = useQuery(
+    ['coingeckoData'],
+    () => getCoingeckoPrice(getAssetAddress(collectModule?.amount?.asset?.symbol)).then((res) => res),
+    { enabled: Boolean(collectModule?.amount) }
+  )
+
   useEffect(() => {
     setRevenue(parseFloat((revenueData?.publicationRevenue?.revenue?.total?.value as any) ?? 0))
-    if (collectModule?.amount) {
-      getCoingeckoPrice(getAssetAddress(collectModule?.amount?.asset?.symbol)).then((data) => {
-        setUsdPrice(data);
-      })
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [revenueData])
 
   const { data: balanceData, isLoading: balanceLoading } = useBalance({
@@ -174,35 +165,28 @@ const CollectModule: FC<Props> = ({ count, setCount, publication, electedMirror 
     hasAmount = true
   }
 
-  const { broadcast, data: broadcastData, loading: broadcastLoading } = useBroadcast({ onCompleted })
+  const [broadcast, { loading: broadcastLoading }] = useBroadcastMutation({
+    onCompleted
+  })
   const [createCollectTypedData, { loading: typedDataLoading }] = useCreateCollectTypedDataMutation({
     onCompleted: async ({ createCollectTypedData }) => {
-      try {
-        const { id, typedData } = createCollectTypedData
-        const { profileId, pubId, data: collectData, deadline } = typedData.value
-        const signature = await signTypedDataAsync(getSignature(typedData))
-        const { v, r, s } = splitSignature(signature)
-        const sig = { v, r, s, deadline }
-        const inputStruct = {
-          collector: address,
-          profileId,
-          pubId,
-          data: collectData,
-          sig
-        }
-        setUserSigNonce(userSigNonce + 1)
-        if (!RELAY_ON) {
-          return write?.({ recklesslySetUnpreparedArgs: [inputStruct] })
-        }
-        
-        const {
-          data: { broadcast: result }
-        } = await broadcast({ request: { id, signature } })
-
-        if ('reason' in result) {
-          write?.({ recklesslySetUnpreparedArgs: [inputStruct] })
-        }
-      } catch {}
+      const { id, typedData } = createCollectTypedData
+      const { profileId, pubId, data: collectData, deadline } = typedData.value
+      const signature = await signTypedDataAsync(getSignature(typedData))
+      const { v, r, s } = splitSignature(signature)
+      const sig = { v, r, s, deadline }
+      const inputStruct = {
+        collector: address,
+        profileId,
+        pubId,
+        data: collectData,
+        sig
+      }
+      setUserSigNonce(userSigNonce + 1)
+      const { data } = await broadcast({ variables: { request: { id, signature } } })
+      if (data?.broadcast.__typename === 'RelayError') {
+        return write?.({ recklesslySetUnpreparedArgs: [inputStruct] })
+      }
     },
     onError
   })
@@ -215,7 +199,7 @@ const CollectModule: FC<Props> = ({ count, setCount, publication, electedMirror 
   const createViaProxyAction = async (variables: any) => {
     const { data } = await createCollectProxyAction({ variables })
     if (!data?.proxyAction) {
-      createCollectTypedData({
+      await createCollectTypedData({
         variables: {
           request: { publicationId: publication?.id },
           options: { overrideSigNonce: userSigNonce }
@@ -224,39 +208,41 @@ const CollectModule: FC<Props> = ({ count, setCount, publication, electedMirror 
     }
   }
 
-  const createCollect = () => {
+  const createCollect = async () => {
     if (!currentProfile) {
       return toast.error(SIGN_WALLET)
     }
 
-    if (collectModule?.type === CollectModules.FreeCollectModule) {
-      createViaProxyAction({
-        request: { collect: { freeCollect: { publicationId: publication?.id } } }
-      })
-    } else if (collectModule?.__typename === 'UnknownCollectModuleSettings') {
-      refetch().then(({ data }) => {
-        if (data) {
-          const decodedData: any = data;
-          const encodedData = defaultAbiCoder.encode(
-            ['address', 'uint256'],
-            [decodedData?.[2] as string, decodedData?.[1] as BigNumber]
-          )
-          createCollectTypedData({
-            variables: {
-              options: { overrideSigNonce: userSigNonce },
-              request: { publicationId: publication?.id, unknownModuleData: encodedData }
-            }
-          })
-        }
-      })
-    } else {
-      createCollectTypedData({
-        variables: {
-          options: { overrideSigNonce: userSigNonce },
-          request: { publicationId: electedMirror ? electedMirror.mirrorId : publication?.id }
-        }
-      })
-    }
+    try {
+      if (collectModule?.type === CollectModules.FreeCollectModule) {
+        await createViaProxyAction({
+          request: { collect: { freeCollect: { publicationId: publication?.id } } }
+        })
+      } else if (collectModule?.__typename === 'UnknownCollectModuleSettings') {
+        refetch().then(async ({ data }) => {
+          if (data) {
+            const decodedData: any = data;
+            const encodedData = defaultAbiCoder.encode(
+              ['address', 'uint256'],
+              [decodedData?.[2] as string, decodedData?.[1] as BigNumber]
+            )
+            await createCollectTypedData({
+              variables: {
+                options: { overrideSigNonce: userSigNonce },
+                request: { publicationId: publication?.id, unknownModuleData: encodedData }
+              }
+            })
+          }
+        })
+      } else {
+        await createCollectTypedData({
+          variables: {
+            options: { overrideSigNonce: userSigNonce },
+            request: { publicationId: electedMirror ? electedMirror.mirrorId : publication?.id }
+          }
+        })
+      }
+    } catch {}
   }
 
   if (loading || revenueLoading) {
@@ -286,24 +272,11 @@ const CollectModule: FC<Props> = ({ count, setCount, publication, electedMirror 
           </div>
         )}
         <div className="pb-2 space-y-1.5">
-          <div className="flex items-center space-x-2">
-            {(electedMirror || isMirror) && (
-              <Tooltip
-                content={`Mirror of ${
-                  electedMirror ? publication.__typename : publication?.mirrorOf.__typename?.toLowerCase()
-                } by ${
-                  isMirror ? publication?.mirrorOf?.profile?.handle : formatHandle(publication.profile.handle)
-                }`}
-              >
-                <SwitchHorizontalIcon className="w-5 h-5 text-brand" />
-              </Tooltip>
-            )}
-            {publication?.metadata?.name && (
-              <div className="text-xl font-bold">{publication?.metadata?.name}</div>
-            )}
-          </div>
-          {publication?.metadata?.description && (
-            <Markup className="text-gray-500 line-clamp-2">{publication?.metadata?.description}</Markup>
+          {publication?.metadata?.name && (
+            <div className="text-xl font-bold">{publication?.metadata?.name}</div>
+          )}
+          {publication?.metadata?.content && (
+            <Markup className="lt-text-gray-500 line-clamp-2">{publication?.metadata?.content}</Markup>
           )}
           <ReferralAlert
             electedMirror={electedMirror}
@@ -436,11 +409,6 @@ const CollectModule: FC<Props> = ({ count, setCount, publication, electedMirror 
             </div>
           )}
         </div>
-        {writeData?.hash ?? broadcastData?.broadcast?.txHash ? (
-          <div className="mt-5">
-            <IndexStatus txHash={writeData?.hash ?? broadcastData?.broadcast?.txHash} />
-          </div>
-        ) : null}
         <div className="flex items-center space-x-2 mt-5">
           {currentProfile && !hasCollectedByMe ? (
             allowanceLoading || balanceLoading ? (
@@ -460,7 +428,7 @@ const CollectModule: FC<Props> = ({ count, setCount, publication, electedMirror 
             ) : (
               <AllowanceButton
                 title="Allow collect module"
-                module={allowanceData?.approvedModuleAllowanceAmount[0]}
+                module={allowanceData?.approvedModuleAllowanceAmount[0] as ApprovedAllowanceAmount}
                 allowed={allowed}
                 setAllowed={setAllowed}
               />

@@ -5,12 +5,11 @@ import { Card } from '@components/UI/Card'
 import { EmptyState } from '@components/UI/EmptyState'
 import { ErrorMessage } from '@components/UI/ErrorMessage'
 import InfiniteLoader from '@components/UI/InfiniteLoader'
-import type { BCharityPublication } from '@generated/types'
 import { CollectionIcon } from '@heroicons/react/outline'
 import { SCROLL_THRESHOLD } from 'data/constants'
+import type { Comment, Publication, PublicationsQueryRequest } from 'lens'
 import { CustomFiltersTypes, useCommentFeedQuery } from 'lens'
 import type { FC } from 'react'
-import { useInView } from 'react-cool-inview'
 import { useTranslation } from 'react-i18next'
 import InfiniteScroll from 'react-infinite-scroll-component'
 import { useAppStore } from 'src/store/app'
@@ -20,7 +19,7 @@ import NewPublication from '../Composer/NewPublication'
 import CommentWarning from '../Shared/CommentWarning'
 
 interface Props {
-  publication?: BCharityPublication
+  publication?: Publication
   type?: 'comment' | 'group post'
 }
 
@@ -31,7 +30,11 @@ const Feed: FC<Props> = ({ publication, type = 'comment' }) => {
   const txnQueue = useTransactionPersistStore((state) => state.txnQueue)
 
   // Variables
-  const request = { commentsOf: publicationId, customFilters: [CustomFiltersTypes.Gardeners], limit: 10 }
+  const request: PublicationsQueryRequest = {
+    commentsOf: publicationId,
+    customFilters: [CustomFiltersTypes.Gardeners],
+    limit: 10
+  }
   const reactionRequest = currentProfile ? { profileId: currentProfile?.id } : null
   const profileId = currentProfile?.id ?? null
 
@@ -92,7 +95,7 @@ const Feed: FC<Props> = ({ publication, type = 'comment' }) => {
             {comments?.map((comment, index) => (
               <SinglePublication
                 key={`${publicationId}_${index}`}
-                publication={comment as BCharityPublication}
+                publication={comment as Comment}
                 showType={false}
               />
             ))}

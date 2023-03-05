@@ -4,6 +4,7 @@ import {
   NotificationWalletProfileName
 } from '@components/Notification/WalletProfile'
 import UserPreview from '@components/Shared/UserPreview'
+import type { MessageDescriptor } from '@generated/types'
 import { CashIcon, CollectionIcon, UsersIcon } from '@heroicons/react/solid'
 import formatTime from '@lib/formatTime'
 import dayjs from 'dayjs'

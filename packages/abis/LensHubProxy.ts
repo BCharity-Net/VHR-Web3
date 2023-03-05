@@ -1385,4 +1385,4 @@ export const LensHubProxy = [
     stateMutability: 'nonpayable',
     type: 'function'
   }
-]
+];

@@ -4,18 +4,17 @@ import { Card } from '@components/UI/Card'
 import { EmptyState } from '@components/UI/EmptyState'
 import { ErrorMessage } from '@components/UI/ErrorMessage'
 import InfiniteLoader from '@components/UI/InfiniteLoader'
-import type { BCharityPublication } from '@generated/types'
 import { CollectionIcon } from '@heroicons/react/outline'
 import { SCROLL_THRESHOLD } from 'data/constants'
+import type { ExplorePublicationRequest, Publication, PublicationMainFocus } from 'lens'
 import { CustomFiltersTypes, PublicationSortCriteria, useExploreFeedQuery } from 'lens'
 import type { FC } from 'react'
-import { useInView } from 'react-cool-inview'
 import { useTranslation } from 'react-i18next'
 import InfiniteScroll from 'react-infinite-scroll-component'
 import { useAppStore } from 'src/store/app'
 
 interface Props {
-  focus?: any
+  focus?: PublicationMainFocus
   feedType?: PublicationSortCriteria
 }
 
@@ -24,11 +23,11 @@ const Feed: FC<Props> = ({ focus, feedType = PublicationSortCriteria.CuratedProf
   const currentProfile = useAppStore((state) => state.currentProfile)
 
   // Variables
-  const request = {
+  const request: ExplorePublicationRequest = {
     sortCriteria: feedType,
     noRandomize: feedType === 'LATEST',
     customFilters: [CustomFiltersTypes.Gardeners],
-    metadata: focus ? { mainContentFocus: focus } : null,
+    metadata: focus ? { mainContentFocus: [focus] } : null,
     limit: 10
   }
   const reactionRequest = currentProfile ? { profileId: currentProfile?.id } : null
@@ -75,10 +74,7 @@ const Feed: FC<Props> = ({ focus, feedType = PublicationSortCriteria.CuratedProf
     >
       <Card className="divide-y-[1px] dark:divide-gray-700/80">
         {publications?.map((publication, index) => (
-          <SinglePublication
-            key={`${publication.id}_${index}`}
-            publication={publication as BCharityPublication}
-          />
+          <SinglePublication key={`${publication.id}_${index}`} publication={publication as Publication} />
         ))}
       </Card>
     </InfiniteScroll>

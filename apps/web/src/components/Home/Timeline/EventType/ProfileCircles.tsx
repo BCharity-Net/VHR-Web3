@@ -21,6 +21,9 @@ const ProfileCircles: FC<Props> = ({ profiles, context }) => {
             href={`/u/${formatHandle(profile?.handle)}`}
           >
             <img
+              onError={({ currentTarget }) => {
+                currentTarget.src = getAvatar(profile, false);
+              }}
               className="w-5 h-5 rounded-full border dark:border-gray-700/80"
               src={getAvatar(profile)}
               alt={formatHandle(profile?.handle)}

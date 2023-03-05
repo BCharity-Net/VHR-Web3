@@ -1,4 +1,5 @@
 import Slug from '@components/Shared/Slug'
+import type { MessageDescriptor } from '@generated/types'
 import { SwitchHorizontalIcon } from '@heroicons/react/outline'
 import formatHandle from '@lib/formatHandle'
 import type { Mirror } from 'lens'

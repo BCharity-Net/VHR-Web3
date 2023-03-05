@@ -4,9 +4,9 @@ import { Card } from '@components/UI/Card'
 import { EmptyState } from '@components/UI/EmptyState'
 import { ErrorMessage } from '@components/UI/ErrorMessage'
 import InfiniteLoader from '@components/UI/InfiniteLoader'
-import type { BCharityPublication } from '@generated/types'
 import { CollectionIcon } from '@heroicons/react/outline'
 import { SCROLL_THRESHOLD } from 'data/constants'
+import type { ExplorePublicationRequest, Publication } from 'lens'
 import { PublicationSortCriteria, PublicationTypes, useExploreFeedQuery } from 'lens'
 import type { FC } from 'react'
 import InfiniteScroll from 'react-infinite-scroll-component'
@@ -16,11 +16,11 @@ const Feed: FC = () => {
   const currentProfile = useAppStore((state) => state.currentProfile)
 
   // Variables
-  const request = {
+  const request: ExplorePublicationRequest = {
     sortCriteria: PublicationSortCriteria.Latest,
     publicationTypes: [PublicationTypes.Post, PublicationTypes.Comment],
     noRandomize: true,
-    limit: 10
+    limit: 50
   }
   const reactionRequest = currentProfile ? { profileId: currentProfile?.id } : null
   const profileId = currentProfile?.id ?? null
@@ -68,7 +68,7 @@ const Feed: FC = () => {
         {publications?.map((publication, index) => (
           <SinglePublication
             key={`${publication.id}_${index}`}
-            publication={publication as BCharityPublication}
+            publication={publication as Publication}
             showThread={false}
             showActions={false}
             showModActions

@@ -4,10 +4,9 @@ import { Card } from '@components/UI/Card'
 import { EmptyState } from '@components/UI/EmptyState'
 import { ErrorMessage } from '@components/UI/ErrorMessage'
 import InfiniteLoader from '@components/UI/InfiniteLoader'
-import type { BCharityPublication } from '@generated/types'
 import { CollectionIcon } from '@heroicons/react/outline'
 import { SCROLL_THRESHOLD } from 'data/constants'
-import type { PublicationSearchResult } from 'lens'
+import type { Publication, PublicationSearchResult, SearchQueryRequest } from 'lens'
 import { CustomFiltersTypes, SearchRequestTypes, useSearchPublicationsQuery } from 'lens'
 import type { FC } from 'react'
 import { useTranslation } from 'react-i18next'
@@ -23,7 +22,7 @@ const Publications: FC<Props> = ({ query }) => {
   const currentProfile = useAppStore((state) => state.currentProfile)
 
   // Variables
-  const request = {
+  const request: SearchQueryRequest = {
     query,
     type: SearchRequestTypes.Publication,
     customFilters: [CustomFiltersTypes.Gardeners],
@@ -37,7 +36,7 @@ const Publications: FC<Props> = ({ query }) => {
   })
 
   const search = data?.search as PublicationSearchResult;
-  const publications = search?.items as BCharityPublication[];
+  const publications = search?.items as Publication[];
   const pageInfo = search?.pageInfo
   const hasMore = pageInfo?.next && publications?.length !== pageInfo.totalCount
 

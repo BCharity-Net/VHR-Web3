@@ -8,6 +8,8 @@ import dynamic from 'next/dynamic'
 import type { Dispatch, FC } from 'react'
 import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
+import { useAppStore } from 'src/store/app'
+import { useAuthStore } from 'src/store/auth'
 import { PROFILE } from 'src/tracking'
 
 import Loader from '../Loader'
@@ -27,6 +29,8 @@ interface Props {
 const SuperFollow: FC<Props> = ({ profile, setFollowing, showText = false, again = false }) => {
   const { t } = useTranslation('common')
   const [showFollowModal, setShowFollowModal] = useState(false)
+  const currentProfile = useAppStore((state) => state.currentProfile)
+  const setShowAuthModal = useAuthStore((state) => state.setShowAuthModal)
 
   return (
     <>
@@ -35,6 +39,10 @@ const SuperFollow: FC<Props> = ({ profile, setFollowing, showText = false, again
         variant="super"
         outline
         onClick={() => {
+          if (!currentProfile) {
+            setShowAuthModal(true)
+            return
+          }
           setShowFollowModal(!showFollowModal)
           Analytics.track(PROFILE.OPEN_SUPER_FOLLOW)
         }}

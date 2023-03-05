@@ -109,7 +109,11 @@ const Search: FC<Props> = ({
                       setSearchText('')
                     }}
                   >
-                    <UserProfile linkToProfile={!onProfileSelected} profile={profile} />
+                    <UserProfile
+                      linkToProfile={!onProfileSelected}
+                      profile={profile}
+                      showUserPreview={false}
+                    />
                   </div>
                 ))}
                 {profiles.length === 0 && <div className="py-2 px-4">No matching users</div>}

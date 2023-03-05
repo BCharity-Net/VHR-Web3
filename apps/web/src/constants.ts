@@ -1,9 +1,7 @@
 import { IS_MAINNET } from 'data/constants';
-import { polygon, polygonMumbai } from 'wagmi/chains';
+import { polygon, polygonMumbai } from '@wagmi/chains';
 
 // Web3
-export const RPC_URL = IS_MAINNET ? 'https://rpc.ankr.com/polygon' : 'https://rpc.ankr.com/polygon_mumbai';
-
 export const POLYGON_MAINNET = {
   ...polygon,
   name: 'Polygon Mainnet',
@@ -15,3 +13,4 @@ export const POLYGON_MUMBAI = {
   rpcUrls: { default: 'https://rpc-mumbai.maticvigil.com' }
 };
 export const CHAIN_ID = IS_MAINNET ? POLYGON_MAINNET.id : POLYGON_MUMBAI.id;
+export const SIMPLEANALYTICS_API_ENDPOINT = 'https://simpleanalytics.com/bcharity.net.json';

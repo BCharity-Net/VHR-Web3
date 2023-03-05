@@ -1,7 +1,7 @@
 import { Card } from '@components/UI/Card'
-import type { BCharityPublication } from '@generated/types'
 import { ExternalLinkIcon } from '@heroicons/react/outline'
 import { IPFS_GATEWAY, POLYGONSCAN_URL } from 'data/constants'
+import type { Publication } from 'lens'
 import type { FC } from 'react'
 
 interface MetaProps {
@@ -23,11 +23,11 @@ const Meta: FC<MetaProps> = ({ name, uri, hash }) => (
 )
 
 interface Props {
-  publication: BCharityPublication
+  publication: Publication
 }
 
 const OnchainMeta: FC<Props> = ({ publication }) => {
-  const hash = publication.onChainContentURI.split('/').pop()
+  const hash = publication.onChainContentURI?.split('/').pop()
   const isArweaveHash = hash?.length === 43
   const isIPFSHash = hash?.length === 46 || hash?.length === 59
 

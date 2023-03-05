@@ -5,13 +5,15 @@ import { Button } from '@components/UI/Button';
 import { Card } from '@components/UI/Card';
 import { ErrorMessage } from '@components/UI/ErrorMessage';
 import { Spinner } from '@components/UI/Spinner';
-import useBroadcast from '@components/utils/hooks/useBroadcast';
-import type { BCharityAttachment, BCharityPublication } from '@generated/types';
+import type { BCharityAttachment } from '@generated/types';
 import type { IGif } from '@giphy/js-types';
 import { ChatAlt2Icon, PencilAltIcon } from '@heroicons/react/outline';
-import type { EncryptedMetadata, FollowCondition } from '@lens-protocol/sdk-gated';
-import { LensEnvironment, LensGatedSDK } from '@lens-protocol/sdk-gated';
-import type { AccessConditionOutput } from '@lens-protocol/sdk-gated/dist/graphql/types';
+import type { CollectCondition, EncryptedMetadata, FollowCondition } from '@lens-protocol/sdk-gated';
+import { LensGatedSDK } from '@lens-protocol/sdk-gated';
+import type {
+  AccessConditionOutput,
+  CreatePublicPostRequest
+} from '@lens-protocol/sdk-gated/dist/graphql/types';
 import { $convertFromMarkdownString } from '@lexical/markdown';
 import { useLexicalComposerContext } from '@lexical/react/LexicalComposerContext';
 import { Analytics } from '@lib/analytics';
@@ -21,7 +23,6 @@ import getTextNftUrl from '@lib/getTextNftUrl';
 import getUserLocale from '@lib/getUserLocale';
 import onError from '@lib/onError';
 import splitSignature from '@lib/splitSignature';
-import trimify from '@lib/trimify';
 import uploadToArweave from '@lib/uploadToArweave';
 import { LensHubProxy } from 'abis';
 import clsx from 'clsx';
@@ -31,15 +32,21 @@ import {
   ALLOWED_VIDEO_TYPES,
   APP_NAME,
   LENSHUB_PROXY,
-  RELAY_ON,
+  LIT_PROTOCOL_ENVIRONMENT,
   SIGN_WALLET
 } from 'data/constants';
-import type { CreatePublicCommentRequest, MetadataAttributeInput, PublicationMetadataV2Input } from 'lens';
+import type {
+  CreatePublicCommentRequest,
+  MetadataAttributeInput,
+  Publication,
+  PublicationMetadataV2Input
+} from 'lens';
 import {
   CollectModules,
   PublicationMainFocus,
   PublicationMetadataDisplayTypes,
   ReferenceModules,
+  useBroadcastMutation,
   useCreateCommentTypedDataMutation,
   useCreateCommentViaDispatcherMutation,
   useCreatePostTypedDataMutation,
@@ -79,7 +86,7 @@ const AccessSettings = dynamic(() => import('@components/Composer/Actions/Access
 });
 
 interface Props {
-  publication: BCharityPublication;
+  publication: Publication;
 }
 
 const NewPublication: FC<Props> = ({ publication }) => {
@@ -114,9 +121,12 @@ const NewPublication: FC<Props> = ({ publication }) => {
 
   // Access module store
   const restricted = useAccessSettingsStore((state) => state.restricted);
+  const followToView = useAccessSettingsStore((state) => state.followToView);
+  const collectToView = useAccessSettingsStore((state) => state.collectToView);
+  const resetAccessSettings = useAccessSettingsStore((state) => state.reset);
 
   // States
-  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [loading, setLoading] = useState(false);
   const [publicationContentError, setPublicationContentError] = useState('');
   const [editor] = useLexicalComposerContext();
   const provider = useProvider();
@@ -132,16 +142,19 @@ const NewPublication: FC<Props> = ({ publication }) => {
     setPublicationContent('');
     setAttachments([]);
     resetCollectSettings();
+    resetAccessSettings();
     if (!isComment) {
       setShowNewPostModal(false);
     }
 
     // Track in simple analytics
-    if (restricted) {
-      Analytics.track(isComment ? COMMENT.TOKEN_GATED : POST.TOKEN_GATED);
-    } else {
-      Analytics.track(isComment ? COMMENT.NEW : POST.NEW);
-    }
+    const eventProperties = {
+      publication_type: restricted ? 'token_gated' : 'public',
+      publication_collect_module: selectedCollectModule,
+      publication_reference_module: selectedReferenceModule,
+      publication_has_attachments: attachments.length > 0
+    };
+    Analytics.track(isComment ? COMMENT.NEW : POST.NEW, eventProperties);
   };
 
   useEffect(() => {
@@ -170,7 +183,7 @@ const NewPublication: FC<Props> = ({ publication }) => {
     };
   };
 
-  const { signTypedDataAsync } = useSignTypedData({ onError });
+  const { signTypedDataAsync, isLoading: typedDataLoading } = useSignTypedData({ onError });
 
   const { error, write } = useContractWrite({
     address: LENSHUB_PROXY,
@@ -184,10 +197,12 @@ const NewPublication: FC<Props> = ({ publication }) => {
     onError
   });
 
-  const { broadcast } = useBroadcast({
+  const [broadcast] = useBroadcastMutation({
     onCompleted: (data) => {
       onCompleted();
-      setTxnQueue([generateOptimisticPublication({ txId: data?.broadcast?.txId }), ...txnQueue]);
+      if (data.broadcast.__typename === 'RelayerResult') {
+        setTxnQueue([generateOptimisticPublication({ txId: data.broadcast.txId }), ...txnQueue]);
+      }
     }
   });
 
@@ -218,28 +233,20 @@ const NewPublication: FC<Props> = ({ publication }) => {
       }),
       sig
     };
-
     setUserSigNonce(userSigNonce + 1);
-    if (!RELAY_ON) {
+    const { data } = await broadcast({ variables: { request: { id, signature } } });
+    if (data?.broadcast.__typename === 'RelayError') {
       return write?.({ recklesslySetUnpreparedArgs: [inputStruct] });
-    }
-
-    const {
-      data: { broadcast: result }
-    } = await broadcast({ request: { id, signature } });
-
-    if ('reason' in result) {
-      write?.({ recklesslySetUnpreparedArgs: [inputStruct] });
     }
   };
 
   const [createCommentTypedData] = useCreateCommentTypedDataMutation({
-    onCompleted: ({ createCommentTypedData }) => typedDataGenerator(createCommentTypedData),
+    onCompleted: async ({ createCommentTypedData }) => await typedDataGenerator(createCommentTypedData),
     onError
   });
 
   const [createPostTypedData] = useCreatePostTypedDataMutation({
-    onCompleted: ({ createPostTypedData }) => typedDataGenerator(createPostTypedData),
+    onCompleted: async ({ createPostTypedData }) => await typedDataGenerator(createPostTypedData),
     onError
   });
 
@@ -278,14 +285,18 @@ const NewPublication: FC<Props> = ({ publication }) => {
     if (isComment) {
       const { data } = await createCommentViaDispatcher({ variables: { request } });
       if (data?.createCommentViaDispatcher?.__typename === 'RelayError') {
-        createCommentTypedData({ variables });
+        return await createCommentTypedData({ variables });
       }
-    } else {
-      const { data } = await createPostViaDispatcher({ variables: { request } });
-      if (data?.createPostViaDispatcher?.__typename === 'RelayError') {
-        createPostTypedData({ variables });
-      }
+
+      return;
     }
+
+    const { data } = await createPostViaDispatcher({ variables: { request } });
+    if (data?.createPostViaDispatcher?.__typename === 'RelayError') {
+      return await createPostTypedData({ variables });
+    }
+
+    return;
   };
 
   const getMainContentFocus = () => {
@@ -311,6 +322,7 @@ const NewPublication: FC<Props> = ({ publication }) => {
     ) {
       return attachments[0]?.item;
     }
+
     return null;
   };
 
@@ -331,15 +343,34 @@ const NewPublication: FC<Props> = ({ publication }) => {
       return toast.error(SIGN_WALLET);
     }
 
-    const tokenGatedSdk = await LensGatedSDK.create({ provider, signer, env: LensEnvironment.Mumbai });
+    // Create the SDK instance
+    const tokenGatedSdk = await LensGatedSDK.create({
+      provider,
+      signer,
+      env: LIT_PROTOCOL_ENVIRONMENT as any
+    });
+
+    // Connect to the SDK
     await tokenGatedSdk.connect({
       address: currentProfile.ownedBy,
-      env: LensEnvironment.Mumbai
+      env: LIT_PROTOCOL_ENVIRONMENT as any
     });
 
     // Condition for gating the content
+    const collectAccessCondition: CollectCondition = { thisPublication: true };
     const followAccessCondition: FollowCondition = { profileId: currentProfile.id };
-    const accessCondition: AccessConditionOutput = { follow: followAccessCondition };
+
+    // Create the access condition
+    let accessCondition: AccessConditionOutput = {};
+    if (collectToView && followToView) {
+      accessCondition = {
+        and: { criteria: [{ collect: collectAccessCondition }, { follow: followAccessCondition }] }
+      };
+    } else if (collectToView) {
+      accessCondition = { collect: collectAccessCondition };
+    } else if (followToView) {
+      accessCondition = { follow: followAccessCondition };
+    }
 
     // Generate the encrypted metadata and upload it to Arweave
     const { contentURI } = await tokenGatedSdk.gated.encryptMetadata(
@@ -364,8 +395,7 @@ const NewPublication: FC<Props> = ({ publication }) => {
     }
 
     try {
-      setIsSubmitting(true);
-
+      setLoading(true);
       if (isAudioPublication) {
         setPublicationContentError('');
         const parsedData = AudioPublicationSchema.safeParse(audioPublication);
@@ -414,9 +444,8 @@ const NewPublication: FC<Props> = ({ publication }) => {
       const metadata: PublicationMetadataV2Input = {
         version: '2.0.0',
         metadata_id: uuid(),
-        description: trimify(publicationContent),
-        content: trimify(publicationContent),
-        external_url: `https://lenster.xyz/u/${currentProfile?.handle}`,
+        content: publicationContent,
+        external_url: `https://bcharity.net/u/${currentProfile?.handle}`,
         image: attachmentsInput.length > 0 ? getAttachmentImage() : textNftImageUrl,
         imageMimeType: attachmentsInput.length > 0 ? getAttachmentImageMimeType() : 'image/svg+xml',
         name: isAudioPublication
@@ -439,7 +468,7 @@ const NewPublication: FC<Props> = ({ publication }) => {
         arweaveId = await createMetadata(metadata);
       }
 
-      const request = {
+      const request: CreatePublicPostRequest | CreatePublicCommentRequest = {
         profileId: currentProfile?.id,
         contentURI: `https://arweave.net/${arweaveId}`,
         ...(isComment && {
@@ -459,24 +488,24 @@ const NewPublication: FC<Props> = ({ publication }) => {
       };
 
       if (currentProfile?.dispatcher?.canUseRelay) {
-        await createViaDispatcher(request);
-      } else {
-        if (isComment) {
-          await createCommentTypedData({
-            variables: {
-              options: { overrideSigNonce: userSigNonce },
-              request: request as CreatePublicCommentRequest
-            }
-          });
-        } else {
-          await createPostTypedData({
-            variables: { options: { overrideSigNonce: userSigNonce }, request }
-          });
-        }
+        return await createViaDispatcher(request);
       }
+
+      if (isComment) {
+        return await createCommentTypedData({
+          variables: {
+            options: { overrideSigNonce: userSigNonce },
+            request: request as CreatePublicCommentRequest
+          }
+        });
+      }
+
+      return await createPostTypedData({
+        variables: { options: { overrideSigNonce: userSigNonce }, request }
+      });
     } catch {
     } finally {
-      setIsSubmitting(false);
+      setLoading(false);
     }
   };
 
@@ -489,6 +518,8 @@ const NewPublication: FC<Props> = ({ publication }) => {
     };
     addAttachments([attachment]);
   };
+
+  const isLoading = loading || typedDataLoading;
 
   return (
     <Card className={clsx({ 'border-none rounded-none': !isComment }, 'pb-3')}>
@@ -507,9 +538,9 @@ const NewPublication: FC<Props> = ({ publication }) => {
         </div>
         <div className="ml-auto pt-2 sm:pt-0">
           <Button
-            disabled={isSubmitting || isUploading}
+            disabled={isLoading || isUploading}
             icon={
-              isSubmitting ? (
+              isLoading ? (
                 <Spinner size="xs" />
               ) : isComment ? (
                 <ChatAlt2Icon className="w-4 h-4" />

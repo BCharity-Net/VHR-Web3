@@ -4,9 +4,8 @@ import IFramely from '@components/Shared/IFramely'
 import Markup from '@components/Shared/Markup'
 import UserProfile from '@components/Shared/UserProfile'
 import { Tooltip } from '@components/UI/Tooltip'
-import getURLs from '@lib/getURLs';
-import dayjs from 'dayjs';
-import relativeTime from 'dayjs/plugin/relativeTime';
+import type { OptimisticTransaction } from '@generated/types'
+import getURLs from '@lib/getURLs'
 import type { Profile } from 'lens'
 import {
   PublicationDocument,
@@ -18,10 +17,8 @@ import type { FC } from 'react'
 import { useAppStore } from 'src/store/app'
 import { useTransactionPersistStore } from 'src/store/transaction'
 
-dayjs.extend(relativeTime)
-
 interface Props {
-  txn: any
+  txn: OptimisticTransaction
 }
 
 const QueuedPublication: FC<Props> = ({ txn }) => {
@@ -46,10 +43,7 @@ const QueuedPublication: FC<Props> = ({ txn }) => {
         cache.modify({
           fields: {
             publications() {
-              cache.writeQuery({
-                data: data?.publication as any,
-                query: PublicationDocument
-              })
+              cache.writeQuery({ data: data?.publication as any, query: PublicationDocument })
             }
           }
         })

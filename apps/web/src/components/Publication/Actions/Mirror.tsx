@@ -1,8 +1,6 @@
 import type { ApolloCache } from '@apollo/client';
 import { Spinner } from '@components/UI/Spinner';
 import { Tooltip } from '@components/UI/Tooltip';
-import useBroadcast from '@components/utils/hooks/useBroadcast';
-import type { BCharityPublication } from '@generated/types';
 import { SwitchHorizontalIcon } from '@heroicons/react/outline';
 import { Analytics } from '@lib/analytics';
 import getSignature from '@lib/getSignature';
@@ -13,10 +11,14 @@ import onError from '@lib/onError';
 import splitSignature from '@lib/splitSignature';
 import { LensHubProxy } from 'abis';
 import clsx from 'clsx';
-import { LENSHUB_PROXY, RELAY_ON, SIGN_WALLET } from 'data/constants';
+import { LENSHUB_PROXY, SIGN_WALLET } from 'data/constants';
 import { motion } from 'framer-motion';
-import type { CreateMirrorRequest } from 'lens';
-import { useCreateMirrorTypedDataMutation, useCreateMirrorViaDispatcherMutation } from 'lens';
+import type { CreateMirrorRequest, Publication } from 'lens';
+import {
+  useBroadcastMutation,
+  useCreateMirrorTypedDataMutation,
+  useCreateMirrorViaDispatcherMutation
+} from 'lens';
 import type { FC } from 'react';
 import { useState } from 'react';
 import toast from 'react-hot-toast';
@@ -25,11 +27,11 @@ import { PUBLICATION } from 'src/tracking';
 import { useContractWrite, useSignTypedData } from 'wagmi';
 
 interface Props {
-  publication: BCharityPublication;
-  isFullPublication: boolean;
+  publication: Publication;
+  showCount: boolean;
 }
 
-const Mirror: FC<Props> = ({ publication, isFullPublication }) => {
+const Mirror: FC<Props> = ({ publication, showCount }) => {
   const isMirror = publication.__typename === 'Mirror';
   const userSigNonce = useAppStore((state) => state.userSigNonce);
   const setUserSigNonce = useAppStore((state) => state.setUserSigNonce);
@@ -38,7 +40,8 @@ const Mirror: FC<Props> = ({ publication, isFullPublication }) => {
     ? publication?.mirrorOf?.stats?.totalAmountOfMirrors
     : publication?.stats?.totalAmountOfMirrors;
   const [mirrored, setMirrored] = useState(
-    publication?.mirrors?.length > 0 || publication?.mirrorOf?.mirrors?.length > 0
+    // @ts-ignore
+    isMirror ? publication?.mirrorOf?.mirrors?.length > 0 : publication?.mirrors?.length > 0
   );
 
   const { isLoading: signLoading, signTypedDataAsync } = useSignTypedData({ onError });
@@ -70,46 +73,39 @@ const Mirror: FC<Props> = ({ publication, isFullPublication }) => {
     onError
   });
 
-  const { broadcast, loading: broadcastLoading } = useBroadcast({ onCompleted, update: updateCache });
+  const [broadcast, { loading: broadcastLoading }] = useBroadcastMutation({
+    onCompleted,
+    update: updateCache
+  });
   const [createMirrorTypedData, { loading: typedDataLoading }] = useCreateMirrorTypedDataMutation({
     onCompleted: async ({ createMirrorTypedData }) => {
-      try {
-        const { id, typedData } = createMirrorTypedData;
-        const {
-          profileId,
-          profileIdPointed,
-          pubIdPointed,
-          referenceModule,
-          referenceModuleData,
-          referenceModuleInitData,
-          deadline
-        } = typedData.value;
-        const signature = await signTypedDataAsync(getSignature(typedData));
-        const { v, r, s } = splitSignature(signature);
-        const sig = { v, r, s, deadline };
-        const inputStruct = {
-          profileId,
-          profileIdPointed,
-          pubIdPointed,
-          referenceModule,
-          referenceModuleData,
-          referenceModuleInitData,
-          sig
-        };
-
-        setUserSigNonce(userSigNonce + 1);
-        if (!RELAY_ON) {
-          return write?.({ recklesslySetUnpreparedArgs: [inputStruct] });
-        }
-
-        const {
-          data: { broadcast: result }
-        } = await broadcast({ request: { id, signature } });
-
-        if ('reason' in result) {
-          write?.({ recklesslySetUnpreparedArgs: [inputStruct] });
-        }
-      } catch {}
+      const { id, typedData } = createMirrorTypedData;
+      const {
+        profileId,
+        profileIdPointed,
+        pubIdPointed,
+        referenceModule,
+        referenceModuleData,
+        referenceModuleInitData,
+        deadline
+      } = typedData.value;
+      const signature = await signTypedDataAsync(getSignature(typedData));
+      const { v, r, s } = splitSignature(signature);
+      const sig = { v, r, s, deadline };
+      const inputStruct = {
+        profileId,
+        profileIdPointed,
+        pubIdPointed,
+        referenceModule,
+        referenceModuleData,
+        referenceModuleInitData,
+        sig
+      };
+      setUserSigNonce(userSigNonce + 1);
+      const { data } = await broadcast({ variables: { request: { id, signature } } });
+      if (data?.broadcast.__typename === 'RelayError') {
+        return write?.({ recklesslySetUnpreparedArgs: [inputStruct] });
+      }
     },
     onError
   });
@@ -125,7 +121,7 @@ const Mirror: FC<Props> = ({ publication, isFullPublication }) => {
       variables: { request }
     });
     if (data?.createMirrorViaDispatcher?.__typename === 'RelayError') {
-      createMirrorTypedData({
+      await createMirrorTypedData({
         variables: {
           options: { overrideSigNonce: userSigNonce },
           request
@@ -134,38 +130,45 @@ const Mirror: FC<Props> = ({ publication, isFullPublication }) => {
     }
   };
 
-  const createMirror = () => {
+  const createMirror = async () => {
     if (!currentProfile) {
       return toast.error(SIGN_WALLET);
     }
 
-    const request = {
-      profileId: currentProfile?.id,
-      publicationId: publication?.id,
-      referenceModule: {
-        followerOnlyReferenceModule: false
-      }
-    };
+    try {
+      const request: CreateMirrorRequest = {
+        profileId: currentProfile?.id,
+        publicationId: publication?.id,
+        referenceModule: {
+          followerOnlyReferenceModule: false
+        }
+      };
 
-    if (currentProfile?.dispatcher?.canUseRelay) {
-      createViaDispatcher(request);
-    } else {
-      createMirrorTypedData({
+      if (currentProfile?.dispatcher?.canUseRelay) {
+        return await createViaDispatcher(request);
+      }
+
+      return await createMirrorTypedData({
         variables: {
           options: { overrideSigNonce: userSigNonce },
           request
         }
       });
-    }
+    } catch {}
   };
 
   const isLoading = typedDataLoading || dispatcherLoading || signLoading || writeLoading || broadcastLoading;
-  const iconClassName = isFullPublication ? 'w-[17px] sm:w-[20px]' : 'w-[15px] sm:w-[18px]';
+  const iconClassName = showCount ? 'w-[17px] sm:w-[20px]' : 'w-[15px] sm:w-[18px]';
 
   return (
-    <motion.button whileTap={{ scale: 0.9 }} onClick={createMirror} disabled={isLoading} aria-label="Mirror">
-      <span className={clsx(mirrored ? 'text-green-500' : 'text-brand', 'flex items-center space-x-1')}>
-        <span
+    <div className={clsx(mirrored ? 'text-green-500' : 'text-brand', 'flex items-center space-x-1')}>
+      <motion.button
+        whileTap={{ scale: 0.9 }}
+        onClick={createMirror}
+        disabled={isLoading}
+        aria-label="Mirror"
+      >
+        <div
           className={clsx(
             mirrored ? 'hover:bg-green-300' : 'hover:bg-brand-300',
             'p-1.5 rounded-full hover:bg-opacity-20'
@@ -178,12 +181,10 @@ const Mirror: FC<Props> = ({ publication, isFullPublication }) => {
               <SwitchHorizontalIcon className={iconClassName} />
             </Tooltip>
           )}
-        </span>
-        {count > 0 && !isFullPublication && (
-          <span className="text-[11px] sm:text-xs">{nFormatter(count)}</span>
-        )}
-      </span>
-    </motion.button>
+          </div>
+      </motion.button>
+      {count > 0 && !showCount && <span className="text-[11px] sm:text-xs">{nFormatter(count)}</span>}
+    </div>
   );
 };
 

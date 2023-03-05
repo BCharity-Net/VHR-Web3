@@ -1,23 +1,19 @@
-import type { BCharityPublication } from '@generated/types'
-import { MEDIA_PROXY_URL } from 'data/constants'
-
-import getIPFSLink from './getIPFSLink'
+import { STATIC_IMAGES_URL } from 'data/constants';
+import type { MetadataOutput } from 'lens';
+import getIPFSLink from 'utils/getIPFSLink';
 
 /**
  *
  * @param publication - The publication to get the thumbnail url from
  * @returns the thumbnail url from a publication
  */
-const getThumbnailUrl = (publication: BCharityPublication | undefined): string => {
-  if (!publication) {
-    return ''
+const getThumbnailUrl = (metadata?: MetadataOutput): string => {
+  if (!metadata) {
+    return '';
   }
-  const url =
-    publication.metadata?.cover?.original.url ||
-    publication.metadata?.image ||
-    `${MEDIA_PROXY_URL}/placeholder.webp`
 
-  return getIPFSLink(url)
-}
+  const url = metadata?.cover?.original.url || metadata?.image || `${STATIC_IMAGES_URL}/placeholder.webp`;
+  return getIPFSLink(url);
+};
 
-export default getThumbnailUrl
+export default getThumbnailUrl;

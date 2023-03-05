@@ -47,6 +47,9 @@ const MutualFollowers: FC<Props> = ({ setShowMutualFollowersModal, profile, vari
           <img
             key={profile.handle}
             className="w-5 h-5 rounded-full border dark:border-gray-700/80"
+            onError={({ currentTarget }) => {
+              currentTarget.src = getAvatar(profile, false);
+            }}
             src={getAvatar(profile)}
             alt={formatHandle(profile?.handle)}
           />

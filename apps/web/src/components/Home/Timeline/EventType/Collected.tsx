@@ -5,7 +5,7 @@ import type { FC } from 'react'
 import ProfileCircles from './ProfileCircles'
 
 interface Props {
-  collects: Array<CollectedEvent>
+  collects: CollectedEvent[]
 }
 
 const Collected: FC<Props> = ({ collects }) => {

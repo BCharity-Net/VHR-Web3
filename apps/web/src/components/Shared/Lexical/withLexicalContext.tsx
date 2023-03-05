@@ -20,19 +20,18 @@ const initialConfig = {
   },
   nodes: [CodeNode, MentionNode, HashtagNode, AutoLinkNode, LinkNode, EmojiNode],
   editorState: null,
-  onError: (error: any) => {
+  onError: (error: Error) => {
     console.error(error);
   }
 };
 
-const withLexicalContext = (Component: FC<any>, editable = true) => {
+const withLexicalContext = (Component: FC<any>) => {
   const LexicalContext = (props: any) => (
-    <LexicalComposer initialConfig={{ ...initialConfig, editable }}>
+    <LexicalComposer initialConfig={{ ...initialConfig }}>
       <Component {...props} />
     </LexicalComposer>
   );
 
-  LexicalContext.displayName = 'EditorContext';
   return LexicalContext;
 };
 

@@ -1,5 +1,5 @@
 import Message from '@components/Profile/Message'
-import Follow from '@components/Shared/Follow'
+import Follow, { FollowSource } from '@components/Shared/Follow'
 import Markup from '@components/Shared/Markup'
 import Slug from '@components/Shared/Slug'
 import SuperFollow from '@components/Shared/SuperFollow'
@@ -19,12 +19,13 @@ import getAttribute from '@lib/getAttribute'
 import getAvatar from '@lib/getAvatar'
 import isStaff from '@lib/isStaff'
 import isVerified from '@lib/isVerified'
-import { STATIC_IMAGES_URL } from 'data/constants'
+import { RARIBLE_URL, STATIC_IMAGES_URL } from 'data/constants'
+import getEnvConfig from 'data/utils/getEnvConfig'
 import type { Profile } from 'lens'
 import Link from 'next/link'
 import { useRouter } from 'next/router'
 import { useTheme } from 'next-themes'
-import type { FC, ReactElement } from 'react'
+import type { Dispatch, FC, ReactElement } from 'react'
 import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useAppStore } from 'src/store/app'
@@ -37,12 +38,13 @@ import MutualFollowersList from './MutualFollowers/List'
 
 interface Props {
   profile: Profile
+  following: boolean
+  setFollowing: Dispatch<boolean>
 }
 
-const Details: FC<Props> = ({ profile }) => {
+const Details: FC<Props> = ({ profile, following, setFollowing }) => {
   const { t } = useTranslation('common')
   const currentProfile = useAppStore((state) => state.currentProfile)
-  const [following, setFollowing] = useState(profile?.isFollowedByMe)
   const [showMutualFollowersModal, setShowMutualFollowersModal] = useState(false)
   const { allowed: staffMode } = useStaffMode()
   const { resolvedTheme } = useTheme()
@@ -74,6 +76,9 @@ const Details: FC<Props> = ({ profile }) => {
     <div className="px-5 mb-4 space-y-5 sm:px-0">
       <div className="relative -mt-24 w-32 h-32 sm:-mt-32 sm:w-52 sm:h-52">
         <img
+          onError={({ currentTarget }) => {
+            currentTarget.src = getAvatar(profile, false);
+          }}
           src={getAvatar(profile)}
           className="w-32 h-32 bg-gray-200 rounded-xl ring-8 ring-gray-50 sm:w-52 sm:h-52 dark:bg-gray-700 dark:ring-black"
           height={128}
@@ -133,7 +138,12 @@ const Details: FC<Props> = ({ profile }) => {
               </div>
             ) : (
               <div className="flex space-x-2">
-                <Follow profile={profile} setFollowing={setFollowing} showText />
+                <Follow
+                  profile={profile}
+                  setFollowing={setFollowing}
+                  followSource={FollowSource.PROFILE_PAGE}
+                  showText
+                />
                 {currentProfile && <Message onClick={onMessageClick} />}
               </div>
             )
@@ -155,7 +165,17 @@ const Details: FC<Props> = ({ profile }) => {
         <div className="w-full divider" />
         <div className="space-y-2">
           <MetaDetails icon={<HashtagIcon className="w-4 h-4" />}>
-            <Tooltip content={`#${parseInt(profile?.id)}`}>{profile?.id}</Tooltip>
+            <Tooltip content={`#${profile?.id}`}>
+              <a
+                href={`${RARIBLE_URL}/token/polygon/${getEnvConfig().lensHubProxyAddress}:${parseInt(
+                  profile?.id
+                )}`}
+                target="_blank"
+                rel="noreferrer"
+              >
+                {parseInt(profile?.id)}
+              </a>
+            </Tooltip>
           </MetaDetails>
           {getAttribute(profile?.attributes, 'location') && (
             <MetaDetails icon={<LocationMarkerIcon className="w-4 h-4" />}>

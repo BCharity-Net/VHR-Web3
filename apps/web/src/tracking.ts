@@ -1,9 +1,11 @@
 // Strings used for events tracking
+export const PAGEVIEW = 'pageview';
 
 export const USER = {
   LOGIN: 'user_login',
   LOGOUT: 'user_logout',
-  SIWL: 'sign_in_with_lens'
+  SIWL: 'sign_in_with_lens',
+  CHANGE_WALLET: 'change_wallet'
 };
 
 export const PROFILE = {
@@ -55,6 +57,12 @@ export const PUBLICATION = {
     OPEN_COLLECTORS: 'open_collectors_list',
     OPEN_UNISWAP: 'open_uniswap'
   },
+  TOKEN_GATED: {
+    DECRYPT: 'decrypt_token_gated_publication',
+    CHECKLIST_NAVIGATED_TO_COLLECT: 'decrypt_checklist_navigated_to_collect',
+    CHECKLIST_NAVIGATED_TO_TOKEN: 'decrypt_checklist_navigated_to_token',
+    CHECKLIST_NAVIGATED_TO_NFT: 'decrypt_checklist_navigated_to_nft'
+  },
   NEW: {
     MARKDOWN_PREVIEW: 'preview_markdown',
     OPEN_GIF: 'open_gif_modal',
@@ -64,7 +72,12 @@ export const PUBLICATION = {
       UPLOAD_AUDIO: 'select_upload_audio'
     },
     COLLECT_MODULE: {
-      OPEN_COLLECT_SETTINGS: 'open_collect_module_settings'
+      OPEN_COLLECT_SETTINGS: 'open_collect_module_settings',
+      TOGGLE_COLLECT_MODULE: 'toggle_collect_module',
+      TOGGLE_CHARGE_FOR_COLLECT: 'toggle_charge_for_collect',
+      TOGGLE_LIMITED_EDITION_COLLECT: 'toggle_limited_edition_collect',
+      TOGGLE_TIME_LIMIT_COLLECT: 'toggle_time_limit_collect',
+      TOGGLE_FOLLOWERS_ONLY_COLLECT: 'toggle_followers_only_collect'
     },
     REFERENCE_MODULE: {
       OPEN_REFERENCE_SETTINGS: 'open_reference_module_settings',
@@ -74,26 +87,29 @@ export const PUBLICATION = {
       FRIENDS_OF_FRIENDS: 'select_friends_of_friends_reference'
     },
     ACCESS: {
-      OPEN_ACCESS_SETTINGS: 'open_access_settings'
+      OPEN_ACCESS_SETTINGS: 'open_access_settings',
+      TOGGLE_RESTRICTED_ACCESS: 'toggle_restricted_access',
+      TOGGLE_COLLECT_TO_VIEW_ACCESS: 'toggle_collect_to_view_access',
+      TOGGLE_FOLLOW_TO_VIEW_ACCESS: 'toggle_follow_to_view_access'
     }
   }
 };
 
 export const POST = {
-  NEW: 'new_post',
-  TOKEN_GATED: 'new_token_gated_post'
+  NEW: 'new_post'
 };
 
 export const COMMENT = {
-  NEW: 'new_comment',
-  TOKEN_GATED: 'new_token_gated_comment'
+  NEW: 'new_comment'
 };
 
 export const NOTIFICATION = {
   OPEN: 'open_notifications',
   SWITCH_ALL: 'switch_to_all_notifications',
   SWITCH_MENTIONS: 'switch_to_mentions_notifications',
-  SWITCH_COMMENTS: 'switch_to_comments_notifications'
+  SWITCH_COMMENTS: 'switch_to_comments_notifications',
+  SWITCH_COLLECTS: 'switch_to_collects_notifications',
+  SWITCH_LIKES: 'switch_to_likes_notifications'
 };
 
 export const MESSAGES = {
@@ -103,8 +119,6 @@ export const MESSAGES = {
 
 export const SETTINGS = {
   ACCOUNT: {
-    OPEN_REFLECT_ENABLE: 'open_reflect_enable',
-    OPEN_REFLECT_DISABLE: 'open_reflect_disable',
     OPEN_VERIFICATION: 'open_account_verification',
     SET_DEFAULT_PROFILE: 'set_default_profile',
     SET_SUPER_FOLLOW: 'set_super_follow'
@@ -141,8 +155,7 @@ export const SEARCH = {
 };
 
 export const SYSTEM = {
-  SWITCH_LIGHT_THEME: 'switch_light_theme',
-  SWITCH_DARK_THEME: 'switch_dark_theme',
+  SWITCH_THEME: 'switch_theme',
   SWITCH_NETWORK: 'switch_network'
 };
 
@@ -163,5 +176,6 @@ export const FOOTER = {
   VOTE: 'open_vote',
   FEEDBACK: 'open_feedback',
   GITHUB: 'open_github',
+  TRANSLATE: 'open_translate',
   VERCEL: 'open_vercel'
 };

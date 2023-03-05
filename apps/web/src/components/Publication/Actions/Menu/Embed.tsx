@@ -1,13 +1,13 @@
-import type { BCharityPublication } from '@generated/types'
 import { Menu } from '@headlessui/react'
 import { CodeIcon } from '@heroicons/react/outline'
 import { Analytics } from '@lib/analytics'
 import clsx from 'clsx'
-import type { FC } from 'react'
+import type { Publication } from 'lens'
+import type { FC, MouseEvent } from 'react'
 import { PUBLICATION } from 'src/tracking'
 
 interface Props {
-  publication: BCharityPublication
+  publication: Publication
 }
 
 const Embed: FC<Props> = ({ publication }) => {
@@ -17,7 +17,7 @@ const Embed: FC<Props> = ({ publication }) => {
       className={({ active }) =>
         clsx({ 'dropdown-active': active }, 'block px-4 py-1.5 text-sm m-2 rounded-lg cursor-pointer')
       }
-      onClick={() => {
+      onClick={(event: MouseEvent<HTMLAnchorElement>) => {
         Analytics.track(PUBLICATION.EMBED)
       }}
       href={`https://embed.withlens.app/?url=${publication?.id}`}

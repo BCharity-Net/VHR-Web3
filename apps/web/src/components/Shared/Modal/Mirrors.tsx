@@ -4,11 +4,12 @@ import { ErrorMessage } from '@components/UI/ErrorMessage'
 import InfiniteLoader from '@components/UI/InfiniteLoader'
 import { SwitchHorizontalIcon } from '@heroicons/react/outline'
 import { SCROLL_THRESHOLD } from 'data/constants'
-import type { Profile } from 'lens';
+import type { Profile, ProfileQueryRequest } from 'lens';
 import { useMirrorsQuery } from 'lens'
 import type { FC } from 'react'
 import InfiniteScroll from 'react-infinite-scroll-component'
 
+import { FollowSource } from '../Follow'
 import Loader from '../Loader'
 
 interface Props {
@@ -17,7 +18,7 @@ interface Props {
 
 const Mirrors: FC<Props> = ({ publicationId }) => {
   // Variables
-  const request = { whoMirroredPublicationId: publicationId, limit: 10 }
+  const request: ProfileQueryRequest = { whoMirroredPublicationId: publicationId, limit: 10 }
 
   const { data, loading, error, fetchMore } = useMirrorsQuery({
     variables: { request },
@@ -51,7 +52,7 @@ const Mirrors: FC<Props> = ({ publicationId }) => {
   }
 
   return (
-    <div className="overflow-y-auto max-h-[80vh]">
+    <div className="max-h-[80vh] overflow-y-auto" id="scrollableMirrorsDiv">
       <ErrorMessage className="m-5" title="Failed to load mirrors" error={error} />
       <InfiniteScroll
         dataLength={profiles?.length ?? 0}
@@ -59,16 +60,19 @@ const Mirrors: FC<Props> = ({ publicationId }) => {
         hasMore={hasMore}
         next={loadMore}
         loader={<InfiniteLoader />}
-        scrollableTarget="scrollableDiv"
+        scrollableTarget="scrollableMirrorsDiv"
       >
         <div className="divide-y dark:divide-gray-700">
-          {profiles?.map((profile) => (
+          {profiles?.map((profile, index) => (
             <div className="p-5" key={profile?.id}>
               <UserProfile
                 profile={profile as Profile}
+                isFollowing={profile?.isFollowedByMe}
+                followPosition={index + 1}
+                followSource={FollowSource.MIRRORS_MODAL}
                 showBio
                 showFollow
-                isFollowing={profile?.isFollowedByMe}
+                showUserPreview={false}
               />
             </div>
           ))}

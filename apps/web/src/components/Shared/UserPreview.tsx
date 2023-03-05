@@ -7,17 +7,17 @@ import Tippy from '@tippyjs/react';
 import clsx from 'clsx';
 import type { Profile } from 'lens';
 import { useProfileLazyQuery } from 'lens';
-import type { FC } from 'react';
-import React, { useState } from 'react';
+import type { FC, ReactNode } from 'react';
+import { useState } from 'react';
 
-import Follow from './Follow';
+import Follow, { FollowSource } from './Follow';
 import Markup from './Markup';
 import Slug from './Slug';
 import SuperFollow from './SuperFollow';
 
-type Props = {
+interface Props {
   profile: Profile;
-  children: React.ReactNode;
+  children: ReactNode;
   isBig?: boolean;
   followStatusLoading?: boolean;
   showUserPreview?: boolean;
@@ -39,6 +39,9 @@ const UserPreview: FC<Props> = ({
 
   const UserAvatar = () => (
     <img
+      onError={({ currentTarget }) => {
+        currentTarget.src = getAvatar(lazyProfile, false);
+      }}
       src={getAvatar(lazyProfile)}
       loading="lazy"
       className={clsx(
@@ -74,7 +77,11 @@ const UserPreview: FC<Props> = ({
             ) : following ? null : lazyProfile?.followModule?.__typename === 'FeeFollowModuleSettings' ? (
               <SuperFollow profile={lazyProfile} setFollowing={setFollowing} />
             ) : (
-              <Follow profile={lazyProfile} setFollowing={setFollowing} />
+              <Follow
+                profile={lazyProfile}
+                setFollowing={setFollowing}
+                followSource={FollowSource.PROFILE_POPOVER}
+              />
             ))}
         </div>
       </div>
@@ -114,21 +121,25 @@ const UserPreview: FC<Props> = ({
   };
 
   return showUserPreview ? (
-    <div onMouseOver={onPreviewStart}>
-      <Tippy
-        placement="bottom-start"
-        delay={[800, 0]}
-        hideOnClick={false}
-        content={<Preview />}
-        arrow={false}
-        interactive
-        zIndex={1000}
-        className="!bg-white hidden md:block !px-1.5 !py-3 !text-black dark:!text-white w-64 dark:!bg-black border dark:border-gray-700 !rounded-xl"
-        appendTo={() => document.body}
-      >
+    <span onMouseOver={onPreviewStart}>
+      {lazyProfile?.id ? (
+        <Tippy
+          placement="bottom-start"
+          delay={[800, 0]}
+          hideOnClick={false}
+          content={<Preview />}
+          arrow={false}
+          interactive
+          zIndex={1000}
+          className="!bg-white hidden md:block !px-1.5 !py-3 !text-black dark:!text-white w-64 dark:!bg-black border dark:border-gray-700 !rounded-xl"
+          appendTo={() => document.body}
+        >
+          <span>{children}</span>
+        </Tippy>
+      ) : (
         <span>{children}</span>
-      </Tippy>
-    </div>
+      )}
+    </span>
   ) : (
     <span>{children}</span>
   );

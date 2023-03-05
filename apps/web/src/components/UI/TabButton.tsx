@@ -1,21 +1,28 @@
-import nFormatter from '@lib/nFormatter'
 import clsx from 'clsx'
+import { useRouter } from 'next/router'
 import type { FC, ReactNode } from 'react'
 
 interface Props {
   name: string
   icon: ReactNode
   active: boolean
+  type?: string
   count?: number
   showOnSm?: boolean
   onClick: () => void
 }
 
-const TabButton: FC<Props> = ({ name, icon, active, count, showOnSm = false, onClick }) => {
+const TabButton: FC<Props> = ({ name, icon, active, type, count, showOnSm = false, onClick }) => {
+  const router = useRouter()
   return (
     <button
       type="button"
-      onClick={onClick}
+      onClick={() => {
+        if (type) {
+          router.replace({ query: { ...router.query, type } }, undefined, { shallow: true });
+        }
+        onClick();
+      }}
       className={clsx(
         { 'text-brand bg-brand-100 dark:bg-opacity-20 bg-opacity-100': active },
         'flex items-center space-x-2 rounded-lg text-sm px-4 sm:px-3 font-medium py-2 sm:py-1.5 text-gray-500 hover:bg-brand-100 dark:hover:bg-opacity-20 hover:bg-opacity-100'
@@ -24,16 +31,6 @@ const TabButton: FC<Props> = ({ name, icon, active, count, showOnSm = false, onC
     >
       {icon}
       <span className={clsx({ 'hidden sm:block': !showOnSm })}>{name}</span>
-      {count ? (
-        <span
-          className={clsx(
-            { 'bg-brand-200 dark:bg-brand-800': active },
-            'px-2 text-xs rounded-full bg-gray-200 dark:bg-gray-800'
-          )}
-        >
-          {nFormatter(count)}
-        </span>
-      ) : null}
     </button>
   )
 }

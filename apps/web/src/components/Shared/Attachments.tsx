@@ -1,13 +1,13 @@
 import { Button } from '@components/UI/Button';
 import { LightBox } from '@components/UI/LightBox';
-import type { BCharityPublication, NewBCharityAttachment } from '@generated/types';
+import type { NewBCharityAttachment } from '@generated/types';
 import { ExternalLinkIcon, XIcon } from '@heroicons/react/outline';
 import { Analytics } from '@lib/analytics';
 import getIPFSLink from '@lib/getIPFSLink';
 import imageProxy from '@lib/imageProxy';
 import clsx from 'clsx';
 import { ALLOWED_AUDIO_TYPES, ALLOWED_VIDEO_TYPES, ATTACHMENT } from 'data/constants';
-import type { MediaSet } from 'lens';
+import type { MediaSet, Publication } from 'lens';
 import type { FC } from 'react';
 import { useState } from 'react';
 import { usePublicationStore } from 'src/store/publication';
@@ -39,7 +39,7 @@ interface Props {
   attachments: any;
   isNew?: boolean;
   hideDelete?: boolean;
-  publication?: BCharityPublication;
+  publication?: Publication;
   txn?: any;
 }
 
@@ -62,6 +62,10 @@ const Attachments: FC<Props> = ({
     );
   };
 
+  const getCoverUrl = () => {
+    return publication?.metadata?.cover?.original.url || publication?.metadata?.image;
+  };
+
   const slicedAttachments = isNew
     ? attachments?.slice(0, 4)
     : attachments?.some((e: any) => ALLOWED_VIDEO_TYPES.includes(e?.original?.mimeType))
@@ -75,7 +79,7 @@ const Attachments: FC<Props> = ({
           const type = isNew ? attachment.type : attachment.original?.mimeType;
           const url = isNew
             ? attachment.previewItem || getIPFSLink(attachment.item!)
-            : getIPFSLink(attachment.original?.url);
+            : getIPFSLink(attachment.original?.url) || getIPFSLink(attachment.item!);
 
           return (
             <div
@@ -108,15 +112,24 @@ const Attachments: FC<Props> = ({
                   <span>Open Image in new tab</span>
                 </Button>
               ) : ALLOWED_VIDEO_TYPES.includes(type) ? (
-                <Video src={url} />
+                <Video src={url} poster={getCoverUrl()} />
               ) : ALLOWED_AUDIO_TYPES.includes(type) ? (
-                <Audio src={url} isNew={isNew} publication={publication} txn={txn} />
+                <Audio
+                  src={url}
+                  isNew={isNew}
+                  publication={publication}
+                  txn={txn}
+                  expandCover={(url) => setExpandedImage(url)}
+                />
               ) : (
                 <img
                   className="object-cover bg-gray-100 rounded-lg border cursor-pointer dark:bg-gray-800 dark:border-gray-700/80"
                   loading="lazy"
                   height={1000}
                   width={1000}
+                  onError={({ currentTarget }) => {
+                    currentTarget.src = url;
+                  }}
                   onClick={() => {
                     setExpandedImage(url);
                     Analytics.track(PUBLICATION.ATTACHEMENT.IMAGE.OPEN);

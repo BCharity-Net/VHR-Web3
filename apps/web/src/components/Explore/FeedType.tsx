@@ -4,8 +4,8 @@ import { PublicationMainFocus } from 'lens'
 import type { Dispatch, FC } from 'react'
 
 interface Props {
-  setFocus: Dispatch<any>
-  focus: string
+  setFocus: Dispatch<PublicationMainFocus>
+  focus?: PublicationMainFocus
 }
 
 const FeedType: FC<Props> = ({ setFocus, focus }) => {
@@ -18,7 +18,7 @@ const FeedType: FC<Props> = ({ setFocus, focus }) => {
     <button
       type="button"
       onClick={() => {
-        setFocus(type)
+        setFocus(type as PublicationMainFocus)
         Analytics.track(`select ${(type ?? 'all_posts')?.toLowerCase()} filter in explore`)
       }}
       className={clsx(

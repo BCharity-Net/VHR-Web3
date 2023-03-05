@@ -1,137 +1,189 @@
-import MetaTags from '@components/Common/MetaTags'
-import { Card } from '@components/UI/Card'
-import { GridItemEight, GridItemFour, GridLayout } from '@components/UI/GridLayout'
-import useStaffMode from '@components/utils/hooks/useStaffMode'
+import MetaTags from '@components/Common/MetaTags';
+import { Card } from '@components/UI/Card';
+import { GridItemEight, GridItemFour, GridLayout } from '@components/UI/GridLayout';
+import useStaffMode from '@components/utils/hooks/useStaffMode';
 import {
-  CashIcon,
+  ArrowDownIcon,
+  ArrowUpIcon,
   ChatAlt2Icon,
   CollectionIcon,
   FireIcon,
   SwitchHorizontalIcon,
   UserAddIcon,
   UsersIcon
-} from '@heroicons/react/outline'
-import { PencilAltIcon } from '@heroicons/react/solid'
-import getTokenImage from '@lib/getTokenImage'
-import humanize from '@lib/humanize'
-import { APP_NAME, ERROR_MESSAGE } from 'data/constants'
-import type { Erc20Amount } from 'lens'
-import { useBCharityStatsQuery } from 'lens'
-import type { NextPage } from 'next'
-import type { FC, ReactNode } from 'react'
-import Custom404 from 'src/pages/404'
+} from '@heroicons/react/outline';
+import { PencilAltIcon } from '@heroicons/react/solid';
+import humanize from '@lib/humanize';
+import { Leafwatch } from '@lib/leafwatch';
+import clsx from 'clsx';
+import { APP_NAME, ERROR_MESSAGE } from 'data/constants';
+import { useBCharityStatsQuery } from 'lens';
+import type { NextPage } from 'next';
+import type { FC, ReactNode } from 'react';
+import { useEffect } from 'react';
+import Custom404 from 'src/pages/404';
+import { PAGEVIEW } from 'src/tracking';
 
-import Sidebar from '../Sidebar'
+import StaffToolsSidebar from '../Sidebar';
 
 interface StatBoxProps {
-  icon: ReactNode
-  value: number
-  title: string
+  icon: ReactNode;
+  value: number;
+  todayValue: number;
+  differenceValue: number;
+  title: string;
 }
 
-const StatBox: FC<StatBoxProps> = ({ icon, value, title }) => (
-  <Card className="px-7 py-4 w-full" forceRounded>
-    <div className="flex items-center space-x-2">
+export const StatBox: FC<StatBoxProps> = ({ icon, value, todayValue, differenceValue, title }) => (
+  <Card className="w-full px-7 py-4" forceRounded>
+    <div className="lt-text-gray-500">{title}</div>
+    <div className="flex items-center space-x-2.5">
       {icon}
-      <b className="text-lg">{humanize(value)}</b>
+      <div>
+        <div className="text-lg font-bold">{humanize(value)}</div>
+        <div className="flex items-center space-x-1 text-xs">
+          {differenceValue === 0 ? (
+            <SwitchHorizontalIcon className="h-3 w-3 text-yellow-500" />
+          ) : differenceValue <= 0 ? (
+            <ArrowDownIcon className="h-3 w-3 text-red-500" />
+          ) : (
+            <ArrowUpIcon className="h-3 w-3 text-green-500" />
+          )}
+          <span
+            className={clsx(
+              differenceValue === 0
+                ? 'text-yellow-500'
+                : differenceValue <= 0
+                ? 'text-red-500'
+                : 'text-green-500'
+            )}
+          >
+            <b>{humanize(todayValue)} today</b> (
+            {differenceValue === 0 ? '' : differenceValue <= 0 ? '-' : '+'}
+            {humanize(differenceValue).replace('-', '')})
+          </span>
+        </div>
+      </div>
     </div>
-    <div className="text-gray-500">{title}</div>
   </Card>
-)
+);
 
 const Stats: NextPage = () => {
-  const { allowed } = useStaffMode()
+  const { allowed } = useStaffMode();
 
-  const { data, loading, error } = useBCharityStatsQuery({ pollInterval: 1000 })
+  useEffect(() => {
+    Leafwatch.track(PAGEVIEW, { page: 'stafftools', subpage: 'stats' });
+  }, []);
+
+  const { data, loading, error } = useBCharityStatsQuery({
+    variables: { request: { sources: [APP_NAME] } }
+  });
+
+  const { data: todayData, loading: todayLoading } = useBCharityStatsQuery({
+    variables: {
+      request: {
+        sources: [APP_NAME],
+        fromTimestamp: Math.floor(Date.now() / 1000) - 60 * 60 * 24,
+        toTimestamp: Math.floor(Date.now() / 1000)
+      }
+    }
+  });
+
+  const { data: yesterdayData, loading: yesterdayLoading } = useBCharityStatsQuery({
+    variables: {
+      request: {
+        sources: [APP_NAME],
+        fromTimestamp: Math.floor(Date.now() / 1000) - 60 * 60 * 24 * 2,
+        toTimestamp: Math.floor(Date.now() / 1000) - 60 * 60 * 24
+      }
+    }
+  });
 
   if (!allowed) {
-    return <Custom404 />
+    return <Custom404 />;
   }
 
-  const stats: any = data?.globalProtocolStats
+  const stats: any = data?.globalProtocolStats;
+  const yesterdayStats: any = yesterdayData?.globalProtocolStats;
+  const todayStats: any = todayData?.globalProtocolStats;
 
   return (
     <GridLayout>
       <MetaTags title={`Stafftools • ${APP_NAME}`} />
       <GridItemFour>
-        <Sidebar />
+        <StaffToolsSidebar />
       </GridItemFour>
       <GridItemEight className="space-y-5">
         <Card className="p-5">
           {error ? (
             <b className="text-red-500">{ERROR_MESSAGE}</b>
-          ) : loading ? (
+          ) : loading || todayLoading || yesterdayLoading ? (
             <div>Loading...</div>
           ) : (
-            <>
-              <section className="space-y-3">
-                <h1 className="text-xl font-bold mb-4">Stats</h1>
-                <div className="block sm:flex space-y-3 sm:space-y-0 sm:space-x-3 justify-between">
-                  <StatBox
-                    icon={<UsersIcon className="w-4 h-4" />}
-                    value={stats?.totalProfiles}
-                    title="total profiles"
-                  />
-                  <StatBox
-                    icon={<FireIcon className="w-4 h-4" />}
-                    value={stats?.totalBurntProfiles}
-                    title="profiles burnt"
-                  />
-                  <StatBox
-                    icon={<PencilAltIcon className="w-4 h-4" />}
-                    value={stats?.totalPosts}
-                    title="total posts"
-                  />
-                </div>
-                <div className="block sm:flex space-y-3 sm:space-y-0 sm:space-x-3 justify-between">
-                  <StatBox
-                    icon={<SwitchHorizontalIcon className="w-4 h-4" />}
-                    value={stats?.totalMirrors}
-                    title="total mirrors"
-                  />
-                  <StatBox
-                    icon={<ChatAlt2Icon className="w-4 h-4" />}
-                    value={stats?.totalComments}
-                    title="total comments"
-                  />
-                </div>
-                <div className="block sm:flex space-y-3 sm:space-y-0 sm:space-x-3 justify-between">
-                  <StatBox
-                    icon={<CollectionIcon className="w-4 h-4" />}
-                    value={stats?.totalCollects}
-                    title="total collects"
-                  />
-                  <StatBox
-                    icon={<UserAddIcon className="w-4 h-4" />}
-                    value={stats?.totalFollows}
-                    title="total follows"
-                  />
-                </div>
-              </section>
-              <section className="mt-5">
-                <h1 className="text-xl font-bold mb-4">Revenue stats</h1>
-                <div className="space-y-2">
-                  {stats?.totalRevenue.map((revenue: Erc20Amount) => (
-                    <div key={revenue?.asset?.address} className="flex items-center space-x-1">
-                      <img
-                        className="w-5 h-5"
-                        src={getTokenImage(revenue?.asset?.symbol)}
-                        alt="revenue?.asset?.symbol"
-                      />
-                      <span>
-                        <b>{parseFloat(revenue?.value).toFixed(2)}</b> {revenue?.asset?.symbol}
-                      </span>
-                    </div>
-                  ))}
-                </div>
-              </section>
-            </>
+            <section className="space-y-3">
+              <h1 className="mb-4 text-xl font-bold">Stats</h1>
+              <div className="block justify-between space-y-3 sm:flex sm:space-y-0 sm:space-x-3">
+                <StatBox
+                  icon={<UsersIcon className="h-6 w-6" />}
+                  value={stats?.totalProfiles}
+                  todayValue={todayStats?.totalProfiles}
+                  differenceValue={yesterdayStats?.totalProfiles - todayStats?.totalProfiles}
+                  title="total profiles"
+                />
+                <StatBox
+                  icon={<FireIcon className="h-6 w-6" />}
+                  value={stats?.totalBurntProfiles}
+                  todayValue={todayStats?.totalBurntProfiles}
+                  differenceValue={yesterdayStats?.totalBurntProfiles - todayStats?.totalBurntProfiles}
+                  title="profiles burnt"
+                />
+                <StatBox
+                  icon={<PencilAltIcon className="h-6 w-6" />}
+                  value={stats?.totalPosts}
+                  todayValue={todayStats?.totalPosts}
+                  differenceValue={yesterdayStats?.totalPosts - todayStats?.totalPosts}
+                  title="total posts"
+                />
+              </div>
+              <div className="block justify-between space-y-3 sm:flex sm:space-y-0 sm:space-x-3">
+                <StatBox
+                  icon={<SwitchHorizontalIcon className="h-6 w-6" />}
+                  value={stats?.totalMirrors}
+                  todayValue={todayStats?.totalMirrors}
+                  differenceValue={yesterdayStats?.totalMirrors - todayStats?.totalMirrors}
+                  title="total mirrors"
+                />
+                <StatBox
+                  icon={<ChatAlt2Icon className="h-6 w-6" />}
+                  value={stats?.totalComments}
+                  todayValue={todayStats?.totalComments}
+                  differenceValue={yesterdayStats?.totalComments - todayStats?.totalComments}
+                  title="total comments"
+                />
+              </div>
+              <div className="block justify-between space-y-3 sm:flex sm:space-y-0 sm:space-x-3">
+                <StatBox
+                  icon={<CollectionIcon className="h-6 w-6" />}
+                  value={stats?.totalCollects}
+                  todayValue={todayStats?.totalCollects}
+                  differenceValue={yesterdayStats?.totalCollects - todayStats?.totalCollects}
+                  title="total collects"
+                />
+                <StatBox
+                  icon={<UserAddIcon className="h-6 w-6" />}
+                  value={stats?.totalFollows}
+                  todayValue={todayStats?.totalFollows}
+                  differenceValue={yesterdayStats?.totalFollows - todayStats?.totalFollows}
+                  title="total follows"
+                />
+              </div>
+            </section>
           )}
           <div />
         </Card>
       </GridItemEight>
     </GridLayout>
-  )
-}
+  );
+};
 
-export default Stats
+export default Stats;

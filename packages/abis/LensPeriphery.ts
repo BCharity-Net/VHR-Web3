@@ -131,4 +131,4 @@ export const LensPeriphery = [
     stateMutability: 'nonpayable',
     type: 'function'
   }
-]
+];

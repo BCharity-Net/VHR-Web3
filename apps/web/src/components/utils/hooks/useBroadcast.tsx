@@ -1,15 +1,29 @@
-import type { ApolloCache } from '@apollo/client'
-import { ERRORS } from 'data/constants'
-import { useBroadcastMutation } from 'lens'
+import { ApolloCache, gql, useMutation } from '@apollo/client'
 import toast from 'react-hot-toast'
+import { ERRORS } from 'data/constants'
+
+const BROADCAST_MUTATION = gql`
+  mutation Broadcast($request: BroadcastRequest!) {
+    broadcast(request: $request) {
+      ... on RelayerResult {
+        txHash
+      }
+      ... on RelayError {
+        reason
+      }
+    }
+  }
+`
 
 interface Props {
+  // eslint-disable-next-line no-unused-vars
   onCompleted?: (data: any) => void
+  // eslint-disable-next-line no-unused-vars
   update?: (cache: ApolloCache<any>) => void
 }
 
-const useBroadcast = ({ onCompleted, update }: Props): { broadcast: any; data: any; loading: boolean } => {
-  const [broadcast, { data, loading }] = useBroadcastMutation({
+export const useBroadcast = ({ onCompleted, update }: Props) => {
+  const [broadcast, { data, loading }] = useMutation(BROADCAST_MUTATION, {
     onCompleted,
     update,
     onError: (error) => {

@@ -1,16 +1,15 @@
 import { useMutation } from '@apollo/client'
 import { Button } from '@components/UI/Button'
 import { Spinner } from '@components/UI/Spinner'
-import useBroadcast from '@components/utils/hooks/useBroadcast'
 import { Group } from '@generated/types'
 import { PlusIcon } from '@heroicons/react/outline'
 import getSignature from '@lib/getSignature'
 import onError from '@lib/onError'
 import splitSignature from '@lib/splitSignature'
 import { LensHubProxy } from 'abis'
-import { LENSHUB_PROXY, RELAY_ON, SIGN_WALLET } from 'data/constants'
+import { LENSHUB_PROXY, SIGN_WALLET } from 'data/constants'
 import type { Mutation } from 'lens'
-import { CreateCollectBroadcastItemResult, CreateCollectTypedDataDocument } from 'lens'
+import { CreateCollectBroadcastItemResult, useCreateCollectTypedDataMutation, useBroadcastMutation, } from 'lens'
 import type { Dispatch, FC } from 'react'
 import toast from 'react-hot-toast'
 import { useAppStore } from 'src/store/app'
@@ -43,58 +42,50 @@ const Join: FC<Props> = ({ group, setJoined, showJoin = true }) => {
     onError
   })
 
-  const { broadcast, loading: broadcastLoading } = useBroadcast({ onCompleted })
-  const [createCollectTypedData, { loading: typedDataLoading }] = useMutation<Mutation>(
-    CreateCollectTypedDataDocument,
-    {
-      onCompleted: async ({
-        createCollectTypedData
-      }: {
-        createCollectTypedData: CreateCollectBroadcastItemResult
-      }) => {
-        try {
-          const { id, typedData } = createCollectTypedData
-          const { profileId, pubId, data: collectData, deadline } = typedData?.value
-          const signature = await signTypedDataAsync(getSignature(typedData))
-          const { v, r, s } = splitSignature(signature)
-          const sig = { v, r, s, deadline }
-          const inputStruct = {
-            collector: address,
-            profileId,
-            pubId,
-            data: collectData,
-            sig
-          }
+  const [broadcast, { loading: broadcastLoading }] = useBroadcastMutation({
+    onCompleted
+  })
+  const [createCollectTypedData, { loading: typedDataLoading }] = useCreateCollectTypedDataMutation({
+    onCompleted: async ({
+      createCollectTypedData
+    }: {
+      createCollectTypedData: CreateCollectBroadcastItemResult
+    }) => {
+      const { id, typedData } = createCollectTypedData
+      const { profileId, pubId, data: collectData, deadline } = typedData?.value
+      const signature = await signTypedDataAsync(getSignature(typedData))
+      const { v, r, s } = splitSignature(signature)
+      const sig = { v, r, s, deadline }
+      const inputStruct = {
+        collector: address,
+        profileId,
+        pubId,
+        data: collectData,
+        sig
+      }
 
-          setUserSigNonce(userSigNonce + 1)
-          if (RELAY_ON) {
-            const {
-              data: { broadcast: result }
-            } = await broadcast({ request: { id, signature } })
+      setUserSigNonce(userSigNonce + 1)
+      const { data } = await broadcast({ variables: { request: { id, signature } } })
+      if (data?.broadcast.__typename === 'RelayError') {
+      return write?.({ recklesslySetUnpreparedArgs: [inputStruct] })
+      }
+    },
+    onError
+  })
 
-            if ('reason' in result) {
-              write?.({ recklesslySetUnpreparedArgs: [inputStruct] })
-            }
-          } else {
-            write?.({ recklesslySetUnpreparedArgs: [inputStruct] })
-          }
-        } catch {}
-      },
-      onError
-    }
-  )
-
-  const createCollect = () => {
+  const createCollect = async () => {
     if (!currentProfile) {
       return toast.error(SIGN_WALLET)
     }
 
-    createCollectTypedData({
-      variables: {
-        options: { overrideSigNonce: userSigNonce },
-        request: { publicationId: group.id }
-      }
-    })
+    try {
+      await createCollectTypedData({
+        variables: {
+          options: { overrideSigNonce: userSigNonce },
+          request: { publicationId: group.id }
+        }
+      })
+    } catch {}
   }
 
   return (

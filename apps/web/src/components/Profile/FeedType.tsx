@@ -10,7 +10,7 @@ import {
 } from '@heroicons/react/outline'
 import isVerified from '@lib/isVerified'
 import { Analytics } from '@lib/analytics'
-import type { Profile, ProfileStats } from 'lens'
+import type { Profile } from 'lens'
 import type { Dispatch, FC } from 'react'
 import { useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
@@ -25,7 +25,6 @@ import OrgVerifiedHours from './Count/OrgVerifiedHours'
 import MediaFilter from './Filters/MediaFilter'
 
 interface Props {
-  stats: ProfileStats
   address: string
   id: string
   setFeedType: Dispatch<string>
@@ -33,7 +32,7 @@ interface Props {
   profile: Profile
 }
 
-const FeedType: FC<Props> = ({ stats, address, id, setFeedType, feedType, profile }) => {
+const FeedType: FC<Props> = ({ address, id, setFeedType, feedType, profile }) => {
   const { t } = useTranslation('common')
   const [orgVerifiedHours, setOrgVerifiedHours] = useState(0)
   const [orgVolunteers, setOrgVolunteers] = useState(0)
@@ -97,7 +96,7 @@ const FeedType: FC<Props> = ({ stats, address, id, setFeedType, feedType, profil
             name={t('Posts')}
             icon={<PencilAltIcon className="w-4 h-4" />}
             active={feedType === 'FEED'}
-            count={stats?.totalPosts + stats?.totalMirrors}
+            type="feed"
             onClick={() => {
               setFeedType('FEED')
               Analytics.track(PROFILE.SWITCH_FEED)
@@ -107,7 +106,7 @@ const FeedType: FC<Props> = ({ stats, address, id, setFeedType, feedType, profil
             name={t('Comments')}
             icon={<ChatAlt2Icon className="w-4 h-4" />}
             active={feedType === 'REPLIES'}
-            count={stats?.totalComments}
+            type="replies"
             onClick={() => {
               setFeedType('REPLIES')
               Analytics.track(PROFILE.SWITCH_REPLIES)
@@ -117,6 +116,7 @@ const FeedType: FC<Props> = ({ stats, address, id, setFeedType, feedType, profil
             name="Media"
             icon={<FilmIcon className="w-4 h-4" />}
             active={feedType === 'MEDIA'}
+            type="media"
             onClick={() => {
               setFeedType('MEDIA')
               Analytics.track(PROFILE.SWITCH_MEDIA)
@@ -126,6 +126,7 @@ const FeedType: FC<Props> = ({ stats, address, id, setFeedType, feedType, profil
             name="NFTs"
             icon={<PhotographIcon className="w-4 h-4" />}
             active={feedType === 'NFT'}
+            type="nft"
             onClick={() => {
               setFeedType('NFT')
               Analytics.track(PROFILE.SWITCH_NFTS)

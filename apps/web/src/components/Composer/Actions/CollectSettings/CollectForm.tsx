@@ -10,12 +10,15 @@ import {
   SwitchHorizontalIcon,
   UserGroupIcon
 } from '@heroicons/react/outline';
+import { Analytics } from '@lib/analytics';
 import type { Erc20 } from 'lens';
 import { CollectModules, useEnabledModulesQuery } from 'lens';
 import type { Dispatch, FC } from 'react';
 import { useEffect } from 'react';
+import { useAccessSettingsStore } from 'src/store/access-settings';
 import { useAppStore } from 'src/store/app';
 import { useCollectModuleStore } from 'src/store/collect-module';
+import { PUBLICATION } from 'src/tracking';
 
 interface Props {
   setShowModal: Dispatch<boolean>;
@@ -39,6 +42,7 @@ const CollectForm: FC<Props> = ({ setShowModal }) => {
   const setFollowerOnly = useCollectModuleStore((state) => state.setFollowerOnly);
   const setPayload = useCollectModuleStore((state) => state.setPayload);
   const reset = useCollectModuleStore((state) => state.reset);
+  const setCollectToView = useAccessSettingsStore((state) => state.setCollectToView);
 
   const {
     RevertCollectModule,
@@ -62,6 +66,7 @@ const CollectForm: FC<Props> = ({ setShowModal }) => {
 
     switch (selectedCollectModule) {
       case RevertCollectModule:
+        setCollectToView(false);
         setPayload({ revertCollectModule: true });
         break;
       case FreeCollectModule:
@@ -127,6 +132,7 @@ const CollectForm: FC<Props> = ({ setShowModal }) => {
   }
 
   const toggleCollect = () => {
+    Analytics.track(PUBLICATION.NEW.COLLECT_MODULE.TOGGLE_COLLECT_MODULE);
     if (selectedCollectModule === RevertCollectModule) {
       return setSelectedCollectModule(FreeCollectModule);
     } else {
@@ -139,7 +145,7 @@ const CollectForm: FC<Props> = ({ setShowModal }) => {
     <div className="p-5 space-y-3">
       <div className="flex items-center space-x-2">
         <Toggle on={selectedCollectModule !== RevertCollectModule} setOn={toggleCollect} />
-        <div className="text-gray-500 dark:text-gray-400 text-sm font-bold">This post can be collected</div>
+        <div className="lt-text-gray-500 text-sm font-bold">This post can be collected</div>
       </div>
       {selectedCollectModule !== RevertCollectModule && (
         <div className="ml-5">
@@ -149,8 +155,14 @@ const CollectForm: FC<Props> = ({ setShowModal }) => {
               <span>Charge for collecting</span>
             </div>
             <div className="flex items-center space-x-2">
-              <Toggle on={Boolean(amount)} setOn={() => setAmount(amount ? null : '0')} />
-              <div className="text-gray-500 dark:text-gray-400 text-sm font-bold">
+              <Toggle
+                on={Boolean(amount)}
+                setOn={() => {
+                  setAmount(amount ? null : '0');
+                  Analytics.track(PUBLICATION.NEW.COLLECT_MODULE.TOGGLE_CHARGE_FOR_COLLECT);
+                }}
+              />
+              <div className="lt-text-gray-500 text-sm font-bold">
                 Get paid whenever someone collects your post
               </div>
             </div>
@@ -171,7 +183,7 @@ const CollectForm: FC<Props> = ({ setShowModal }) => {
                   <div>
                     <div className="label">Select Currency</div>
                     <select
-                      className="w-full bg-white rounded-xl border border-gray-300 outline-none dark:bg-gray-800 disabled:bg-gray-500 disabled:bg-opacity-20 disabled:opacity-60 dark:border-gray-700/80 focus:border-brand-500 focus:ring-brand-400"
+                      className="w-full bg-white rounded-xl border border-gray-300 outline-none dark:bg-gray-800 disabled:bg-gray-500 disabled:bg-opacity-20 disabled:opacity-60 dark:border-gray-700 focus:border-brand-500 focus:ring-brand-400"
                       onChange={(e) => setSelectedCurrency(e.target.value)}
                     >
                       {data?.enabledModuleCurrencies.map((currency: Erc20) => (
@@ -191,7 +203,7 @@ const CollectForm: FC<Props> = ({ setShowModal }) => {
                     <SwitchHorizontalIcon className="h-4 w-4 text-brand-500" />
                     <span>Mirror referral reward</span>
                   </div>
-                  <div className="text-gray-500 dark:text-gray-400 text-sm font-bold">
+                  <div className="lt-text-gray-500 text-sm font-bold">
                     Share your collect fee with people who amplify your content
                   </div>
                   <div className="text-sm pt-2 flex space-x-2">
@@ -222,11 +234,12 @@ const CollectForm: FC<Props> = ({ setShowModal }) => {
                 <div className="flex items-center space-x-2">
                   <Toggle
                     on={Boolean(collectLimit)}
-                    setOn={() => setCollectLimit(collectLimit ? null : '1')}
+                    setOn={() => {
+                      setCollectLimit(collectLimit ? null : '1');
+                      Analytics.track(PUBLICATION.NEW.COLLECT_MODULE.TOGGLE_LIMITED_EDITION_COLLECT);
+                    }}
                   />
-                  <div className="text-gray-500 dark:text-gray-400 text-sm font-bold">
-                    Make the collects exclusive
-                  </div>
+                  <div className="lt-text-gray-500 text-sm font-bold">Make the collects exclusive</div>
                 </div>
                 {collectLimit ? (
                   <div className="text-sm pt-2 flex space-x-2">
@@ -250,10 +263,14 @@ const CollectForm: FC<Props> = ({ setShowModal }) => {
                   <span>Time limit</span>
                 </div>
                 <div className="flex items-center space-x-2">
-                  <Toggle on={hasTimeLimit} setOn={() => setHasTimeLimit(!hasTimeLimit)} />
-                  <div className="text-gray-500 dark:text-gray-400 text-sm font-bold">
-                    Limit collecting to the first 24h
-                  </div>
+                  <Toggle
+                    on={hasTimeLimit}
+                    setOn={() => {
+                      setHasTimeLimit(!hasTimeLimit);
+                      Analytics.track(PUBLICATION.NEW.COLLECT_MODULE.TOGGLE_TIME_LIMIT_COLLECT);
+                    }}
+                  />
+                  <div className="lt-text-gray-500 text-sm font-bold">Limit collecting to the first 24h</div>
                 </div>
               </div>
             </>
@@ -264,10 +281,14 @@ const CollectForm: FC<Props> = ({ setShowModal }) => {
               <span>Who can collect</span>
             </div>
             <div className="flex items-center space-x-2">
-              <Toggle on={followerOnly} setOn={() => setFollowerOnly(!followerOnly)} />
-              <div className="text-gray-500 dark:text-gray-400 text-sm font-bold">
-                Only followers can collect
-              </div>
+              <Toggle
+                on={followerOnly}
+                setOn={() => {
+                  setFollowerOnly(!followerOnly);
+                  Analytics.track(PUBLICATION.NEW.COLLECT_MODULE.TOGGLE_FOLLOWERS_ONLY_COLLECT);
+                }}
+              />
+              <div className="lt-text-gray-500 text-sm font-bold">Only followers can collect</div>
             </div>
           </div>
         </div>

@@ -1,7 +1,8 @@
 import Markup from '@components/Shared/Markup'
 import UserPreview from '@components/Shared/UserPreview'
+import type { MessageDescriptor } from '@generated/types'
 import { ChatAlt2Icon } from '@heroicons/react/solid'
-import formatTime from '@lib/formatTime';
+import formatTime from '@lib/formatTime'
 import dayjs from 'dayjs'
 import relativeTime from 'dayjs/plugin/relativeTime'
 import type { NewCommentNotification } from 'lens'

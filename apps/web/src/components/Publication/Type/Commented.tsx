@@ -1,14 +1,14 @@
-import type { BCharityPublication } from '@generated/types'
+import type { Comment } from 'lens'
 import type { FC } from 'react'
 
 import ThreadBody from '../ThreadBody'
 
 interface Props {
-  publication: BCharityPublication
+  publication: Comment
 }
 
 const Commented: FC<Props> = ({ publication }) => {
-  const commentOn: BCharityPublication | any = publication?.commentOn
+  const commentOn: Comment | any = publication?.commentOn
   const mainPost = commentOn?.mainPost
   const publicationType = mainPost?.metadata?.attributes[0]?.value
 

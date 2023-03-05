@@ -6,7 +6,7 @@ import { ErrorMessage } from '@components/UI/ErrorMessage'
 import InfiniteLoader from '@components/UI/InfiniteLoader'
 import { UsersIcon } from '@heroicons/react/outline'
 import { SCROLL_THRESHOLD } from 'data/constants'
-import type { Profile, ProfileSearchResult } from 'lens';
+import type { Profile, ProfileSearchResult, SearchQueryRequest } from 'lens';
 import { CustomFiltersTypes, SearchRequestTypes, useSearchProfilesQuery } from 'lens'
 import type { FC } from 'react'
 import { useTranslation } from 'react-i18next'
@@ -20,7 +20,7 @@ const Profiles: FC<Props> = ({ query }) => {
   const { t } = useTranslation('common')
 
   // Variables
-  const request = {
+  const request: SearchQueryRequest = {
     query,
     type: SearchRequestTypes.Profile,
     customFilters: [CustomFiltersTypes.Gardeners],

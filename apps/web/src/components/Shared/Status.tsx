@@ -3,7 +3,6 @@ import { ErrorMessage } from '@components/UI/ErrorMessage';
 import { Form, useZodForm } from '@components/UI/Form';
 import { Input } from '@components/UI/Input';
 import { Spinner } from '@components/UI/Spinner';
-import useBroadcast from '@components/utils/hooks/useBroadcast';
 import { PencilIcon } from '@heroicons/react/outline';
 import { Analytics } from '@lib/analytics';
 import getAttribute from '@lib/getAttribute';
@@ -12,9 +11,10 @@ import onError from '@lib/onError';
 import splitSignature from '@lib/splitSignature';
 import uploadToArweave from '@lib/uploadToArweave';
 import { LensPeriphery } from 'abis';
-import { APP_NAME, LENS_PERIPHERY, RELAY_ON, SIGN_WALLET } from 'data/constants';
+import { APP_NAME, LENS_PERIPHERY, SIGN_WALLET } from 'data/constants';
 import type { CreatePublicSetProfileMetadataUriRequest } from 'lens';
 import {
+  useBroadcastMutation,
   useCreateSetProfileMetadataTypedDataMutation,
   useCreateSetProfileMetadataViaDispatcherMutation,
   useProfileSettingsQuery
@@ -29,13 +29,12 @@ import { useContractWrite, useSignTypedData } from 'wagmi';
 import { object, string } from 'zod';
 
 import EmojiPicker from './EmojiPicker';
-import IndexStatus from './IndexStatus';
 import Loader from './Loader';
 
 const editStatusSchema = object({
   status: string()
-    .min(1, { message: 'Status should atleast have 1 character' })
-    .max(100, { message: 'Status should not exceed 100 characters' })
+    .min(1, { message: `Status should not be empty` })
+    .max(100, { message: `Status should not exceed 100 characters` })
 });
 
 const Status: FC = () => {
@@ -58,16 +57,12 @@ const Status: FC = () => {
   });
 
   const onCompleted = () => {
-    toast.success('Status updated successfully!');
+    toast.success(`Status updated successfully!`);
   };
 
   const { isLoading: signLoading, signTypedDataAsync } = useSignTypedData({ onError });
 
-  const {
-    data: writeData,
-    isLoading: writeLoading,
-    write
-  } = useContractWrite({
+  const { isLoading: writeLoading, write } = useContractWrite({
     address: LENS_PERIPHERY,
     abi: LensPeriphery,
     functionName: 'setProfileMetadataURIWithSig',
@@ -76,40 +71,32 @@ const Status: FC = () => {
     onError
   });
 
-  const { broadcast, data: broadcastData, loading: broadcastLoading } = useBroadcast({ onCompleted });
+  const [broadcast, { loading: broadcastLoading }] = useBroadcastMutation({
+    onCompleted
+  });
   const [createSetProfileMetadataTypedData, { loading: typedDataLoading }] =
     useCreateSetProfileMetadataTypedDataMutation({
       onCompleted: async ({ createSetProfileMetadataTypedData }) => {
-        try {
-          const { id, typedData } = createSetProfileMetadataTypedData;
-          const { profileId, metadata, deadline } = typedData.value;
-          const signature = await signTypedDataAsync(getSignature(typedData));
-          const { v, r, s } = splitSignature(signature);
-          const sig = { v, r, s, deadline };
-          const inputStruct = {
-            user: currentProfile?.ownedBy,
-            profileId,
-            metadata,
-            sig
-          };
-
-          if (!RELAY_ON) {
-            return write?.({ recklesslySetUnpreparedArgs: [inputStruct] });
-          }
-
-          const {
-            data: { broadcast: result }
-          } = await broadcast({ request: { id, signature } });
-
-          if ('reason' in result) {
-            write?.({ recklesslySetUnpreparedArgs: [inputStruct] });
-          }
-        } catch {}
+        const { id, typedData } = createSetProfileMetadataTypedData;
+        const { profileId, metadata, deadline } = typedData.value;
+        const signature = await signTypedDataAsync(getSignature(typedData));
+        const { v, r, s } = splitSignature(signature);
+        const sig = { v, r, s, deadline };
+        const inputStruct = {
+          user: currentProfile?.ownedBy,
+          profileId,
+          metadata,
+          sig
+        };
+        const { data } = await broadcast({ variables: { request: { id, signature } } });
+        if (data?.broadcast.__typename === 'RelayError') {
+          return write?.({ recklesslySetUnpreparedArgs: [inputStruct] });
+        }
       },
       onError
     });
 
-  const [createSetProfileMetadataViaDispatcher, { data: dispatcherData, loading: dispatcherLoading }] =
+  const [createSetProfileMetadataViaDispatcher, { loading: dispatcherLoading }] =
     useCreateSetProfileMetadataViaDispatcherMutation({ onCompleted, onError });
 
   const createViaDispatcher = async (request: CreatePublicSetProfileMetadataUriRequest) => {
@@ -117,7 +104,7 @@ const Status: FC = () => {
       variables: { request }
     });
     if (data?.createSetProfileMetadataViaDispatcher?.__typename === 'RelayError') {
-      createSetProfileMetadataTypedData({
+      await createSetProfileMetadataTypedData({
         variables: { request }
       });
     }
@@ -129,68 +116,73 @@ const Status: FC = () => {
     if (!currentProfile) {
       return toast.error(SIGN_WALLET);
     }
-    setIsUploading(true);
-    const id = await uploadToArweave({
-      name: profile?.name ?? '',
-      bio: profile?.bio ?? '',
-      cover_picture:
-        profile?.coverPicture?.__typename === 'MediaSet' ? profile?.coverPicture?.original?.url ?? '' : '',
-      attributes: [
-        { traitType: 'string', key: 'location', value: getAttribute(profile?.attributes, 'location') },
-        { traitType: 'string', key: 'website', value: getAttribute(profile?.attributes, 'website') },
-        {
-          traitType: 'string',
-          key: 'twitter',
-          value: getAttribute(profile?.attributes, 'twitter')?.replace('https://twitter.com/', '')
-        },
-        {
-          traitType: 'boolean',
-          key: 'hasPrideLogo',
-          value: getAttribute(profile?.attributes, 'hasPrideLogo')
-        },
-        { traitType: 'string', key: 'statusEmoji', value: emoji },
-        { traitType: 'string', key: 'statusMessage', value: status },
-        { traitType: 'string', key: 'app', value: APP_NAME }
-      ],
-      version: '1.0.0',
-      metadata_id: uuid(),
-      createdOn: new Date(),
-      appId: APP_NAME
-    }).finally(() => setIsUploading(false));
 
-    const request = {
-      profileId: currentProfile?.id,
-      metadata: `https://arweave.net/${id}`
-    };
+    try {
+      setIsUploading(true);
+      const id = await uploadToArweave({
+        name: profile?.name ?? '',
+        bio: profile?.bio ?? '',
+        cover_picture:
+          profile?.coverPicture?.__typename === 'MediaSet' ? profile?.coverPicture?.original?.url ?? '' : '',
+        attributes: [
+          ...(profile?.attributes
+            ?.filter(
+              (attr) =>
+                ![
+                  'location',
+                  'website',
+                  'twitter',
+                  'hasPrideLogo',
+                  'statusEmoji',
+                  'statusMessage',
+                  'app'
+                ].includes(attr.key)
+            )
+            .map(({ key, value }) => ({ key, value })) ?? []),
+          { key: 'location', value: getAttribute(profile?.attributes, 'location') },
+          { key: 'website', value: getAttribute(profile?.attributes, 'website') },
+          {
+            key: 'twitter',
+            value: getAttribute(profile?.attributes, 'twitter')?.replace('https://twitter.com/', '')
+          },
+          { key: 'hasPrideLogo', value: getAttribute(profile?.attributes, 'hasPrideLogo') },
+          { key: 'statusEmoji', value: emoji },
+          { key: 'statusMessage', value: status },
+          { key: 'app', value: APP_NAME }
+        ],
+        version: '1.0.0',
+        metadata_id: uuid()
+      }).finally(() => setIsUploading(false));
 
-    if (currentProfile?.dispatcher?.canUseRelay) {
-      createViaDispatcher(request);
-    } else {
-      createSetProfileMetadataTypedData({
+      const request: CreatePublicSetProfileMetadataUriRequest = {
+        profileId: currentProfile?.id,
+        metadata: `https://arweave.net/${id}`
+      };
+
+      if (currentProfile?.dispatcher?.canUseRelay) {
+        return await createViaDispatcher(request);
+      }
+
+      return await createSetProfileMetadataTypedData({
         variables: { request }
       });
-    }
+    } catch {}
   };
 
   if (loading) {
     return (
       <div className="p-5">
-        <Loader message="Loading status settings" />
+        <Loader message={`Loading status settings`} />
       </div>
     );
   }
 
   if (error) {
-    return <ErrorMessage title="Failed to load status settings" error={error} />;
+    return <ErrorMessage title={`Failed to load status settings`} error={error} />;
   }
 
   const isLoading =
     isUploading || typedDataLoading || dispatcherLoading || signLoading || writeLoading || broadcastLoading;
-  const txHash =
-    writeData?.hash ??
-    broadcastData?.broadcast?.txHash ??
-    (dispatcherData?.createSetProfileMetadataViaDispatcher.__typename === 'RelayerResult' &&
-      dispatcherData?.createSetProfileMetadataViaDispatcher.txHash);
 
   return (
     <div className="p-5 space-y-5">
@@ -204,36 +196,31 @@ const Status: FC = () => {
       >
         <Input
           prefix={<EmojiPicker emoji={emoji} setEmoji={setEmoji} />}
-          placeholder="What's happening?"
+          placeholder={`What's happening?`}
           {...form.register('status')}
         />
-        <div className="flex flex-col space-y-2">
-          <div className="flex items-center space-x-2">
-            <Button
-              className="ml-auto"
-              type="submit"
-              variant="danger"
-              disabled={isLoading}
-              outline
-              onClick={() => {
-                setEmoji('');
-                form.setValue('status', '');
-                editStatus('', '');
-                Analytics.track(SETTINGS.PROFILE.CLEAR_STATUS);
-              }}
-            >
-              Clear status
-            </Button>
-            <Button
-              className="ml-auto"
-              type="submit"
-              disabled={isLoading}
-              icon={isLoading ? <Spinner size="xs" /> : <PencilIcon className="w-4 h-4" />}
-            >
-              Save
-            </Button>
-          </div>
-          {txHash ? <IndexStatus txHash={txHash} reload /> : null}
+        <div className="flex items-center space-x-2 ml-auto">
+          <Button
+            type="submit"
+            variant="danger"
+            disabled={isLoading}
+            outline
+            onClick={() => {
+              setEmoji('');
+              form.setValue('status', '');
+              editStatus('', '');
+              Analytics.track(SETTINGS.PROFILE.CLEAR_STATUS);
+            }}
+          >
+            Clear status
+          </Button>
+          <Button
+            type="submit"
+            disabled={isLoading}
+            icon={isLoading ? <Spinner size="xs" /> : <PencilIcon className="w-4 h-4" />}
+          >
+            Save
+          </Button>
         </div>
       </Form>
     </div>

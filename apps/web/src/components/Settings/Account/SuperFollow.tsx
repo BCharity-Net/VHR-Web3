@@ -1,11 +1,9 @@
 
-import IndexStatus from '@components/Shared/IndexStatus'
 import { Button } from '@components/UI/Button'
 import { Card } from '@components/UI/Card'
 import { Form, useZodForm } from '@components/UI/Form'
 import { Input } from '@components/UI/Input'
 import { Spinner } from '@components/UI/Spinner'
-import useBroadcast from '@components/utils/hooks/useBroadcast'
 import { StarIcon, XIcon } from '@heroicons/react/outline'
 import { Analytics } from '@lib/analytics'
 import getSignature from '@lib/getSignature'
@@ -13,9 +11,10 @@ import getTokenImage from '@lib/getTokenImage'
 import onError from '@lib/onError'
 import splitSignature from '@lib/splitSignature'
 import { LensHubProxy } from 'abis'
-import { ADDRESS_REGEX, DEFAULT_COLLECT_TOKEN, LENSHUB_PROXY, RELAY_ON, SIGN_WALLET } from 'data/constants'
+import { ADDRESS_REGEX, DEFAULT_COLLECT_TOKEN, LENSHUB_PROXY, SIGN_WALLET } from 'data/constants'
 import type { Erc20 } from 'lens'
 import {
+  useBroadcastMutation,
   useCreateSetFollowModuleTypedDataMutation,
   useEnabledCurrencyModulesWithProfileQuery
 } from 'lens'
@@ -45,11 +44,7 @@ const SuperFollow: FC = () => {
     Analytics.track(SETTINGS.ACCOUNT.SET_SUPER_FOLLOW)
   }
 
-  const {
-    data: writeData,
-    isLoading: writeLoading,
-    write
-  } = useContractWrite({
+  const { isLoading: writeLoading, write } = useContractWrite({
     address: LENSHUB_PROXY,
     abi: LensHubProxy,
     functionName: 'setFollowModuleWithSig',
@@ -72,66 +67,60 @@ const SuperFollow: FC = () => {
     }
   })
 
-  const { broadcast, data: broadcastData, loading: broadcastLoading } = useBroadcast({ onCompleted })
+  const [broadcast, { loading: broadcastLoading }] = useBroadcastMutation({
+    onCompleted
+  })
   const [createSetFollowModuleTypedData, { loading: typedDataLoading }] =
     useCreateSetFollowModuleTypedDataMutation({
       onCompleted: async ({ createSetFollowModuleTypedData }) => {
-        try {
-          const { id, typedData } = createSetFollowModuleTypedData
-          const { profileId, followModule, followModuleInitData, deadline } = typedData.value
-          const signature = await signTypedDataAsync(getSignature(typedData))
-          const { v, r, s } = splitSignature(signature)
-          const sig = { v, r, s, deadline }
-          const inputStruct = {
-            profileId,
-            followModule,
-            followModuleInitData,
-            sig
-          }
-
-          setUserSigNonce(userSigNonce + 1)
-          if (!RELAY_ON) {
-            return write?.({ recklesslySetUnpreparedArgs: [inputStruct] })
-          }
-
-          const {
-            data: { broadcast: result }
-          } = await broadcast({ request: { id, signature } })
-
-          if ('reason' in result) {
-            write?.({ recklesslySetUnpreparedArgs: [inputStruct] })
-          }
-        } catch {}
+        const { id, typedData } = createSetFollowModuleTypedData
+        const { profileId, followModule, followModuleInitData, deadline } = typedData.value
+        const signature = await signTypedDataAsync(getSignature(typedData))
+        const { v, r, s } = splitSignature(signature)
+        const sig = { v, r, s, deadline }
+        const inputStruct = {
+          profileId,
+          followModule,
+          followModuleInitData,
+          sig
+        }
+        setUserSigNonce(userSigNonce + 1)
+        const { data } = await broadcast({ variables: { request: { id, signature } } })
+        if (data?.broadcast.__typename === 'RelayError') {
+          return write?.({ recklesslySetUnpreparedArgs: [inputStruct] })
+        }
       },
       onError
     })
 
-  const setSuperFollow = (amount: string | null, recipient: string | null) => {
+  const setSuperFollow = async (amount: string | null, recipient: string | null) => {
     if (!currentProfile) {
       return toast.error(SIGN_WALLET)
     }
 
-    createSetFollowModuleTypedData({
-      variables: {
-        options: { overrideSigNonce: userSigNonce },
-        request: {
-          profileId: currentProfile?.id,
-          followModule: amount
-            ? {
-                feeFollowModule: {
-                  amount: {
-                    currency: selectedCurrency,
-                    value: amount
-                  },
-                  recipient
+    try {
+      await createSetFollowModuleTypedData({
+        variables: {
+          options: { overrideSigNonce: userSigNonce },
+          request: {
+            profileId: currentProfile?.id,
+            followModule: amount
+              ? {
+                  feeFollowModule: {
+                    amount: {
+                      currency: selectedCurrency,
+                      value: amount
+                    },
+                    recipient
+                  }
                 }
-              }
-            : {
-                freeFollowModule: true
-              }
+              : {
+                  freeFollowModule: true
+                }
+          }
         }
-      }
-    })
+      })
+    } catch {}
   }
 
   if (loading) {
@@ -199,7 +188,7 @@ const SuperFollow: FC = () => {
           placeholder="0x3A5bd...5e3"
           {...form.register('recipient')}
         />
-        <div className="ml-auto flex flex-col space-y-2">
+        <div className="ml-auto">
           <div className="block space-y-2 space-x-0 sm:flex sm:space-y-0 sm:space-x-2">
             {followType === 'FeeFollowModuleSettings' && (
               <Button
@@ -223,9 +212,6 @@ const SuperFollow: FC = () => {
               {followType === 'FeeFollowModuleSettings' ? t('Update super follow') : t('Set super follow')}
             </Button>
           </div>
-          {writeData?.hash ?? broadcastData?.broadcast?.txHash ? (
-            <IndexStatus txHash={writeData?.hash ?? broadcastData?.broadcast?.txHash} />
-          ) : null}
         </div>
       </Form>
     </Card>

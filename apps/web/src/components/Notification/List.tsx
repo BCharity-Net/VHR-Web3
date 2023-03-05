@@ -10,7 +10,8 @@ import type {
   NewFollowerNotification,
   NewMentionNotification,
   NewMirrorNotification,
-  NewReactionNotification
+  NewReactionNotification,
+  NotificationRequest
 } from 'lens'
 import { CustomFiltersTypes, NotificationTypes, useNotificationsQuery } from 'lens'
 import type { FC } from 'react'
@@ -27,7 +28,7 @@ import MentionNotification from './Type/MentionNotification'
 import MirrorNotification from './Type/MirrorNotification'
 
 interface Props {
-  feedType: 'ALL' | 'MENTIONS' | 'COMMENTS'
+  feedType: string
 }
 
 const List: FC<Props> = ({ feedType }) => {
@@ -41,14 +42,18 @@ const List: FC<Props> = ({ feedType }) => {
       case 'MENTIONS':
         return [NotificationTypes.MentionPost, NotificationTypes.MentionComment]
       case 'COMMENTS':
-        return [NotificationTypes.CommentedComment, NotificationTypes.CommentedPost]
+        return [NotificationTypes.CommentedPost, NotificationTypes.CommentedComment]
+      case 'LIKES':
+        return [NotificationTypes.ReactionPost, NotificationTypes.ReactionComment]
+      case 'COLLECTS':
+        return [NotificationTypes.CollectedPost, NotificationTypes.CollectedComment]
       default:
         return;
     }
   }
 
   // Variables
-  const request = {
+  const request: NotificationRequest = {
     profileId: currentProfile?.id,
     customFilters: [CustomFiltersTypes.Gardeners],
     notificationTypes: getNotificationType(),

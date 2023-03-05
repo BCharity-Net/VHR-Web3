@@ -1,6 +1,9 @@
 import { Card } from '@components/UI/Card'
 import type { OG } from '@generated/types'
 import { Analytics } from '@lib/analytics'
+import imageProxy from '@lib/imageProxy'
+import { ATTACHMENT } from 'data/constants'
+import Link from 'next/link'
 import type { FC } from 'react'
 import { PUBLICATION } from 'src/tracking'
 
@@ -11,18 +14,25 @@ interface Props {
 const Embed: FC<Props> = ({ og }) => {
   return (
     <div className="mt-4 text-sm sm:w-4/6">
-      <a
+      <Link
         href={og.url}
         onClick={(event) => {
           event.stopPropagation()
           Analytics.track(PUBLICATION.OEMBED_CLICK)
         }}
-        target="_blank"
+        target={og.url.includes(location.host) ? '_self' : '_blank'}
         rel="noreferrer noopener"
       >
         <Card forceRounded>
           {!og.isSquare && og.thumbnail && (
-            <img className="w-full rounded-t-xl" src={og.thumbnail} alt="Thumbnail" />
+            <img
+            className="w-full rounded-t-xl"
+            onError={({ currentTarget }) => {
+              currentTarget.src = og.thumbnail;
+            }}
+            src={imageProxy(og.thumbnail, ATTACHMENT)}
+            alt="Thumbnail"
+          />
           )}
           <div className="flex items-center">
             {og.isSquare && og.thumbnail && (
@@ -30,7 +40,10 @@ const Embed: FC<Props> = ({ og }) => {
                 className="w-36 h-36 rounded-l-xl"
                 height={144}
                 width={144}
-                src={og.thumbnail}
+                onError={({ currentTarget }) => {
+                  currentTarget.src = og.thumbnail;
+                }}
+                src={imageProxy(og.thumbnail, ATTACHMENT)}
                 alt="Thumbnail"
               />
             )}
@@ -56,7 +69,7 @@ const Embed: FC<Props> = ({ og }) => {
             </div>
           </div>
         </Card>
-      </a>
+      </Link>
     </div>
   )
 }

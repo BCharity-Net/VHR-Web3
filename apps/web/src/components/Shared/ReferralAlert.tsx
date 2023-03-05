@@ -1,12 +1,12 @@
 import Slug from '@components/Shared/Slug'
 import { HeartIcon } from '@heroicons/react/solid'
 import formatHandle from '@lib/formatHandle'
-import type { ElectedMirror, Mirror } from 'lens'
+import type { ElectedMirror, Publication } from 'lens'
 import type { FC } from 'react'
 import { useTranslation } from 'react-i18next'
 
 interface Props {
-  mirror: Mirror
+  mirror: Publication
   referralFee?: number
   electedMirror?: ElectedMirror
 }

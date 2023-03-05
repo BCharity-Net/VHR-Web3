@@ -5,10 +5,9 @@ import { Card } from '@components/UI/Card'
 import { EmptyState } from '@components/UI/EmptyState'
 import { ErrorMessage } from '@components/UI/ErrorMessage'
 import InfiniteLoader from '@components/UI/InfiniteLoader'
-import type { BCharityPublication } from '@generated/types'
 import { CollectionIcon } from '@heroicons/react/outline'
 import { SCROLL_THRESHOLD } from 'data/constants'
-import type { FeedItem } from 'lens';
+import type { FeedItem, FeedRequest, Publication } from 'lens';
 import { FeedEventItemType, useTimelineQuery } from 'lens';
 import type { FC } from 'react'
 import InfiniteScroll from 'react-infinite-scroll-component'
@@ -41,7 +40,7 @@ const Timeline: FC = () => {
 
   // Variables
   const profileId = seeThroughProfile?.id ?? currentProfile?.id
-  const request = { profileId, limit: 50, feedEventItemTypes: getFeedEventItems() }
+  const request: FeedRequest = { profileId, limit: 50, feedEventItemTypes: getFeedEventItems() }
   const reactionRequest = currentProfile ? { profileId } : null
 
   const { data, loading, error, fetchMore } = useTimelineQuery({
@@ -96,7 +95,7 @@ const Timeline: FC = () => {
           <SinglePublication
             key={`${publication?.root.id}_${index}`}
             feedItem={publication as FeedItem}
-            publication={publication.root as BCharityPublication}
+            publication={publication.root as Publication}
           />
         ))}
       </Card>

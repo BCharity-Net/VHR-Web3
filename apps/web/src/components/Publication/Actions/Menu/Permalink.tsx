@@ -1,15 +1,15 @@
-import type { BCharityPublication } from '@generated/types'
 import { Menu } from '@headlessui/react'
 import { ClipboardCopyIcon } from '@heroicons/react/outline'
 import { Analytics } from '@lib/analytics'
 import clsx from 'clsx'
+import type { Publication } from 'lens'
 import type { FC } from 'react'
 import { CopyToClipboard } from 'react-copy-to-clipboard'
 import toast from 'react-hot-toast'
 import { PUBLICATION } from 'src/tracking'
 
 interface Props {
-  publication: BCharityPublication
+  publication: Publication
 }
 
 const Permalink: FC<Props> = ({ publication }) => {

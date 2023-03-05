@@ -1,14 +1,7 @@
 /** @type {import('next').NextConfig} */
-const withTM = require('next-transpile-modules')(['lens', 'data', 'abis'])
 const headers = [{ key: 'Cache-Control', value: 'public, max-age=3600' }]
 
-const withPWA = require('next-pwa')({
-  dest: 'public',
-  disable: process.env.NODE_ENV === 'development'
-});
-
-module.exports = withTM(
-  withPWA({
+module.exports = {
     reactStrictMode: false,
     trailingSlash: false,
     experimental: {
@@ -59,5 +52,4 @@ module.exports = withTM(
         { source: '/thanks', headers }
       ];
     }
-  })
-);
+  };

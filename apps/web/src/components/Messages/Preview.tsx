@@ -10,7 +10,6 @@ import type { Profile } from 'lens';
 import relativeTime from 'dayjs/plugin/relativeTime';
 import { useRouter } from 'next/router';
 import type { FC } from 'react';
-import React from 'react';
 import { useAppStore } from 'src/store/app';
 
 dayjs.extend(relativeTime);
@@ -41,6 +40,9 @@ const Preview: FC<Props> = ({ profile, message, conversationKey, isSelected }) =
     >
       <div className="flex justify-between space-x-3 px-5">
         <img
+          onError={({ currentTarget }) => {
+            currentTarget.src = getAvatar(profile, false);
+          }}
           src={getAvatar(profile)}
           loading="lazy"
           className="w-10 h-10 bg-gray-200 rounded-full border dark:border-gray-700/80"

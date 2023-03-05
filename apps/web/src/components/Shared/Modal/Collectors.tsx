@@ -5,12 +5,13 @@ import { ErrorMessage } from '@components/UI/ErrorMessage'
 import InfiniteLoader from '@components/UI/InfiniteLoader'
 import { CollectionIcon } from '@heroicons/react/outline'
 import { SCROLL_THRESHOLD } from 'data/constants'
-import type { Profile, Wallet } from 'lens'
+import type { Profile, Wallet, WhoCollectedPublicationRequest } from 'lens'
 import { useCollectorsQuery } from 'lens'
 import type { FC } from 'react'
 import { useTranslation } from 'react-i18next'
 import InfiniteScroll from 'react-infinite-scroll-component'
 
+import { FollowSource } from '../Follow'
 import Loader from '../Loader'
 
 interface Props {
@@ -21,7 +22,7 @@ const Collectors: FC<Props> = ({ publicationId }) => {
   const { t } = useTranslation('common')
 
   // Variables
-  const request = { publicationId: publicationId, limit: 10 }
+  const request: WhoCollectedPublicationRequest = { publicationId: publicationId, limit: 10 }
 
   const { data, loading, error, fetchMore } = useCollectorsQuery({
     variables: { request },
@@ -55,7 +56,7 @@ const Collectors: FC<Props> = ({ publicationId }) => {
   }
 
   return (
-    <div className="overflow-y-auto max-h-[80vh]">
+    <div className="max-h-[80vh] overflow-y-auto" id="scrollableCollectorsDiv">
       <ErrorMessage className="m-5" title="Failed to load collectors" error={error} />
       <InfiniteScroll
         dataLength={profiles?.length ?? 0}
@@ -63,17 +64,20 @@ const Collectors: FC<Props> = ({ publicationId }) => {
         hasMore={hasMore}
         next={loadMore}
         loader={<InfiniteLoader />}
-        scrollableTarget="scrollableDiv"
+        scrollableTarget="scrollableCollectorsDiv"
       >
         <div className="divide-y dark:divide-gray-700">
-          {profiles?.map((wallet) => (
+          {profiles?.map((wallet, index) => (
             <div className="p-5" key={wallet?.address}>
               {wallet?.defaultProfile ? (
                 <UserProfile
                   profile={wallet?.defaultProfile as Profile}
+                  isFollowing={wallet?.defaultProfile?.isFollowedByMe}
+                  followPosition={index + 1}
+                  followSource={FollowSource.COLLECTORS_MODAL}
                   showBio
                   showFollow
-                  isFollowing={wallet?.defaultProfile?.isFollowedByMe}
+                  showUserPreview={false}
                 />
               ) : (
                 <WalletProfile wallet={wallet as Wallet} />

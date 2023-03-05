@@ -37,6 +37,9 @@ const MessageTile: FC<MessageTileProps> = ({ message, profile, currentProfile })
       <div className="flex max-w-[60%]">
         {address !== message.senderAddress && (
           <img
+            onError={({ currentTarget }) => {
+              currentTarget.src = getAvatar(profile, false);
+            }}
             src={getAvatar(profile)}
             className="h-10 w-10 bg-gray-200 rounded-full border dark:border-gray-700/80 mr-2"
             alt={formatHandle(profile?.handle)}
@@ -131,7 +134,7 @@ const MessagesList: FC<MessageListProps> = ({
   return (
     <div className="flex-grow flex h-[75%]">
       <div className="relative w-full h-full pl-4 flex">
-        <div id="scrollableDiv" className="flex flex-col-reverse h-full overflow-y-auto w-full">
+        <div id="scrollableMessageListDiv" className="flex flex-col-reverse h-full overflow-y-auto w-full">
           {missingXmtpAuth && <MissingXmtpAuth />}
           <InfiniteScroll
             dataLength={messages.length}
@@ -141,7 +144,7 @@ const MessagesList: FC<MessageListProps> = ({
             endMessage={<ConversationBeginningNotice />}
             hasMore={hasMore}
             loader={<LoadingMore />}
-            scrollableTarget="scrollableDiv"
+            scrollableTarget="scrollableMessageListDiv"
           >
             {messages?.map((msg: DecodedMessage, index) => {
               const dateHasChanged = lastMessageDate ? !isOnSameDay(lastMessageDate, msg.sent) : false;

@@ -4,11 +4,12 @@ import { ErrorMessage } from '@components/UI/ErrorMessage'
 import InfiniteLoader from '@components/UI/InfiniteLoader'
 import { HeartIcon } from '@heroicons/react/outline'
 import { SCROLL_THRESHOLD } from 'data/constants'
-import type { Profile } from 'lens';
+import type { Profile, WhoReactedPublicationRequest } from 'lens'
 import { useLikesQuery } from 'lens'
 import type { FC } from 'react'
 import InfiniteScroll from 'react-infinite-scroll-component'
 
+import { FollowSource } from '../Follow'
 import Loader from '../Loader'
 
 interface Props {
@@ -17,7 +18,7 @@ interface Props {
 
 const Likes: FC<Props> = ({ publicationId }) => {
   // Variables
-  const request = { publicationId: publicationId, limit: 10 }
+  const request: WhoReactedPublicationRequest = { publicationId: publicationId, limit: 10 }
 
   const { data, loading, error, fetchMore } = useLikesQuery({
     variables: { request },
@@ -51,7 +52,7 @@ const Likes: FC<Props> = ({ publicationId }) => {
   }
 
   return (
-    <div className="overflow-y-auto max-h-[80vh]">
+    <div className="max-h-[80vh] overflow-y-auto" id="scrollableLikesDiv">
       <ErrorMessage className="m-5" title="Failed to load likes" error={error} />
       <InfiniteScroll
         dataLength={profiles?.length ?? 0}
@@ -59,16 +60,19 @@ const Likes: FC<Props> = ({ publicationId }) => {
         hasMore={hasMore}
         next={loadMore}
         loader={<InfiniteLoader />}
-        scrollableTarget="scrollableDiv"
+        scrollableTarget="scrollableLikesDiv"
       >
         <div className="divide-y dark:divide-gray-700">
-          {profiles?.map((like) => (
+          {profiles?.map((like, index) => (
             <div className="p-5" key={like?.reactionId}>
               <UserProfile
                 profile={like?.profile as Profile}
+                isFollowing={like?.profile?.isFollowedByMe}
+                followPosition={index + 1}
+                followSource={FollowSource.LIKES_MODAL}
                 showBio
                 showFollow
-                isFollowing={like?.profile?.isFollowedByMe}
+                showUserPreview={false}
               />
             </div>
           ))}

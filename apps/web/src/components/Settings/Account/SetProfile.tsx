@@ -1,10 +1,8 @@
-import IndexStatus from '@components/Shared/IndexStatus'
 import UserProfile from '@components/Shared/UserProfile'
 import { Button } from '@components/UI/Button'
 import { Card } from '@components/UI/Card'
 import { ErrorMessage } from '@components/UI/ErrorMessage'
 import { Spinner } from '@components/UI/Spinner'
-import useBroadcast from '@components/utils/hooks/useBroadcast'
 import { ExclamationIcon, PencilIcon } from '@heroicons/react/outline'
 import { Analytics } from '@lib/analytics'
 import formatHandle from '@lib/formatHandle'
@@ -12,9 +10,9 @@ import getSignature from '@lib/getSignature'
 import onError from '@lib/onError'
 import splitSignature from '@lib/splitSignature'
 import { LensHubProxy } from 'abis'
-import { APP_NAME, LENSHUB_PROXY, RELAY_ON, SIGN_WALLET } from 'data/constants'
-import type { Profile } from 'lens';
-import { useCreateSetDefaultProfileTypedDataMutation } from 'lens'
+import { APP_NAME, LENSHUB_PROXY, SIGN_WALLET } from 'data/constants'
+import type { CreateSetDefaultProfileRequest, Profile } from 'lens';
+import { useBroadcastMutation, useCreateSetDefaultProfileTypedDataMutation } from 'lens'
 import type { FC } from 'react'
 import { useEffect, useState } from 'react'
 import toast from 'react-hot-toast'
@@ -40,7 +38,6 @@ const SetProfile: FC = () => {
   }
 
   const {
-    data: writeData,
     isLoading: writeLoading,
     error,
     write
@@ -63,52 +60,46 @@ const SetProfile: FC = () => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
-  const { broadcast, data: broadcastData, loading: broadcastLoading } = useBroadcast({ onCompleted })
+  const [broadcast, { loading: broadcastLoading }] = useBroadcastMutation({
+    onCompleted
+  })
   const [createSetDefaultProfileTypedData, { loading: typedDataLoading }] =
     useCreateSetDefaultProfileTypedDataMutation({
       onCompleted: async ({ createSetDefaultProfileTypedData }) => {
-        try {
-          const { id, typedData } = createSetDefaultProfileTypedData
-          const { wallet, profileId, deadline } = typedData.value
-          const signature = await signTypedDataAsync(getSignature(typedData))
-          const { v, r, s } = splitSignature(signature)
-          const sig = { v, r, s, deadline }
-          const inputStruct = {
-            follower: address,
-            wallet,
-            profileId,
-            sig
-          }
-
-          setUserSigNonce(userSigNonce + 1)
-          if (!RELAY_ON) {
-            return write?.({ recklesslySetUnpreparedArgs: [inputStruct] })
-          }
-
-          const {
-            data: { broadcast: result }
-          } = await broadcast({ request: { id, signature } })
-
-          if ('reason' in result) {
-            write?.({ recklesslySetUnpreparedArgs: [inputStruct] })
-          }
-        } catch {}
+        const { id, typedData } = createSetDefaultProfileTypedData
+        const { wallet, profileId, deadline } = typedData.value
+        const signature = await signTypedDataAsync(getSignature(typedData))
+        const { v, r, s } = splitSignature(signature)
+        const sig = { v, r, s, deadline }
+        const inputStruct = {
+          follower: address,
+          wallet,
+          profileId,
+          sig
+        }
+        setUserSigNonce(userSigNonce + 1)
+        const { data } = await broadcast({ variables: { request: { id, signature } } })
+        if (data?.broadcast.__typename === 'RelayError') {
+          return write?.({ recklesslySetUnpreparedArgs: [inputStruct] })
+        }
       },
       onError
     })
 
-  const setDefaultProfile = () => {
+  const setDefaultProfile = async () => {
     if (!currentProfile) {
       return toast.error(SIGN_WALLET)
     }
 
-    const request = { profileId: selectedUser }
-    createSetDefaultProfileTypedData({
-      variables: {
-        options: { overrideSigNonce: userSigNonce },
-        request
-      }
-    })
+    try {
+      const request: CreateSetDefaultProfileRequest = { profileId: selectedUser }
+      await createSetDefaultProfileTypedData({
+        variables: {
+          options: { overrideSigNonce: userSigNonce },
+          request
+        }
+      })
+    } catch {}
   }
 
   if (!currentProfile) {
@@ -153,20 +144,15 @@ const SetProfile: FC = () => {
           ))}
         </select>
       </div>
-      <div className="flex flex-col space-y-2">
-        <Button
-          className="ml-auto"
-          type="submit"
-          disabled={isLoading}
-          onClick={setDefaultProfile}
-          icon={isLoading ? <Spinner size="xs" /> : <PencilIcon className="w-4 h-4" />}
-        >
-          {t('Save')}
-        </Button>
-        {writeData?.hash ?? broadcastData?.broadcast?.txHash ? (
-          <IndexStatus txHash={writeData?.hash ?? broadcastData?.broadcast?.txHash} reload />
-        ) : null}
-      </div>
+      <Button
+        className="ml-auto"
+        type="submit"
+        disabled={isLoading}
+        onClick={setDefaultProfile}
+        icon={isLoading ? <Spinner size="xs" /> : <PencilIcon className="w-4 h-4" />}
+      >
+        Save
+      </Button>
     </Card>
   )
 }

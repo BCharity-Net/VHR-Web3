@@ -1,14 +1,15 @@
+import MenuTransition from '@components/Shared/MenuTransition';
 import UserProfile from '@components/Shared/UserProfile';
 import { Input } from '@components/UI/Input';
 import { Spinner } from '@components/UI/Spinner';
-import { Menu, Transition } from '@headlessui/react';
+import { Menu } from '@headlessui/react';
 import { XIcon } from '@heroicons/react/outline';
 import { ChevronDownIcon } from '@heroicons/react/solid';
 import { Analytics } from '@lib/analytics';
 import formatHandle from '@lib/formatHandle';
 import getAvatar from '@lib/getAvatar';
 import clsx from 'clsx';
-import type { FeedItem, Profile, ProfileSearchResult } from 'lens';
+import type { FeedItem, FeedRequest, Profile, ProfileSearchResult } from 'lens';
 import {
   CustomFiltersTypes,
   SearchRequestTypes,
@@ -16,7 +17,7 @@ import {
   useTimelineLazyQuery
 } from 'lens';
 import type { ChangeEvent, FC } from 'react';
-import React, { Fragment, useState } from 'react';
+import { Fragment, useState } from 'react';
 import { useAppStore } from 'src/store/app';
 import { useTimelineStore } from 'src/store/timeline';
 import { MISCELLANEOUS, SEARCH } from 'src/tracking';
@@ -47,7 +48,7 @@ const SeeThroughLens: FC = () => {
   };
 
   const profile = seeThroughProfile ?? currentProfile;
-  const request = { profileId: profile?.id, limit: 50 };
+  const request: FeedRequest = { profileId: profile?.id, limit: 50 };
 
   const [searchUsers, { data: searchUsersData, loading: searchUsersLoading }] = useSearchProfilesLazyQuery();
 
@@ -89,36 +90,33 @@ const SeeThroughLens: FC = () => {
       >
         <span className="flex space-x-1 items-center text-sm pl-1">
           <img
+            onError={({ currentTarget }) => {
+              currentTarget.src = getAvatar(profile, false);
+            }}
             src={getAvatar(profile)}
             loading="lazy"
             width={20}
             height={20}
-            className="bg-gray-200 w-5 h-5 rounded-full border dark:border-gray-700/80"
-            alt={formatHandle(currentProfile?.handle)}
+            className="bg-gray-200 w-5 h-5 rounded-full border dark:border-gray-700"
+            alt={formatHandle(profile?.handle)}
           />
-          <span>{seeThroughProfile ? `@${formatHandle(profile?.handle)}` : 'My Feed'}</span>
-          <ChevronDownIcon className="w-5 h-5" />
+          <span>{seeThroughProfile ? `@${formatHandle(profile?.handle)}` : `My Feed`}</span>
+          <ChevronDownIcon className="w-4 h-4" />
         </span>
       </Menu.Button>
-      <Transition
-        as={Fragment}
-        enter="transition ease-out duration-100"
-        enterFrom="transform opacity-0 scale-95"
-        enterTo="transform opacity-100 scale-100"
-        leave="transition ease-in duration-75"
-        leaveFrom="transform opacity-100 scale-100"
-        leaveTo="transform opacity-0 scale-95"
-      >
+      <MenuTransition>
         <Menu.Items
           static
-          className="absolute w-64 right-0 z-[5] mt-1 bg-white rounded-xl border shadow-sm dark:bg-gray-900 focus:outline-none dark:border-gray-700/80"
+          className="absolute w-64 right-0 z-[5] mt-1 bg-white rounded-xl border shadow-sm dark:bg-gray-900 focus:outline-none dark:border-gray-700"
         >
-          <div className="text-xs pt-2 px-3">👀 See the feed through...</div>
+          <div className="text-xs pt-2 px-3">
+            👀 See the feed through...
+          </div>
           <div className="p-2">
             <Input
               type="text"
               className="py-2 px-3 text-sm"
-              placeholder="Search"
+              placeholder={`Search`}
               value={searchText}
               autoFocus
               autoComplete="off"
@@ -146,7 +144,9 @@ const SeeThroughLens: FC = () => {
             {searchUsersLoading || loading ? (
               <div className="py-2 px-4 space-y-2 text-sm font-bold text-center">
                 <Spinner size="sm" className="mx-auto" />
-                <div>Searching users</div>
+                <div>
+                  Searching users
+                </div>
               </div>
             ) : (
               <>
@@ -161,20 +161,21 @@ const SeeThroughLens: FC = () => {
                       setSeeThroughProfile(profile);
                       setSearchText('');
                       Analytics.track(MISCELLANEOUS.SELECT_USER_FEED);
-
                     }}
                   >
-                    <UserProfile showUserPreview={false} linkToProfile={false} profile={profile} />
+                    <UserProfile linkToProfile={false} profile={profile} showUserPreview={false} />
                   </Menu.Item>
                 ))}
                 {(profiles.length === 0 || error) && (
-                  <div className="py-4 text-center">No matching users</div>
+                  <div className="py-4 text-center">
+                    No matching users
+                  </div>
                 )}
               </>
             )}
           </div>
         </Menu.Items>
-      </Transition>
+      </MenuTransition>
     </Menu>
   );
 };

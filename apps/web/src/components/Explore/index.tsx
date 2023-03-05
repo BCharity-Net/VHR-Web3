@@ -8,8 +8,10 @@ import { Analytics } from '@lib/analytics'
 import isFeatureEnabled from '@lib/isFeatureEnabled'
 import clsx from 'clsx'
 import { APP_NAME, STATIC_IMAGES_URL } from 'data/constants'
+import type { PublicationMainFocus } from 'lens'
 import { PublicationSortCriteria } from 'lens'
 import type { NextPage } from 'next'
+import { useRouter } from 'next/router'
 import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useAppStore } from 'src/store/app'
@@ -20,7 +22,8 @@ import FeedType from './FeedType'
 const Explore: NextPage = () => {
   const { t } = useTranslation('common')
   const currentProfile = useAppStore((state) => state.currentProfile)
-  const [focus, setFocus] = useState<any>()
+  const [focus, setFocus] = useState<PublicationMainFocus>()
+  const router = useRouter()
 
   const tabs = [
     { name: 'For you', emoji: 'leaf-fluttering-in-wind.png', type: PublicationSortCriteria.CuratedProfiles },
@@ -33,7 +36,12 @@ const Explore: NextPage = () => {
     <GridLayout>
       <MetaTags title={t('Explore web')} description={t('Web description')} />
       <GridItemEight className="space-y-5" data-test="explore-feed">
-        <Tab.Group>
+        <Tab.Group
+          defaultIndex={Number(router.query.tab)}
+          onChange={(index) => {
+            router.replace({ query: { ...router.query, tab: index } }, undefined, { shallow: true });
+          }}
+        >
           <Tab.List className="divider space-x-8">
             {tabs.map((tab, index) => (
               <Tab

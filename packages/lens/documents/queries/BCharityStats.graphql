@@ -1,5 +1,5 @@
-query BCharityStats {
-  globalProtocolStats(request: { sources: "BCharity" }) {
+query BCharityStats($request: GlobalProtocolStatsRequest) {
+  globalProtocolStats(request: $request) {
     totalProfiles
     totalPosts
     totalBurntProfiles

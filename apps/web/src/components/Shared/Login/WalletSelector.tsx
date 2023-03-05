@@ -2,6 +2,7 @@ import SwitchNetwork from '@components/Shared/SwitchNetwork'
 import { Button } from '@components/UI/Button'
 import { Spinner } from '@components/UI/Spinner'
 import useIsMounted from '@components/utils/hooks/useIsMounted'
+import { KeyIcon } from '@heroicons/react/outline'
 import { XCircleIcon } from '@heroicons/react/solid'
 import { Analytics } from '@lib/analytics'
 import getWalletLogo from '@lib/getWalletLogo'
@@ -15,9 +16,10 @@ import { useState } from 'react'
 import toast from 'react-hot-toast'
 import { CHAIN_ID } from 'src/constants'
 import { useAppPersistStore, useAppStore } from 'src/store/app'
+import { useAuthStore } from 'src/store/auth'
 import { USER } from 'src/tracking'
 import type { Connector } from 'wagmi'
-import { useAccount, useConnect, useNetwork, useSignMessage } from 'wagmi'
+import { useAccount, useConnect, useDisconnect, useNetwork, useSignMessage } from 'wagmi'
 
 interface Props {
   setHasConnected: Dispatch<boolean>
@@ -28,11 +30,13 @@ const WalletSelector: FC<Props> = ({ setHasConnected, setHasProfile }) => {
   const setProfiles = useAppStore((state) => state.setProfiles)
   const setCurrentProfile = useAppStore((state) => state.setCurrentProfile)
   const setProfileId = useAppPersistStore((state) => state.setProfileId)
+  const setShowAuthModal = useAuthStore((state) => state.setShowAuthModal)
   const [loading, setLoading] = useState(false)
 
   const { mounted } = useIsMounted()
   const { chain } = useNetwork()
-  const { connectors, error, connectAsync } = useConnect()
+  const { connectors, error, connectAsync } = useConnect({ chainId: CHAIN_ID })
+  const { disconnect } = useDisconnect()
   const { address, connector: activeConnector } = useAccount()
   const { signMessageAsync } = useSignMessage({ onError })
   const [loadChallenge, { error: errorChallenge }] = useChallengeLazyQuery({
@@ -54,6 +58,7 @@ const WalletSelector: FC<Props> = ({ setHasConnected, setHasProfile }) => {
   }
 
   const handleSign = async () => {
+    let keepModal = false
     try {
       setLoading(true)
       // Get challenge
@@ -84,6 +89,7 @@ const WalletSelector: FC<Props> = ({ setHasConnected, setHasProfile }) => {
 
       if (profilesData?.profiles?.items?.length === 0) {
         setHasProfile(false)
+        keepModal = true
       } else {
         const profiles: any = profilesData?.profiles?.items
           ?.slice()
@@ -99,28 +105,45 @@ const WalletSelector: FC<Props> = ({ setHasConnected, setHasProfile }) => {
       console.error(error)
     } finally {
       setLoading(false)
+      if (!keepModal) {
+        setShowAuthModal(false)
+      }
     }
   }
 
   return activeConnector?.id ? (
     <div className="space-y-3">
-      {chain?.id === CHAIN_ID ? (
-        <Button
-          disabled={loading}
-          icon={
-            loading ? (
-              <Spinner className="mr-0.5" size="xs" />
-            ) : (
-              <img className="mr-0.5 w-4 h-4" height={16} width={16} src="/lens.png" alt="Lens Logo" />
-            )
-          }
-          onClick={handleSign}
+      <div className="space-y-2.5">
+        {chain?.id === CHAIN_ID ? (
+          <Button
+            disabled={loading}
+            icon={
+              loading ? (
+                <Spinner className="mr-0.5" size="xs" />
+              ) : (
+                <img className="mr-0.5 w-4 h-4" height={16} width={16} src="/lens.png" alt="Lens Logo" />
+              )
+            }
+            onClick={handleSign}
+          >
+            Sign-In with Lens
+          </Button>
+        ) : (
+          <SwitchNetwork />
+        )}
+        <button
+          onClick={() => {
+            disconnect?.();
+            Analytics.track(USER.CHANGE_WALLET);
+          }}
+          className="text-sm underline flex items-center space-x-1"
         >
-          Sign-In with Lens
-        </Button>
-      ) : (
-        <SwitchNetwork />
-      )}
+           <KeyIcon className="h-4 w-4" />
+          <div>
+            Change wallet
+          </div>
+        </button>
+      </div>
       {(errorChallenge || errorAuthenticate || errorProfiles) && (
         <div className="flex items-center space-x-1 font-bold text-red-500">
           <XCircleIcon className="w-5 h-5" />

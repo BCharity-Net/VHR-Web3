@@ -1,56 +1,35 @@
-import UserProfile from '@components/Shared/UserProfile'
-import type { BCharityPublication } from '@generated/types'
-import { Analytics } from '@lib/analytics'
-import formatTime from '@lib/formatTime'
-import dayjs from 'dayjs'
-import relativeTime from 'dayjs/plugin/relativeTime'
-import { useRouter } from 'next/router'
-import type { FC } from 'react'
-import { PUBLICATION } from 'src/tracking'
+import { Analytics } from '@lib/analytics';
+import type { Publication } from 'lens';
+import { useRouter } from 'next/router';
+import type { FC } from 'react';
+import { PUBLICATION } from 'src/tracking';
 
-import PublicationActions from './Actions'
-import HiddenPublication from './HiddenPublication'
-import PublicationBody from './PublicationBody'
-
-dayjs.extend(relativeTime)
+import PublicationActions from './Actions';
+import HiddenPublication from './HiddenPublication';
+import PublicationBody from './PublicationBody';
+import PublicationHeader from './PublicationHeader';
 
 interface Props {
-  publication: BCharityPublication
+  publication: Publication;
 }
 
 const ThreadBody: FC<Props> = ({ publication }) => {
-  const { push } = useRouter()
-  const isMirror = publication.__typename === 'Mirror'
-  const isFundraise = publication?.metadata?.attributes[0]?.value === 'fundraise'
-  const profile = isMirror ? publication?.mirrorOf?.profile : publication?.profile
-  const timestamp = isMirror ? publication?.mirrorOf?.createdAt : publication?.createdAt
+  const { push } = useRouter();
 
   return (
-    <article>
-      <div className="flex justify-between space-x-1.5">
-        <span onClick={(event) => event.stopPropagation()}>
-          <UserProfile
-            profile={
-              publication?.collectedBy?.defaultProfile ? publication?.collectedBy?.defaultProfile : profile
-            }
-          />
-        </span>
-        <span className="text-xs text-gray-500" title={formatTime(timestamp)}>
-          {dayjs(new Date(timestamp)).fromNow()}
-        </span>
-      </div>
+    <article
+      onClick={() => {
+        const selection = window.getSelection();
+        if (!selection || selection.toString().length === 0) {
+          Analytics.track(PUBLICATION.OPEN);
+          push(`/posts/${publication?.id}`);
+        }
+      }}
+    >
+      <PublicationHeader publication={publication} />
       <div className="flex">
         <div className="mr-8 ml-5 bg-gray-300 border-gray-300 dark:bg-gray-700 dark:border-gray-700 border-[0.8px] -my-[3px]" />
-        <div
-          className="pt-4 pb-5 !w-[85%] sm:w-full"
-          onClick={() => {
-            const selection = window.getSelection()
-            if (!selection || selection.toString().length === 0) {
-              Analytics.track(PUBLICATION.OPEN)
-              push(`/posts/${publication?.id}`)
-            }
-          }}
-        >
+        <div className="pt-4 pb-5 !w-[85%] sm:w-full">
           {publication?.hidden ? (
             <HiddenPublication type={publication.__typename} />
           ) : (
@@ -62,7 +41,7 @@ const ThreadBody: FC<Props> = ({ publication }) => {
         </div>
       </div>
     </article>
-  )
-}
+  );
+};
 
-export default ThreadBody
+export default ThreadBody;

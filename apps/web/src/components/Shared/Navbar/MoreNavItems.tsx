@@ -1,13 +1,15 @@
-import { Menu, Transition } from '@headlessui/react'
-import { CashIcon, ClockIcon, SupportIcon, UserIcon, UsersIcon } from '@heroicons/react/outline'
+import { Menu } from '@headlessui/react'
+import { CashIcon, ClockIcon, UserIcon, UsersIcon } from '@heroicons/react/outline'
 import clsx from 'clsx'
 import type { FC } from 'react'
-import { Fragment } from 'react'
 import { useTranslation } from 'react-i18next'
 import { IS_MAINNET } from 'data/constants'
 import { useAppStore } from 'src/store/app'
 
+import MenuTransition from '../MenuTransition'
 import { NextLink } from './MenuItems'
+import Contact from './NavItems/Contact'
+import ReportBug from './NavItems/ReportBug'
 
 const MoreNavItems: FC = () => {
   const currentProfile = useAppStore((state) => state.currentProfile)
@@ -29,16 +31,7 @@ const MoreNavItems: FC = () => {
           >
             {t('More')}
           </Menu.Button>
-          <Transition
-            show={open}
-            as={Fragment}
-            enter="transition ease-out duration-100"
-            enterFrom="transform opacity-0 scale-95"
-            enterTo="transform opacity-100 scale-100"
-            leave="transition ease-in duration-75"
-            leaveFrom="transform opacity-100 scale-100"
-            leaveTo="transform opacity-0 scale-95"
-          >
+          <MenuTransition>
             <Menu.Items
               static
               className="absolute py-1 mt-2 w-52 bg-white rounded-xl border shadow-sm dark:bg-gray-900 focus:outline-none dark:border-gray-700/80"
@@ -113,19 +106,23 @@ const MoreNavItems: FC = () => {
                 </>
               ) : null}
               <Menu.Item
-                as={NextLink}
-                href="/contact"
+                as="div"
                 className={({ active }: { active: boolean }) =>
-                  clsx({ 'dropdown-active': active }, 'menu-item')
+                  clsx({ 'dropdown-active': active }, 'm-2 rounded-lg')
                 }
               >
-                <div className="flex items-center space-x-1.5">
-                  <SupportIcon className="w-4 h-4" />
-                  <div>{t('Contact Button')}</div>
-                </div>
+                <Contact />
+              </Menu.Item>
+              <Menu.Item
+                as="div"
+                className={({ active }: { active: boolean }) =>
+                  clsx({ 'dropdown-active': active }, 'm-2 rounded-lg')
+                }
+              >
+                <ReportBug />
               </Menu.Item>
             </Menu.Items>
-          </Transition>
+          </MenuTransition>
         </>
       )}
     </Menu>

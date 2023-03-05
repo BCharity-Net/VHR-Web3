@@ -4,19 +4,33 @@ import getIPFSLink from './getIPFSLink'
 import getStampFyiURL from './getStampFyiURL'
 import imageProxy from './imageProxy'
 
+const skipList = ['assets.bcharity.net', 'cdn.stamp.fyi', 'avataaars.io', 'avatar.tobi.sh']
+
 /**
  *
  * @param profile - Profile object
+ * @param isCdn - To passthrough image proxy
  * @returns avatar image url
  */
-const getAvatar = (profile: any): string => {
-  return imageProxy(
-    getIPFSLink(
-      profile?.picture?.original?.url ??
-        profile?.picture?.uri ??
-        getStampFyiURL(profile?.ownedBy ?? ZERO_ADDRESS)
-    ),
-    AVATAR
+const getAvatar = (profile: any, isCdn = true): string => {
+  const avatarUrl =
+    profile?.picture?.original?.url ??
+    profile?.picture?.uri ??
+    getStampFyiURL(profile?.ownedBy ?? ZERO_ADDRESS);
+  const url = new URL(avatarUrl);
+
+  if (skipList.includes(url.hostname)) {
+    return avatarUrl;
+  }
+
+  if (isCdn) {
+    return imageProxy(getIPFSLink(avatarUrl), AVATAR)
+  }
+
+  return getIPFSLink(
+    profile?.picture?.original?.url ??
+      profile?.picture?.uri ??
+      getStampFyiURL(profile?.ownedBy ?? ZERO_ADDRESS)
   )
 }
 

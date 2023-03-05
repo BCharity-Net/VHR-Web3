@@ -22,7 +22,7 @@ import Custom404 from 'src/pages/404'
 import { useAppPersistStore, useAppStore } from 'src/store/app'
 import { useContractWrite, useDisconnect, useSignTypedData } from 'wagmi'
 
-import Sidebar from '../Sidebar'
+import SettingsSidebar from '../Sidebar'
 
 const DeleteSettings: FC = () => {
   const [showWarningModal, setShowWarningModal] = useState(false)
@@ -55,31 +55,31 @@ const DeleteSettings: FC = () => {
 
   const [createBurnProfileTypedData, { loading: typedDataLoading }] = useCreateBurnProfileTypedDataMutation({
     onCompleted: async ({ createBurnProfileTypedData }) => {
-      try {
-        const { typedData } = createBurnProfileTypedData
-        const { tokenId, deadline } = typedData.value
-        const signature = await signTypedDataAsync(getSignature(typedData))
-        const { v, r, s } = splitSignature(signature)
-        const sig = { v, r, s, deadline }
+      const { typedData } = createBurnProfileTypedData
+      const { tokenId, deadline } = typedData.value
+      const signature = await signTypedDataAsync(getSignature(typedData))
+      const { v, r, s } = splitSignature(signature)
+      const sig = { v, r, s, deadline }
 
-        setUserSigNonce(userSigNonce + 1);
-        write?.({ recklesslySetUnpreparedArgs: [tokenId, sig] });
-      } catch {}
+      setUserSigNonce(userSigNonce + 1)
+      write?.({ recklesslySetUnpreparedArgs: [tokenId, sig] })
     },
     onError
   })
 
-  const handleDelete = () => {
+  const handleDelete = async () => {
     if (!currentProfile) {
       return toast.error(SIGN_WALLET)
     }
 
-    createBurnProfileTypedData({
-      variables: {
-        options: { overrideSigNonce: userSigNonce },
-        request: { profileId: currentProfile?.id }
-      }
-    })
+    try {
+      await createBurnProfileTypedData({
+        variables: {
+          options: { overrideSigNonce: userSigNonce },
+          request: { profileId: currentProfile?.id }
+        }
+      })
+    } catch {}
   }
 
   const isDeleting = typedDataLoading || signLoading || writeLoading
@@ -92,7 +92,7 @@ const DeleteSettings: FC = () => {
     <GridLayout>
       <MetaTags title={`Delete Profile • ${APP_NAME}`} />
       <GridItemFour>
-        <Sidebar />
+        <SettingsSidebar />
       </GridItemFour>
       <GridItemEight>
         <Card className="space-y-5 p-5">

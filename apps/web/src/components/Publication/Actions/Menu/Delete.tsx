@@ -1,16 +1,16 @@
-import type { BCharityPublication } from '@generated/types'
 import { Menu } from '@headlessui/react'
 import { TrashIcon } from '@heroicons/react/outline'
 import { Analytics } from '@lib/analytics'
 import clsx from 'clsx'
+import type { Publication } from 'lens'
 import { useHidePublicationMutation } from 'lens'
 import { useRouter } from 'next/router'
-import type { FC } from 'react'
+import type { FC, MouseEvent } from 'react'
 import { useTranslation } from 'react-i18next'
 import { PUBLICATION } from 'src/tracking'
 
 interface Props {
-  publication: BCharityPublication
+  publication: Publication
 }
 
 const Delete: FC<Props> = ({ publication }) => {
@@ -32,7 +32,7 @@ const Delete: FC<Props> = ({ publication }) => {
           'block px-4 py-1.5 text-sm text-red-500 m-2 rounded-lg cursor-pointer'
         )
       }
-      onClick={() => {
+      onClick={(event: MouseEvent<HTMLAnchorElement>) => {
         if (confirm(t('Delete confirm'))) {
           hidePost({ variables: { request: { publicationId: publication?.id } } })
         }

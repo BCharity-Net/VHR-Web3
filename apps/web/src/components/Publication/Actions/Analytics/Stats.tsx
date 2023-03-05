@@ -1,16 +1,16 @@
 import Loader from '@components/Shared/Loader';
 import { ErrorMessage } from '@components/UI/ErrorMessage';
 import HelpTooltip from '@components/UI/HelpTooltip';
-import type { BCharityPublication } from '@generated/types';
 import humanize from '@lib/humanize';
+import { useQuery } from '@tanstack/react-query';
 import axios from 'axios';
 import { ERROR_MESSAGE, SIMPLEANALYTICS_API } from 'data/constants';
+import type { Publication } from 'lens'
 import type { FC } from 'react';
-import { useEffect, useState } from 'react';
 
 const Stat: FC<{ title: string; helper: string; stat: number }> = ({ title, helper, stat }) => (
   <>
-    <span className="text-sm text-gray-500 font-bold flex items-center space-x-1">
+    <span className="text-sm lt-text-gray-500 font-bold flex items-center space-x-1">
       <span>{title}</span>
       <HelpTooltip content={helper} />
     </span>
@@ -19,42 +19,25 @@ const Stat: FC<{ title: string; helper: string; stat: number }> = ({ title, help
 );
 
 interface Props {
-  publication: BCharityPublication;
+  publication: Publication;
 }
 
 const Stats: FC<Props> = ({ publication }) => {
-  const [statsData, setStatsData] = useState<any>();
-  const [error, setError] = useState<any>();
-
   const getStats = async () => {
-    try {
-      const response = await axios(SIMPLEANALYTICS_API, {
-        method: 'GET',
-        params: { version: 5, fields: 'pageviews', info: false, page: `/posts/${publication.id}` }
-      });
+    const response = await axios(SIMPLEANALYTICS_API, {
+      params: { version: 5, fields: 'pageviews', info: false, page: `/posts/${publication.id}` }
+    });
 
-      setStatsData(response.data);
-    } catch (error: any) {
-      setError(error);
-    }
+    return response.data;
   };
 
-  useEffect(() => {
-    getStats();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [publication]);
+  const { data, isLoading, error } = useQuery(['statsData'], () => getStats().then((res) => res));
 
   if (error) {
-    return (
-      <ErrorMessage
-        className="m-5"
-        title={ERROR_MESSAGE}
-        error={{ message: error.message, name: ERROR_MESSAGE }}
-      />
-    );
+    return <ErrorMessage className="m-5" title={ERROR_MESSAGE} error={error as any} />;
   }
 
-  if (!statsData) {
+  if (isLoading) {
     return <Loader message="Loading analytics" />;
   }
 
@@ -63,7 +46,7 @@ const Stats: FC<Props> = ({ publication }) => {
       <Stat
         title="Views"
         helper="Times people viewed the details about this publication"
-        stat={statsData?.pageviews}
+        stat={data?.pageviews}
       />
     </div>
   );

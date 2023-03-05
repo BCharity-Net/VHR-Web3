@@ -1,3 +1,4 @@
+import { FollowSource } from '@components/Shared/Follow'
 import Loader from '@components/Shared/Loader'
 import UserProfile from '@components/Shared/UserProfile'
 import { EmptyState } from '@components/UI/EmptyState'
@@ -6,7 +7,7 @@ import InfiniteLoader from '@components/UI/InfiniteLoader'
 import { UsersIcon } from '@heroicons/react/outline'
 import formatHandle from '@lib/formatHandle'
 import { SCROLL_THRESHOLD } from 'data/constants'
-import type { Profile } from 'lens';
+import type { FollowingRequest, Profile } from 'lens';
 import { useFollowingQuery } from 'lens'
 import type { FC } from 'react'
 import { useTranslation } from 'react-i18next'
@@ -21,7 +22,7 @@ const Following: FC<Props> = ({ profile, onProfileSelected }) => {
   const { t } = useTranslation('common')
 
   // Variables
-  const request = { address: profile?.ownedBy, limit: 10 }
+  const request: FollowingRequest = { address: profile?.ownedBy, limit: 10 }
 
   const { data, loading, error, fetchMore } = useFollowingQuery({
     variables: { request },
@@ -60,7 +61,7 @@ const Following: FC<Props> = ({ profile, onProfileSelected }) => {
   }
 
   return (
-    <div className="overflow-y-auto max-h-[80vh]">
+    <div className="max-h-[80vh] overflow-y-auto" id="scrollableFollowingDiv">
       <ErrorMessage className="m-5" title="Failed to load following" error={error} />
       <InfiniteScroll
         dataLength={followings?.length ?? 0}
@@ -68,10 +69,10 @@ const Following: FC<Props> = ({ profile, onProfileSelected }) => {
         hasMore={hasMore}
         next={loadMore}
         loader={<InfiniteLoader />}
-        scrollableTarget="scrollableDiv"
+        scrollableTarget="scrollableFollowingDiv"
       >
         <div className="divide-y dark:divide-gray-700">
-          {followings?.map((following) => (
+          {followings?.map((following, index) => (
             <div
               className={`p-5 ${
                 onProfileSelected && 'hover:bg-gray-100 dark:hover:bg-gray-900 cursor-pointer'
@@ -88,9 +89,12 @@ const Following: FC<Props> = ({ profile, onProfileSelected }) => {
               <UserProfile
                 profile={following?.profile as Profile}
                 linkToProfile={!onProfileSelected}
+                isFollowing={following?.profile?.isFollowedByMe}
+                followPosition={index + 1}
+                followSource={FollowSource.FOLLOWING_MODAL}
                 showBio
                 showFollow
-                isFollowing={following?.profile?.isFollowedByMe}
+                showUserPreview={false}
               />
             </div>
           ))}

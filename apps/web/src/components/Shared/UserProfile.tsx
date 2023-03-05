@@ -1,9 +1,13 @@
 import { BadgeCheckIcon } from '@heroicons/react/solid';
 import formatHandle from '@lib/formatHandle';
+import formatTime from '@lib/formatTime';
 import getAttribute from '@lib/getAttribute';
 import getAvatar from '@lib/getAvatar';
 import isVerified from '@lib/isVerified';
 import clsx from 'clsx';
+import dayjs from 'dayjs';
+// @ts-ignore
+import dayjsTwitter from 'dayjs-twitter';
 import type { Profile } from 'lens';
 import Link from 'next/link';
 import type { FC } from 'react';
@@ -15,28 +19,38 @@ import Slug from './Slug';
 import SuperFollow from './SuperFollow';
 import UserPreview from './UserPreview';
 
+dayjs.extend(dayjsTwitter);
+
 interface Props {
   profile: Profile;
-  showBio?: boolean;
-  showFollow?: boolean;
   followStatusLoading?: boolean;
   isFollowing?: boolean;
   isBig?: boolean;
   linkToProfile?: boolean;
+  showBio?: boolean;
+  showFollow?: boolean;
   showStatus?: boolean;
   showUserPreview?: boolean;
+  timestamp?: Date;
+
+  // For data analytics
+  followPosition?: number;
+  followSource?: string;
 }
 
 const UserProfile: FC<Props> = ({
   profile,
-  showBio = false,
-  showFollow = false,
   followStatusLoading = false,
   isFollowing = false,
   isBig = false,
   linkToProfile = true,
+  showBio = false,
+  showFollow = false,
   showStatus = false,
-  showUserPreview = true
+  showUserPreview = true,
+  timestamp = '',
+  followPosition,
+  followSource
 }) => {
   const [following, setFollowing] = useState(isFollowing);
 
@@ -46,11 +60,14 @@ const UserProfile: FC<Props> = ({
 
   const UserAvatar = () => (
     <img
+      onError={({ currentTarget }) => {
+        currentTarget.src = getAvatar(profile, false);
+      }}
       src={getAvatar(profile)}
       loading="lazy"
       className={clsx(
         isBig ? 'w-14 h-14' : 'w-10 h-10',
-        'bg-gray-200 rounded-full border dark:border-gray-700/80'
+        'bg-gray-200 rounded-full border dark:border-gray-700'
       )}
       height={isBig ? 56 : 40}
       width={isBig ? 56 : 40}
@@ -66,7 +83,7 @@ const UserProfile: FC<Props> = ({
         </div>
         {isVerified(profile?.id) && <BadgeCheckIcon className="w-4 h-4 text-brand ml-1" />}
         {showStatus && hasStatus ? (
-          <div className="flex items-center text-gray-500">
+          <div className="flex items-center lt-text-gray-500">
             <span className="mx-1.5">·</span>
             <span className="text-xs flex items-center space-x-1 max-w-[10rem]">
               <span>{statusEmoji}</span>
@@ -75,7 +92,18 @@ const UserProfile: FC<Props> = ({
           </div>
         ) : null}
       </div>
-      <Slug className="text-sm" slug={formatHandle(profile?.handle)} prefix="@" />
+      <div>
+        <Slug className="text-sm" slug={formatHandle(profile?.handle)} prefix="@" />
+        {timestamp ? (
+          <span className="lt-text-gray-500">
+            <span className="mx-1.5">·</span>
+            <span className="text-xs" title={formatTime(timestamp as Date)}>
+              {/* @ts-ignore */}
+              {dayjs(new Date(timestamp)).twitter()}
+            </span>
+          </span>
+        ) : null}
+      </div>
     </>
   );
 
@@ -92,7 +120,11 @@ const UserProfile: FC<Props> = ({
           <div>
             <UserName />
             {showBio && profile?.bio && (
-              <div className={clsx(isBig ? 'text-base' : 'text-sm', 'mt-2', 'linkify leading-6')}>
+              <div
+                // Replace with Tailwind
+                style={{ wordBreak: 'break-word' }}
+                className={clsx(isBig ? 'text-base' : 'text-sm', 'mt-2', 'linkify leading-6')}
+              >
                 <Markup>{profile?.bio}</Markup>
               </div>
             )}
@@ -117,7 +149,12 @@ const UserProfile: FC<Props> = ({
         ) : following ? null : profile?.followModule?.__typename === 'FeeFollowModuleSettings' ? (
           <SuperFollow profile={profile} setFollowing={setFollowing} />
         ) : (
-          <Follow profile={profile} setFollowing={setFollowing} />
+          <Follow
+            profile={profile}
+            setFollowing={setFollowing}
+            followPosition={followPosition}
+            followSource={followSource}
+          />
         ))}
     </div>
   );

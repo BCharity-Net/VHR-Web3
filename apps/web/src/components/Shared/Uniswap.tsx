@@ -1,4 +1,3 @@
-import type { BCharityCollectModule, BCharityFollowModule } from '@generated/types'
 import { Analytics } from '@lib/analytics'
 import getUniswapURL from '@lib/getUniswapURL'
 import { STATIC_IMAGES_URL } from 'data/constants'
@@ -6,7 +5,7 @@ import type { FC } from 'react'
 import { PUBLICATION } from 'src/tracking'
 
 interface Props {
-  module: BCharityCollectModule | BCharityFollowModule
+  module: any
 }
 
 const Uniswap: FC<Props> = ({ module }) => {

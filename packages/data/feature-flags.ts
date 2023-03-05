@@ -1,5 +1,7 @@
 import { aaveMembers } from './aave-members'
+import { IS_PRODUCTION } from './constants'
 import { bcharityMembers } from './bcharity-members'
+import { mainnetStaffs, testnetStaffs } from './staffs'
 
 export const featureFlags = [
   {
@@ -7,7 +9,6 @@ export const featureFlags = [
     name: 'Messages',
     enabledFor: [
       ...bcharityMembers,
-      ...aaveMembers,
       '0x06', // wagmi.lens
       '0x2d', // sasicodes.lens
       '0xe248', // nick-molnar.lens
@@ -31,5 +32,20 @@ export const featureFlags = [
     key: 'access-settings',
     name: 'Access settings',
     enabledFor: [...bcharityMembers]
+  },
+  {
+    key: 'nft-gallery',
+    name: 'NFT Gallery',
+    enabledFor: !IS_PRODUCTION ? [...mainnetStaffs, ...testnetStaffs] : []
+  },
+  {
+    key: 'nft-detail',
+    name: 'NFT Detail Page',
+    enabledFor: !IS_PRODUCTION ? [...mainnetStaffs, ...testnetStaffs] : []
+  },
+  {
+    key: 'preferences-settings',
+    name: 'Preferences settings',
+    enabledFor: [...bcharityMembers, ...aaveMembers]
   }
 ]

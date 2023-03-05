@@ -3,6 +3,7 @@ import getEnvConfig from './utils/getEnvConfig'
 
 // Environments
 export const IS_PRODUCTION = process.env.NODE_ENV === 'production'
+export const IS_DEVELOPMENT = process.env.NODE_ENV === 'development'
 
 // Lens Network
 export const LENS_NETWORK = process.env.NEXT_PUBLIC_LENS_NETWORK ?? 'mainnet'
@@ -12,11 +13,11 @@ export const SANDBOX_API_URL = 'https://api-sandbox-mumbai.lens.dev'
 export const STAGING_API_URL = 'https://staging-api-social-mumbai.lens.crtlkey.com'
 export const STAGING_SANDBOX_API_URL = 'https://staging-api-social-mumbai.sandbox.crtlkey.com'
 
-export const SERVERLESS_MAINNET_API_URL = 'https://api.lenster.xyz'
-export const SERVERLESS_TESTNET_API_URL = 'https://api-testnet.lenster.xyz'
-export const SERVERLESS_STAGING_API_URL = 'https://api-staging.lenster.xyz'
-export const SERVERLESS_STAGING_SANDBOX_API_URL = 'https://api-staging-sandbox.lenster.xyz'
-export const SERVERLESS_SANDBOX_API_URL = 'https://api-sandbox.lenster.xyz'
+export const SERVERLESS_MAINNET_API_URL = 'https://api.bcharity.net'
+export const SERVERLESS_TESTNET_API_URL = 'https://api-testnet.bcharity.net'
+export const SERVERLESS_STAGING_API_URL = 'https://api-staging.bcharity.net'
+export const SERVERLESS_STAGING_SANDBOX_API_URL = 'https://api-staging-sandbox.bcharity.net'
+export const SERVERLESS_SANDBOX_API_URL = 'https://api-sandbox.bcharity.net'
 export const SERVERLESS_DEVELOPMENT_API_URL = 'http://localhost:4784'
 
 export const SERVERLESS_URL = getEnvConfig().serverlessEndpoint
@@ -24,6 +25,7 @@ export const API_URL = getEnvConfig().apiEndpoint
 export const LENSHUB_PROXY = getEnvConfig().lensHubProxyAddress
 export const LENS_PERIPHERY = getEnvConfig().lensPeripheryAddress
 export const DEFAULT_COLLECT_TOKEN = getEnvConfig().defaultCollectToken
+export const LIT_PROTOCOL_ENVIRONMENT = getEnvConfig().litProtocolEnvironment
 
 export const IS_MAINNET = API_URL === MAINNET_API_URL
 
@@ -36,7 +38,6 @@ export const XMTP_PREFIX = 'lens.dev/dm'
 export const APP_NAME = 'BCharity'
 export const DESCRIPTION =
   'Next generation group-driven composable, decentralized, and permissionless public good Web3 built on blockchain.'
-export const DEFAULT_OG = 'https://github.com/bcharity/assets'
 export const APP_VERSION = packageJson.version;
 
 // Git
@@ -44,7 +45,7 @@ export const GIT_COMMIT_SHA = process.env.NEXT_PUBLIC_VERCEL_GIT_COMMIT_SHA?.sli
 
 // Misc
 export const CONTACT_EMAIL = 'admin@bcharity.net'
-export const RELAY_ON = 'true'
+export const RELAY_ON = true
 export const ZERO_ADDRESS = '0x0000000000000000000000000000000000000000'
 export const LENSPROTOCOL_HANDLE = 'lensprotocol'
 export const HANDLE_SUFFIX = IS_MAINNET ? '.lens' : '.test'
@@ -78,26 +79,28 @@ export const WRONG_NETWORK = IS_MAINNET
 export const SIGN_ERROR = 'Failed to sign data'
 
 // URLs
-export const STATIC_ASSETS_URL = 'https://assets.lenster.xyz'
+export const STATIC_ASSETS_URL = 'https://assets.bcharity.net'
 export const STATIC_IMAGES_URL = `${STATIC_ASSETS_URL}/images`
 export const POLYGONSCAN_URL = IS_MAINNET ? 'https://polygonscan.com' : 'https://mumbai.polygonscan.com'
 export const VHR_TOP_HOLDERS_URL =
   'https://mumbai.polygonscan.com/token/tokenholderchart/0x28ee241ab245699968f2980d3d1b1d23120ab8be'
-export const RARIBLE_URL = IS_MAINNET ? 'https://rarible.com' : 'https://rinkeby.rarible.com'
+export const RARIBLE_URL = IS_MAINNET ? 'https://rarible.com' : 'https://testnet.rarible.com'
 export const IMAGEKIT_URL = `https://ik.imagekit.io/${IS_PRODUCTION ? 'bcharityimg' : 'bcharitydev'}`
-export const MEDIA_PROXY_URL = 'https://media.lenster.xyz'
-export const OG_MEDIA_PROXY_URL = 'https://og-media.lenster.xyz'
 export const ARWEAVE_GATEWAY = 'https://arweave.net'
-export const IPFS_GATEWAY = 'https://lens.infura-ipfs.io/ipfs/'
+export const IPFS_GATEWAY = 'https://gateway.ipfscdn.io/ipfs/'
 export const EVER_API = 'https://endpoint.4everland.co'
-export const SIMPLEANALYTICS_API = 'https://simpleanalytics.com/lenster.xyz.json'
+export const SIMPLEANALYTICS_API = 'https://simpleanalytics.com/bcharity.net.json'
+export const DEFAULT_OG = `${STATIC_IMAGES_URL}/og/logo.jpeg`
+
+// Workers
+export const MEDIA_PROXY_URL = IS_PRODUCTION ? 'https://media.bcharity.net' : 'http://localhost:8081';
+export const STS_TOKEN_URL = IS_PRODUCTION ? 'https://sts.bcharity.net' : 'http://localhost:8082';
 
 // Web3
-export const ALCHEMY_KEY = process.env.NEXT_PUBLIC_ALCHEMY_KEY
+export const ALCHEMY_KEY = 'HHfOFn8jsYguteTVvL0cz4g9aydrbjTV'
 export const ALCHEMY_RPC = IS_MAINNET
   ? `https://polygon-mainnet.g.alchemy.com/v2/${ALCHEMY_KEY}`
   : `https://polygon-mumbai.g.alchemy.com/v2/${ALCHEMY_KEY}`
-export const RPC_URL = IS_MAINNET ? 'https://rpc.ankr.com/polygon' : 'https://rpc.ankr.com/polygon_mumbai'
 
 export const INFURA_PROJECT_ID = process.env.NEXT_PUBLIC_INFURA_PROJECT_ID
 export const INFURA_PROJECT_SECRET = process.env.NEXT_PUBLIC_INFURA_PROJECT_SECRET
@@ -161,6 +164,7 @@ export const ATTACHMENT = 'attachment'
 // Localstorage keys
 export const LS_KEYS = {
   BCHARITY_STORE: 'bcharity.store',
+  PREFERENCES_STORE: 'preferences.store',
   TRANSACTION_STORE: 'transaction.store',
   TIMELINE_STORE: 'timeline.store',
   MESSAGE_STORE: 'message.store'

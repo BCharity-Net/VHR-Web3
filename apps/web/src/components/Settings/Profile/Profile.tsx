@@ -1,5 +1,4 @@
 import ChooseFile from '@components/Shared/ChooseFile'
-import IndexStatus from '@components/Shared/IndexStatus'
 import { Button } from '@components/UI/Button'
 import { Card } from '@components/UI/Card'
 import { ErrorMessage } from '@components/UI/ErrorMessage'
@@ -8,7 +7,6 @@ import { Input } from '@components/UI/Input'
 import { Spinner } from '@components/UI/Spinner'
 import { TextArea } from '@components/UI/TextArea'
 import { Toggle } from '@components/UI/Toggle'
-import useBroadcast from '@components/utils/hooks/useBroadcast'
 import { PencilIcon } from '@heroicons/react/outline'
 import { Analytics } from '@lib/analytics'
 import getAttribute from '@lib/getAttribute'
@@ -21,10 +19,11 @@ import splitSignature from '@lib/splitSignature'
 import uploadToArweave from '@lib/uploadToArweave'
 import uploadToIPFS from '@lib/uploadToIPFS'
 import { LensPeriphery } from 'abis'
-import { APP_NAME, COVER, LENS_PERIPHERY, RELAY_ON, SIGN_WALLET } from 'data/constants'
+import { APP_NAME, COVER, LENS_PERIPHERY, SIGN_WALLET } from 'data/constants'
 import type { CreatePublicSetProfileMetadataUriRequest, MediaSet } from 'lens';
 import {
   Profile,
+  useBroadcastMutation,
   useCreateSetProfileMetadataTypedDataMutation,
   useCreateSetProfileMetadataViaDispatcherMutation
 } from 'lens'
@@ -58,7 +57,6 @@ const Profile: FC<Props> = ({ profile }) => {
   const { isLoading: signLoading, signTypedDataAsync } = useSignTypedData({ onError })
 
   const {
-    data: writeData,
     isLoading: writeLoading,
     error,
     write
@@ -71,43 +69,32 @@ const Profile: FC<Props> = ({ profile }) => {
     onError
   })
 
-  const { broadcast, data: broadcastData, loading: broadcastLoading } = useBroadcast({ onCompleted })
+  const [broadcast, { loading: broadcastLoading }] = useBroadcastMutation({
+    onCompleted
+  })
   const [createSetProfileMetadataTypedData, { loading: typedDataLoading }] =
     useCreateSetProfileMetadataTypedDataMutation({
       onCompleted: async ({ createSetProfileMetadataTypedData }) => {
         const { id, typedData } = createSetProfileMetadataTypedData
-        const { deadline } = typedData?.value
-
-        try {
-          const { id, typedData } = createSetProfileMetadataTypedData
-          const { profileId, metadata, deadline } = typedData.value
-          const signature = await signTypedDataAsync(getSignature(typedData))
-          const { v, r, s } = splitSignature(signature)
-          const sig = { v, r, s, deadline }
-          const inputStruct = {
-            user: currentProfile?.ownedBy,
-            profileId,
-            metadata,
-            sig
-          }
-
-          if (!RELAY_ON) {
-            return write?.({ recklesslySetUnpreparedArgs: [inputStruct] })
-          }
-
-          const {
-            data: { broadcast: result }
-          } = await broadcast({ request: { id, signature } })
-
-          if ('reason' in result) {
-            write?.({ recklesslySetUnpreparedArgs: [inputStruct] })
-          }
-        } catch {}
+        const { profileId, metadata, deadline } = typedData.value
+        const signature = await signTypedDataAsync(getSignature(typedData))
+        const { v, r, s } = splitSignature(signature)
+        const sig = { v, r, s, deadline }
+        const inputStruct = {
+          user: currentProfile?.ownedBy,
+          profileId,
+          metadata,
+          sig
+        }
+        const { data } = await broadcast({ variables: { request: { id, signature } } })
+        if (data?.broadcast.__typename === 'RelayError') {
+          return write?.({ recklesslySetUnpreparedArgs: [inputStruct] })
+        }
       },
       onError
     })
 
-  const [createSetProfileMetadataViaDispatcher, { data: dispatcherData, loading: dispatcherLoading }] =
+  const [createSetProfileMetadataViaDispatcher, { loading: dispatcherLoading }] =
     useCreateSetProfileMetadataViaDispatcherMutation({ onCompleted, onError })
 
   const createViaDispatcher = async (request: CreatePublicSetProfileMetadataUriRequest) => {
@@ -115,7 +102,7 @@ const Profile: FC<Props> = ({ profile }) => {
       variables: { request }
     })
     if (data?.createSetProfileMetadataViaDispatcher?.__typename === 'RelayError') {
-      createSetProfileMetadataTypedData({
+      await createSetProfileMetadataTypedData({
         variables: { request }
       })
     }
@@ -160,7 +147,7 @@ const Profile: FC<Props> = ({ profile }) => {
       name: profile?.name ?? '',
       location: getAttribute(profile?.attributes, 'location'),
       website: getAttribute(profile?.attributes, 'website'),
-      twitter: getAttribute(profile?.attributes, 'twitter')?.replace('https://twitter.com/', ''),
+      twitter: getAttribute(profile?.attributes, 'twitter')?.replace(/(https:\/\/)?twitter\.com\//, ''),
       bio: profile?.bio ?? ''
     }
   })
@@ -176,51 +163,56 @@ const Profile: FC<Props> = ({ profile }) => {
       return toast.error(SIGN_WALLET)
     }
 
-    setIsUploading(true)
-    const id = await uploadToArweave({
-      name,
-      bio,
-      cover_picture: cover ? cover : null,
-      attributes: [
-        { traitType: 'string', key: 'location', value: location },
-        { traitType: 'string', key: 'website', value: website },
-        { traitType: 'string', key: 'twitter', value: twitter },
-        { traitType: 'boolean', key: 'hasPrideLogo', value: pride },
-        { traitType: 'string', key: 'statusEmoji', value: getAttribute(profile?.attributes, 'statusEmoji') },
-        {
-          traitType: 'string',
-          key: 'statusMessage',
-          value: getAttribute(profile?.attributes, 'statusMessage')
-        },
-        { traitType: 'string', key: 'app', value: APP_NAME }
-      ],
-      version: '1.0.0',
-      metadata_id: uuid(),
-      createdOn: new Date(),
-      appId: APP_NAME
-    }).finally(() => setIsUploading(false))
+    try {
+      setIsUploading(true)
+      const id = await uploadToArweave({
+        name,
+        bio,
+        cover_picture: cover ? cover : null,
+        attributes: [
+          ...(profile?.attributes
+            ?.filter(
+              (attr) =>
+                ![
+                  'location',
+                  'website',
+                  'twitter',
+                  'hasPrideLogo',
+                  'statusEmoji',
+                  'statusMessage',
+                  'app'
+                ].includes(attr.key)
+            )
+            .map(({ key, value }) => ({ key, value })) ?? []),
+          { key: 'location', value: location },
+          { key: 'website', value: website },
+          { key: 'twitter', value: twitter },
+          { key: 'hasPrideLogo', value: pride },
+          { key: 'statusEmoji', value: getAttribute(profile?.attributes, 'statusEmoji') },
+          { key: 'statusMessage', value: getAttribute(profile?.attributes, 'statusMessage') },
+          { key: 'app', value: APP_NAME }
+        ],
+        version: '1.0.0',
+        metadata_id: uuid()
+      }).finally(() => setIsUploading(false))
 
-    const request = {
-      profileId: currentProfile?.id,
-      metadata: `https://arweave.net/${id}`
-    }
+      const request: CreatePublicSetProfileMetadataUriRequest = {
+        profileId: currentProfile?.id,
+        metadata: `https://arweave.net/${id}`
+      }
 
-    if (currentProfile?.dispatcher?.canUseRelay) {
-      createViaDispatcher(request)
-    } else {
-      createSetProfileMetadataTypedData({
+      if (currentProfile?.dispatcher?.canUseRelay) {
+        return await createViaDispatcher(request)
+      }
+
+      return await createSetProfileMetadataTypedData({
         variables: { request }
       })
-    }
+    } catch {}
   }
 
   const isLoading =
     isUploading || typedDataLoading || dispatcherLoading || signLoading || writeLoading || broadcastLoading
-  const txHash =
-    writeData?.hash ??
-    broadcastData?.broadcast?.txHash ??
-    (dispatcherData?.createSetProfileMetadataViaDispatcher.__typename === 'RelayerResult' &&
-      dispatcherData?.createSetProfileMetadataViaDispatcher.txHash)
 
   return (
     <Card className="p-5">
@@ -256,6 +248,9 @@ const Profile: FC<Props> = ({ profile }) => {
               <div>
                 <img
                   className="object-cover w-full h-60 rounded-lg"
+                  onError={({ currentTarget }) => {
+                    currentTarget.src = getIPFSLink(cover);
+                  }}
                   src={imageProxy(getIPFSLink(cover), COVER)}
                   alt={cover}
                 />
@@ -274,23 +269,19 @@ const Profile: FC<Props> = ({ profile }) => {
           </div>
           <div className="flex items-center space-x-2">
             <Toggle on={pride} setOn={setPride} />
-            <div>
+            <div className="lt-text-gray-500">
               {APP_NAME} {t('Pride switch')}
             </div>
           </div>
         </div>
-        <div className="flex flex-col space-y-2">
-          <Button
-            className="ml-auto"
-            type="submit"
-            disabled={isLoading}
-            icon={isLoading ? <Spinner size="xs" /> : <PencilIcon className="w-4 h-4" />}
-          >
-            {' '}
-            {t('Save')}
-          </Button>
-          {txHash ? <IndexStatus txHash={txHash} /> : null}
-        </div>
+        <Button
+          className="ml-auto"
+          type="submit"
+          disabled={isLoading}
+          icon={isLoading ? <Spinner size="xs" /> : <PencilIcon className="w-4 h-4" />}
+        >
+          Save
+        </Button>
       </Form>
     </Card>
   )

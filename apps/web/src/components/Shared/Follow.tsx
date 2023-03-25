@@ -2,7 +2,7 @@ import type { ApolloCache } from '@apollo/client'
 import { Button } from '@components/UI/Button'
 import { Spinner } from '@components/UI/Spinner'
 import { UserAddIcon } from '@heroicons/react/outline'
-import { Analytics } from '@lib/analytics'
+import { Mixpanel } from '@lib/mixpanel'
 import getSignature from '@lib/getSignature'
 import onError from '@lib/onError'
 import splitSignature from '@lib/splitSignature'
@@ -39,7 +39,7 @@ interface Props {
   showText?: boolean
   outline?: boolean
 
-  // For data analytics
+  // For data mixpanel
   followPosition?: number;
   followSource?: string;
 }
@@ -64,11 +64,10 @@ const Follow: FC<Props> = ({
   const onCompleted = () => {
     setFollowing(true)
     toast.success('Followed successfully!')
-    Analytics.track(PROFILE.FOLLOW, {
+    Mixpanel.track(PROFILE.FOLLOW, {
       follow_path: pathname,
       ...(followSource && { follow_source: followSource }),
       ...(followPosition && { follow_position: followPosition }),
-      follow_from: currentProfile?.id,
       follow_target: profile?.id
     })
   }

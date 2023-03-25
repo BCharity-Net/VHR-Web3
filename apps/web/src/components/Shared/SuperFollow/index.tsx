@@ -1,7 +1,7 @@
 import { Button } from '@components/UI/Button'
 import { Modal } from '@components/UI/Modal'
 import { StarIcon } from '@heroicons/react/outline'
-import { Analytics } from '@lib/analytics'
+import { Mixpanel } from '@lib/mixpanel'
 import formatHandle from '@lib/formatHandle'
 import type { Profile } from 'lens'
 import dynamic from 'next/dynamic'
@@ -44,7 +44,7 @@ const SuperFollow: FC<Props> = ({ profile, setFollowing, showText = false, again
             return
           }
           setShowFollowModal(!showFollowModal)
-          Analytics.track(PROFILE.OPEN_SUPER_FOLLOW)
+          Mixpanel.track(PROFILE.OPEN_SUPER_FOLLOW)
         }}
         aria-label={t('Super follow')}
         icon={<StarIcon className="w-4 h-4" />}

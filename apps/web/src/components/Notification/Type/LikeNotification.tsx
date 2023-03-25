@@ -3,7 +3,7 @@ import UserPreview from '@components/Shared/UserPreview'
 import type { MessageDescriptor } from '@generated/types'
 import { SunIcon } from '@heroicons/react/outline'
 import { HeartIcon } from '@heroicons/react/solid'
-import formatTime from '@lib/formatTime'
+import { formatTime, getTimeFromNow } from '@lib/formatTime'
 import dayjs from 'dayjs'
 import hasGm from '@lib/hasGm'
 import relativeTime from 'dayjs/plugin/relativeTime'
@@ -12,8 +12,6 @@ import Link from 'next/link'
 import type { FC } from 'react'
 
 import { NotificationProfileAvatar, NotificationProfileName } from '../Profile'
-
-dayjs.extend(relativeTime)
 
 interface Props {
   notification: NewReactionNotification
@@ -50,7 +48,7 @@ const LikeNotification: FC<Props> = ({ notification }) => {
         </div>
       </div>
       <div className="text-gray-400 text-[12px]" title={formatTime(notification?.createdAt)}>
-        {dayjs(new Date(notification?.createdAt)).fromNow()}
+        {getTimeFromNow(notification?.createdAt)}
       </div>
     </div>
   )

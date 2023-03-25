@@ -6,6 +6,7 @@ import SuperFollow from '@components/Shared/SuperFollow'
 import Unfollow from '@components/Shared/Unfollow'
 import ProfileStaffTool from '@components/StaffTools/Panels/Profile'
 import { Button } from '@components/UI/Button'
+import { Image } from '@components/UI/Image'
 import { Modal } from '@components/UI/Modal'
 import { Tooltip } from '@components/UI/Tooltip'
 import useStaffMode from '@components/utils/hooks/useStaffMode'
@@ -15,8 +16,8 @@ import buildConversationId from '@lib/buildConversationId'
 import { buildConversationKey } from '@lib/conversationKey'
 import formatAddress from '@lib/formatAddress'
 import formatHandle from '@lib/formatHandle'
-import getAttribute from '@lib/getAttribute'
 import getAvatar from '@lib/getAvatar'
+import getProfileAttribute from '@lib/getProfileAttribute'
 import isStaff from '@lib/isStaff'
 import isVerified from '@lib/isVerified'
 import { RARIBLE_URL, STATIC_IMAGES_URL } from 'data/constants'
@@ -75,7 +76,7 @@ const Details: FC<Props> = ({ profile, following, setFollowing }) => {
   return (
     <div className="px-5 mb-4 space-y-5 sm:px-0">
       <div className="relative -mt-24 w-32 h-32 sm:-mt-32 sm:w-52 sm:h-52">
-        <img
+        <Image
           onError={({ currentTarget }) => {
             currentTarget.src = getAvatar(profile, false);
           }}
@@ -177,9 +178,9 @@ const Details: FC<Props> = ({ profile, following, setFollowing }) => {
               </a>
             </Tooltip>
           </MetaDetails>
-          {getAttribute(profile?.attributes, 'location') && (
+          {getProfileAttribute(profile?.attributes, 'location') && (
             <MetaDetails icon={<LocationMarkerIcon className="w-4 h-4" />}>
-              {getAttribute(profile?.attributes, 'location') as any}
+              {getProfileAttribute(profile?.attributes, 'location') as any}
             </MetaDetails>
           )}
           {profile?.onChainIdentity?.ens?.name && (
@@ -197,11 +198,11 @@ const Details: FC<Props> = ({ profile, following, setFollowing }) => {
               {profile?.onChainIdentity?.ens?.name}
             </MetaDetails>
           )}
-          {getAttribute(profile?.attributes, 'website') && (
+          {getProfileAttribute(profile?.attributes, 'website') && (
             <MetaDetails
               icon={
                 <img
-                  src={`https://www.google.com/s2/favicons?domain=${getAttribute(
+                  src={`https://www.google.com/s2/favicons?domain=${getProfileAttribute(
                     profile?.attributes,
                     'website'
                   )
@@ -215,17 +216,17 @@ const Details: FC<Props> = ({ profile, following, setFollowing }) => {
               }
             >
               <a
-                href={`https://${getAttribute(profile?.attributes, 'website')
+                href={`https://${getProfileAttribute(profile?.attributes, 'website')
                   ?.replace('https://', '')
                   .replace('http://', '')}`}
                 target="_blank"
                 rel="noreferrer noopener me"
               >
-                {getAttribute(profile?.attributes, 'website')?.replace('https://', '').replace('http://', '')}
+                {getProfileAttribute(profile?.attributes, 'website')?.replace('https://', '').replace('http://', '')}
               </a>
             </MetaDetails>
           )}
-          {getAttribute(profile?.attributes, 'twitter') && (
+          {getProfileAttribute(profile?.attributes, 'twitter') && (
             <MetaDetails
               icon={
                 resolvedTheme === 'dark' ? (
@@ -248,11 +249,11 @@ const Details: FC<Props> = ({ profile, following, setFollowing }) => {
               }
             >
               <a
-                href={`https://twitter.com/${getAttribute(profile?.attributes, 'twitter')}`}
+                href={`https://twitter.com/${getProfileAttribute(profile?.attributes, 'twitter')}`}
                 target="_blank"
                 rel="noreferrer noopener"
               >
-                {getAttribute(profile?.attributes, 'twitter')?.replace('https://twitter.com/', '')}
+                {getProfileAttribute(profile?.attributes, 'twitter')?.replace('https://twitter.com/', '')}
               </a>
             </MetaDetails>
           )}

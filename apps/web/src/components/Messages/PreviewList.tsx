@@ -9,7 +9,7 @@ import { GridItemFour } from '@components/UI/GridLayout';
 import { Modal } from '@components/UI/Modal';
 import useMessagePreviews from '@components/utils/hooks/useMessagePreviews';
 import { MailIcon, PlusCircleIcon, UsersIcon } from '@heroicons/react/outline';
-import { Analytics } from '@lib/analytics';
+import { Mixpanel } from '@lib/mixpanel';
 import buildConversationId from '@lib/buildConversationId';
 import { buildConversationKey } from '@lib/conversationKey';
 import clsx from 'clsx';
@@ -57,7 +57,7 @@ const PreviewList: FC<Props> = ({ className, selectedConversationKey }) => {
 
   const newMessageClick = () => {
     setShowSearchModal(true);
-    Analytics.track(MESSAGES.OPEN_NEW_CONVERSATION);
+    Mixpanel.track(MESSAGES.OPEN_NEW_CONVERSATION);
   };
 
   const onProfileSelected = (profile: Profile) => {

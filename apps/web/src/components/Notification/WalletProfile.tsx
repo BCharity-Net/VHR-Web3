@@ -1,3 +1,4 @@
+import { Image } from '@components/UI/Image'
 import formatAddress from '@lib/formatAddress'
 import getStampFyiURL from '@lib/getStampFyiURL'
 import imageProxy from '@lib/imageProxy'
@@ -12,7 +13,7 @@ interface Props {
 export const NotificationWalletProfileAvatar: FC<Props> = ({ wallet }) => {
   return (
     <a href={`${POLYGONSCAN_URL}/address/${wallet?.address}`} target="_blank" rel="noreferrer noopener">
-      <img
+      <Image
         onError={({ currentTarget }) => {
           currentTarget.src = getStampFyiURL(wallet?.address);
         }}

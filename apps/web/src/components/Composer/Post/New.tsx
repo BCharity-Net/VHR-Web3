@@ -1,4 +1,5 @@
 import { Card } from '@components/UI/Card';
+import { Image } from '@components/UI/Image';
 import { Modal } from '@components/UI/Modal';
 import { Tooltip } from '@components/UI/Tooltip';
 import { PencilAltIcon } from '@heroicons/react/outline';
@@ -70,7 +71,7 @@ const NewPost: FC = () => {
   return (
     <Card className="p-5 space-y-3">
       <div className="flex items-center space-x-3">
-        <img
+        <Image
           onError={({ currentTarget }) => {
             currentTarget.src = getAvatar(currentProfile, false);
           }}

@@ -1,9 +1,10 @@
 import ChooseFile from '@components/Shared/ChooseFile'
 import { Button } from '@components/UI/Button'
 import { ErrorMessage } from '@components/UI/ErrorMessage'
+import { Image } from '@components/UI/Image'
 import { Spinner } from '@components/UI/Spinner'
 import { PencilIcon } from '@heroicons/react/outline'
-import { Analytics } from '@lib/analytics'
+import { Mixpanel } from '@lib/mixpanel'
 import getIPFSLink from '@lib/getIPFSLink'
 import getSignature from '@lib/getSignature'
 import imageProxy from '@lib/imageProxy'
@@ -41,7 +42,7 @@ const Picture: FC<Props> = ({ profile }) => {
 
   const onCompleted = () => {
     toast.success('Avatar updated successfully!')
-    Analytics.track(SETTINGS.PROFILE.SET_PICTURE)
+    Mixpanel.track(SETTINGS.PROFILE.SET_PICTURE)
   }
 
   const {
@@ -156,7 +157,7 @@ const Picture: FC<Props> = ({ profile }) => {
         <div className="space-y-3">
           {avatar && (
             <div>
-              <img
+              <Image
                 className="w-60 h-60 rounded-lg"
                 height={240}
                 width={240}

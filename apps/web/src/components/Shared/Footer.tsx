@@ -1,10 +1,8 @@
 import useStaffMode from '@components/utils/hooks/useStaffMode'
-import { Analytics } from '@lib/analytics'
 import { APP_NAME } from 'data/constants'
 import Link from 'next/link'
 import type { FC } from 'react'
 import { useTranslation } from 'react-i18next'
-import { FOOTER } from 'src/tracking'
 
 const Footer: FC = () => {
   const { t } = useTranslation('common')
@@ -23,7 +21,6 @@ const Footer: FC = () => {
       <a 
         href="https://discord.gg/4vKS59q5kV" 
         target="_blank" rel="noreferrer noopener"
-        onClick={() => Analytics.track(FOOTER.DISCORD)}
       >
         Discord
       </a>
@@ -33,17 +30,16 @@ const Footer: FC = () => {
       <a href="https://t.me/BCharitynet" target="_blank" rel="noreferrer noopener">
         {t('Telegram')}
       </a>
-      <a href="" target="_blank" rel="noreferrer noopener" onClick={() => Analytics.track(FOOTER.DONATE)}>
+      <a href="" target="_blank" rel="noreferrer noopener">
         {t('Donate')}
       </a>
-      <a href="" target="_blank" rel="noreferrer noopener" onClick={() => Analytics.track(FOOTER.STATUS)}>
+      <a href="" target="_blank" rel="noreferrer noopener">
         {t('Status')}
       </a>
       <a 
         href="https://snapshot.org/#/igive.eth" 
         target="_blank" 
         rel="noreferrer noopener"
-        onClick={() => Analytics.track(FOOTER.VOTE)}
       >
         {t('Vote')}
       </a>
@@ -51,7 +47,6 @@ const Footer: FC = () => {
         href="https://github.com/BCharity-Net/SocialFi" 
         target="_blank" 
         rel="noreferrer noopener"
-        onClick={() => Analytics.track(FOOTER.GITHUB)}
       >
         GitHub
       </a>
@@ -59,7 +54,6 @@ const Footer: FC = () => {
         href="https://feedback.bcharity.net" 
         target="_blank" 
         rel="noreferrer noopener"
-        onClick={() => Analytics.track(FOOTER.FEEDBACK)}
       >
         Feedback
       </a>

@@ -1,5 +1,6 @@
 import { Tooltip } from '@components/UI/Tooltip';
 import { LockClosedIcon } from '@heroicons/react/solid';
+import { stopEventPropagation } from '@lib/stopEventPropagation';
 import type { ElectedMirror, Publication } from 'lens';
 import type { FC } from 'react';
 import { useAppStore } from 'src/store/app';
@@ -23,12 +24,7 @@ const PublicationActions: FC<Props> = ({ publication, electedMirror, showCount =
 
   return (
     <div className="flex items-center justify-between pt-3 -ml-2">
-      <span
-        className="flex items-center gap-6 sm:gap-8"
-        onClick={(event) => {
-          event.stopPropagation();
-        }}
-      >
+      <span className="flex items-center gap-6 sm:gap-8" onClick={stopEventPropagation}>
         <Comment publication={publication} showCount={showCount} />
         {canMirror && <Mirror publication={publication} showCount={showCount} />}
         <Like publication={publication} showCount={showCount} />

@@ -1,59 +1,63 @@
-import UserProfile from '@components/Shared/UserProfile'
-import { EmptyState } from '@components/UI/EmptyState'
-import { ErrorMessage } from '@components/UI/ErrorMessage'
-import InfiniteLoader from '@components/UI/InfiniteLoader'
-import { SwitchHorizontalIcon } from '@heroicons/react/outline'
-import { SCROLL_THRESHOLD } from 'data/constants'
+import UserProfile from '@components/Shared/UserProfile';
+import { EmptyState } from '@components/UI/EmptyState';
+import { ErrorMessage } from '@components/UI/ErrorMessage';
+import InfiniteLoader from '@components/UI/InfiniteLoader';
+import { SwitchHorizontalIcon } from '@heroicons/react/outline';
+import { SCROLL_THRESHOLD } from 'data/constants';
 import type { Profile, ProfileQueryRequest } from 'lens';
-import { useMirrorsQuery } from 'lens'
-import type { FC } from 'react'
-import InfiniteScroll from 'react-infinite-scroll-component'
+import { useMirrorsQuery } from 'lens';
+import type { FC } from 'react';
+import { useState } from 'react';
+import InfiniteScroll from 'react-infinite-scroll-component';
 
-import { FollowSource } from '../Follow'
-import Loader from '../Loader'
+import { FollowSource } from '../Follow';
+import Loader from '../Loader';
 
 interface Props {
-  publicationId: string
+  publicationId: string;
 }
 
 const Mirrors: FC<Props> = ({ publicationId }) => {
+  const [hasMore, setHasMore] = useState(true);
+
   // Variables
-  const request: ProfileQueryRequest = { whoMirroredPublicationId: publicationId, limit: 10 }
+  const request: ProfileQueryRequest = { whoMirroredPublicationId: publicationId, limit: 10 };
 
   const { data, loading, error, fetchMore } = useMirrorsQuery({
     variables: { request },
     skip: !publicationId
-  })
+  });
 
-  const profiles = data?.profiles?.items
-  const pageInfo = data?.profiles?.pageInfo
-  const hasMore = pageInfo?.next && profiles?.length !== pageInfo.totalCount
+  const profiles = data?.profiles?.items;
+  const pageInfo = data?.profiles?.pageInfo;
 
   const loadMore = async () => {
     await fetchMore({
       variables: { request: { ...request, cursor: pageInfo?.next } }
-    })
-  }
+    }).then(({ data }) => {
+      setHasMore(data?.profiles?.items?.length > 0);
+    });
+  };
 
   if (loading) {
-    return <Loader message="Loading mirrors" />
+    return <Loader message={`Loading mirrors`} />;
   }
 
   if (profiles?.length === 0) {
     return (
       <div className="p-5">
         <EmptyState
-          message={<span>No mirrors.</span>}
-          icon={<SwitchHorizontalIcon className="w-8 h-8 text-brand" />}
+          message={`No mirrors.`}
+          icon={<SwitchHorizontalIcon className="text-brand h-8 w-8" />}
           hideCard
         />
       </div>
-    )
+    );
   }
 
   return (
     <div className="max-h-[80vh] overflow-y-auto" id="scrollableMirrorsDiv">
-      <ErrorMessage className="m-5" title="Failed to load mirrors" error={error} />
+      <ErrorMessage className="m-5" title={`Failed to load mirrors`} error={error} />
       <InfiniteScroll
         dataLength={profiles?.length ?? 0}
         scrollThreshold={SCROLL_THRESHOLD}
@@ -79,7 +83,7 @@ const Mirrors: FC<Props> = ({ publicationId }) => {
         </div>
       </InfiniteScroll>
     </div>
-  )
-}
+  );
+};
 
-export default Mirrors
+export default Mirrors;

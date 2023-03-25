@@ -5,7 +5,7 @@ import { Form, useZodForm } from '@components/UI/Form'
 import { Input } from '@components/UI/Input'
 import { Spinner } from '@components/UI/Spinner'
 import { StarIcon, XIcon } from '@heroicons/react/outline'
-import { Analytics } from '@lib/analytics'
+import { Mixpanel } from '@lib/mixpanel'
 import getSignature from '@lib/getSignature'
 import getTokenImage from '@lib/getTokenImage'
 import onError from '@lib/onError'
@@ -41,7 +41,7 @@ const SuperFollow: FC = () => {
   })
 
   const onCompleted = () => {
-    Analytics.track(SETTINGS.ACCOUNT.SET_SUPER_FOLLOW)
+    Mixpanel.track(SETTINGS.ACCOUNT.SET_SUPER_FOLLOW)
   }
 
   const { isLoading: writeLoading, write } = useContractWrite({

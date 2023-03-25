@@ -3,13 +3,11 @@ import Likes from '@components/Shared/Modal/Likes';
 import Mirrors from '@components/Shared/Modal/Mirrors';
 import { Modal } from '@components/UI/Modal';
 import { CollectionIcon, HeartIcon, SwitchHorizontalIcon } from '@heroicons/react/outline';
-import { Analytics } from '@lib/analytics';
 import nFormatter from '@lib/nFormatter';
 import type { Publication } from 'lens';
 import type { FC } from 'react';
 import { useState } from 'react';
 import { usePreferencesStore } from 'src/store/preferences';
-import { PUBLICATION } from 'src/tracking';
 
 interface Props {
   publication: Publication;
@@ -43,13 +41,7 @@ const PublicationStats: FC<Props> = ({ publication }) => {
           <span>
             <b className="text-black dark:text-white">{nFormatter(commentsCount)}</b> Comments
           </span>
-          <button
-            type="button"
-            onClick={() => {
-              setShowMirrorsModal(true);
-              Analytics.track(PUBLICATION.STATS.MIRRORED_BY);
-            }}
-          >
+          <button type="button" onClick={() => setShowMirrorsModal(true)}>
             
           <b className="text-black dark:text-white">{nFormatter(mirrorCount)}</b> Mirrors
           </button>
@@ -65,13 +57,7 @@ const PublicationStats: FC<Props> = ({ publication }) => {
       )}
       {!hideLikesCount && reactionCount > 0 && (
         <>
-          <button
-            type="button"
-            onClick={() => {
-              setShowLikesModal(true);
-              Analytics.track(PUBLICATION.STATS.LIKED_BY);
-            }}
-          >
+          <button type="button" onClick={() => setShowLikesModal(true)}>
             <b className="text-black dark:text-white">{nFormatter(reactionCount)}</b> Likes
           </button>
           <Modal
@@ -86,13 +72,7 @@ const PublicationStats: FC<Props> = ({ publication }) => {
       )}
       {collectCount > 0 && (
         <>
-          <button
-            type="button"
-            onClick={() => {
-              setShowCollectorsModal(true);
-              Analytics.track(PUBLICATION.STATS.COLLECTED_BY);
-            }}
-          >
+          <button type="button" onClick={() => setShowCollectorsModal(true)}>
             <b className="text-black dark:text-white">{nFormatter(collectCount)}</b> Collects
           </button>
           <Modal

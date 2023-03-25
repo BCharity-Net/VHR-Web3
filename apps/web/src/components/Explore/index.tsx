@@ -4,17 +4,19 @@ import Trending from '@components/Home/Trending'
 import Footer from '@components/Shared/Footer'
 import { GridItemEight, GridItemFour, GridLayout } from '@components/UI/GridLayout'
 import { Tab } from '@headlessui/react'
-import { Analytics } from '@lib/analytics'
+import { Mixpanel } from '@lib/mixpanel'
 import isFeatureEnabled from '@lib/isFeatureEnabled'
 import clsx from 'clsx'
 import { APP_NAME, STATIC_IMAGES_URL } from 'data/constants'
+import { FeatureFlag } from 'data/feature-flags'
 import type { PublicationMainFocus } from 'lens'
 import { PublicationSortCriteria } from 'lens'
 import type { NextPage } from 'next'
 import { useRouter } from 'next/router'
-import { useState } from 'react'
+import {useEffect,  useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useAppStore } from 'src/store/app'
+import { EXPLORE, PAGEVIEW } from 'src/tracking'
 
 import Feed from './Feed'
 import FeedType from './FeedType'
@@ -24,6 +26,10 @@ const Explore: NextPage = () => {
   const currentProfile = useAppStore((state) => state.currentProfile)
   const [focus, setFocus] = useState<PublicationMainFocus>()
   const router = useRouter()
+
+  useEffect(() => {
+    Mixpanel.track(PAGEVIEW, { page: 'explore' });
+  }, [])
 
   const tabs = [
     { name: 'For you', emoji: 'leaf-fluttering-in-wind.png', type: PublicationSortCriteria.CuratedProfiles },
@@ -48,7 +54,9 @@ const Explore: NextPage = () => {
                 key={index}
                 defaultChecked={index === 1}
                 onClick={() => {
-                  Analytics.track(`switch to ${tab.type?.toLowerCase()} tab in explore`)
+                  Mixpanel.track(EXPLORE.SWITCH_EXPLORE_FEED_TAB, {
+                    explore_feed_type: tab.type.toLowerCase()
+                  })
                 }}
                 className={({ selected }) =>
                   clsx(
@@ -75,7 +83,7 @@ const Explore: NextPage = () => {
         </Tab.Group>
       </GridItemEight>
       <GridItemFour>
-        {isFeatureEnabled('trending-widget', currentProfile?.id) && <Trending />}
+        {isFeatureEnabled(FeatureFlag.TrendingWidget, currentProfile?.id) && <Trending />}
         {currentProfile ? <RecommendedProfiles /> : null}
         <Footer />
       </GridItemFour>

@@ -1,6 +1,7 @@
 import { Button } from '@components/UI/Button'
 import { ExclamationCircleIcon, ExternalLinkIcon, ShieldCheckIcon } from '@heroicons/react/outline'
-import { Analytics } from '@lib/analytics'
+import { Mixpanel } from '@lib/mixpanel'
+import { stopEventPropagation } from '@lib/stopEventPropagation'
 import type { Publication } from 'lens'
 import type { FC } from 'react'
 import { useGlobalModalStateStore } from 'src/store/modals'
@@ -14,12 +15,11 @@ const ModAction: FC<Props> = ({ publication }) => {
   const setShowReportModal = useGlobalModalStateStore((state) => state.setShowReportModal)
 
   return (
-    <span className="flex items-center gap-3 mt-3 text-sm">
+    <span className="flex items-center gap-3 mt-3 text-sm" onClick={stopEventPropagation}>
       <Button
-        onClick={(event) => {
-          event.stopPropagation()
+        onClick={() => {
           setShowReportModal(true, publication, { type: 'spamReason', subReason: 'FAKE_ENGAGEMENT' })
-          Analytics.track(MOD.SPAM)
+          Mixpanel.track(MOD.SPAM)
         }}
         variant="warning"
         icon={<ExclamationCircleIcon className="h-4 w-4" />}
@@ -31,7 +31,7 @@ const ModAction: FC<Props> = ({ publication }) => {
         onClick={(event) => {
           event.stopPropagation()
           setShowReportModal(true, publication)
-          Analytics.track(MOD.OTHER)
+          Mixpanel.track(MOD.OTHER)
         }}
         icon={<ShieldCheckIcon className="h-4 w-4" />}
         className="text-sm mt-3"

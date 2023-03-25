@@ -94,7 +94,7 @@ const QueuedPublication: FC<Props> = ({ txn }) => {
         </Tooltip>
       </div>
       <div className="ml-[53px] break-words">
-        <div className="whitespace-pre-wrap break-words leading-md linkify text-md">
+        <div className="leading-md linkify text-md break-words">
           <Markup>{txn?.content}</Markup>
         </div>
         {txn?.attachments?.length > 0 ? (

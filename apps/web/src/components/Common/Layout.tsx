@@ -2,9 +2,10 @@ import BottomNavigation from '@components/Shared/Navbar/BottomNavigation'
 import getIsAuthTokensAvailable from '@lib/getIsAuthTokensAvailable'
 import getToastOptions from '@lib/getToastOptions'
 import resetAuthData from '@lib/resetAuthData'
-import { IS_MAINNET } from 'data/constants'
+import { IS_MAINNET, MIXPANEL_ENABLED, MIXPANEL_TOKEN } from 'data/constants'
 import type { Profile } from 'lens'
 import { ReferenceModules, useUserProfilesQuery } from 'lens'
+import mixpanel from 'mixpanel-browser'
 import Head from 'next/head'
 import { useTheme } from 'next-themes'
 import type { FC, ReactNode } from 'react'
@@ -20,6 +21,14 @@ import GlobalModals from '../Shared/GlobalModals'
 import Navbar from '../Shared/Navbar'
 import useIsMounted from '../utils/hooks/useIsMounted'
 import { useDisconnectXmtp } from '../utils/hooks/useXmtpClient'
+
+if (MIXPANEL_ENABLED) {
+  mixpanel.init(MIXPANEL_TOKEN, {
+    ignore_dnt: true,
+    api_host: '/collect',
+    batch_requests: false
+  })
+}
 
 interface Props {
   children: ReactNode
@@ -106,6 +115,21 @@ const Layout: FC<Props> = ({ children }) => {
       } else {
         setIsPro(true)
       }
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [currentProfile?.id])
+
+  // Mixpanel identify
+  useEffect(() => {
+    if (MIXPANEL_ENABLED && currentProfile?.id) {
+      mixpanel.identify(currentProfile?.id)
+      mixpanel.people.set({
+        $name: currentProfile?.handle,
+        $last_active: new Date()
+      })
+      mixpanel.people.set_once({
+        $created_at: new Date()
+      })
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [currentProfile?.id])

@@ -57,3 +57,8 @@ export interface OptimisticTransaction {
   content: string;
   attachments: BCharityAttachment[];
 }
+
+export interface MarkupLinkProps {
+  href?: string;
+  title?: string;
+}

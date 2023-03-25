@@ -9,7 +9,7 @@ import {
   PhotographIcon
 } from '@heroicons/react/outline'
 import isVerified from '@lib/isVerified'
-import { Analytics } from '@lib/analytics'
+import { Mixpanel } from '@lib/mixpanel'
 import type { Profile } from 'lens'
 import type { Dispatch, FC } from 'react'
 import { useEffect, useState } from 'react'
@@ -43,6 +43,12 @@ const FeedType: FC<Props> = ({ address, id, setFeedType, feedType, profile }) =>
     token: VHR_TOKEN,
     watch: true
   })
+  const switchTab = (type: string) => {
+    setFeedType(type);
+    Mixpanel.track(PROFILE.SWITCH_PROFILE_FEED_TAB, {
+      profile_feed_type: type.toLowerCase()
+    })
+  }
 
   useEffect(() => {
     getTotalVHRSent(profile.ownedBy).then((value) => {
@@ -93,44 +99,33 @@ const FeedType: FC<Props> = ({ address, id, setFeedType, feedType, profile }) =>
       <div className="flex justify-between items-center">
         <div className="flex overflow-x-auto gap-3 px-5 pb-2 mt-3 sm:px-0 sm:mt-0 md:pb-0">
           <TabButton
-            name={t('Posts')}
+            name={t('Feed')}
             icon={<PencilAltIcon className="w-4 h-4" />}
             active={feedType === 'FEED'}
-            type="feed"
-            onClick={() => {
-              setFeedType('FEED')
-              Analytics.track(PROFILE.SWITCH_FEED)
-            }}
+            type={ProfileFeedType.Feed.toLowerCase()}
+            onClick={() => switchTab(ProfileFeedType.Feed)}
           />
           <TabButton
-            name={t('Comments')}
+            name={t('Replies')}
             icon={<ChatAlt2Icon className="w-4 h-4" />}
             active={feedType === 'REPLIES'}
-            type="replies"
-            onClick={() => {
-              setFeedType('REPLIES')
-              Analytics.track(PROFILE.SWITCH_REPLIES)
-            }}
+            type={ProfileFeedType.Replies.toLowerCase()}
+            onClick={() => switchTab(ProfileFeedType.Replies)}
           />
           <TabButton
             name="Media"
             icon={<FilmIcon className="w-4 h-4" />}
             active={feedType === 'MEDIA'}
-            type="media"
-            onClick={() => {
-              setFeedType('MEDIA')
-              Analytics.track(PROFILE.SWITCH_MEDIA)
-            }}
+            type={ProfileFeedType.Media.toLowerCase()}
+            onClick={() => switchTab(ProfileFeedType.Media)}
           />
           <TabButton
             name="NFTs"
             icon={<PhotographIcon className="w-4 h-4" />}
             active={feedType === 'NFT'}
             type="nft"
-            onClick={() => {
-              setFeedType('NFT')
-              Analytics.track(PROFILE.SWITCH_NFTS)
-            }}
+            type={ProfileFeedType.Nft.toLowerCase()}
+            onClick={() => switchTab(ProfileFeedType.Nft)}
           />
         </div>
         <div>{feedType === 'MEDIA' && <MediaFilter />}</div>

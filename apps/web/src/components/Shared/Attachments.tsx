@@ -1,10 +1,12 @@
 import { Button } from '@components/UI/Button';
+import { Image } from '@components/UI/Image';
 import { LightBox } from '@components/UI/LightBox';
 import type { NewBCharityAttachment } from '@generated/types';
 import { ExternalLinkIcon, XIcon } from '@heroicons/react/outline';
-import { Analytics } from '@lib/analytics';
 import getIPFSLink from '@lib/getIPFSLink';
 import imageProxy from '@lib/imageProxy';
+import { Mixpanel } from '@lib/mixpanel';
+import { stopEventPropagation } from '@lib/stopEventPropagation';
 import clsx from 'clsx';
 import { ALLOWED_AUDIO_TYPES, ALLOWED_VIDEO_TYPES, ATTACHMENT } from 'data/constants';
 import type { MediaSet, Publication } from 'lens';
@@ -98,9 +100,7 @@ const Attachments: FC<Props> = ({
                 'relative'
               )}
               key={index + url}
-              onClick={(event) => {
-                event.stopPropagation();
-              }}
+              onClick={stopEventPropagation}
             >
               {type === 'image/svg+xml' ? (
                 <Button
@@ -122,7 +122,7 @@ const Attachments: FC<Props> = ({
                   expandCover={(url) => setExpandedImage(url)}
                 />
               ) : (
-                <img
+                <Image
                   className="object-cover bg-gray-100 rounded-lg border cursor-pointer dark:bg-gray-800 dark:border-gray-700/80"
                   loading="lazy"
                   height={1000}
@@ -132,7 +132,7 @@ const Attachments: FC<Props> = ({
                   }}
                   onClick={() => {
                     setExpandedImage(url);
-                    Analytics.track(PUBLICATION.ATTACHEMENT.IMAGE.OPEN);
+                    Mixpanel.track(PUBLICATION.ATTACHMENT.IMAGE.OPEN);
                   }}
                   src={isNew ? url : imageProxy(url, ATTACHMENT)}
                   alt={isNew ? url : imageProxy(url, ATTACHMENT)}

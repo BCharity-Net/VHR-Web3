@@ -1,5 +1,5 @@
 import { MoonIcon, SunIcon } from '@heroicons/react/outline';
-import { Analytics } from '@lib/analytics';
+import { Mixpanel } from '@lib/mixpanel';
 import clsx from 'clsx';
 import { useTheme } from 'next-themes';
 import type { FC } from 'react';
@@ -20,7 +20,7 @@ const ThemeSwitch: FC<Props> = ({ onClick, className = '' }) => {
       className={clsx('flex px-4 py-1.5 text-sm w-full text-gray-700 dark:text-gray-200', className)}
       onClick={() => {
         setTheme(theme === 'light' ? 'dark' : 'light');
-        Analytics.track(SYSTEM.SWITCH_THEME, { mode: theme === 'light' ? 'dark' : 'light'  });
+        Mixpanel.track(SYSTEM.SWITCH_THEME, { mode: theme === 'light' ? 'dark' : 'light'  });
         onClick?.();
       }}
     >

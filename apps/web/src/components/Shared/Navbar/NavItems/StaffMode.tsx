@@ -1,6 +1,6 @@
 import useStaffMode from '@components/utils/hooks/useStaffMode';
 import { ShieldCheckIcon, ShieldExclamationIcon } from '@heroicons/react/outline';
-import { Analytics } from '@lib/analytics';
+import { Mixpanel } from '@lib/mixpanel';
 import clsx from 'clsx';
 import type { FC } from 'react';
 import React from 'react';
@@ -17,7 +17,7 @@ const StaffMode: FC<Props> = ({ className = '' }) => {
 
   const toggleStaffMode = () => {
     setStaffMode(!staffMode);
-    Analytics.track(STAFFTOOLS.TOGGLE_MODE);
+    Mixpanel.track(STAFFTOOLS.TOGGLE_MODE);
   };
 
   return (

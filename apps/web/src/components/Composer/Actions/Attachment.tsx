@@ -5,7 +5,6 @@ import useOnClickOutside from '@components/utils/hooks/useOnClickOutside';
 import useUploadAttachments from '@components/utils/hooks/useUploadAttachments';
 import { Menu } from '@headlessui/react';
 import { MusicNoteIcon, PhotographIcon, VideoCameraIcon } from '@heroicons/react/outline';
-import { Analytics } from '@lib/analytics';
 import clsx from 'clsx';
 import {
   ALLOWED_AUDIO_TYPES,
@@ -14,10 +13,9 @@ import {
   ALLOWED_VIDEO_TYPES
 } from 'data/constants';
 import type { ChangeEvent, FC } from 'react';
-import { useId, useRef, useState } from 'react';
+import { Fragment, useId, useRef, useState } from 'react';
 import toast from 'react-hot-toast';
 import { usePublicationStore } from 'src/store/publication';
-import { PUBLICATION } from 'src/tracking';
 
 const Attachment: FC = () => {
   const attachments = usePublicationStore((state) => state.attachments);
@@ -97,18 +95,16 @@ const Attachment: FC = () => {
 
   return (
     <Menu as="div">
-      <Menu.Button
-        onClick={() => setShowMenu(!showMenu)}
-        className="rounded-full hover:bg-gray-300 hover:bg-opacity-20"
-        aria-label="More"
-      >
-        {isUploading ? (
-          <Spinner size="sm" />
-        ) : (
-          <Tooltip placement="top" content="Media">
-            <PhotographIcon className="w-5 h-5 text-brand" />
-          </Tooltip>
-        )}
+      <Menu.Button as={Fragment}>
+        <button onClick={() => setShowMenu(!showMenu)} aria-label="More">
+          {isUploading ? (
+            <Spinner size="sm" />
+          ) : (
+            <Tooltip placement="top" content="Media">
+              <PhotographIcon className="text-brand h-5 w-5" />
+            </Tooltip>
+          )}
+        </button>
       </Menu.Button>
       <MenuTransition show={showMenu}>
         <Menu.Items
@@ -134,7 +130,6 @@ const Attachment: FC = () => {
               multiple
               accept={ALLOWED_IMAGE_TYPES.join(',')}
               className="hidden"
-              onClick={() => Analytics.track(PUBLICATION.NEW.ATTACHMENT.UPLOAD_IMAGES)}
               onChange={handleAttachment}
               disabled={attachments.length >= 4}
             />
@@ -156,7 +151,6 @@ const Attachment: FC = () => {
               type="file"
               accept={ALLOWED_VIDEO_TYPES.join(',')}
               className="hidden"
-              onClick={() => Analytics.track(PUBLICATION.NEW.ATTACHMENT.UPLOAD_VIDEO)}
               onChange={handleAttachment}
               disabled={attachments.length >= 4}
             />
@@ -178,7 +172,6 @@ const Attachment: FC = () => {
               type="file"
               accept={ALLOWED_AUDIO_TYPES.join(',')}
               className="hidden"
-              onClick={() => Analytics.track(PUBLICATION.NEW.ATTACHMENT.UPLOAD_AUDIO)}
               onChange={handleAttachment}
               disabled={attachments.length >= 4}
             />

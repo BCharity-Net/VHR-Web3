@@ -1,9 +1,9 @@
 import { Button } from '@components/UI/Button'
-import { Analytics } from '@lib/analytics'
+import { Mixpanel } from '@lib/mixpanel'
 import type { FC } from 'react'
 import { useAuthStore } from 'src/store/auth'
 import { useTranslation } from 'react-i18next'
-import { USER } from 'src/tracking'
+import { AUTH } from 'src/tracking'
 
 const LoginButton: FC = () => {
   const { t } = useTranslation('common')
@@ -14,7 +14,7 @@ const LoginButton: FC = () => {
       icon={<img className="mr-0.5 w-4 h-4" height={16} width={16} src="/lens.png" alt="Lens Logo" />}
       onClick={() => {
         setShowAuthModal(true);
-        Analytics.track(USER.LOGIN);
+        Mixpanel.track(AUTH.LOGIN);
       }}
     >
       {t('Login')}

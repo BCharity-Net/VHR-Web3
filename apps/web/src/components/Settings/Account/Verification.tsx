@@ -1,6 +1,6 @@
 import { Card } from '@components/UI/Card'
 import { BadgeCheckIcon } from '@heroicons/react/solid'
-import { Analytics } from '@lib/analytics'
+import { Mixpanel } from '@lib/mixpanel'
 import isVerified from '@lib/isVerified'
 import type { FC } from 'react'
 import { useTranslation } from 'react-i18next'
@@ -25,7 +25,7 @@ const Verification: FC = () => {
           <a
             href="https://tally.so/r/wgDajK"
             onClick={() => {
-              Analytics.track(SETTINGS.ACCOUNT.OPEN_VERIFICATION);
+              Mixpanel.track(SETTINGS.ACCOUNT.OPEN_VERIFICATION);
             }}
             target="_blank"
             rel="noreferrer noopener"

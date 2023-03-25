@@ -4,6 +4,8 @@ import { Modal } from '@components/UI/Modal';
 import { Tooltip } from '@components/UI/Tooltip';
 import useStaffMode from '@components/utils/hooks/useStaffMode';
 import { ChartBarIcon } from '@heroicons/react/outline';
+import isFeatureEnabled from '@lib/isFeatureEnabled';
+import { FeatureFlag } from 'data/feature-flags';
 import { motion } from 'framer-motion';
 import type { Publication } from 'lens';
 import dynamic from 'next/dynamic';
@@ -13,14 +15,14 @@ import { useState } from 'react';
 import { useAppStore } from 'src/store/app';
 
 const Stats = dynamic(() => import('./Stats'), {
-  loading: () => <Loader message="Loading analytics" />
+  loading: () => <Loader message="Loading mixpanel" />
 });
 
 interface Props {
   publication: Publication;
 }
 
-const Analytics: FC<Props> = ({ publication }) => {
+const Mixpanel: FC<Props> = ({ publication }) => {
   const { pathname } = useRouter();
   const currentProfile = useAppStore((state) => state.currentProfile);
   const [showCollectModal, setShowCollectModal] = useState(false);
@@ -30,7 +32,10 @@ const Analytics: FC<Props> = ({ publication }) => {
   const profileIdFromPublication = publication?.id.split('-')[0];
   const showAnalytics = currentProfile?.id === profileIdFromPublication;
 
-  if (!staffMode && (!showAnalytics || publication.__typename === 'Mirror')) {
+  if (
+    (!staffMode && (!showAnalytics || publication.__typename === 'Mirror')) ||
+    isFeatureEnabled(FeatureFlag.PublicationAnalytics, currentProfile?.id)
+  ) {
     return null;
   }
 
@@ -42,13 +47,12 @@ const Analytics: FC<Props> = ({ publication }) => {
         whileTap={{ scale: 0.9 }}
         onClick={() => {
           setShowCollectModal(true);
-          // Analytics.track(PUBLICATION.COLLECT_MODULE.OPEN_COLLECT);
         }}
-        aria-label="Analytics"
+        aria-label="Mixpanel"
       >
         <div className="flex items-center space-x-1 text-blue-500">
           <div className="p-1.5 rounded-full hover:bg-blue-300 hover:bg-opacity-20">
-            <Tooltip placement="top" content="Analytics" withDelay>
+            <Tooltip placement="top" content="Mixpanel" withDelay>
               <ChartBarIcon className={iconClassName} />
             </Tooltip>
           </div>
@@ -57,7 +61,7 @@ const Analytics: FC<Props> = ({ publication }) => {
       <Modal
         title={
           <div className="flex items-center space-x-2">
-            <span>{`Publication Analytics`}</span>
+            <span>{`Publication Mixpanel`}</span>
             <Beta />
           </div>
         }
@@ -71,4 +75,4 @@ const Analytics: FC<Props> = ({ publication }) => {
   );
 };
 
-export default Analytics;
+export default Mixpanel;

@@ -7,7 +7,7 @@ import { SCROLL_THRESHOLD } from 'data/constants'
 import type { MutualFollowersProfilesQueryRequest, Profile } from 'lens';
 import { useMutualFollowersListQuery } from 'lens'
 import type { FC } from 'react'
-import { useInView } from 'react-cool-inview'
+import { useState } from 'react'
 import InfiniteScroll from 'react-infinite-scroll-component'
 import { useAppStore } from 'src/store/app'
 
@@ -17,6 +17,7 @@ interface Props {
 
 const MutualFollowersList: FC<Props> = ({ profileId }) => {
   const currentProfile = useAppStore((state) => state.currentProfile)
+  const [hasMore, setHasMore] = useState(true)
 
   // Variables
   const request: MutualFollowersProfilesQueryRequest = {
@@ -32,11 +33,12 @@ const MutualFollowersList: FC<Props> = ({ profileId }) => {
 
   const profiles = data?.mutualFollowersProfiles?.items
   const pageInfo = data?.mutualFollowersProfiles?.pageInfo
-  const hasMore = pageInfo?.next && profiles?.length !== pageInfo.totalCount
 
   const loadMore = async () => {
     await fetchMore({
       variables: { request: { ...request, cursor: pageInfo?.next } }
+    }).then(({ data }) => {
+      setHasMore(data?.mutualFollowersProfiles?.items?.length > 0)
     })
   }
 

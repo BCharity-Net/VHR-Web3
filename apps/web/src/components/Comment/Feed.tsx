@@ -8,8 +8,9 @@ import InfiniteLoader from '@components/UI/InfiniteLoader'
 import { CollectionIcon } from '@heroicons/react/outline'
 import { SCROLL_THRESHOLD } from 'data/constants'
 import type { Comment, Publication, PublicationsQueryRequest } from 'lens'
-import { CustomFiltersTypes, useCommentFeedQuery } from 'lens'
+import { CommentOrderingTypes, CommentRankingFilter, CustomFiltersTypes, useCommentFeedQuery } from 'lens'
 import type { FC } from 'react'
+import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import InfiniteScroll from 'react-infinite-scroll-component'
 import { useAppStore } from 'src/store/app'
@@ -28,11 +29,14 @@ const Feed: FC<Props> = ({ publication, type = 'comment' }) => {
   const publicationId = publication?.__typename === 'Mirror' ? publication?.mirrorOf?.id : publication?.id
   const currentProfile = useAppStore((state) => state.currentProfile)
   const txnQueue = useTransactionPersistStore((state) => state.txnQueue)
+  const [hasMore, setHasMore] = useState(true)
 
   // Variables
   const request: PublicationsQueryRequest = {
     commentsOf: publicationId,
     customFilters: [CustomFiltersTypes.Gardeners],
+    commentsOfOrdering: CommentOrderingTypes.Ranking,
+    commentsRankingFilter: CommentRankingFilter.Relevant,
     limit: 10
   }
   const reactionRequest = currentProfile ? { profileId: currentProfile?.id } : null
@@ -45,7 +49,6 @@ const Feed: FC<Props> = ({ publication, type = 'comment' }) => {
 
   const comments = data?.publications?.items ?? []
   const pageInfo = data?.publications?.pageInfo
-  const hasMore = pageInfo?.next && comments?.length !== pageInfo.totalCount
 
   const queuedCount = txnQueue.filter((o) => o.type === 'NEW_COMMENT').length
   const totalComments = comments?.length + queuedCount
@@ -54,6 +57,8 @@ const Feed: FC<Props> = ({ publication, type = 'comment' }) => {
   const loadMore = async () => {
     await fetchMore({
       variables: { request: { ...request, cursor: pageInfo?.next }, reactionRequest, profileId }
+    }).then(({ data }) => {
+      setHasMore(data?.publications?.items?.length > 0)
     })
   }
 

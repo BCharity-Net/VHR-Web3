@@ -1,6 +1,6 @@
 import { Menu } from '@headlessui/react'
 import { ClipboardCopyIcon } from '@heroicons/react/outline'
-import { Analytics } from '@lib/analytics'
+import { Mixpanel } from '@lib/mixpanel'
 import clsx from 'clsx'
 import type { Publication } from 'lens'
 import type { FC } from 'react'
@@ -18,7 +18,7 @@ const Permalink: FC<Props> = ({ publication }) => {
       text={`${location.origin}/posts/${publication?.id}`}
       onCopy={() => {
         toast.success('Copied to clipboard!')
-        Analytics.track(PUBLICATION.PERMALINK)
+        Mixpanel.track(PUBLICATION.PERMALINK)
       }}
     >
       <Menu.Item

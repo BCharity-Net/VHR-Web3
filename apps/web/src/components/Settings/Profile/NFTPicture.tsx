@@ -4,7 +4,7 @@ import { Form, useZodForm } from '@components/UI/Form'
 import { Input } from '@components/UI/Input'
 import { Spinner } from '@components/UI/Spinner'
 import { PencilIcon } from '@heroicons/react/outline'
-import { Analytics } from '@lib/analytics'
+import { Mixpanel } from '@lib/mixpanel'
 import getSignature from '@lib/getSignature'
 import onError from '@lib/onError'
 import splitSignature from '@lib/splitSignature'
@@ -50,7 +50,7 @@ const NFTPicture: FC<Props> = ({ profile }) => {
 
   const onCompleted = () => {
     toast.success('Avatar updated successfully!')
-    Analytics.track(SETTINGS.PROFILE.SET_NFT_PICTURE)
+    Mixpanel.track(SETTINGS.PROFILE.SET_NFT_PICTURE)
   }
 
   const form = useZodForm({

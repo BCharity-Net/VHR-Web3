@@ -17,7 +17,7 @@ fragment CommentFields on Comment {
   canDecrypt(profileId: $profileId) {
     result
     reasons
-  }
+  }  
   collectedBy {
     address
     defaultProfile {
@@ -59,7 +59,7 @@ fragment CommentFields on Comment {
       canDecrypt(profileId: $profileId) {
         result
         reasons
-      }
+      }      
       collectedBy {
         address
         defaultProfile {

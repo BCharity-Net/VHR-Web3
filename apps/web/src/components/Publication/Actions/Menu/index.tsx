@@ -1,13 +1,13 @@
 import MenuTransition from '@components/Shared/MenuTransition'
 import { Menu } from '@headlessui/react'
 import { DotsVerticalIcon } from '@heroicons/react/outline'
-import { Analytics } from '@lib/analytics'
+import { stopEventPropagation } from '@lib/stopEventPropagation'
 import clsx from 'clsx'
 import type { Publication } from 'lens'
-import type { FC, MouseEvent } from 'react'
+import type { FC } from 'react'
+import { Fragment } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useAppStore } from 'src/store/app'
-import { PUBLICATION } from 'src/tracking'
 
 import Delete from './Delete'
 import Embed from './Embed'
@@ -16,23 +16,24 @@ import Report from './Report'
 
 interface Props {
   publication: Publication
+  forceReloadOnDelete?: boolean
 }
 
-const PublicationMenu: FC<Props> = ({ publication }) => {
+const PublicationMenu: FC<Props> = ({ publication, forceReloadOnDelete }) => {
   const { t } = useTranslation('common')
   const currentProfile = useAppStore((state) => state.currentProfile)
   const iconClassName = 'w-[15px] sm:w-[18px]'
 
   return (
     <Menu as="div" className="relative">
-      <Menu.Button
-        className="p-1.5 rounded-full hover:bg-gray-300 hover:bg-opacity-20"
-        onClick={(event: MouseEvent<HTMLButtonElement>) => {
-          Analytics.track(PUBLICATION.MORE);
-        }}
-        aria-label="More"
-      >
-        <DotsVerticalIcon className={clsx('lt-text-gray-500', iconClassName)} />
+      <Menu.Button as={Fragment}>
+        <button
+          className="rounded-full p-1.5 hover:bg-gray-300 hover:bg-opacity-20"
+          onClick={stopEventPropagation}
+          aria-label="More"
+        >
+          <DotsVerticalIcon className={clsx('lt-text-gray-500', iconClassName)} />
+        </button>
       </Menu.Button>
       <MenuTransition>
         <Menu.Items
@@ -40,7 +41,7 @@ const PublicationMenu: FC<Props> = ({ publication }) => {
           className="absolute right-0 mt-1 w-max bg-white rounded-xl border shadow-sm dark:bg-gray-900 focus:outline-none z-[5] dark:border-gray-700"
         >
           {currentProfile?.id === publication?.profile?.id ? (
-            <Delete publication={publication} />
+            <Delete publication={publication} forceReloadOnDelete={forceReloadOnDelete} />
           ) : (
             <Report publication={publication} />
           )}

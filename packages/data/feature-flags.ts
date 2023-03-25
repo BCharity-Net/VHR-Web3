@@ -3,6 +3,14 @@ import { IS_PRODUCTION } from './constants'
 import { bcharityMembers } from './bcharity-members'
 import { mainnetStaffs, testnetStaffs } from './staffs'
 
+export enum FeatureFlag {
+  TrendingWidget = 'trending-widget',
+  NftGallery = 'nft-gallery',
+  NftDetail = 'nft-detail',
+  GatedLocales = 'gated-locales',
+  PublicationAnalytics = 'publication-analytics'
+}
+
 export const featureFlags = [
   {
     key: 'messages',
@@ -24,7 +32,7 @@ export const featureFlags = [
     ]
   },
   {
-    key: 'trending-widget',
+    key: FeatureFlag.TrendingWidget,
     name: 'Trending widget',
     enabledFor: [...bcharityMembers]
   },
@@ -34,18 +42,23 @@ export const featureFlags = [
     enabledFor: [...bcharityMembers]
   },
   {
-    key: 'nft-gallery',
+    key: FeatureFlag.NftGallery,
     name: 'NFT Gallery',
     enabledFor: !IS_PRODUCTION ? [...mainnetStaffs, ...testnetStaffs] : []
   },
   {
-    key: 'nft-detail',
+    key: FeatureFlag.NftDetail,
     name: 'NFT Detail Page',
     enabledFor: !IS_PRODUCTION ? [...mainnetStaffs, ...testnetStaffs] : []
   },
   {
-    key: 'preferences-settings',
-    name: 'Preferences settings',
-    enabledFor: [...bcharityMembers, ...aaveMembers]
+    key: FeatureFlag.GatedLocales,
+    name: 'Gated locales',
+    enabledFor: ['0x01adb7', '0x216f', '0x6b66', '0x6b15', '0x01adb3', ...bcharityMembers, ...aaveMembers]
+  },
+  {
+    key: FeatureFlag.PublicationAnalytics,
+    name: 'Publication Analytics',
+    enabledFor: [...mainnetStaffs]
   }
 ]

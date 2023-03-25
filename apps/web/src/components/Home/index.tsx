@@ -43,11 +43,6 @@ const Home: NextPage = () => {
             <>
               <EnableDispatcher />
               <EnableMessages />
-            </>
-          ) : null}
-          <BetaWarning />
-          {currentProfile ? (
-            <>
               <SetDefaultProfile />
               <SetProfile />
               <RecommendedProfiles />

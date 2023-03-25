@@ -3,14 +3,12 @@ import { Input } from '@components/UI/Input'
 import { Spinner } from '@components/UI/Spinner'
 import useOnClickOutside from '@components/utils/hooks/useOnClickOutside'
 import { SearchIcon, XIcon } from '@heroicons/react/outline'
-import { Analytics } from '@lib/analytics'
 import clsx from 'clsx'
 import type { Profile, ProfileSearchResult } from 'lens';
 import { CustomFiltersTypes, SearchRequestTypes, useSearchProfilesLazyQuery } from 'lens'
 import { useRouter } from 'next/router'
 import type { ChangeEvent, FC } from 'react'
 import { useRef, useState } from 'react'
-import { SEARCH } from 'src/tracking'
 
 import UserProfile from '../UserProfile'
 
@@ -74,15 +72,11 @@ const Search: FC<Props> = ({
           className="py-2 px-3 text-sm"
           placeholder={placeholder}
           value={searchText}
-          onFocus={() => Analytics.track(SEARCH.FOCUS)}
           iconLeft={<SearchIcon />}
           iconRight={
             <XIcon
               className={clsx('cursor-pointer', searchText ? 'visible' : 'invisible')}
-              onClick={() => {
-                setSearchText('')
-                Analytics.track(SEARCH.CLEAR)
-              }}
+              onClick={() => setSearchText('')}
             />
           }
           onChange={handleSearch}

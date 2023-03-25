@@ -1,7 +1,7 @@
 import { Button } from '@components/UI/Button'
 import { Spinner } from '@components/UI/Spinner'
 import { UserRemoveIcon } from '@heroicons/react/outline'
-import { Analytics } from '@lib/analytics'
+import { Mixpanel } from '@lib/mixpanel'
 import getSignature from '@lib/getSignature'
 import onError from '@lib/onError'
 import splitSignature from '@lib/splitSignature'
@@ -63,7 +63,7 @@ const Unfollow: FC<Props> = ({ profile, showText = false, setFollowing }) => {
           await burnWithSig(signature, typedData)
         }
         toast.success('Unfollowed successfully!')
-        Analytics.track(PROFILE.UNFOLLOW)
+        Mixpanel.track(PROFILE.UNFOLLOW)
       } catch {
         toast.error('User rejected request')
       } finally {

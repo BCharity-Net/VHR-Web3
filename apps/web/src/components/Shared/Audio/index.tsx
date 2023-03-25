@@ -1,9 +1,9 @@
 import type { OptimisticTransaction } from '@generated/types'
 import { PauseIcon, PlayIcon } from '@heroicons/react/solid';
-import { Analytics } from '@lib/analytics';
-import getAttributeFromTrait from '@lib/getAttributeFromTrait';
+import { Mixpanel } from '@lib/mixpanel';
+import getPublicationAttribute from '@lib/getPublicationAttribute';
 import getThumbnailUrl from '@lib/getThumbnailUrl';
-import type { Attribute, Publication } from 'lens';
+import type { Publication } from 'lens';
 import type { APITypes } from 'plyr-react';
 import type { ChangeEvent, FC } from 'react';
 import { useRef, useState } from 'react';
@@ -47,13 +47,13 @@ const Audio: FC<Props> = ({ src, isNew = false, publication, txn, expandCover })
     }
     if (playerRef.current?.plyr.paused && !playing) {
       setPlaying(true);
-      Analytics.track(PUBLICATION.ATTACHEMENT.AUDIO.PLAY);
+      Mixpanel.track(PUBLICATION.ATTACHMENT.AUDIO.PLAY);
 
       return playerRef.current?.plyr.play();
     }
     setPlaying(false);
     playerRef.current?.plyr.pause();
-    Analytics.track(PUBLICATION.ATTACHEMENT.AUDIO.PAUSE);
+    Mixpanel.track(PUBLICATION.ATTACHMENT.AUDIO.PAUSE);
   };
 
   const handleChange = (e: ChangeEvent<HTMLInputElement>) => {
@@ -107,7 +107,7 @@ const Audio: FC<Props> = ({ src, isNew = false, publication, txn, expandCover })
                     <h5 className="text-lg text-white truncate">{publication?.metadata.name ?? txn.title}</h5>
                     <h6 className="text-white/70 truncate">
                       {txn?.author ??
-                        getAttributeFromTrait(publication?.metadata.attributes as Attribute[], 'author') ??
+                        getPublicationAttribute(publication?.metadata.attributes, 'author') ??
                         publication?.profile.name}
                     </h6>
                   </>

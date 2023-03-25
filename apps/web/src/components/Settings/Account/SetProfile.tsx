@@ -4,7 +4,7 @@ import { Card } from '@components/UI/Card'
 import { ErrorMessage } from '@components/UI/ErrorMessage'
 import { Spinner } from '@components/UI/Spinner'
 import { ExclamationIcon, PencilIcon } from '@heroicons/react/outline'
-import { Analytics } from '@lib/analytics'
+import { Mixpanel } from '@lib/mixpanel'
 import formatHandle from '@lib/formatHandle'
 import getSignature from '@lib/getSignature'
 import onError from '@lib/onError'
@@ -34,7 +34,7 @@ const SetProfile: FC = () => {
 
   const onCompleted = () => {
     toast.success('Default profile updated successfully!')
-    Analytics.track(SETTINGS.ACCOUNT.SET_DEFAULT_PROFILE)
+    Mixpanel.track(SETTINGS.ACCOUNT.SET_DEFAULT_PROFILE)
   }
 
   const {

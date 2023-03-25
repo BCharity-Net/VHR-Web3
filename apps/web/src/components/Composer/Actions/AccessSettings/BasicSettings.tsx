@@ -2,13 +2,11 @@ import ToggleWithHelper from '@components/Shared/ToggleWithHelper';
 import { Button } from '@components/UI/Button';
 import { Card } from '@components/UI/Card';
 import { CollectionIcon, UsersIcon } from '@heroicons/react/outline';
-import { Analytics } from '@lib/analytics';
 import { CollectModules } from 'lens';
 import type { Dispatch, FC } from 'react';
 import toast from 'react-hot-toast';
 import { useAccessSettingsStore } from 'src/store/access-settings';
 import { useCollectModuleStore } from 'src/store/collect-module';
-import { PUBLICATION } from 'src/tracking';
 
 interface Props {
   setShowModal: Dispatch<boolean>;
@@ -41,54 +39,43 @@ const BasicSettings: FC<Props> = ({ setShowModal }) => {
             reset();
           }
           setRestricted(!restricted);
-          Analytics.track(PUBLICATION.NEW.ACCESS.TOGGLE_RESTRICTED_ACCESS);
         }}
-        label="Add restrictions on who can view this post"
+        description={`Add restrictions on who can view this post`}
       />
       {restricted && (
         <>
-          <Card className="p-5 mt-5">
-            <div className="space-y-2">
-              <div className="flex items-center space-x-2">
-                <CollectionIcon className="h-4 w-4 text-brand-500" />
-                <span>Collectors can view</span>
-              </div>
-              <ToggleWithHelper
-                on={collectToView}
-                setOn={() => {
-                  if (!collectToView && selectedCollectModule === CollectModules.RevertCollectModule) {
-                    return toast.error('Enable collect first to use collect based token gating');
-                  }
-                  setCollectToView(!collectToView);
-                  Analytics.track(PUBLICATION.NEW.ACCESS.TOGGLE_COLLECT_TO_VIEW_ACCESS);
-                }}
-                label="People need to collect it first to be able to view it"
-              />
-            </div>
+          <Card className="mt-5 p-5">
+            <ToggleWithHelper
+              on={collectToView}
+              setOn={() => {
+                if (!collectToView && selectedCollectModule === CollectModules.RevertCollectModule) {
+                  return toast.error(`Enable collect first to use collect based token gating`);
+                }
+                setCollectToView(!collectToView);
+              }}
+              heading={`Collectors can view`}
+              description={`People need to collect it first to be able to view it`}
+              icon={<CollectionIcon className="h-4 w-4" />}
+            />
           </Card>
-          <Card className="p-5 mt-5">
-            <div className="space-y-2">
-              <div className="flex items-center space-x-2">
-                <UsersIcon className="h-4 w-4 text-brand-500" />
-                <span>Followers can view</span>
-              </div>
-              <ToggleWithHelper
-                on={followToView}
-                setOn={() => {
-                  setFollowToView(!followToView);
-                  Analytics.track(PUBLICATION.NEW.ACCESS.TOGGLE_FOLLOW_TO_VIEW_ACCESS);
-                }}
-                label="People need to follow you to be able to view it"
-              />
-            </div>
+          <Card className="mt-5 p-5">
+            <ToggleWithHelper
+              on={followToView}
+              setOn={() => {setFollowToView(!followToView)}}
+              heading={`Followers can view`}
+              description={`People need to follow you to be able to view it`}
+              icon={<UsersIcon className="h-4 w-4" />}
+            />
           </Card>
         </>
       )}
-      <div className="pt-5 flex space-x-2">
+      <div className="flex space-x-2 pt-5">
         <Button className="ml-auto" variant="danger" outline onClick={onSave}>
           Cancel
         </Button>
-        <Button onClick={onSave}>Save</Button>
+        <Button onClick={onSave}>
+          Save
+        </Button>
       </div>
     </div>
   );

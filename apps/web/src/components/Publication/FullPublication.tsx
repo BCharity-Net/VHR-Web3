@@ -1,8 +1,7 @@
 import UserProfile from '@components/Shared/UserProfile'
-import formatTime from '@lib/formatTime'
+import { formatTime } from '@lib/formatTime'
 import getAppName from '@lib/getAppName'
 import dayjs from 'dayjs'
-import relativeTime from 'dayjs/plugin/relativeTime'
 import type { Publication } from 'lens'
 import type { FC } from 'react'
 
@@ -12,8 +11,6 @@ import HiddenPublication from './HiddenPublication'
 import PublicationBody from './PublicationBody'
 import PublicationStats from './PublicationStats'
 import PublicationType from './Type'
-
-dayjs.extend(relativeTime)
 
 interface Props {
   publication: Publication
@@ -51,7 +48,7 @@ const FullPublication: FC<Props> = ({ publication }) => {
             }
             showStatus
           />
-          <PublicationMenu publication={publication} />
+          <PublicationMenu publication={publication} forceReloadOnDelete />
           <span className="text-sm text-gray-500">{dayjs(new Date(timestamp)).fromNow()}</span>
         </div>
         <div className="ml-[53px]">

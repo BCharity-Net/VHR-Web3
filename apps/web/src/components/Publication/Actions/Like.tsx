@@ -2,7 +2,7 @@ import type { ApolloCache } from '@apollo/client'
 import { Tooltip } from '@components/UI/Tooltip'
 import { HeartIcon, SunIcon } from '@heroicons/react/outline'
 import { HeartIcon as HeartIconSolid, SunIcon as SunIconSolid } from '@heroicons/react/solid'
-import { Analytics } from '@lib/analytics'
+import { Mixpanel } from '@lib/mixpanel'
 import hasGm from '@lib/hasGm'
 import { publicationKeyFields } from '@lib/keyFields'
 import nFormatter from '@lib/nFormatter'
@@ -66,7 +66,6 @@ const Like: FC<Props> = ({ publication, showCount }) => {
 
   const getEventProperties = (type: 'like' | 'dislike') => {
     return {
-      [`${type}_by`]: currentProfile?.id,
       [`${type}_publication`]: publication?.id,
       [`${type}_source`]: getLikeSource()
     }
@@ -74,7 +73,7 @@ const Like: FC<Props> = ({ publication, showCount }) => {
 
   const [addReaction] = useAddReactionMutation({
     onCompleted: () => {
-      Analytics.track(PUBLICATION.LIKE, getEventProperties('like'))
+      Mixpanel.track(PUBLICATION.LIKE, getEventProperties('like'))
     },
     onError: (error) => {
       setLiked(!liked)
@@ -86,7 +85,7 @@ const Like: FC<Props> = ({ publication, showCount }) => {
 
   const [removeReaction] = useRemoveReactionMutation({
     onCompleted: () => {
-      Analytics.track(PUBLICATION.DISLIKE, getEventProperties('dislike'))
+      Mixpanel.track(PUBLICATION.DISLIKE, getEventProperties('dislike'))
     },
     onError: (error) => {
       setLiked(!liked)

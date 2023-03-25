@@ -1,4 +1,4 @@
-import { Analytics } from '@lib/analytics'
+import { Mixpanel } from '@lib/mixpanel'
 import getUniswapURL from '@lib/getUniswapURL'
 import { STATIC_IMAGES_URL } from 'data/constants'
 import type { FC } from 'react'
@@ -18,7 +18,7 @@ const Uniswap: FC<Props> = ({ module }) => {
         href={getUniswapURL(parseFloat(module?.amount?.value), module?.amount?.asset?.address)}
         className="flex items-center space-x-1.5 text-xs font-bold text-pink-500"
         onClick={() => {
-          Analytics.track(PUBLICATION.COLLECT_MODULE.OPEN_UNISWAP)
+          Mixpanel.track(PUBLICATION.COLLECT_MODULE.OPEN_UNISWAP)
         }}
         target="_blank"
         rel="noreferrer noopener"

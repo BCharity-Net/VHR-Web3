@@ -1,7 +1,9 @@
 import { Card } from '@components/UI/Card'
+import { Image } from '@components/UI/Image'
 import type { OG } from '@generated/types'
-import { Analytics } from '@lib/analytics'
 import imageProxy from '@lib/imageProxy'
+import { Mixpanel } from '@lib/mixpanel'
+import { stopEventPropagation } from '@lib/stopEventPropagation'
 import { ATTACHMENT } from 'data/constants'
 import Link from 'next/link'
 import type { FC } from 'react'
@@ -17,16 +19,16 @@ const Embed: FC<Props> = ({ og }) => {
       <Link
         href={og.url}
         onClick={(event) => {
-          event.stopPropagation()
-          Analytics.track(PUBLICATION.OEMBED_CLICK)
+          stopEventPropagation(event)
+          Mixpanel.track(PUBLICATION.OEMBED_CLICK)
         }}
         target={og.url.includes(location.host) ? '_self' : '_blank'}
         rel="noreferrer noopener"
       >
         <Card forceRounded>
           {!og.isSquare && og.thumbnail && (
-            <img
-            className="w-full rounded-t-xl"
+            <Image
+            className="w-full rounded-t-xl border-b"
             onError={({ currentTarget }) => {
               currentTarget.src = og.thumbnail;
             }}
@@ -36,8 +38,8 @@ const Embed: FC<Props> = ({ og }) => {
           )}
           <div className="flex items-center">
             {og.isSquare && og.thumbnail && (
-              <img
-                className="w-36 h-36 rounded-l-xl"
+              <Image
+                className="w-36 h-36 rounded-l-xl border-b"
                 height={144}
                 width={144}
                 onError={({ currentTarget }) => {
@@ -52,7 +54,7 @@ const Embed: FC<Props> = ({ og }) => {
                 {og.title && <div className="font-bold line-clamp-1">{og.title}</div>}
                 {og.description && <div className="text-gray-500 line-clamp-2">{og.description}</div>}
                 {og.site && (
-                  <div className="flex items-center pt-1.5 space-x-1">
+                  <div className="flex items-center pt-1.5 space-x-2">
                     {og.favicon && (
                       <img
                         className="w-4 h-4 rounded-full"

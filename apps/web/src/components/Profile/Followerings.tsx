@@ -1,12 +1,10 @@
 import { Modal } from '@components/UI/Modal'
 import { UsersIcon } from '@heroicons/react/outline'
-import { Analytics } from '@lib/analytics'
 import humanize from '@lib/humanize'
 import type { Profile } from 'lens'
 import type { FC } from 'react'
 import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { PROFILE } from 'src/tracking'
 
 import Followers from './Followers'
 import Following from './Following'
@@ -22,25 +20,11 @@ const Followerings: FC<Props> = ({ profile }) => {
 
   return (
     <div className="flex gap-8">
-      <button
-        type="button"
-        className="text-left"
-        onClick={() => {
-          setShowFollowingModal(!showFollowingModal)
-          Analytics.track(PROFILE.OPEN_FOLLOWING)
-        }}
-      >
+      <button type="button" className="text-left" onClick={() => setShowFollowingModal(!showFollowingModal)}>
         <div className="text-xl">{humanize(profile?.stats?.totalFollowing)}</div>
         <div className="text-gray-500">{t('Following')}</div>
       </button>
-      <button
-        type="button"
-        className="text-left"
-        onClick={() => {
-          setShowFollowersModal(!showFollowersModal)
-          Analytics.track(PROFILE.OPEN_FOLLOWERS)
-        }}
-      >
+      <button type="button" className="text-left" onClick={() => setShowFollowersModal(!showFollowersModal)}>
         <div className="text-xl">{humanize(profile?.stats?.totalFollowers)}</div>
         <div className="text-gray-500">{t('Followers')}</div>
       </button>

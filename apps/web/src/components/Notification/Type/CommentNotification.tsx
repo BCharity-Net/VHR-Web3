@@ -2,17 +2,13 @@ import Markup from '@components/Shared/Markup'
 import UserPreview from '@components/Shared/UserPreview'
 import type { MessageDescriptor } from '@generated/types'
 import { ChatAlt2Icon } from '@heroicons/react/solid'
-import formatTime from '@lib/formatTime'
-import dayjs from 'dayjs'
-import relativeTime from 'dayjs/plugin/relativeTime'
+import { formatTime, getTimeFromNow } from '@lib/formatTime'
 import type { NewCommentNotification } from 'lens'
 import Link from 'next/link'
 import type { FC } from 'react'
 import { useTranslation } from 'react-i18next'
 
 import { NotificationProfileAvatar, NotificationProfileName } from '../Profile'
-
-dayjs.extend(relativeTime)
 
 interface Props {
   notification: NewCommentNotification
@@ -44,7 +40,7 @@ const CommentNotification: FC<Props> = ({ notification }) => {
         </div>
       </div>
       <div className="text-gray-400 text-[12px]" title={formatTime(notification?.createdAt)}>
-        {dayjs(new Date(notification?.createdAt)).fromNow()}
+        {getTimeFromNow(notification?.createdAt)}
       </div>
     </div>
   )

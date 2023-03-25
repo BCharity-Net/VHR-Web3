@@ -3,7 +3,7 @@ import { Modal } from '@components/UI/Modal'
 import { Spinner } from '@components/UI/Spinner'
 import { WarningMessage } from '@components/UI/WarningMessage'
 import { ExclamationIcon, MinusIcon, PlusIcon } from '@heroicons/react/outline'
-import { Analytics } from '@lib/analytics'
+import { Mixpanel } from '@lib/mixpanel'
 import { getModule } from '@lib/getModule'
 import onError from '@lib/onError'
 import type { ApprovedAllowanceAmount } from 'lens'
@@ -11,6 +11,7 @@ import { useGenerateModuleCurrencyApprovalDataLazyQuery } from 'lens'
 import type { Dispatch, FC } from 'react'
 import { useState } from 'react'
 import toast from 'react-hot-toast'
+import { SETTINGS } from 'src/tracking'
 import { useTranslation } from 'react-i18next'
 import { usePrepareSendTransaction, useSendTransaction, useWaitForTransaction } from 'wagmi'
 
@@ -46,7 +47,11 @@ const AllowanceButton: FC<Props> = ({ title = 'Allow', module, allowed, setAllow
       toast.success(`Module ${allowed ? 'disabled' : 'enabled'} successfully!`)
       setShowWarningModal(false)
       setAllowed(!allowed)
-      Analytics.track(`module ${allowed ? 'disabled' : 'enabled'}`)
+      Mixpanel.track(SETTINGS.ALLOWANCE.TOGGLE, {
+        allowance_module: module.module,
+        allowance_currency: module.currency,
+        allowance_allowed: !allowed
+      })
     },
     onError
   })

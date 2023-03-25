@@ -1,11 +1,12 @@
 import MenuTransition from '@components/Shared/MenuTransition';
 import UserProfile from '@components/Shared/UserProfile';
+import { Image } from '@components/UI/Image';
 import { Input } from '@components/UI/Input';
 import { Spinner } from '@components/UI/Spinner';
 import { Menu } from '@headlessui/react';
 import { XIcon } from '@heroicons/react/outline';
 import { ChevronDownIcon } from '@heroicons/react/solid';
-import { Analytics } from '@lib/analytics';
+import { Mixpanel } from '@lib/mixpanel';
 import formatHandle from '@lib/formatHandle';
 import getAvatar from '@lib/getAvatar';
 import clsx from 'clsx';
@@ -20,7 +21,7 @@ import type { ChangeEvent, FC } from 'react';
 import { Fragment, useState } from 'react';
 import { useAppStore } from 'src/store/app';
 import { useTimelineStore } from 'src/store/timeline';
-import { MISCELLANEOUS, SEARCH } from 'src/tracking';
+import { MISCELLANEOUS } from 'src/tracking';
 
 const SeeThroughLens: FC = () => {
   const currentProfile = useAppStore((state) => state.currentProfile);
@@ -84,12 +85,12 @@ const SeeThroughLens: FC = () => {
 
   return (
     <Menu as="div" className="relative">
-      <Menu.Button
-        onClick={() => fetchRecommendedProfiles()}
-        className="rounded-md hover:bg-gray-300 p-1 hover:bg-opacity-20"
-      >
-        <span className="flex space-x-1 items-center text-sm pl-1">
-          <img
+      <Menu.Button as={Fragment}>
+        <button
+          className="flex items-center space-x-1 rounded-md p-1 pl-1 text-sm hover:bg-gray-300 hover:bg-opacity-20"
+          onClick={() => fetchRecommendedProfiles()}
+        >
+          <Image
             onError={({ currentTarget }) => {
               currentTarget.src = getAvatar(profile, false);
             }}
@@ -102,7 +103,7 @@ const SeeThroughLens: FC = () => {
           />
           <span>{seeThroughProfile ? `@${formatHandle(profile?.handle)}` : `My Feed`}</span>
           <ChevronDownIcon className="w-4 h-4" />
-        </span>
+        </button>
       </Menu.Button>
       <MenuTransition>
         <Menu.Items
@@ -123,10 +124,7 @@ const SeeThroughLens: FC = () => {
               iconRight={
                 <XIcon
                   className={clsx('cursor-pointer', searchText ? 'visible' : 'invisible')}
-                  onClick={() => {
-                    setSearchText('');
-                    Analytics.track(SEARCH.CLEAR);
-                  }}
+                  onClick={() => setSearchText('')}
                 />
               }
               onChange={handleSearch}
@@ -160,7 +158,9 @@ const SeeThroughLens: FC = () => {
                     onClick={() => {
                       setSeeThroughProfile(profile);
                       setSearchText('');
-                      Analytics.track(MISCELLANEOUS.SELECT_USER_FEED);
+                      Mixpanel.track(MISCELLANEOUS.SELECT_USER_FEED, {
+                        see_through_profile: profile?.id
+                      });
                     }}
                   >
                     <UserProfile linkToProfile={false} profile={profile} showUserPreview={false} />

@@ -1,8 +1,6 @@
 import UserPreview from '@components/Shared/UserPreview'
 import { UserAddIcon } from '@heroicons/react/solid'
-import formatTime from '@lib/formatTime';
-import dayjs from 'dayjs'
-import relativeTime from 'dayjs/plugin/relativeTime'
+import { formatTime, getTimeFromNow } from '@lib/formatTime'
 import type { NewFollowerNotification } from 'lens'
 import type { FC } from 'react'
 import { useTranslation } from 'react-i18next'
@@ -10,8 +8,6 @@ import { useAppStore } from 'src/store/app'
 
 import { NotificationProfileAvatar, NotificationProfileName } from '../Profile'
 import { NotificationWalletProfileAvatar, NotificationWalletProfileName } from '../WalletProfile'
-
-dayjs.extend(relativeTime)
 
 interface Props {
   notification: NewFollowerNotification
@@ -51,7 +47,7 @@ const FollowerNotification: FC<Props> = ({ notification }) => {
         </div>
       </div>
       <div className="text-gray-400 text-[12px]" title={formatTime(notification?.createdAt)}>
-        {dayjs(new Date(notification?.createdAt)).fromNow()}
+        {getTimeFromNow(notification?.createdAt)}
       </div>
     </div>
   )

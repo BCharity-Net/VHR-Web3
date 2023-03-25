@@ -28,7 +28,7 @@ class BCharityDocument extends Document {
           <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png" />
           <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png" />
 
-          {/* Simple Analytics */}
+          {/* Simple Mixpanel */}
           <Script strategy="lazyOnload" id="sa-events">
             {`window.sa_event=window.sa_event||function(){var a=[].slice.call(arguments);window.sa_event.q?window.sa_event.q.push(a):window.sa_event.q=[a]};`}
           </Script>

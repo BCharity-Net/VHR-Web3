@@ -6,17 +6,13 @@ import {
 import UserPreview from '@components/Shared/UserPreview'
 import type { MessageDescriptor } from '@generated/types'
 import { CashIcon, CollectionIcon, UsersIcon } from '@heroicons/react/solid'
-import formatTime from '@lib/formatTime'
-import dayjs from 'dayjs'
-import relativeTime from 'dayjs/plugin/relativeTime'
+import { formatTime, getTimeFromNow } from '@lib/formatTime'
 import type { NewCollectNotification } from 'lens'
 import Link from 'next/link'
 import type { FC } from 'react'
 
 import CollectedAmount from './Amount'
 import CollectedContent from './Content'
-
-dayjs.extend(relativeTime)
 
 interface Props {
   notification: NewCollectNotification
@@ -74,7 +70,7 @@ const CollectNotification: FC<Props> = ({ notification }) => {
         </div>
       </div>
       <div className="text-gray-400 text-[12px]" title={formatTime(notification?.createdAt)}>
-        {dayjs(new Date(notification?.createdAt)).fromNow()}
+        {getTimeFromNow(notification?.createdAt)}
       </div>
     </div>
   )

@@ -9,6 +9,7 @@ import { SCROLL_THRESHOLD } from 'data/constants'
 import type { ExplorePublicationRequest, Publication, PublicationMainFocus } from 'lens'
 import { CustomFiltersTypes, PublicationSortCriteria, useExploreFeedQuery } from 'lens'
 import type { FC } from 'react'
+import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import InfiniteScroll from 'react-infinite-scroll-component'
 import { useAppStore } from 'src/store/app'
@@ -21,6 +22,7 @@ interface Props {
 const Feed: FC<Props> = ({ focus, feedType = PublicationSortCriteria.CuratedProfiles }) => {
   const { t } = useTranslation('common')
   const currentProfile = useAppStore((state) => state.currentProfile)
+  const [hasMore, setHasMore] = useState(true)
 
   // Variables
   const request: ExplorePublicationRequest = {
@@ -39,11 +41,12 @@ const Feed: FC<Props> = ({ focus, feedType = PublicationSortCriteria.CuratedProf
 
   const pageInfo = data?.explorePublications?.pageInfo
   const publications = data?.explorePublications?.items
-  const hasMore = pageInfo?.next && publications?.length !== pageInfo.totalCount
 
   const loadMore = async () => {
     await fetchMore({
       variables: { request: { ...request, cursor: pageInfo?.next }, reactionRequest, profileId }
+    }).then(({ data }) => {
+      setHasMore(data?.explorePublications?.items?.length > 0)
     })
   }
 

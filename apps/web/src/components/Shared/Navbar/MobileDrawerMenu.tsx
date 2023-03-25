@@ -1,9 +1,9 @@
+import { Image } from '@components/UI/Image';
 import { XIcon } from '@heroicons/react/outline';
 import formatHandle from '@lib/formatHandle';
 import getAvatar from '@lib/getAvatar';
 import isGardener from '@lib/isGardener';
 import isStaff from '@lib/isStaff';
-import { Trans } from '@lingui/macro';
 import type { Profile } from 'lens';
 import Link from 'next/link';
 import type { FC } from 'react';
@@ -44,16 +44,16 @@ const MobileDrawerMenu: FC = () => {
           className="flex hover:bg-gray-200 dark:hover:bg-gray-800 px-5 py-3 mt-2 space-x-2 items-center"
         >
           <div className="w-full flex space-x-1.5">
-            <img
-              src={getAvatar(currentProfile as Profile)}
-              className="w-12 h-12 rounded-full border cursor-pointer dark:border-gray-700"
-              alt={formatHandle(currentProfile?.handle)}
+            <Image
               onError={({ currentTarget }) => {
                 currentTarget.src = getAvatar(currentProfile, false);
               }}
+              src={getAvatar(currentProfile as Profile)}
+              className="h-12 w-12 cursor-pointer rounded-full border dark:border-gray-700"
+              alt={formatHandle(currentProfile?.handle)}
             />
             <div>
-              <Trans>Logged in as</Trans>
+              Logged in as
               <div className="truncate">
                 <Slug className="font-bold" slug={formatHandle(currentProfile?.handle)} prefix="@" />
               </div>

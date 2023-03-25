@@ -1,3 +1,4 @@
+import { Image } from '@components/UI/Image';
 import formatHandle from '@lib/formatHandle';
 import getAvatar from '@lib/getAvatar';
 import type { Profile } from 'lens';
@@ -20,7 +21,7 @@ const ProfileCircles: FC<Props> = ({ profiles, context }) => {
             key={`${profile.handle}_${i}`}
             href={`/u/${formatHandle(profile?.handle)}`}
           >
-            <img
+            <Image
               onError={({ currentTarget }) => {
                 currentTarget.src = getAvatar(profile, false);
               }}

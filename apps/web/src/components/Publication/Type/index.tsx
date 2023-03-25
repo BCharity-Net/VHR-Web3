@@ -1,3 +1,4 @@
+import { stopEventPropagation } from '@lib/stopEventPropagation'
 import type { Publication } from 'lens'
 import { useRouter } from 'next/router'
 import type { FC } from 'react'
@@ -25,7 +26,7 @@ const PublicationType: FC<Props> = ({ publication, showType, showThread }) => {
   }
 
   return (
-    <>
+    <span onClick={stopEventPropagation}>
       {type === 'Mirror' && <Mirrored publication={publication} />}
       {type === 'Comment' && pathname === '/posts/[id]' && publicationType !== 'group post' && (
         <CommentedPublication publication={publication} />
@@ -42,7 +43,7 @@ const PublicationType: FC<Props> = ({ publication, showType, showThread }) => {
       {isCollected && publicationType === 'fundraise' && (
         <Collected publication={publication} type="funded" />
       )}
-    </>
+    </span>
   )
 }
 

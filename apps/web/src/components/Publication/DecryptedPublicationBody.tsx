@@ -21,10 +21,11 @@ import type {
   Erc20OwnershipOutput,
   NftOwnershipOutput
 } from '@lens-protocol/sdk-gated/dist/graphql/types';
-import { Analytics } from '@lib/analytics';
 import formatHandle from '@lib/formatHandle';
 import getIPFSLink from '@lib/getIPFSLink';
 import getURLs from '@lib/getURLs';
+import { Mixpanel } from '@lib/mixpanel';
+import { stopEventPropagation } from '@lib/stopEventPropagation';
 import axios from 'axios';
 import clsx from 'clsx';
 import { LIT_PROTOCOL_ENVIRONMENT, POLYGONSCAN_URL, RARIBLE_URL } from 'data/constants';
@@ -167,7 +168,7 @@ const DecryptedPublicationBody: FC<Props> = ({ encryptedPublication }) => {
       <Card
         className={clsx(cardClasses, '!cursor-pointer')}
         onClick={(event) => {
-          event.stopPropagation();
+          stopEventPropagation(event);
           setShowAuthModal(true);
         }}
       >
@@ -181,7 +182,7 @@ const DecryptedPublicationBody: FC<Props> = ({ encryptedPublication }) => {
 
   if (!canDecrypt) {
     return (
-      <Card className={clsx(cardClasses, 'cursor-text')} onClick={(event) => event.stopPropagation()}>
+      <Card className={clsx(cardClasses, 'cursor-text')} onClick={stopEventPropagation}>
         <div className="font-bold flex items-center space-x-2">
           <LockClosedIcon className="h-5 w-5 text-green-300" />
           <span className="text-white font-black text-base">
@@ -196,7 +197,7 @@ const DecryptedPublicationBody: FC<Props> = ({ encryptedPublication }) => {
               <Link
                 href={`/posts/${collectCondition?.publicationId}`}
                 className="font-bold lowercase underline"
-                onClick={() => Analytics.track(PUBLICATION.TOKEN_GATED.CHECKLIST_NAVIGATED_TO_COLLECT)}
+                onClick={() => Mixpanel.track(PUBLICATION.TOKEN_GATED.CHECKLIST_NAVIGATED_TO_COLLECT)}
               >
                 {encryptedPublication?.__typename}
               </Link>
@@ -230,7 +231,7 @@ const DecryptedPublicationBody: FC<Props> = ({ encryptedPublication }) => {
               <a
                 href={`${POLYGONSCAN_URL}/token/${tokenCondition.contractAddress}`}
                 className="font-bold underline"
-                onClick={() => Analytics.track(PUBLICATION.TOKEN_GATED.CHECKLIST_NAVIGATED_TO_TOKEN)}
+                onClick={() => Mixpanel.track(PUBLICATION.TOKEN_GATED.CHECKLIST_NAVIGATED_TO_TOKEN)}
                 target="_blank"
                 rel="noreferrer"
               >
@@ -248,7 +249,7 @@ const DecryptedPublicationBody: FC<Props> = ({ encryptedPublication }) => {
                 <a
                   href={`${RARIBLE_URL}/collection/polygon/${nftCondition.contractAddress}/items`}
                   className="font-bold underline"
-                  onClick={() => Analytics.track(PUBLICATION.TOKEN_GATED.CHECKLIST_NAVIGATED_TO_NFT)}
+                  onClick={() => Mixpanel.track(PUBLICATION.TOKEN_GATED.CHECKLIST_NAVIGATED_TO_NFT)}
                   target="_blank"
                   rel="noreferrer"
                 >
@@ -281,9 +282,9 @@ const DecryptedPublicationBody: FC<Props> = ({ encryptedPublication }) => {
       <Card
         className={clsx(cardClasses, '!cursor-pointer')}
         onClick={(event) => {
-          event.stopPropagation();
+          stopEventPropagation(event);
           getDecryptedData();
-          Analytics.track(PUBLICATION.TOKEN_GATED.DECRYPT);
+          Mixpanel.track(PUBLICATION.TOKEN_GATED.DECRYPT);
         }}
       >
         <div className="text-white font-bold flex items-center space-x-1">
@@ -300,12 +301,7 @@ const DecryptedPublicationBody: FC<Props> = ({ encryptedPublication }) => {
 
   return (
     <div className="break-words">
-      <Markup
-        className={clsx(
-          { 'line-clamp-5': showMore },
-          'whitespace-pre-wrap break-words leading-md linkify text-md'
-        )}
-      >
+      <Markup className={clsx({ 'line-clamp-5': showMore }, 'leading-md linkify text-md break-words')}>
         {publication?.content}
       </Markup>
       {showMore && (

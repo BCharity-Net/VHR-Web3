@@ -4,7 +4,7 @@ import { Tooltip } from '@components/UI/Tooltip'
 import GetModuleIcon from '@components/utils/GetModuleIcon'
 import { CollectionIcon } from '@heroicons/react/outline'
 import { CollectionIcon as CollectionIconSolid } from '@heroicons/react/solid'
-import { Analytics } from '@lib/analytics'
+import { Mixpanel } from '@lib/mixpanel'
 import { getModule } from '@lib/getModule'
 import humanize from '@lib/humanize'
 import nFormatter from '@lib/nFormatter'
@@ -58,7 +58,7 @@ const Collect: FC<Props> = ({ publication, electedMirror, showCount }) => {
           whileTap={{ scale: 0.9 }}
           onClick={() => {
             setShowCollectModal(true);
-            Analytics.track(PUBLICATION.COLLECT_MODULE.OPEN_COLLECT);
+            Mixpanel.track(PUBLICATION.COLLECT_MODULE.OPEN_COLLECT);
           }}
           aria-label="Collect"
         >

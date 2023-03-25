@@ -2,7 +2,7 @@ import IndexStatus from '@components/Shared/IndexStatus'
 import { Button } from '@components/UI/Button'
 import { Spinner } from '@components/UI/Spinner'
 import { CheckCircleIcon, XIcon } from '@heroicons/react/outline'
-import { Analytics } from '@lib/analytics'
+import { Mixpanel } from '@lib/mixpanel'
 import getSignature from '@lib/getSignature'
 import onError from '@lib/onError'
 import splitSignature from '@lib/splitSignature'
@@ -28,7 +28,7 @@ const ToggleDispatcher: FC<Props> = ({ buttonSize = 'md' }) => {
 
   const onCompleted = () => {
     toast.success('Profile updated successfully!')
-    Analytics.track(SETTINGS.DISPATCHER.TOGGLE)
+    Mixpanel.track(SETTINGS.DISPATCHER.TOGGLE)
   }
 
   const { isLoading: signLoading, signTypedDataAsync } = useSignTypedData({ onError })

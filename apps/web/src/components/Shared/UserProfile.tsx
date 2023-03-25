@@ -1,13 +1,11 @@
+import { Image } from '@components/UI/Image';
 import { BadgeCheckIcon } from '@heroicons/react/solid';
 import formatHandle from '@lib/formatHandle';
-import formatTime from '@lib/formatTime';
-import getAttribute from '@lib/getAttribute';
+import { formatTime, getTwitterFormat } from '@lib/formatTime';
 import getAvatar from '@lib/getAvatar';
+import getProfileAttribute from '@lib/getProfileAttribute';
 import isVerified from '@lib/isVerified';
 import clsx from 'clsx';
-import dayjs from 'dayjs';
-// @ts-ignore
-import dayjsTwitter from 'dayjs-twitter';
 import type { Profile } from 'lens';
 import Link from 'next/link';
 import type { FC } from 'react';
@@ -18,8 +16,6 @@ import Markup from './Markup';
 import Slug from './Slug';
 import SuperFollow from './SuperFollow';
 import UserPreview from './UserPreview';
-
-dayjs.extend(dayjsTwitter);
 
 interface Props {
   profile: Profile;
@@ -54,20 +50,20 @@ const UserProfile: FC<Props> = ({
 }) => {
   const [following, setFollowing] = useState(isFollowing);
 
-  const statusEmoji = getAttribute(profile?.attributes, 'statusEmoji');
-  const statusMessage = getAttribute(profile?.attributes, 'statusMessage');
+  const statusEmoji = getProfileAttribute(profile?.attributes, 'statusEmoji');
+  const statusMessage = getProfileAttribute(profile?.attributes, 'statusMessage');
   const hasStatus = statusEmoji && statusMessage;
 
   const UserAvatar = () => (
-    <img
+    <Image
       onError={({ currentTarget }) => {
         currentTarget.src = getAvatar(profile, false);
       }}
       src={getAvatar(profile)}
       loading="lazy"
       className={clsx(
-        isBig ? 'w-14 h-14' : 'w-10 h-10',
-        'bg-gray-200 rounded-full border dark:border-gray-700'
+        isBig ? 'h-14 w-14' : 'h-10 w-10',
+        'rounded-full border bg-gray-200 dark:border-gray-700'
       )}
       height={isBig ? 56 : 40}
       width={isBig ? 56 : 40}
@@ -77,15 +73,15 @@ const UserProfile: FC<Props> = ({
 
   const UserName = () => (
     <>
-      <div className="flex items-center max-w-sm truncate">
-        <div className={clsx(isBig ? 'font-bold' : 'text-md')}>
-          {profile?.name ?? formatHandle(profile?.handle)}
+      <div className="flex max-w-sm items-center">
+        <div className={clsx(isBig ? 'font-bold' : 'text-md', 'grid')}>
+          <div className="truncate">{profile?.name ?? formatHandle(profile?.handle)}</div>
         </div>
-        {isVerified(profile?.id) && <BadgeCheckIcon className="w-4 h-4 text-brand ml-1" />}
+        {isVerified(profile?.id) && <BadgeCheckIcon className="text-brand ml-1 h-4 w-4" />}
         {showStatus && hasStatus ? (
-          <div className="flex items-center lt-text-gray-500">
+          <div className="lt-text-gray-500 flex items-center">
             <span className="mx-1.5">·</span>
-            <span className="text-xs flex items-center space-x-1 max-w-[10rem]">
+            <span className="flex max-w-[10rem] items-center space-x-1 text-xs">
               <span>{statusEmoji}</span>
               <span className="truncate">{statusMessage}</span>
             </span>
@@ -98,8 +94,7 @@ const UserProfile: FC<Props> = ({
           <span className="lt-text-gray-500">
             <span className="mx-1.5">·</span>
             <span className="text-xs" title={formatTime(timestamp as Date)}>
-              {/* @ts-ignore */}
-              {dayjs(new Date(timestamp)).twitter()}
+              {getTwitterFormat(timestamp)}
             </span>
           </span>
         ) : null}
@@ -135,7 +130,7 @@ const UserProfile: FC<Props> = ({
   };
 
   return (
-    <div className="flex justify-between items-center">
+    <div className="flex items-center justify-between">
       {linkToProfile ? (
         <Link href={`/u/${formatHandle(profile?.handle)}`}>
           <UserInfo />
@@ -145,7 +140,7 @@ const UserProfile: FC<Props> = ({
       )}
       {showFollow &&
         (followStatusLoading ? (
-          <div className="w-10 h-8 rounded-lg shimmer" />
+          <div className="shimmer h-8 w-10 rounded-lg" />
         ) : following ? null : profile?.followModule?.__typename === 'FeeFollowModuleSettings' ? (
           <SuperFollow profile={profile} setFollowing={setFollowing} />
         ) : (

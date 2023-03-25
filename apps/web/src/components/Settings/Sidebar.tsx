@@ -10,7 +10,6 @@ import {
   SparklesIcon,
   UserIcon
 } from '@heroicons/react/outline'
-import isFeatureEnabled from '@lib/isFeatureEnabled'
 import type { Profile } from 'lens'
 import type { FC } from 'react'
 import { useTranslation } from 'react-i18next'
@@ -40,8 +39,7 @@ const SettingsSidebar: FC = () => {
           {
             title: t`Preferences`,
             icon: <AdjustmentsIcon className="w-4 h-4" />,
-            url: '/settings/preferences',
-            enabled: isFeatureEnabled('preferences-settings', currentProfile?.id)
+            url: '/settings/preferences'
           },
           {
             title: 'Interests',

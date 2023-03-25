@@ -6,6 +6,7 @@ import formatHandle from '@lib/formatHandle'
 import isFeatureEnabled from '@lib/isFeatureEnabled'
 import isVerified from '@lib/isVerified'
 import { APP_NAME, STATIC_IMAGES_URL } from 'data/constants'
+import { FeatureFlag } from 'data/feature-flags'
 import type { Profile } from 'lens'
 import { useProfileQuery } from 'lens'
 import type { NextPage } from 'next'
@@ -152,7 +153,7 @@ const ViewProfile: NextPage = () => {
                 feedType === ProfileFeedType.Media ||
                 feedType === ProfileFeedType.Collects) && <Feed profile={profile as Profile} type={feedType} />}
               {feedType === ProfileFeedType.Nft ? (
-                isFeatureEnabled('nft-gallery', currentProfile?.id) ? (
+                isFeatureEnabled(FeatureFlag.NftGallery, currentProfile?.id) ? (
                   <NftGallery profile={profile as Profile} />
                 ) : (
                   <NFTFeed profile={profile as Profile} />

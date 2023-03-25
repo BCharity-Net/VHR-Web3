@@ -8,6 +8,7 @@ import { SCROLL_THRESHOLD } from 'data/constants'
 import type { Profile, Wallet, WhoCollectedPublicationRequest } from 'lens'
 import { useCollectorsQuery } from 'lens'
 import type { FC } from 'react'
+import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import InfiniteScroll from 'react-infinite-scroll-component'
 
@@ -20,6 +21,7 @@ interface Props {
 
 const Collectors: FC<Props> = ({ publicationId }) => {
   const { t } = useTranslation('common')
+  const [hasMore, setHasMore] = useState(true)
 
   // Variables
   const request: WhoCollectedPublicationRequest = { publicationId: publicationId, limit: 10 }
@@ -31,11 +33,12 @@ const Collectors: FC<Props> = ({ publicationId }) => {
 
   const profiles = data?.whoCollectedPublication?.items
   const pageInfo = data?.whoCollectedPublication?.pageInfo
-  const hasMore = pageInfo?.next && profiles?.length !== pageInfo.totalCount
 
   const loadMore = async () => {
     await fetchMore({
       variables: { request: { ...request, cursor: pageInfo?.next } }
+    }).then(({ data }) => {
+      setHasMore(data?.whoCollectedPublication?.items?.length > 0)
     })
   }
 

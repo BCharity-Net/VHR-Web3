@@ -6,9 +6,11 @@ import {
   HeartIcon,
   LightningBoltIcon
 } from '@heroicons/react/outline';
-import { Analytics } from '@lib/analytics';
+import { Mixpanel } from '@lib/mixpanel';
 import type { Dispatch, FC } from 'react';
 import { NOTIFICATION } from 'src/tracking';
+
+import { NotificationType } from './List'
 
 interface Props {
   setFeedType: Dispatch<string>;
@@ -16,58 +18,50 @@ interface Props {
 }
 
 const FeedType: FC<Props> = ({ setFeedType, feedType }) => {
+  const switchTab = (type: string) => {
+    setFeedType(type);
+    Mixpanel.track(NOTIFICATION.SWITCH_NOTIFICATION_TAB, {
+      notification_type: type.toLowerCase()
+    });
+  };
+
   return (
     <div className="flex justify-between items-center">
       <div className="flex overflow-x-auto gap-3 px-5 pb-2 mt-3 sm:px-0 sm:mt-0 md:pb-0">
         <TabButton
           name={`All notifications`}
           icon={<LightningBoltIcon className="w-4 h-4" />}
-          active={feedType === 'ALL'}
-          type="all"
-          onClick={() => {
-            setFeedType('ALL');
-            Analytics.track(NOTIFICATION.SWITCH_ALL);
-          }}
+          active={feedType === NotificationType.All}
+          type={NotificationType.All.toLowerCase()}
+          onClick={() => switchTab(NotificationType.All)}
         />
         <TabButton
           name={`Mentions`}
           icon={<AtSymbolIcon className="w-4 h-4" />}
-          active={feedType === 'MENTIONS'}
-          type="mentions"
-          onClick={() => {
-            setFeedType('MENTIONS');
-            Analytics.track(NOTIFICATION.SWITCH_MENTIONS);
-          }}
+          active={feedType === NotificationType.Mentions}
+          type={NotificationType.Mentions.toLowerCase()}
+          onClick={() => switchTab(NotificationType.Mentions)}
         />
         <TabButton
           name={`Comments`}
           icon={<ChatAlt2Icon className="w-4 h-4" />}
-          active={feedType === 'COMMENTS'}
-          type="comments"
-          onClick={() => {
-            setFeedType('COMMENTS');
-            Analytics.track(NOTIFICATION.SWITCH_COMMENTS);
-          }}
+          active={feedType === NotificationType.Comments}
+          type={NotificationType.Comments.toLowerCase()}
+          onClick={() => switchTab(NotificationType.Comments)}
         />
         <TabButton
           name={`Likes`}
           icon={<HeartIcon className="w-4 h-4" />}
-          active={feedType === 'LIKES'}
-          type="likes"
-          onClick={() => {
-            setFeedType('LIKES');
-            Analytics.track(NOTIFICATION.SWITCH_LIKES);
-          }}
+          active={feedType === NotificationType.Likes}
+          type={NotificationType.Likes.toLowerCase()}
+          onClick={() => switchTab(NotificationType.Likes)}
         />
         <TabButton
           name={`Collects`}
           icon={<CollectionIcon className="w-4 h-4" />}
-          active={feedType === 'COLLECTS'}
-          type="collects"
-          onClick={() => {
-            setFeedType('COLLECTS');
-            Analytics.track(NOTIFICATION.SWITCH_COLLECTS);
-          }}
+          active={feedType === NotificationType.Collects}
+          type={NotificationType.Collects.toLowerCase()}
+          onClick={() => switchTab(NotificationType.Collects)}
         />
       </div>
     </div>

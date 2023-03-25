@@ -1,8 +1,9 @@
+import { Image } from '@components/UI/Image'
 import Markup from '@components/Shared/Markup';
 import { Card } from '@components/UI/Card';
 import { EmojiSadIcon } from '@heroicons/react/outline';
 import formatHandle from '@lib/formatHandle';
-import formatTime from '@lib/formatTime';
+import { formatTime } from '@lib/formatTime';
 import getAvatar from '@lib/getAvatar';
 import type { DecodedMessage } from '@xmtp/xmtp-js';
 import clsx from 'clsx';
@@ -36,7 +37,7 @@ const MessageTile: FC<MessageTileProps> = ({ message, profile, currentProfile })
     >
       <div className="flex max-w-[60%]">
         {address !== message.senderAddress && (
-          <img
+          <Image
             onError={({ currentTarget }) => {
               currentTarget.src = getAvatar(profile, false);
             }}
@@ -57,9 +58,7 @@ const MessageTile: FC<MessageTileProps> = ({ message, profile, currentProfile })
               'block text-md break-words linkify-message'
             )}
           >
-            {message.error
-              ? `Error: ${message.error?.message}`
-              : <Markup matchOnlyUrl>{message.content}</Markup> ?? ''}
+            {message.error ? `Error: ${message.error?.message}` : <Markup>{message.content}</Markup> ?? ''}
           </span>
         </div>
       </div>

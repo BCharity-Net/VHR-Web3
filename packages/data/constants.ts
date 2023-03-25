@@ -44,11 +44,14 @@ export const APP_VERSION = packageJson.version;
 export const GIT_COMMIT_SHA = process.env.NEXT_PUBLIC_VERCEL_GIT_COMMIT_SHA?.slice(0, 7)
 
 // Misc
-export const CONTACT_EMAIL = 'admin@bcharity.net'
 export const RELAY_ON = true
 export const ZERO_ADDRESS = '0x0000000000000000000000000000000000000000'
 export const LENSPROTOCOL_HANDLE = 'lensprotocol'
 export const HANDLE_SUFFIX = IS_MAINNET ? '.lens' : '.test'
+
+// Mixpanel
+export const MIXPANEL_TOKEN = process.env.NEXT_PUBLIC_MIXPANEL_TOKEN ?? ''
+export const MIXPANEL_ENABLED = MIXPANEL_TOKEN && IS_PRODUCTION
 
 export const CATEGORIES = [
   'Education',
@@ -86,15 +89,16 @@ export const VHR_TOP_HOLDERS_URL =
   'https://mumbai.polygonscan.com/token/tokenholderchart/0x28ee241ab245699968f2980d3d1b1d23120ab8be'
 export const RARIBLE_URL = IS_MAINNET ? 'https://rarible.com' : 'https://testnet.rarible.com'
 export const IMAGEKIT_URL = `https://ik.imagekit.io/${IS_PRODUCTION ? 'bcharityimg' : 'bcharitydev'}`
-export const ARWEAVE_GATEWAY = 'https://arweave.net'
 export const IPFS_GATEWAY = 'https://gateway.ipfscdn.io/ipfs/'
 export const EVER_API = 'https://endpoint.4everland.co'
 export const SIMPLEANALYTICS_API = 'https://simpleanalytics.com/bcharity.net.json'
 export const DEFAULT_OG = `${STATIC_IMAGES_URL}/og/logo.jpeg`
 
 // Workers
-export const MEDIA_PROXY_URL = IS_PRODUCTION ? 'https://media.bcharity.net' : 'http://localhost:8081';
-export const STS_TOKEN_URL = IS_PRODUCTION ? 'https://sts.bcharity.net' : 'http://localhost:8082';
+export const MEDIA_PROXY_URL = IS_PRODUCTION ? 'https://media.bcharity.net' : 'http://localhost:8081'
+export const STS_TOKEN_URL = IS_PRODUCTION ? 'https://sts.bcharity.net' : 'http://localhost:8082'
+export const METADATA_WORKER_URL = IS_PRODUCTION ? 'https://metadata.bcharity.net' : 'http://localhost:8083'
+export const FRESHDESK_WORKER_URL = IS_PRODUCTION ? 'https://freshdesk.bcharity.net' : 'http://localhost:8084'
 
 // Web3
 export const ALCHEMY_KEY = 'HHfOFn8jsYguteTVvL0cz4g9aydrbjTV'

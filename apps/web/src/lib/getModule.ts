@@ -13,6 +13,8 @@ export const getModule = (
 } => {
   switch (name) {
     // Collect Modules
+    case CollectModules.MultirecipientFeeCollectModule:
+      return { name: `Multirecipient Paid Collect`, field: 'collectModule' }
     case CollectModules.UnknownCollectModule:
       return { name: `Unknown Collect`, field: 'collectModule' };
     case CollectModules.FeeCollectModule:

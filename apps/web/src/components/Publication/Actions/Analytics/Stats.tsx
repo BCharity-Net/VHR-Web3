@@ -38,7 +38,7 @@ const Stats: FC<Props> = ({ publication }) => {
   }
 
   if (isLoading) {
-    return <Loader message="Loading analytics" />;
+    return <Loader message="Loading mixpanel" />;
   }
 
   return (

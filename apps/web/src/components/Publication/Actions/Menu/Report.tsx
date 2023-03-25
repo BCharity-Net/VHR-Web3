@@ -1,8 +1,9 @@
 import { Menu } from '@headlessui/react'
 import { ShieldExclamationIcon } from '@heroicons/react/outline'
+import { stopEventPropagation } from '@lib/stopEventPropagation'
 import clsx from 'clsx'
 import type { Publication } from 'lens'
-import type { FC, MouseEvent } from 'react'
+import type { FC } from 'react'
 import { useGlobalModalStateStore } from 'src/store/modals'
 
 interface Props {
@@ -21,7 +22,8 @@ const Report: FC<Props> = ({ publication }) => {
           'block px-4 py-1.5 text-sm text-red-500 m-2 rounded-lg cursor-pointer'
         )
       }
-      onClick={(event: MouseEvent<HTMLDivElement>) => {
+      onClick={(event) => {
+        stopEventPropagation(event)
         setShowReportModal(true, publication)
       }}
     >

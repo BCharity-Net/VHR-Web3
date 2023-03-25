@@ -3,7 +3,7 @@ import { Button } from '@components/UI/Button'
 import { Spinner } from '@components/UI/Spinner'
 import { WarningMessage } from '@components/UI/WarningMessage'
 import { StarIcon, UserIcon } from '@heroicons/react/outline'
-import { Analytics } from '@lib/analytics'
+import { Mixpanel } from '@lib/mixpanel'
 import formatAddress from '@lib/formatAddress'
 import formatHandle from '@lib/formatHandle'
 import getSignature from '@lib/getSignature'
@@ -52,7 +52,7 @@ const FollowModule: FC<Props> = ({ profile, setFollowing, setShowFollowModal, ag
     setFollowing(true)
     setShowFollowModal(false)
     toast.success('Followed successfully!')
-    Analytics.track(PROFILE.SUPER_FOLLOW)
+    Mixpanel.track(PROFILE.SUPER_FOLLOW)
   }
 
   const { isLoading: writeLoading, write } = useContractWrite({

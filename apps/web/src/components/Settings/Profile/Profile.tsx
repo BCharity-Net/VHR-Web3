@@ -3,13 +3,14 @@ import { Button } from '@components/UI/Button'
 import { Card } from '@components/UI/Card'
 import { ErrorMessage } from '@components/UI/ErrorMessage'
 import { Form, useZodForm } from '@components/UI/Form'
+import { Image } from '@components/UI/Image'
 import { Input } from '@components/UI/Input'
 import { Spinner } from '@components/UI/Spinner'
 import { TextArea } from '@components/UI/TextArea'
 import { Toggle } from '@components/UI/Toggle'
 import { PencilIcon } from '@heroicons/react/outline'
-import { Analytics } from '@lib/analytics'
-import getAttribute from '@lib/getAttribute'
+import { Mixpanel } from '@lib/mixpanel'
+import getProfileAttribute from '@lib/getProfileAttribute'
 import getIPFSLink from '@lib/getIPFSLink'
 import getSignature from '@lib/getSignature'
 import hasPrideLogo from '@lib/hasPrideLogo'
@@ -51,7 +52,7 @@ const Profile: FC<Props> = ({ profile }) => {
 
   const onCompleted = () => {
     toast.success('Profile updated successfully!')
-    Analytics.track(SETTINGS.PROFILE.UPDATE)
+    Mixpanel.track(SETTINGS.PROFILE.UPDATE)
   }
 
   const { isLoading: signLoading, signTypedDataAsync } = useSignTypedData({ onError })
@@ -145,9 +146,9 @@ const Profile: FC<Props> = ({ profile }) => {
     schema: editProfileSchema,
     defaultValues: {
       name: profile?.name ?? '',
-      location: getAttribute(profile?.attributes, 'location'),
-      website: getAttribute(profile?.attributes, 'website'),
-      twitter: getAttribute(profile?.attributes, 'twitter')?.replace(/(https:\/\/)?twitter\.com\//, ''),
+      location: getProfileAttribute(profile?.attributes, 'location'),
+      website: getProfileAttribute(profile?.attributes, 'website'),
+      twitter: getProfileAttribute(profile?.attributes, 'twitter')?.replace(/(https:\/\/)?twitter\.com\//, ''),
       bio: profile?.bio ?? ''
     }
   })
@@ -188,8 +189,8 @@ const Profile: FC<Props> = ({ profile }) => {
           { key: 'website', value: website },
           { key: 'twitter', value: twitter },
           { key: 'hasPrideLogo', value: pride },
-          { key: 'statusEmoji', value: getAttribute(profile?.attributes, 'statusEmoji') },
-          { key: 'statusMessage', value: getAttribute(profile?.attributes, 'statusMessage') },
+          { key: 'statusEmoji', value: getProfileAttribute(profile?.attributes, 'statusEmoji') },
+          { key: 'statusMessage', value: getProfileAttribute(profile?.attributes, 'statusMessage') },
           { key: 'app', value: APP_NAME }
         ],
         version: '1.0.0',
@@ -246,7 +247,7 @@ const Profile: FC<Props> = ({ profile }) => {
           <div className="space-y-3">
             {cover && (
               <div>
-                <img
+                <Image
                   className="object-cover w-full h-60 rounded-lg"
                   onError={({ currentTarget }) => {
                     currentTarget.src = getIPFSLink(cover);

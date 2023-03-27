@@ -2,7 +2,7 @@ import { AVATAR, ZERO_ADDRESS } from 'data/constants'
 
 import getIPFSLink from './getIPFSLink'
 import getStampFyiURL from './getStampFyiURL'
-import imageProxy from './imageProxy'
+import imageProxy from 'utils/imageProxy'
 
 const skipList = ['assets.bcharity.net', 'cdn.stamp.fyi', 'avataaars.io', 'avatar.tobi.sh']
 

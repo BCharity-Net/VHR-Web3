@@ -6,7 +6,7 @@ import { Mixpanel } from '@lib/mixpanel'
 import getSignature from '@lib/getSignature'
 import onError from '@lib/onError'
 import splitSignature from '@lib/splitSignature'
-import { LensHubProxy } from 'abis'
+import { LensHub } from 'abis'
 import { LENSHUB_PROXY } from 'data/constants'
 import { useBroadcastMutation, useCreateSetDispatcherTypedDataMutation } from 'lens'
 import clsx from 'clsx'
@@ -39,7 +39,7 @@ const ToggleDispatcher: FC<Props> = ({ buttonSize = 'md' }) => {
     write
   } = useContractWrite({
     address: LENSHUB_PROXY,
-    abi: LensHubProxy,
+    abi: LensHub,
     functionName: 'setDispatcherWithSig',
     mode: 'recklesslyUnprepared',
     onSuccess: onCompleted,

@@ -16,10 +16,9 @@ import Report from './Report'
 
 interface Props {
   publication: Publication
-  forceReloadOnDelete?: boolean
 }
 
-const PublicationMenu: FC<Props> = ({ publication, forceReloadOnDelete }) => {
+const PublicationMenu: FC<Props> = ({ publication }) => {
   const { t } = useTranslation('common')
   const currentProfile = useAppStore((state) => state.currentProfile)
   const iconClassName = 'w-[15px] sm:w-[18px]'
@@ -41,7 +40,7 @@ const PublicationMenu: FC<Props> = ({ publication, forceReloadOnDelete }) => {
           className="absolute right-0 mt-1 w-max bg-white rounded-xl border shadow-sm dark:bg-gray-900 focus:outline-none z-[5] dark:border-gray-700"
         >
           {currentProfile?.id === publication?.profile?.id ? (
-            <Delete publication={publication} forceReloadOnDelete={forceReloadOnDelete} />
+            <Delete publication={publication} />
           ) : (
             <Report publication={publication} />
           )}

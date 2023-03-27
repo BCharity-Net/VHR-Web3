@@ -1,5 +1,6 @@
 import { useQuery } from '@tanstack/react-query';
 import axios from 'axios';
+import { IFRAMELY_URL } from 'data/constants';
 import type { FC } from 'react';
 import { useEffect } from 'react';
 
@@ -17,8 +18,8 @@ const IFramely: FC<Props> = ({ url }) => {
     [url],
     () =>
       axios({
-        url: 'https://iframe.ly/api/iframely',
-        params: { api_key: '258c8580bd477c9b886b49', url }
+        url: IFRAMELY_URL,
+        params: { url }
       }).then((res) => res.data),
     { enabled: Boolean(url) }
   );
@@ -32,10 +33,10 @@ const IFramely: FC<Props> = ({ url }) => {
   }
 
   const og = {
+    url: url as string,
     title: data?.meta?.title,
     description: data?.meta?.description,
     site: data?.meta?.site,
-    url: data?.url,
     favicon: `https://www.google.com/s2/favicons?domain=${url}`,
     thumbnail: data?.links?.thumbnail && data?.links?.thumbnail[0]?.href,
     isSquare:

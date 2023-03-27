@@ -4,19 +4,33 @@ import clsx from 'clsx';
 import type { FC, ReactNode } from 'react';
 import { Fragment } from 'react';
 
-interface Props {
+interface ModalProps {
   icon?: ReactNode;
   title?: ReactNode;
-  size?: 'xs' | 'sm' | 'md' | 'lg';
+  size?: 'xs' | 'sm' | 'md' | 'lg' | 'fit-content';
   show: boolean;
   children: ReactNode[] | ReactNode;
+  dataTestId?: string;
   onClose?: () => void;
 }
 
-export const Modal: FC<Props> = ({ icon, title, size = 'sm', show, children, onClose }) => {
+export const Modal: FC<ModalProps> = ({
+  icon,
+  title,
+  size = 'sm',
+  show,
+  children,
+  dataTestId = '',
+  onClose
+}) => {
   return (
     <Transition.Root show={show} as={Fragment}>
-      <Dialog as="div" className="fixed inset-0 z-10 overflow-y-auto" onClose={() => onClose?.()}>
+      <Dialog
+        as="div"
+        className="fixed inset-0 z-10 overflow-y-auto"
+        onClose={() => onClose?.()}
+        data-testid={dataTestId}
+      >
         <div className="flex min-h-screen items-center justify-center p-4 text-center sm:block sm:p-0">
           <Transition.Child
             as={Fragment}
@@ -41,11 +55,11 @@ export const Modal: FC<Props> = ({ icon, title, size = 'sm', show, children, onC
           >
             <div
               className={clsx(
-                { 'sm:max-w-5xl': size === 'lg' },
-                { 'sm:max-w-3xl': size === 'md' },
-                { 'sm:max-w-lg': size === 'sm' },
-                { 'sm:max-w-sm': size === 'xs' },
-                'inline-block w-full transform rounded-xl bg-white text-left align-bottom shadow-xl transition-all dark:bg-gray-800 sm:my-8 sm:align-middle'
+                { 'w-full sm:max-w-5xl': size === 'lg' },
+                { 'w-full sm:max-w-3xl': size === 'md' },
+                { 'w-full sm:max-w-lg': size === 'sm' },
+                { 'w-full sm:max-w-sm': size === 'xs' },
+                'inline-block transform rounded-xl bg-white text-left align-bottom shadow-xl transition-all dark:bg-gray-800 sm:my-8 sm:align-middle'
               )}
             >
               {title && (

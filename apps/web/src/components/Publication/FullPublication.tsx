@@ -1,9 +1,9 @@
 import UserProfile from '@components/Shared/UserProfile'
 import { formatTime } from '@lib/formatTime'
-import getAppName from '@lib/getAppName'
 import dayjs from 'dayjs'
 import type { Publication } from 'lens'
 import type { FC } from 'react'
+import getAppName from 'utils/getAppName'
 
 import PublicationActions from './Actions'
 import PublicationMenu from './Actions/Menu'
@@ -48,7 +48,7 @@ const FullPublication: FC<Props> = ({ publication }) => {
             }
             showStatus
           />
-          <PublicationMenu publication={publication} forceReloadOnDelete />
+          <PublicationMenu publication={publication} />
           <span className="text-sm text-gray-500">{dayjs(new Date(timestamp)).fromNow()}</span>
         </div>
         <div className="ml-[53px]">

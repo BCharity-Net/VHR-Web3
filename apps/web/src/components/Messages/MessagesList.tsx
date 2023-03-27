@@ -2,7 +2,6 @@ import { Image } from '@components/UI/Image'
 import Markup from '@components/Shared/Markup';
 import { Card } from '@components/UI/Card';
 import { EmojiSadIcon } from '@heroicons/react/outline';
-import formatHandle from '@lib/formatHandle';
 import { formatTime } from '@lib/formatTime';
 import getAvatar from '@lib/getAvatar';
 import type { DecodedMessage } from '@xmtp/xmtp-js';
@@ -11,7 +10,8 @@ import dayjs from 'dayjs';
 import type { Profile } from 'lens';
 import type { FC, ReactNode } from 'react';
 import { memo } from 'react';
-import InfiniteScroll from 'react-infinite-scroll-component';
+import { useInView } from 'react-cool-inview';
+import formatHandle from 'utils/formatHandle';
 
 const isOnSameDay = (d1?: Date, d2?: Date): boolean => {
   return dayjs(d1).format('YYYYMMDD') === dayjs(d2).format('YYYYMMDD');
@@ -129,26 +129,26 @@ const MessagesList: FC<MessageListProps> = ({
   missingXmtpAuth
 }) => {
   let lastMessageDate: Date | undefined;
+  const { observe } = useInView({
+    onChange: async ({ inView }) => {
+      if (!inView) {
+        return;
+      }
+
+      fetchNextMessages();
+    }
+  });
 
   return (
     <div className="flex-grow flex h-[75%]">
       <div className="relative w-full h-full pl-4 flex">
-        <div id="scrollableMessageListDiv" className="flex flex-col-reverse h-full overflow-y-auto w-full">
+        <div className="flex flex-col-reverse h-full overflow-y-auto w-full">
           {missingXmtpAuth && <MissingXmtpAuth />}
-          <InfiniteScroll
-            dataLength={messages.length}
-            next={fetchNextMessages}
-            className="flex flex-col-reverse overflow-y-auto overflow-x-hidden"
-            inverse
-            endMessage={<ConversationBeginningNotice />}
-            hasMore={hasMore}
-            loader={<LoadingMore />}
-            scrollableTarget="scrollableMessageListDiv"
-          >
+          <span className="flex flex-col-reverse overflow-y-auto overflow-x-hidden">
             {messages?.map((msg: DecodedMessage, index) => {
               const dateHasChanged = lastMessageDate ? !isOnSameDay(lastMessageDate, msg.sent) : false;
               const messageDiv = (
-                <div key={`${msg.id}_${index}`}>
+                <div key={`${msg.id}_${index}`} ref={index === messages.length - 1 ? observe : null}>
                   <MessageTile currentProfile={currentProfile} profile={profile} message={msg} />
                   {dateHasChanged ? <DateDivider date={lastMessageDate} /> : null}
                 </div>
@@ -156,7 +156,8 @@ const MessagesList: FC<MessageListProps> = ({
               lastMessageDate = msg.sent;
               return messageDiv;
             })}
-          </InfiniteScroll>
+            {hasMore ? <LoadingMore /> : <ConversationBeginningNotice />}
+          </span>
         </div>
       </div>
     </div>

@@ -1,4 +1,5 @@
 import { Tooltip } from '@components/UI/Tooltip';
+import useModMode from '@components/utils/hooks/useModMode';
 import { LockClosedIcon } from '@heroicons/react/solid';
 import { stopEventPropagation } from '@lib/stopEventPropagation';
 import type { ElectedMirror, Publication } from 'lens';
@@ -10,6 +11,7 @@ import Collect from './Collect';
 import Comment from './Comment';
 import Like from './Like';
 import Mirror from './Mirror';
+import Mod from './Mod';
 
 interface Props {
   publication: Publication;
@@ -18,6 +20,7 @@ interface Props {
 }
 
 const PublicationActions: FC<Props> = ({ publication, electedMirror, showCount = false }) => {
+  const { allowed: modMode } = useModMode();
   const currentProfile = useAppStore((state) => state.currentProfile);
   const collectModuleType = publication?.collectModule.__typename;
   const canMirror = currentProfile ? publication?.canMirror?.result : true;
@@ -31,6 +34,7 @@ const PublicationActions: FC<Props> = ({ publication, electedMirror, showCount =
         {collectModuleType !== 'RevertCollectModuleSettings' && (
           <Collect electedMirror={electedMirror} publication={publication} showCount={showCount} />
         )}
+        {modMode && <Mod publication={publication} isFullPublication={showCount} />}
         <Analytics publication={publication} />
       </span>
       {publication?.isGated && (

@@ -3,15 +3,13 @@ import PublicationsShimmer from '@components/Shared/Shimmer/PublicationsShimmer'
 import { Card } from '@components/UI/Card'
 import { EmptyState } from '@components/UI/EmptyState'
 import { ErrorMessage } from '@components/UI/ErrorMessage'
-import InfiniteLoader from '@components/UI/InfiniteLoader'
 import { CollectionIcon } from '@heroicons/react/outline'
-import { SCROLL_THRESHOLD } from 'data/constants'
 import type { ExplorePublicationRequest, Publication, PublicationMainFocus } from 'lens'
 import { CustomFiltersTypes, PublicationSortCriteria, useExploreFeedQuery } from 'lens'
 import type { FC } from 'react'
 import { useState } from 'react'
+import { useInView } from 'react-cool-inview'
 import { useTranslation } from 'react-i18next'
-import InfiniteScroll from 'react-infinite-scroll-component'
 import { useAppStore } from 'src/store/app'
 
 interface Props {
@@ -42,13 +40,19 @@ const Feed: FC<Props> = ({ focus, feedType = PublicationSortCriteria.CuratedProf
   const pageInfo = data?.explorePublications?.pageInfo
   const publications = data?.explorePublications?.items
 
-  const loadMore = async () => {
-    await fetchMore({
-      variables: { request: { ...request, cursor: pageInfo?.next }, reactionRequest, profileId }
-    }).then(({ data }) => {
-      setHasMore(data?.explorePublications?.items?.length > 0)
-    })
-  }
+  const { observe } = useInView({
+    onChange: async ({ inView }) => {
+      if (!inView || !hasMore) {
+        return
+      }
+
+      await fetchMore({
+        variables: { request: { ...request, cursor: pageInfo?.next }, reactionRequest, profileId }
+      }).then(({ data }) => {
+        setHasMore(data?.explorePublications?.items?.length > 0)
+      })
+    }
+  })
 
   if (loading) {
     return <PublicationsShimmer />
@@ -68,19 +72,12 @@ const Feed: FC<Props> = ({ focus, feedType = PublicationSortCriteria.CuratedProf
   }
 
   return (
-    <InfiniteScroll
-      dataLength={publications?.length ?? 0}
-      scrollThreshold={SCROLL_THRESHOLD}
-      hasMore={hasMore}
-      next={loadMore}
-      loader={<InfiniteLoader />}
-    >
-      <Card className="divide-y-[1px] dark:divide-gray-700/80">
-        {publications?.map((publication, index) => (
-          <SinglePublication key={`${publication.id}_${index}`} publication={publication as Publication} />
-        ))}
-      </Card>
-    </InfiniteScroll>
+    <Card className="divide-y-[1px] dark:divide-gray-700" dataTestId="explore-feed">
+      {publications?.map((publication, index) => (
+        <SinglePublication key={`${publication.id}_${index}`} publication={publication as Publication} />
+      ))}
+      {hasMore && <span ref={observe} />}
+    </Card>
   )
 }
 

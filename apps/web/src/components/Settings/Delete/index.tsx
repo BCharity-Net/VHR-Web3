@@ -12,7 +12,7 @@ import getSignature from '@lib/getSignature'
 import onError from '@lib/onError'
 import resetAuthData from '@lib/resetAuthData'
 import splitSignature from '@lib/splitSignature'
-import { LensHubProxy } from 'abis'
+import { LensHub } from 'abis'
 import { APP_NAME, LENSHUB_PROXY, SIGN_WALLET } from 'data/constants'
 import { useCreateBurnProfileTypedDataMutation } from 'lens'
 import type { FC } from 'react'
@@ -46,7 +46,7 @@ const DeleteSettings: FC = () => {
 
   const { isLoading: writeLoading, write } = useContractWrite({
     address: LENSHUB_PROXY,
-    abi: LensHubProxy,
+    abi: LensHub,
     functionName: 'burnWithSig',
     mode: 'recklesslyUnprepared',
     onSuccess: onCompleted,

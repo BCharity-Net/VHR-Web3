@@ -24,7 +24,7 @@ import getUserLocale from '@lib/getUserLocale';
 import onError from '@lib/onError';
 import splitSignature from '@lib/splitSignature';
 import uploadToArweave from '@lib/uploadToArweave';
-import { LensHubProxy } from 'abis';
+import { LensHub } from 'abis';
 import clsx from 'clsx';
 import {
   ALLOWED_AUDIO_TYPES,
@@ -193,7 +193,7 @@ const NewPublication: FC<Props> = ({ publication }) => {
 
   const { error, write } = useContractWrite({
     address: LENSHUB_PROXY,
-    abi: LensHubProxy,
+    abi: LensHub,
     functionName: isComment ? 'commentWithSig' : 'postWithSig',
     mode: 'recklesslyUnprepared',
     onSuccess: ({ hash }) => {
@@ -221,6 +221,7 @@ const NewPublication: FC<Props> = ({ publication }) => {
       collectModuleInitData,
       referenceModule,
       referenceModuleInitData,
+      referenceModuleData,
       deadline
     } = typedData.value;
     const signature = await signTypedDataAsync(getSignature(typedData));
@@ -233,6 +234,7 @@ const NewPublication: FC<Props> = ({ publication }) => {
       collectModuleInitData,
       referenceModule,
       referenceModuleInitData,
+      referenceModuleData,
       ...(isComment && {
         profileIdPointed: typedData.value.profileIdPointed,
         pubIdPointed: typedData.value.pubIdPointed
@@ -242,7 +244,7 @@ const NewPublication: FC<Props> = ({ publication }) => {
     setUserSigNonce(userSigNonce + 1);
     const { data } = await broadcast({ variables: { request: { id, signature } } });
     if (data?.broadcast.__typename === 'RelayError') {
-      return write?.({ recklesslySetUnpreparedArgs: [inputStruct] });
+      return write({ recklesslySetUnpreparedArgs: [inputStruct] });
     }
   };
 

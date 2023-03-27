@@ -7,7 +7,6 @@ import { Menu } from '@headlessui/react';
 import { XIcon } from '@heroicons/react/outline';
 import { ChevronDownIcon } from '@heroicons/react/solid';
 import { Mixpanel } from '@lib/mixpanel';
-import formatHandle from '@lib/formatHandle';
 import getAvatar from '@lib/getAvatar';
 import clsx from 'clsx';
 import type { FeedItem, FeedRequest, Profile, ProfileSearchResult } from 'lens';
@@ -22,6 +21,7 @@ import { Fragment, useState } from 'react';
 import { useAppStore } from 'src/store/app';
 import { useTimelineStore } from 'src/store/timeline';
 import { MISCELLANEOUS } from 'src/tracking';
+import formatHandle from 'utils/formatHandle';
 
 const SeeThroughLens: FC = () => {
   const currentProfile = useAppStore((state) => state.currentProfile);

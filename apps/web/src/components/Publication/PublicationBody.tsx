@@ -2,12 +2,12 @@ import Attachments from '@components/Shared/Attachments';
 import IFramely from '@components/Shared/IFramely';
 import Markup from '@components/Shared/Markup';
 import { EyeIcon } from '@heroicons/react/outline';
-import getURLs from '@lib/getURLs';
 import clsx from 'clsx';
 import type { Publication } from 'lens'
 import Link from 'next/link';
 import { useRouter } from 'next/router';
 import type { FC } from 'react';
+import getURLs from 'utils/getURLs';
 
 import DecryptedPublicationBody from './DecryptedPublicationBody';
 
@@ -25,7 +25,7 @@ const PublicationBody: FC<Props> = ({ publication }) => {
 
   return (
     <div className="break-words">
-      <Markup className={clsx({ 'line-clamp-5': showMore }, 'leading-md linkify text-md break-words')}>
+      <Markup className={clsx({ 'line-clamp-5': showMore }, 'markup linkify text-md break-words')}>
         {publication?.metadata?.content}
       </Markup>
       {showMore && (

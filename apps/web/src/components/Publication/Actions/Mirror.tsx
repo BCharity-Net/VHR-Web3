@@ -9,7 +9,7 @@ import { publicationKeyFields } from '@lib/keyFields';
 import nFormatter from '@lib/nFormatter';
 import onError from '@lib/onError';
 import splitSignature from '@lib/splitSignature';
-import { LensHubProxy } from 'abis';
+import { LensHub } from 'abis';
 import clsx from 'clsx';
 import { LENSHUB_PROXY, SIGN_WALLET } from 'data/constants';
 import { motion } from 'framer-motion';
@@ -66,7 +66,7 @@ const Mirror: FC<Props> = ({ publication, showCount }) => {
 
   const { isLoading: writeLoading, write } = useContractWrite({
     address: LENSHUB_PROXY,
-    abi: LensHubProxy,
+    abi: LensHub,
     functionName: 'mirrorWithSig',
     mode: 'recklesslyUnprepared',
     onSuccess: onCompleted,

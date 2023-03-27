@@ -13,7 +13,7 @@ const Footer: FC = () => {
       className={`mt-4 leading-7 text-sm sticky flex flex-wrap px-3 lg:px-0 gap-x-[12px] ${
         staffMode ? 'top-28' : 'top-20'
       }`}
-      data-test="footer"
+      data-testid="footer"
     >
       <a href="https://polygive.gitbook.io/bcharity/" target="_blank" rel="noreferrer noopener">
         {t('About')}

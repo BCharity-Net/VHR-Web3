@@ -4,7 +4,7 @@ import Markup from '@components/Shared/Markup';
 import { Card } from '@components/UI/Card';
 import { ErrorMessage } from '@components/UI/ErrorMessage';
 import { Tooltip } from '@components/UI/Tooltip';
-import useNFT from '@components/utils/hooks/useNFT';
+import useNft from '@components/utils/hooks/useNFT';
 import {
   CollectionIcon,
   DatabaseIcon,
@@ -21,9 +21,6 @@ import type {
   Erc20OwnershipOutput,
   NftOwnershipOutput
 } from '@lens-protocol/sdk-gated/dist/graphql/types';
-import formatHandle from '@lib/formatHandle';
-import getIPFSLink from '@lib/getIPFSLink';
-import getURLs from '@lib/getURLs';
 import { Mixpanel } from '@lib/mixpanel';
 import { stopEventPropagation } from '@lib/stopEventPropagation';
 import axios from 'axios';
@@ -38,6 +35,9 @@ import { useEffect, useState } from 'react';
 import { useAppStore } from 'src/store/app';
 import { useAuthStore } from 'src/store/auth';
 import { PUBLICATION } from 'src/tracking';
+import formatHandle from 'utils/formatHandle';
+import getIPFSLink from 'utils/getIPFSLink';
+import getURLs from 'utils/getURLs';
 import { useProvider, useSigner, useToken } from 'wagmi';
 
 interface DecryptMessageProps {
@@ -52,11 +52,11 @@ const DecryptMessage: FC<DecryptMessageProps> = ({ icon, children }) => (
   </div>
 );
 
-interface Props {
+interface DecryptedPublicationBodyProps {
   encryptedPublication: Publication;
 }
 
-const DecryptedPublicationBody: FC<Props> = ({ encryptedPublication }) => {
+const DecryptedPublicationBody: FC<DecryptedPublicationBodyProps> = ({ encryptedPublication }) => {
   const { pathname } = useRouter();
   const currentProfile = useAppStore((state) => state.currentProfile);
   const setShowAuthModal = useAuthStore((state) => state.setShowAuthModal);
@@ -116,7 +116,7 @@ const DecryptedPublicationBody: FC<Props> = ({ encryptedPublication }) => {
     enabled: Boolean(tokenCondition)
   });
 
-  const { data: nftData } = useNFT({
+  const { data: nftData } = useNft({
     address: nftCondition?.contractAddress,
     chainId: nftCondition?.chainID,
     enabled: Boolean(nftCondition)
@@ -172,7 +172,7 @@ const DecryptedPublicationBody: FC<Props> = ({ encryptedPublication }) => {
           setShowAuthModal(true);
         }}
       >
-        <div className="text-white font-bold flex items-center space-x-1">
+        <div className="flex items-center space-x-1 font-bold text-white">
           <LogoutIcon className="h-5 w-5" />
           <span>Login to decrypt</span>
         </div>
@@ -183,13 +183,13 @@ const DecryptedPublicationBody: FC<Props> = ({ encryptedPublication }) => {
   if (!canDecrypt) {
     return (
       <Card className={clsx(cardClasses, 'cursor-text')} onClick={stopEventPropagation}>
-        <div className="font-bold flex items-center space-x-2">
+        <div className="flex items-center space-x-2 font-bold">
           <LockClosedIcon className="h-5 w-5 text-green-300" />
-          <span className="text-white font-black text-base">
+          <span className="text-base font-black text-white">
             To view this...
           </span>
         </div>
-        <div className="pt-3.5 space-y-2 text-white">
+        <div className="space-y-2 pt-3.5 text-white">
           {/* Collect checks */}
           {hasNotCollectedPublication && (
             <DecryptMessage icon={<CollectionIcon className="h-4 w-4" />}>
@@ -204,7 +204,7 @@ const DecryptedPublicationBody: FC<Props> = ({ encryptedPublication }) => {
             </DecryptMessage>
           )}
           {collectNotFinalisedOnChain && (
-            <DecryptMessage icon={<CollectionIcon className="animate-pulse h-4 w-4" />}>
+            <DecryptMessage icon={<CollectionIcon className="h-4 w-4 animate-pulse" />}>
               Collect finalizing on chain...
             </DecryptMessage>
           )}
@@ -219,7 +219,7 @@ const DecryptedPublicationBody: FC<Props> = ({ encryptedPublication }) => {
             </DecryptMessage>
           )}
           {followNotFinalisedOnChain && (
-            <DecryptMessage icon={<UserAddIcon className="animate-pulse h-4 w-4" />}>
+            <DecryptMessage icon={<UserAddIcon className="h-4 w-4 animate-pulse" />}>
               Follow finalizing on chain...
             </DecryptMessage>
           )}
@@ -265,14 +265,14 @@ const DecryptedPublicationBody: FC<Props> = ({ encryptedPublication }) => {
   }
 
   if (decryptError) {
-    return <ErrorMessage title="Error while decrypting!" error={decryptError} />;
+    return <ErrorMessage title={`Error while decrypting!`} error={decryptError} />;
   }
 
   if (!decryptedData && isDecrypting) {
     return (
       <div className="space-y-2">
-        <div className="w-7/12 h-3 rounded-lg shimmer" />
-        <div className="w-1/3 h-3 rounded-lg shimmer" />
+        <div className="shimmer h-3 w-7/12 rounded-lg" />
+        <div className="shimmer h-3 w-1/3 rounded-lg" />
       </div>
     );
   }
@@ -287,7 +287,7 @@ const DecryptedPublicationBody: FC<Props> = ({ encryptedPublication }) => {
           Mixpanel.track(PUBLICATION.TOKEN_GATED.DECRYPT);
         }}
       >
-        <div className="text-white font-bold flex items-center space-x-1">
+        <div className="flex items-center space-x-1 font-bold text-white">
           <FingerPrintIcon className="h-5 w-5" />
           <span>
             Decrypt <span className="lowercase">{encryptedPublication.__typename}</span>
@@ -301,11 +301,11 @@ const DecryptedPublicationBody: FC<Props> = ({ encryptedPublication }) => {
 
   return (
     <div className="break-words">
-      <Markup className={clsx({ 'line-clamp-5': showMore }, 'leading-md linkify text-md break-words')}>
+      <Markup className={clsx({ 'line-clamp-5': showMore }, 'markup linkify text-md break-words')}>
         {publication?.content}
       </Markup>
       {showMore && (
-        <div className="mt-4 text-sm text-gray-500 font-bold flex items-center space-x-1">
+        <div className="mt-4 flex items-center space-x-1 text-sm font-bold text-gray-500">
           <EyeIcon className="h-4 w-4" />
           <Link href={`/posts/${encryptedPublication?.id}`}>
             Show more

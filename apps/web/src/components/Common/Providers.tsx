@@ -6,7 +6,7 @@ import type { ReactNode } from 'react';
 import { configureChains, createClient, WagmiConfig } from 'wagmi';
 import { mainnet, polygon, polygonMumbai } from 'wagmi/chains';
 import { InjectedConnector } from 'wagmi/connectors/injected';
-import { WalletConnectConnector } from 'wagmi/connectors/walletConnect';
+import { WalletConnectLegacyConnector } from 'wagmi/connectors/walletConnectLegacy';
 import { alchemyProvider } from 'wagmi/providers/alchemy';
 
 import client from '../../apollo';
@@ -21,7 +21,7 @@ const { chains, provider } = configureChains(
 const connectors = () => {
   return [
     new InjectedConnector({ chains, options: { shimDisconnect: true } }),
-    new WalletConnectConnector({ chains, options: {} })
+    new WalletConnectLegacyConnector({ chains, options: {} })
   ];
 };
 

@@ -2,13 +2,13 @@ import { Image } from '@components/UI/Image'
 import { Spinner } from '@components/UI/Spinner';
 import { PhotographIcon } from '@heroicons/react/outline';
 import getIPFSLink from '@lib/getIPFSLink';
-import imageProxy from '@lib/imageProxy';
 import uploadToIPFS from '@lib/uploadToIPFS';
 import clsx from 'clsx';
 import { ATTACHMENT, ERROR_MESSAGE } from 'data/constants';
 import type { ChangeEvent, FC, Ref } from 'react';
 import { useState } from 'react';
 import toast from 'react-hot-toast';
+import imageProxy from 'utils/imageProxy';
 
 interface Props {
   isNew: boolean;

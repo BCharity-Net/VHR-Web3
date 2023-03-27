@@ -19,10 +19,7 @@ import {
   UsersIcon
 } from '@heroicons/react/outline';
 import { CheckCircleIcon } from '@heroicons/react/solid';
-import formatAddress from '@lib/formatAddress';
-import formatHandle from '@lib/formatHandle';
 import { formatTime } from '@lib/formatTime';
-import getAssetAddress from '@lib/getAssetAddress';
 import getCoingeckoPrice from '@lib/getCoingeckoPrice';
 import getSignature from '@lib/getSignature';
 import getTokenImage from '@lib/getTokenImage';
@@ -31,7 +28,7 @@ import { Mixpanel } from '@lib/mixpanel';
 import onError from '@lib/onError';
 import splitSignature from '@lib/splitSignature';
 import { useQuery } from '@tanstack/react-query';
-import { LensHubProxy, UpdateOwnableFeeCollectModule } from 'abis';
+import { LensHub, UpdateOwnableFeeCollectModule } from 'abis';
 import { LENSHUB_PROXY, POLYGONSCAN_URL, SIGN_WALLET } from 'data/constants';
 import getEnvConfig from 'data/utils/getEnvConfig';
 import dayjs from 'dayjs';
@@ -52,6 +49,9 @@ import { useEffect, useState } from 'react';
 import toast from 'react-hot-toast';
 import { useAppStore } from 'src/store/app';
 import { PUBLICATION } from 'src/tracking';
+import formatAddress from 'utils/formatAddress';
+import formatHandle from 'utils/formatHandle';
+import getAssetAddress from 'utils/getAssetAddress';
 import { useAccount, useBalance, useContractRead, useContractWrite, useSignTypedData } from 'wagmi';
 
 import Splits from './Splits';
@@ -112,7 +112,7 @@ const CollectModule: FC<Props> = ({ count, setCount, publication, electedMirror 
 
   const { isLoading: writeLoading, write } = useContractWrite({
     address: LENSHUB_PROXY,
-    abi: LensHubProxy,
+    abi: LensHub,
     functionName: 'collectWithSig',
     mode: 'recklesslyUnprepared',
     onSuccess: onCompleted,

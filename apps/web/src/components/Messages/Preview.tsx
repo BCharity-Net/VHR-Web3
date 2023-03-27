@@ -1,15 +1,15 @@
 import { Image } from '@components/UI/Image'
 import { BadgeCheckIcon } from '@heroicons/react/solid';
-import formatHandle from '@lib/formatHandle';
 import { formatTime, getTimeFromNow } from '@lib/formatTime';
 import getAvatar from '@lib/getAvatar';
-import isVerified from '@lib/isVerified';
 import type { DecodedMessage } from '@xmtp/xmtp-js';
 import clsx from 'clsx';
 import type { Profile } from 'lens';
 import { useRouter } from 'next/router';
 import type { FC } from 'react';
 import { useAppStore } from 'src/store/app';
+import formatHandle from 'utils/formatHandle';
+import isVerified from 'utils/isVerified';
 
 interface Props {
   profile: Profile;

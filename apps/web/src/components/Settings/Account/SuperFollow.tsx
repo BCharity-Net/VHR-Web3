@@ -10,7 +10,7 @@ import getSignature from '@lib/getSignature'
 import getTokenImage from '@lib/getTokenImage'
 import onError from '@lib/onError'
 import splitSignature from '@lib/splitSignature'
-import { LensHubProxy } from 'abis'
+import { LensHub } from 'abis'
 import { ADDRESS_REGEX, DEFAULT_COLLECT_TOKEN, LENSHUB_PROXY, SIGN_WALLET } from 'data/constants'
 import type { Erc20 } from 'lens'
 import {
@@ -46,7 +46,7 @@ const SuperFollow: FC = () => {
 
   const { isLoading: writeLoading, write } = useContractWrite({
     address: LENSHUB_PROXY,
-    abi: LensHubProxy,
+    abi: LensHub,
     functionName: 'setFollowModuleWithSig',
     mode: 'recklesslyUnprepared',
     onSuccess: onCompleted,

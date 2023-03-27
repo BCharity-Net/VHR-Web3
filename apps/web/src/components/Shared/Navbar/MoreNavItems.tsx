@@ -16,7 +16,7 @@ const MoreNavItems: FC = () => {
   const { t } = useTranslation('common')
 
   return (
-    <Menu as="div">
+    <Menu as="div" data-testid="nav-item-more">
       {({ open }) => (
         <>
           <Menu.Button
@@ -34,7 +34,8 @@ const MoreNavItems: FC = () => {
           <MenuTransition>
             <Menu.Items
               static
-              className="absolute py-1 mt-2 w-52 bg-white rounded-xl border shadow-sm dark:bg-gray-900 focus:outline-none dark:border-gray-700/80"
+              className="absolute mt-2 rounded-xl border bg-white py-1 shadow-sm focus:outline-none dark:border-gray-700 dark:bg-gray-900"
+              data-testid="nav-item-more-dropdown"
             >
               {currentProfile ? (
                 <>

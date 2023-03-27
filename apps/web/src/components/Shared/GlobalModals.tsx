@@ -1,48 +1,49 @@
-import Report from '@components/Shared/Modal/Report'
-import { Modal } from '@components/UI/Modal'
-import { ArrowCircleRightIcon, EmojiHappyIcon, ShieldCheckIcon } from '@heroicons/react/outline'
-import type { FC } from 'react'
-import { useAuthStore } from 'src/store/auth'
-import { useGlobalModalStateStore } from 'src/store/modals'
+import Report from '@components/Shared/Modal/Report';
+import { Modal } from '@components/UI/Modal';
+import { ArrowCircleRightIcon, EmojiHappyIcon, ShieldCheckIcon } from '@heroicons/react/outline';
+import { t } from '@lingui/macro';
+import type { FC } from 'react';
+import { useAuthStore } from 'src/store/auth';
+import { useGlobalModalStateStore } from 'src/store/modals';
 
-import Login from './Login'
-import Status from './Status'
-import SwitchProfiles from './SwitchProfiles'
+import Login from './Login';
+import Status from './Status';
+import SwitchProfiles from './SwitchProfiles';
 
 const GlobalModals: FC = () => {
   // Report modal state
-  const showReportModal = useGlobalModalStateStore((state) => state.showReportModal)
-  const reportPublication = useGlobalModalStateStore((state) => state.reportPublication)
-  const setShowReportModal = useGlobalModalStateStore((state) => state.setShowReportModal)
-  const showStatusModal = useGlobalModalStateStore((state) => state.showStatusModal)
-  const setShowStatusModal = useGlobalModalStateStore((state) => state.setShowStatusModal)
-  const showProfileSwitchModal = useGlobalModalStateStore((state) => state.showProfileSwitchModal)
-  const setShowProfileSwitchModal = useGlobalModalStateStore((state) => state.setShowProfileSwitchModal)
-  const showAuthModal = useAuthStore((state) => state.showAuthModal)
-  const setShowAuthModal = useAuthStore((state) => state.setShowAuthModal)
+  const showReportModal = useGlobalModalStateStore((state) => state.showReportModal);
+  const reportingPublication = useGlobalModalStateStore((state) => state.reportingPublication);
+  const setShowReportModal = useGlobalModalStateStore((state) => state.setShowReportModal);
+  const showStatusModal = useGlobalModalStateStore((state) => state.showStatusModal);
+  const setShowStatusModal = useGlobalModalStateStore((state) => state.setShowStatusModal);
+  const showProfileSwitchModal = useGlobalModalStateStore((state) => state.showProfileSwitchModal);
+  const setShowProfileSwitchModal = useGlobalModalStateStore((state) => state.setShowProfileSwitchModal);
+  const showAuthModal = useAuthStore((state) => state.showAuthModal);
+  const setShowAuthModal = useAuthStore((state) => state.setShowAuthModal);
 
   return (
     <>
-      {reportPublication && (
+      {reportingPublication ? (
         <Modal
-          title="Report"
-          icon={<ShieldCheckIcon className="w-5 h-5 text-brand" />}
+          title={t`Report`}
+          icon={<ShieldCheckIcon className="text-brand h-5 w-5" />}
           show={showReportModal}
-          onClose={() => setShowReportModal(false, reportPublication)}
+          onClose={() => setShowReportModal(false, reportingPublication)}
         >
-          <Report publication={reportPublication} />
+          <Report publication={reportingPublication} />
         </Modal>
-      )}
+      ) : null}
       <Modal
-        title="Set Status"
-        icon={<EmojiHappyIcon className="w-5 h-5 text-brand" />}
+        title={t`Set status`}
+        icon={<EmojiHappyIcon className="text-brand h-5 w-5" />}
         show={showStatusModal}
         onClose={() => setShowStatusModal(false)}
       >
         <Status />
       </Modal>
       <Modal
-        title="Change Profile"
+        title={t`Change Profile`}
         show={showProfileSwitchModal}
         onClose={() => setShowProfileSwitchModal(false)}
         size="xs"
@@ -50,15 +51,16 @@ const GlobalModals: FC = () => {
         <SwitchProfiles />
       </Modal>
       <Modal
-        title="Login"
-        icon={<ArrowCircleRightIcon className="w-5 h-5 text-brand" />}
+        title={t`Login`}
+        icon={<ArrowCircleRightIcon className="text-brand h-5 w-5" />}
         show={showAuthModal}
         onClose={() => setShowAuthModal(false)}
+        dataTestId="login-modal"
       >
         <Login />
       </Modal>
     </>
-  )
-}
+  );
+};
 
-export default GlobalModals
+export default GlobalModals;

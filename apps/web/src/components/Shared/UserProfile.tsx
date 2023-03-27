@@ -1,15 +1,15 @@
 import { Image } from '@components/UI/Image';
 import { BadgeCheckIcon } from '@heroicons/react/solid';
-import formatHandle from '@lib/formatHandle';
 import { formatTime, getTwitterFormat } from '@lib/formatTime';
 import getAvatar from '@lib/getAvatar';
 import getProfileAttribute from '@lib/getProfileAttribute';
-import isVerified from '@lib/isVerified';
 import clsx from 'clsx';
 import type { Profile } from 'lens';
 import Link from 'next/link';
 import type { FC } from 'react';
 import { useState } from 'react';
+import formatHandle from 'utils/formatHandle';
+import isVerified from 'utils/isVerified';
 
 import Follow from './Follow';
 import Markup from './Markup';

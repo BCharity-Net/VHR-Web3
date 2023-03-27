@@ -1,7 +1,7 @@
-import formatAddress from '@lib/formatAddress';
 import { POLYGONSCAN_URL } from 'data/constants';
 import type { RecipientDataOutput } from 'lens';
 import type { FC } from 'react';
+import formatAddress from 'utils/formatAddress';
 import getStampFyiURL from 'utils/getStampFyiURL';
 
 interface Props {

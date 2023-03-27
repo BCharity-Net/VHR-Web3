@@ -16,6 +16,7 @@ const LoginButton: FC = () => {
         setShowAuthModal(true);
         Mixpanel.track(AUTH.LOGIN);
       }}
+      data-testid="login-button"
     >
       {t('Login')}
     </Button>

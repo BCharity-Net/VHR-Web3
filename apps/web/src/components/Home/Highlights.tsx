@@ -4,14 +4,12 @@ import PublicationsShimmer from '@components/Shared/Shimmer/PublicationsShimmer'
 import { Card } from '@components/UI/Card';
 import { EmptyState } from '@components/UI/EmptyState';
 import { ErrorMessage } from '@components/UI/ErrorMessage';
-import InfiniteLoader from '@components/UI/InfiniteLoader';
 import { CollectionIcon } from '@heroicons/react/outline';
-import { SCROLL_THRESHOLD } from 'data/constants';
 import type { FeedHighlightsRequest, Publication } from 'lens';
 import { useFeedHighlightsQuery } from 'lens';
 import type { FC } from 'react';
 import { useState } from 'react';
-import InfiniteScroll from 'react-infinite-scroll-component';
+import { useInView } from 'react-cool-inview';
 import { useAppStore } from 'src/store/app';
 import { useTransactionPersistStore } from 'src/store/transaction';
 
@@ -32,13 +30,19 @@ const Highlights: FC = () => {
   const publications = data?.feedHighlights?.items;
   const pageInfo = data?.feedHighlights?.pageInfo;
 
-  const loadMore = async () => {
-    await fetchMore({
-      variables: { request: { ...request, cursor: pageInfo?.next }, reactionRequest, profileId }
-    }).then(({ data }) => {
-      setHasMore(data?.feedHighlights?.items?.length > 0);
-    });
-  };
+  const { observe } = useInView({
+    onChange: async ({ inView }) => {
+      if (!inView || !hasMore) {
+        return;
+      }
+
+      await fetchMore({
+        variables: { request: { ...request, cursor: pageInfo?.next }, reactionRequest, profileId }
+      }).then(({ data }) => {
+        setHasMore(data?.feedHighlights?.items?.length > 0);
+      });
+    }
+  });
 
   if (loading) {
     return <PublicationsShimmer />;
@@ -53,27 +57,20 @@ const Highlights: FC = () => {
   }
 
   return (
-    <InfiniteScroll
-      dataLength={publications?.length ?? 0}
-      scrollThreshold={SCROLL_THRESHOLD}
-      hasMore={hasMore}
-      next={loadMore}
-      loader={<InfiniteLoader />}
-    >
-      <Card className="divide-y-[1px] dark:divide-gray-700">
-        {txnQueue.map(
-          (txn) =>
-            txn?.type === 'NEW_POST' && (
-              <div key={txn.id}>
-                <QueuedPublication txn={txn} />
-              </div>
-            )
-        )}
-        {publications?.map((publication, index) => (
-          <SinglePublication key={`${publication?.id}_${index}`} publication={publication as Publication} />
-        ))}
-      </Card>
-    </InfiniteScroll>
+    <Card className="divide-y-[1px] dark:divide-gray-700">
+      {txnQueue.map(
+        (txn) =>
+          txn?.type === 'NEW_POST' && (
+            <div key={txn.id}>
+              <QueuedPublication txn={txn} />
+            </div>
+          )
+      )}
+      {publications?.map((publication, index) => (
+        <SinglePublication key={`${publication?.id}_${index}`} publication={publication as Publication} />
+      ))}
+      {hasMore && <span ref={observe} />}
+    </Card>
   );
 };
 

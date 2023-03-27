@@ -4,7 +4,6 @@ import { LightBox } from '@components/UI/LightBox';
 import type { NewBCharityAttachment } from '@generated/types';
 import { ExternalLinkIcon, XIcon } from '@heroicons/react/outline';
 import getIPFSLink from '@lib/getIPFSLink';
-import imageProxy from '@lib/imageProxy';
 import { Mixpanel } from '@lib/mixpanel';
 import { stopEventPropagation } from '@lib/stopEventPropagation';
 import clsx from 'clsx';
@@ -14,6 +13,7 @@ import type { FC } from 'react';
 import { useState } from 'react';
 import { usePublicationStore } from 'src/store/publication';
 import { PUBLICATION } from 'src/tracking';
+import imageProxy from 'utils/imageProxy';
 
 import Audio from './Audio';
 import Video from './Video';

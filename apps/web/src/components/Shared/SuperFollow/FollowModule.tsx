@@ -4,13 +4,11 @@ import { Spinner } from '@components/UI/Spinner'
 import { WarningMessage } from '@components/UI/WarningMessage'
 import { StarIcon, UserIcon } from '@heroicons/react/outline'
 import { Mixpanel } from '@lib/mixpanel'
-import formatAddress from '@lib/formatAddress'
-import formatHandle from '@lib/formatHandle'
 import getSignature from '@lib/getSignature'
 import getTokenImage from '@lib/getTokenImage'
 import onError from '@lib/onError'
 import splitSignature from '@lib/splitSignature'
-import { LensHubProxy } from 'abis'
+import { LensHub } from 'abis'
 import { LENSHUB_PROXY, POLYGONSCAN_URL, SIGN_WALLET } from 'data/constants'
 import type { ApprovedAllowanceAmount, Profile } from 'lens';
 import {
@@ -26,6 +24,8 @@ import toast from 'react-hot-toast'
 import { useTranslation } from 'react-i18next'
 import { useAppStore } from 'src/store/app'
 import { PROFILE } from 'src/tracking'
+import formatAddress from 'utils/formatAddress'
+import formatHandle from 'utils/formatHandle'
 import { useAccount, useBalance, useContractWrite, useSignTypedData } from 'wagmi'
 
 import Loader from '../Loader'
@@ -57,7 +57,7 @@ const FollowModule: FC<Props> = ({ profile, setFollowing, setShowFollowModal, ag
 
   const { isLoading: writeLoading, write } = useContractWrite({
     address: LENSHUB_PROXY,
-    abi: LensHubProxy,
+    abi: LensHub,
     functionName: 'followWithSig',
     mode: 'recklesslyUnprepared',
     onSuccess: onCompleted,

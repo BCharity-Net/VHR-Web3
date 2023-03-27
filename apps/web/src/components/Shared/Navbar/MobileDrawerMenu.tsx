@@ -1,20 +1,21 @@
 import { Image } from '@components/UI/Image';
 import { XIcon } from '@heroicons/react/outline';
-import formatHandle from '@lib/formatHandle';
 import getAvatar from '@lib/getAvatar';
-import isGardener from '@lib/isGardener';
-import isStaff from '@lib/isStaff';
 import type { Profile } from 'lens';
 import Link from 'next/link';
 import type { FC } from 'react';
 import { useAppStore } from 'src/store/app';
 import { useGlobalModalStateStore } from 'src/store/modals';
+import formatHandle from 'utils/formatHandle';
+import isGardener from 'utils/isGardener';
+import isStaff from 'utils/isStaff';
 
 import Slug from '../Slug';
 import AppVersion from './NavItems/AppVersion';
 import Contact from './NavItems/Contact';
 import Logout from './NavItems/Logout';
 import Mod from './NavItems/Mod';
+import ModMode from './NavItems/ModMode';
 import ReportBug from './NavItems/ReportBug';
 import Settings from './NavItems/Settings';
 import StaffMode from './NavItems/StaffMode';
@@ -102,6 +103,14 @@ const MobileDrawerMenu: FC = () => {
             <Logout onClick={closeDrawer} className="py-3" />
           </div>
           <div className="divider" />
+          {isGardener(currentProfile?.id) && (
+            <>
+              <div onClick={closeDrawer} className="hover:bg-gray-200 dark:hover:bg-gray-800">
+                <ModMode className="py-3" />
+              </div>
+              <div className="divider" />
+            </>
+          )}
           {isStaff(currentProfile?.id) && (
             <>
               <div onClick={closeDrawer} className="hover:bg-gray-200 dark:hover:bg-gray-800">

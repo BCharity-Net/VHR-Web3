@@ -1,3 +1,5 @@
+@import url('image-cropper/styles.css');
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -218,10 +220,6 @@ table {
   @apply !text-sm sm:!text-base;
 }
 
-.leading-md {
-  @apply !leading-6 sm:!leading-7;
-}
-
 .iframely-player,
 iframe {
   @apply rounded-xl;
@@ -270,4 +268,29 @@ div[data-lexical-editor='true'] {
 
 #typeahead-menu {
   @apply z-20;
+}
+
+.rc-slider-rail {
+  @apply bg-brand-500 !important;
+  @apply opacity-30;
+}
+
+.rc-slider-track {
+  @apply bg-brand-500 !important;
+}
+
+.rc-slider-handle {
+  @apply border-brand-500 !important;
+}
+
+.rc-slider-handle-dragging {
+  box-shadow: 0 0 0 5px rgb(139 92 246 / 0.3) !important;
+}
+
+/* Markup styles */
+
+.markup > p,
+ul {
+  @apply !leading-6 sm:!leading-7;
+  @apply [&:not(:last-child)]:mb-5;
 }

@@ -1,9 +1,7 @@
 import EventType from '@components/Home/Timeline/EventType';
-import { Mixpanel } from '@lib/mixpanel';
 import type { ElectedMirror, FeedItem, Publication } from 'lens';
 import { useRouter } from 'next/router';
 import type { FC } from 'react';
-import { PUBLICATION } from 'src/tracking';
 
 import PublicationActions from './Actions';
 import ModAction from './Actions/ModAction';
@@ -39,7 +37,6 @@ const SinglePublication: FC<Props> = ({
       onClick={() => {
         const selection = window.getSelection();
         if (!selection || selection.toString().length === 0) {
-          Mixpanel.track(PUBLICATION.OPEN);
           push(`/posts/${rootPublication?.id}`);
         }
       }}
@@ -62,7 +59,7 @@ const SinglePublication: FC<Props> = ({
                 electedMirror={feedItem?.electedMirror as ElectedMirror}
               />
             )}
-            {showModActions && <ModAction publication={rootPublication} />}
+            {showModActions && <ModAction publication={rootPublication} className="mt-3 max-w-md" />}
           </>
         )}
       </div>

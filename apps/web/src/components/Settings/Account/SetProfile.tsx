@@ -5,11 +5,10 @@ import { ErrorMessage } from '@components/UI/ErrorMessage'
 import { Spinner } from '@components/UI/Spinner'
 import { ExclamationIcon, PencilIcon } from '@heroicons/react/outline'
 import { Mixpanel } from '@lib/mixpanel'
-import formatHandle from '@lib/formatHandle'
 import getSignature from '@lib/getSignature'
 import onError from '@lib/onError'
 import splitSignature from '@lib/splitSignature'
-import { LensHubProxy } from 'abis'
+import { LensHub } from 'abis'
 import { APP_NAME, LENSHUB_PROXY, SIGN_WALLET } from 'data/constants'
 import type { CreateSetDefaultProfileRequest, Profile } from 'lens';
 import { useBroadcastMutation, useCreateSetDefaultProfileTypedDataMutation } from 'lens'
@@ -20,6 +19,7 @@ import { useTranslation } from 'react-i18next'
 import Custom404 from 'src/pages/404'
 import { useAppStore } from 'src/store/app'
 import { SETTINGS } from 'src/tracking'
+import formatHandle from 'utils/formatHandle'
 import { useAccount, useContractWrite, useSignTypedData } from 'wagmi'
 
 const SetProfile: FC = () => {
@@ -43,7 +43,7 @@ const SetProfile: FC = () => {
     write
   } = useContractWrite({
     address: LENSHUB_PROXY,
-    abi: LensHubProxy,
+    abi: LensHub,
     functionName: 'setDefaultProfileWithSig',
     mode: 'recklesslyUnprepared',
     onSuccess: onCompleted,

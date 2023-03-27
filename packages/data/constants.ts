@@ -93,6 +93,7 @@ export const IPFS_GATEWAY = 'https://gateway.ipfscdn.io/ipfs/'
 export const EVER_API = 'https://endpoint.4everland.co'
 export const SIMPLEANALYTICS_API = 'https://simpleanalytics.com/bcharity.net.json'
 export const DEFAULT_OG = `${STATIC_IMAGES_URL}/og/logo.jpeg`
+export const IFRAMELY_URL = 'https://iframely.bcharity.net/iframely'
 
 // Workers
 export const MEDIA_PROXY_URL = IS_PRODUCTION ? 'https://media.bcharity.net' : 'http://localhost:8081'
@@ -102,6 +103,7 @@ export const FRESHDESK_WORKER_URL = IS_PRODUCTION ? 'https://freshdesk.bcharity.
 
 // Web3
 export const ALCHEMY_KEY = 'HHfOFn8jsYguteTVvL0cz4g9aydrbjTV'
+export const WALLETCONNECT_PROJECT_ID = 'cd542acc70c2b548030f9901a52e70c8'
 export const ALCHEMY_RPC = IS_MAINNET
   ? `https://polygon-mainnet.g.alchemy.com/v2/${ALCHEMY_KEY}`
   : `https://polygon-mumbai.g.alchemy.com/v2/${ALCHEMY_KEY}`
@@ -157,7 +159,6 @@ export const BUNDLR_NODE_URL = IS_MAINNET ? 'https://node2.bundlr.network' : 'ht
 
 // UI
 export const MESSAGE_PAGE_LIMIT = 15
-export const SCROLL_THRESHOLD = 0.5
 export const MIN_WIDTH_DESKTOP = 1024
 
 // Named transforms

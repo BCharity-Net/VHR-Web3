@@ -31,7 +31,7 @@ const uploadToIPFS = async (data: any): Promise<BCharityAttachment[]> => {
     const files = Array.from(data);
     const attachments = await Promise.all(
       files.map(async (_: any, i: number) => {
-        const file = data.item(i);
+        const file = data[i];
         const params = {
           Bucket: S3_BUCKET.BCHARITY_MEDIA,
           Key: uuid()
@@ -49,7 +49,7 @@ const uploadToIPFS = async (data: any): Promise<BCharityAttachment[]> => {
     );
 
     return attachments;
-  } catch {
+  } catch (error) {
     return [];
   }
 };

@@ -5,7 +5,6 @@ import Markup from '@components/Shared/Markup'
 import UserProfile from '@components/Shared/UserProfile'
 import { Tooltip } from '@components/UI/Tooltip'
 import type { OptimisticTransaction } from '@generated/types'
-import getURLs from '@lib/getURLs'
 import type { Profile } from 'lens'
 import {
   PublicationDocument,
@@ -16,6 +15,7 @@ import {
 import type { FC } from 'react'
 import { useAppStore } from 'src/store/app'
 import { useTransactionPersistStore } from 'src/store/transaction'
+import getURLs from 'utils/getURLs'
 
 interface Props {
   txn: OptimisticTransaction
@@ -94,7 +94,7 @@ const QueuedPublication: FC<Props> = ({ txn }) => {
         </Tooltip>
       </div>
       <div className="ml-[53px] break-words">
-        <div className="leading-md linkify text-md break-words">
+        <div className="markup linkify text-md break-words">
           <Markup>{txn?.content}</Markup>
         </div>
         {txn?.attachments?.length > 0 ? (

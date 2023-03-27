@@ -1,47 +1,49 @@
-import MetaTags from '@components/Common/MetaTags'
-import RecommendedProfiles from '@components/Home/RecommendedProfiles'
-import Trending from '@components/Home/Trending'
-import Footer from '@components/Shared/Footer'
-import { GridItemEight, GridItemFour, GridLayout } from '@components/UI/GridLayout'
-import { Tab } from '@headlessui/react'
-import { Mixpanel } from '@lib/mixpanel'
-import isFeatureEnabled from '@lib/isFeatureEnabled'
-import clsx from 'clsx'
-import { APP_NAME, STATIC_IMAGES_URL } from 'data/constants'
-import { FeatureFlag } from 'data/feature-flags'
-import type { PublicationMainFocus } from 'lens'
-import { PublicationSortCriteria } from 'lens'
-import type { NextPage } from 'next'
-import { useRouter } from 'next/router'
-import {useEffect,  useState } from 'react'
-import { useTranslation } from 'react-i18next'
-import { useAppStore } from 'src/store/app'
-import { EXPLORE, PAGEVIEW } from 'src/tracking'
+import MetaTags from '@components/Common/MetaTags';
+import RecommendedProfiles from '@components/Home/RecommendedProfiles';
+import Trending from '@components/Home/Trending';
+import Footer from '@components/Shared/Footer';
+import { GridItemEight, GridItemFour, GridLayout } from '@components/UI/GridLayout';
+import { Tab } from '@headlessui/react';
+import isFeatureEnabled from '@lib/isFeatureEnabled';
+import { Mixpanel } from '@lib/mixpanel';
+import { t } from '@lingui/macro';
+import clsx from 'clsx';
+import { APP_NAME } from 'data/constants';
+import { FeatureFlag } from 'data/feature-flags';
+import type { PublicationMainFocus } from 'lens';
+import { PublicationSortCriteria } from 'lens';
+import type { NextPage } from 'next';
+import { useRouter } from 'next/router';
+import { useEffect, useState } from 'react';
+import { useAppStore } from 'src/store/app';
+import { EXPLORE, PAGEVIEW } from 'src/tracking';
 
-import Feed from './Feed'
-import FeedType from './FeedType'
+import Feed from './Feed';
+import FeedType from './FeedType';
 
 const Explore: NextPage = () => {
-  const { t } = useTranslation('common')
-  const currentProfile = useAppStore((state) => state.currentProfile)
-  const [focus, setFocus] = useState<PublicationMainFocus>()
-  const router = useRouter()
+  const currentProfile = useAppStore((state) => state.currentProfile);
+  const [focus, setFocus] = useState<PublicationMainFocus>();
+  const router = useRouter();
 
   useEffect(() => {
     Mixpanel.track(PAGEVIEW, { page: 'explore' });
-  }, [])
+  }, []);
 
   const tabs = [
-    { name: 'For you', emoji: 'leaf-fluttering-in-wind.png', type: PublicationSortCriteria.CuratedProfiles },
-    { name: 'Popular', emoji: 'hundred-points.png', type: PublicationSortCriteria.TopCommented },
-    { name: 'Trending', emoji: 'heart-on-fire.png', type: PublicationSortCriteria.TopCollected },
-    { name: 'Interesting', emoji: 'hushed-face.png', type: PublicationSortCriteria.TopMirrored }
-  ]
+    { name: t`For you`, type: PublicationSortCriteria.CuratedProfiles },
+    { name: t`Popular`, type: PublicationSortCriteria.TopCommented },
+    { name: t`Trending`, type: PublicationSortCriteria.TopCollected },
+    { name: t`Interesting`, type: PublicationSortCriteria.TopMirrored }
+  ];
 
   return (
     <GridLayout>
-      <MetaTags title={t('Explore web')} description={t('Web description')} />
-      <GridItemEight className="space-y-5" data-test="explore-feed">
+      <MetaTags
+        title={t`Explore • ${APP_NAME}`}
+        description={`Explore top commented, collected and latest publications in the ${APP_NAME}.`}
+      />
+      <GridItemEight className="space-y-5">
         <Tab.Group
           defaultIndex={Number(router.query.tab)}
           onChange={(index) => {
@@ -56,19 +58,17 @@ const Explore: NextPage = () => {
                 onClick={() => {
                   Mixpanel.track(EXPLORE.SWITCH_EXPLORE_FEED_TAB, {
                     explore_feed_type: tab.type.toLowerCase()
-                  })
+                  });
                 }}
                 className={({ selected }) =>
                   clsx(
-                    { 'border-b-2 border-brand-500 !text-black dark:!text-white': selected },
-                    'px-4 pb-2 text-gray-500 outline-none font-medium text-sm'
+                    { 'border-brand-500 border-b-2 !text-black dark:!text-white': selected },
+                    'lt-text-gray-500 px-4 pb-2 text-xs font-medium outline-none sm:text-sm'
                   )
                 }
+                data-testid={`explore-tab-${index}`}
               >
-                <span className="flex items-center space-x-2">
-                  <span className="hidden sm:block">{tab.name}</span>
-                  <img className="h-4" src={`${STATIC_IMAGES_URL}/emojis/${tab.emoji}`} alt={tab.name} />
-                </span>
+                {tab.name}
               </Tab>
             ))}
           </Tab.List>
@@ -88,7 +88,7 @@ const Explore: NextPage = () => {
         <Footer />
       </GridItemFour>
     </GridLayout>
-  )
-}
+  );
+};
 
-export default Explore
+export default Explore;

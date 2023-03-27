@@ -5,7 +5,7 @@ import useIsMounted from '@components/utils/hooks/useIsMounted'
 import { KeyIcon } from '@heroicons/react/outline'
 import { XCircleIcon } from '@heroicons/react/solid'
 import { Mixpanel } from '@lib/mixpanel'
-import getWalletLogo from '@lib/getWalletLogo'
+import getWalletDetails from '@lib/getWalletDetails'
 import onError from '@lib/onError'
 import clsx from 'clsx'
 import { ERROR_MESSAGE } from 'data/constants'
@@ -167,11 +167,15 @@ const WalletSelector: FC<Props> = ({ setHasConnected, setHasProfile }) => {
             disabled={mounted ? !connector.ready || connector.id === activeConnector?.id : false}
           >
             <span>
-              {mounted ? (connector.id === 'injected' ? 'Browser Wallet' : connector.name) : connector.name}
+              {mounted
+                ? connector.id === 'injected'
+                  ? `Browser Wallet`
+                  : getWalletDetails(connector.name).name
+                : getWalletDetails(connector.name).name}
               {mounted ? !connector.ready && ' (unsupported)' : ''}
             </span>
             <img
-              src={getWalletLogo(connector.name)}
+              src={getWalletDetails(connector.name).logo}
               draggable={false}
               className="w-6 h-6"
               height={24}

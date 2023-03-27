@@ -4,11 +4,12 @@ import { Spinner } from '@components/UI/Spinner'
 import useOnClickOutside from '@components/utils/hooks/useOnClickOutside'
 import { SearchIcon, XIcon } from '@heroicons/react/outline'
 import clsx from 'clsx'
-import type { Profile, ProfileSearchResult } from 'lens';
+import type { Profile, ProfileSearchResult } from 'lens'
 import { CustomFiltersTypes, SearchRequestTypes, useSearchProfilesLazyQuery } from 'lens'
 import { useRouter } from 'next/router'
 import type { ChangeEvent, FC } from 'react'
 import { useRef, useState } from 'react'
+import formatHandle from 'utils/formatHandle'
 
 import UserProfile from '../UserProfile'
 
@@ -65,7 +66,7 @@ const Search: FC<Props> = ({
   const profiles = isProfileSearchResult ? searchResult.items : []
 
   return (
-    <div aria-hidden="true" className="w-full">
+    <div aria-hidden="true" className="w-full" data-testid="global-search">
       <form onSubmit={handleKeyDown}>
         <Input
           type="text"
@@ -83,7 +84,11 @@ const Search: FC<Props> = ({
         />
       </form>
       {pathname !== '/search' && !hideDropdown && searchText.length > 0 && (
-        <div className={clsx('flex absolute flex-col mt-2 w-[94%]', modalWidthClassName)} ref={dropdownRef}>
+        <div
+          className={clsx('absolute mt-2 flex w-[94%] flex-col', modalWidthClassName)}
+          ref={dropdownRef}
+          data-testid="search-profiles-dropdown"
+        >
           <Card className="overflow-y-auto py-2 max-h-[80vh]">
             {searchUsersLoading ? (
               <div className="py-2 px-4 space-y-2 text-sm font-bold text-center">
@@ -102,6 +107,7 @@ const Search: FC<Props> = ({
                       }
                       setSearchText('')
                     }}
+                    data-testid={`search-profile-${formatHandle(profile?.handle)}`}
                   >
                     <UserProfile
                       linkToProfile={!onProfileSelected}

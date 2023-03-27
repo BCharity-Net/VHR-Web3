@@ -8,7 +8,6 @@ import useGetMessages from '@components/utils/hooks/useGetMessages';
 import useSendMessage from '@components/utils/hooks/useSendMessage';
 import useStreamMessages from '@components/utils/hooks/useStreamMessages';
 import { parseConversationKey } from '@lib/conversationKey';
-import formatHandle from '@lib/formatHandle';
 import { APP_NAME } from 'data/constants';
 import type { NextPage } from 'next';
 import { useRouter } from 'next/router';
@@ -17,6 +16,7 @@ import { useCallback, useState } from 'react';
 import Custom404 from 'src/pages/404';
 import { useAppStore } from 'src/store/app';
 import { useMessageStore } from 'src/store/message';
+import formatHandle from 'utils/formatHandle';
 
 import Composer from './Composer';
 import MessagesList from './MessagesList';

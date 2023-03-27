@@ -1,23 +1,29 @@
-import type { Comment } from 'lens'
-import type { FC } from 'react'
+import Slug from '@components/Shared/Slug';
+import { ChatAlt2Icon } from '@heroicons/react/outline';
+import type { Comment } from 'lens';
+import Link from 'next/link';
+import type { FC } from 'react';
+import formatHandle from 'utils/formatHandle';
 
-import ThreadBody from '../ThreadBody'
-
-interface Props {
-  publication: Comment
+interface CommentedPublicationProps {
+  publication: Comment;
 }
 
-const Commented: FC<Props> = ({ publication }) => {
-  const commentOn: Comment | any = publication?.commentOn
-  const mainPost = commentOn?.mainPost
-  const publicationType = mainPost?.metadata?.attributes[0]?.value
+const CommentedPublication: FC<CommentedPublicationProps> = ({ publication }) => {
+  const sourceId = publication?.commentOn?.id;
+  const sourceProfileHandle = formatHandle(publication?.commentOn?.profile?.handle);
 
   return (
-    <>
-      {mainPost && publicationType !== 'group' ? <ThreadBody publication={mainPost} /> : null}
-      <ThreadBody publication={commentOn} />
-    </>
-  )
-}
+    <div className="lt-text-gray-500 flex items-center space-x-1 pb-4 text-[13px]">
+      <ChatAlt2Icon className="h-4 w-4" />
+      <Link href={`/posts/${sourceId}`}>
+        Commented on {publication?.commentOn?.__typename?.toLowerCase()} by
+      </Link>
+      <Link href={`/u/${sourceProfileHandle}`}>
+        <Slug slug={sourceProfileHandle} prefix="@" />
+      </Link>
+    </div>
+  );
+};
 
-export default Commented
+export default CommentedPublication;

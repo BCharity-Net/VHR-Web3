@@ -14,12 +14,8 @@ import { CogIcon, HashtagIcon, LocationMarkerIcon, UsersIcon } from '@heroicons/
 import { BadgeCheckIcon } from '@heroicons/react/solid'
 import buildConversationId from '@lib/buildConversationId'
 import { buildConversationKey } from '@lib/conversationKey'
-import formatAddress from '@lib/formatAddress'
-import formatHandle from '@lib/formatHandle'
 import getAvatar from '@lib/getAvatar'
 import getProfileAttribute from '@lib/getProfileAttribute'
-import isStaff from '@lib/isStaff'
-import isVerified from '@lib/isVerified'
 import { RARIBLE_URL, STATIC_IMAGES_URL } from 'data/constants'
 import getEnvConfig from 'data/utils/getEnvConfig'
 import type { Profile } from 'lens'
@@ -31,6 +27,10 @@ import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useAppStore } from 'src/store/app'
 import { useMessageStore } from 'src/store/message'
+import formatAddress from 'utils/formatAddress'
+import formatHandle from 'utils/formatHandle'
+import isStaff from 'utils/isStaff'
+import isVerified from 'utils/isVerified'
 
 import Badges from './Badges'
 import Followerings from './Followerings'
@@ -110,7 +110,7 @@ const Details: FC<Props> = ({ profile, following, setFollowing }) => {
         </div>
       </div>
       {profile?.bio && (
-        <div className="mr-0 sm:mr-10 leading-md linkify text-md">
+        <div className="markup linkify text-md mr-0 break-words sm:mr-10">
           <Markup>{profile?.bio}</Markup>
         </div>
       )}

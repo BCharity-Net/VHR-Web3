@@ -1,7 +1,6 @@
 import { Image } from '@components/UI/Image';
 import { CheckCircleIcon } from '@heroicons/react/solid';
 import { Mixpanel } from '@lib/mixpanel';
-import formatHandle from '@lib/formatHandle';
 import getAvatar from '@lib/getAvatar';
 import type { Profile } from 'lens';
 import type { FC } from 'react';
@@ -9,6 +8,7 @@ import React from 'react';
 import { useAppPersistStore, useAppStore } from 'src/store/app';
 import { useGlobalModalStateStore } from 'src/store/modals';
 import { PROFILE } from 'src/tracking';
+import formatHandle from 'utils/formatHandle';
 
 const SwitchProfiles: FC = () => {
   const profiles = useAppStore((state) => state.profiles);

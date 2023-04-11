@@ -1,17 +1,11 @@
-import { Button } from '@components/UI/Button';
-import { ErrorMessage } from '@components/UI/ErrorMessage';
-import { Form, useZodForm } from '@components/UI/Form';
-import { Input } from '@components/UI/Input';
-import { Spinner } from '@components/UI/Spinner';
 import { PencilIcon } from '@heroicons/react/outline';
 import { Mixpanel } from '@lib/mixpanel';
-import getProfileAttribute from '@lib/getProfileAttribute';
-import getSignature from '@lib/getSignature';
 import onError from '@lib/onError';
 import splitSignature from '@lib/splitSignature';
 import uploadToArweave from '@lib/uploadToArweave';
 import { LensPeriphery } from 'abis';
-import { APP_NAME, LENS_PERIPHERY, SIGN_WALLET } from 'data/constants';
+import { APP_NAME, LENS_PERIPHERY } from 'data/constants';
+import Errors from 'data/errors';
 import type { CreatePublicSetProfileMetadataUriRequest } from 'lens';
 import {
   useBroadcastMutation,
@@ -19,12 +13,15 @@ import {
   useCreateSetProfileMetadataViaDispatcherMutation,
   useProfileSettingsQuery
 } from 'lens';
+import getProfileAttribute from 'lib/getProfileAttribute';
+import getSignature from 'lib/getSignature';
 import type { FC } from 'react';
 import { useState } from 'react';
 import toast from 'react-hot-toast';
 import { useGlobalModalStateStore } from 'src/store/modals';
 import { useAppStore } from 'src/store/app';
 import { SETTINGS } from 'src/tracking';
+import { Button, ErrorMessage, Form, Input, Spinner, useZodForm } from 'ui';
 import { v4 as uuid } from 'uuid';
 import { useContractWrite, useSignTypedData } from 'wagmi';
 import { object, string } from 'zod';
@@ -51,8 +48,7 @@ const Status: FC = () => {
   const { data, loading, error } = useProfileSettingsQuery({
     variables: { request: { profileId: currentProfile?.id } },
     skip: !currentProfile?.id,
-    onCompleted: (data) => {
-      const profile = data?.profile;
+    onCompleted: ({ profile }) => {
       form.setValue('status', getProfileAttribute(profile?.attributes, 'statusMessage'));
       setEmoji(getProfileAttribute(profile?.attributes, 'statusEmoji'));
     }
@@ -117,7 +113,7 @@ const Status: FC = () => {
 
   const editStatus = async (emoji: string, status: string) => {
     if (!currentProfile) {
-      return toast.error(SIGN_WALLET);
+      return toast.error(Errors.SignWallet);
     }
 
     try {

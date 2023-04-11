@@ -1,8 +1,8 @@
-import type { NewBCharityAttachment } from '@generated/types';
 import uploadToIPFS from '@lib/uploadToIPFS';
 import { useCallback } from 'react';
 import { toast } from 'react-hot-toast';
 import { usePublicationStore } from 'src/store/publication';
+import type { NewBCharityAttachment } from 'src/types';
 import { v4 as uuid } from 'uuid';
 
 const useUploadAttachments = () => {

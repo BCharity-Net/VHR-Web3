@@ -1,9 +1,9 @@
-import type { MarkupLinkProps } from '@generated/types';
-import { stopEventPropagation } from '@lib/stopEventPropagation';
 import type { Profile } from 'lens';
+import formatHandle from 'lib/formatHandle';
+import { stopEventPropagation } from 'lib/stopEventPropagation';
 import Link from 'next/link';
 import type { FC } from 'react';
-import formatHandle from 'utils/formatHandle';
+import type { MarkupLinkProps } from 'src/types';
 
 import Slug from '../../Slug';
 import UserPreview from '../../UserPreview';

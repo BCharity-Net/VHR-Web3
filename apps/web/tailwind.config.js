@@ -3,7 +3,7 @@ const defaultTheme = require('tailwindcss/defaultTheme')
 const colors = require('tailwindcss/colors')
 
 module.exports = {
-  content: ['./src/**/*.{js,ts,jsx,tsx}'],
+  content: ['./src/**/*.{ts,tsx}'],
   darkMode: 'class',
   theme: {
     screens: {
@@ -25,9 +25,5 @@ module.exports = {
   variants: {
     extend: {}
   },
-  plugins: [
-    require('@tailwindcss/aspect-ratio'),
-    require('@tailwindcss/forms'),
-    require('@tailwindcss/line-clamp')
-  ]
+  plugins: [require('@tailwindcss/aspect-ratio'), require('@tailwindcss/forms')]
 }

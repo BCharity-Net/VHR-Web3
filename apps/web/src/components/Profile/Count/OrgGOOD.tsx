@@ -1,6 +1,6 @@
 /* eslint-disable react/jsx-key */
 import { gql, useQuery } from '@apollo/client'
-import type { BCharityPublication } from '@generated/types'
+import type { BCharityPublication } from 'src/types/index.ts /types'
 import { ethers } from 'ethers'
 import { PaginatedResultInfo, Profile } from 'lens'
 import type { FC } from 'react'

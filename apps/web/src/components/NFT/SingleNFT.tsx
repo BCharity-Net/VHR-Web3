@@ -1,9 +1,9 @@
-import { Card } from '@components/UI/Card';
 import { RARIBLE_URL, STATIC_IMAGES_URL } from 'data/constants';
 import type { Nft } from 'lens';
+import sanitizeDStorageUrl from 'lib/sanitizeDStorageUrl';
 import type { FC } from 'react';
 import { CHAIN_ID } from 'src/constants';
-import getIPFSLink from 'utils/getIPFSLink';
+import { Card } from 'ui';
 
 interface Props {
   nft: Nft;
@@ -38,7 +38,7 @@ const SingleNFT: FC<Props> = ({ nft, linkToDetail = true }) => {
               title={`${nft.contractAddress}:${nft.tokenId}`}
               sandbox=""
               className="h-full w-full sm:rounded-t-[10px]"
-              src={getIPFSLink(nft?.originalContent?.animatedUrl)}
+              src={sanitizeDStorageUrl(nft?.originalContent?.animatedUrl)}
             />
           )}
         </div>
@@ -49,7 +49,7 @@ const SingleNFT: FC<Props> = ({ nft, linkToDetail = true }) => {
             style={{
               backgroundImage: `url(${
                 nft.originalContent.uri
-                  ? getIPFSLink(nft.originalContent.uri)
+                  ? sanitizeDStorageUrl(nft.originalContent.uri)
                   : `${STATIC_IMAGES_URL}/placeholder.webp`
               })`,
               backgroundSize: 'contain',

@@ -1,8 +1,7 @@
+import Profiles from '@components/Shared/Profiles'
 import { CollectionIcon } from '@heroicons/react/outline'
 import type { CollectedEvent } from 'lens'
 import type { FC } from 'react'
-
-import ProfileCircles from './ProfileCircles'
 
 interface Props {
   collects: CollectedEvent[]
@@ -18,7 +17,7 @@ const Collected: FC<Props> = ({ collects }) => {
   return (
     <div className="flex items-center pb-4 space-x-1 text-gray-500 text-[13px]">
       <CollectionIcon className="w-4 h-4" />
-      <ProfileCircles profiles={getCollectedProfiles()} context="Collected by" />
+      <Profiles profiles={getCollectedProfiles()} context="Collected by" />
     </div>
   )
 }

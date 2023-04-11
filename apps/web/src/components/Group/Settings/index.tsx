@@ -1,7 +1,7 @@
 import { useMutation } from '@apollo/client'
 import { Button } from '@components/UI/Button'
 import { WarningMessage } from '@components/UI/WarningMessage'
-import type { Group } from '@generated/types'
+import type { Group } from 'src/types/index.ts /types'
 import { TrashIcon } from '@heroicons/react/outline'
 import type { Mutation } from 'lens'
 import { HidePublicationDocument } from 'lens'

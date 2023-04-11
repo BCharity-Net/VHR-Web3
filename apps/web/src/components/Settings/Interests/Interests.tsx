@@ -1,5 +1,3 @@
-import { useApolloClient } from '@apollo/client';
-import { Button } from '@components/UI/Button';
 import { PlusCircleIcon } from '@heroicons/react/outline';
 import { CheckCircleIcon } from '@heroicons/react/solid';
 import { Mixpanel } from '@lib/mixpanel';
@@ -10,9 +8,11 @@ import {
   useProfileInterestsQuery,
   useRemoveProfileInterestMutation
 } from 'lens';
+import { useApolloClient } from 'lens/apollo';
 import type { FC } from 'react';
 import { useAppStore } from 'src/store/app';
 import { SETTINGS } from 'src/tracking';
+import { Button } from 'ui';
 
 import Loader from '../../Shared/Loader';
 

@@ -3,15 +3,14 @@
   "version": "0.0.0",
   "main": "index.ts",
   "scripts": {
-    "typecheck": "tsc --noEmit",
-    "lint": "eslint . --ext .ts"
-  },
-  "dependencies": {
-    "typescript": "^4.9.4"
+    "typecheck": "tsc --pretty --noEmit",
+    "lint": "eslint . --ext .ts",
+    "lint:fix": "eslint . --fix --ext .ts"
   },
   "devDependencies": {
-    "@types/node": "^18.15.2",
+    "@types/node": "^18.15.11",
     "eslint-config-weblint": "*",
-    "tsconfig": "*"
+    "tsconfig": "*",
+    "typescript": "^5.0.4"
   }
 }

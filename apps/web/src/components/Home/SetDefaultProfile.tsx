@@ -1,9 +1,9 @@
-import { Card } from '@components/UI/Card'
 import { CurrencyDollarIcon, UserCircleIcon } from '@heroicons/react/outline'
 import Link from 'next/link'
 import type { FC } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useAppStore } from 'src/store/app'
+import { Card } from 'ui'
 
 const SetDefaultProfile: FC = () => {
   const { t } = useTranslation('common')

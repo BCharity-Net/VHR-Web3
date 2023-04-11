@@ -1,11 +1,7 @@
-import { useApolloClient } from '@apollo/client';
 import EmojiPicker from '@components/Shared/EmojiPicker';
-import { Button } from '@components/UI/Button';
-import { Modal } from '@components/UI/Modal';
-import { Spinner } from '@components/UI/Spinner';
 import { ChevronLeftIcon } from '@heroicons/react/outline';
-import trimify from '@lib/trimify';
-import { ERROR_MESSAGE } from 'data/constants';
+import { t, Trans } from '@lingui/macro';
+import Errors from 'data/errors';
 import type { NftGallery } from 'lens';
 import {
   NftGalleriesDocument,
@@ -14,19 +10,17 @@ import {
   useUpdateNftGalleryInfoMutation,
   useUpdateNftGalleryItemsMutation
 } from 'lens';
+import { useApolloClient } from 'lens/apollo';
+import trimify from 'lib/trimify';
 import type { Dispatch, FC } from 'react';
 import React, { useState } from 'react';
 import { toast } from 'react-hot-toast';
 import { useAppStore } from 'src/store/app';
 import { useNftGalleryStore } from 'src/store/nft-gallery';
+import { Button, Modal, Spinner } from 'ui';
 
 import Picker from './Picker';
 import ReviewSelection from './ReviewSelection';
-
-interface Props {
-  showModal: boolean;
-  setShowModal: Dispatch<boolean>;
-}
 
 enum CreateSteps {
   NAME = 'NAME',
@@ -34,7 +28,12 @@ enum CreateSteps {
   REVIEW = 'REVIEW'
 }
 
-const Create: FC<Props> = ({ showModal, setShowModal }) => {
+interface CreateProps {
+  showModal: boolean;
+  setShowModal: Dispatch<boolean>;
+}
+
+const Create: FC<CreateProps> = ({ showModal, setShowModal }) => {
   const [currentStep, setCurrentStep] = useState<CreateSteps>(CreateSteps.NAME);
   const gallery = useNftGalleryStore((state) => state.gallery);
   const setGallery = useNftGalleryStore((state) => state.setGallery);
@@ -78,10 +77,10 @@ const Create: FC<Props> = ({ showModal, setShowModal }) => {
           }
         });
         closeModal();
-        toast.success(`Gallery created`);
+        toast.success(t`Gallery created`);
       }
     } catch (error: any) {
-      toast.error(error?.messaage ?? ERROR_MESSAGE);
+      toast.error(error?.messaage ?? Errors.SomethingWentWrong);
     }
   };
 
@@ -107,10 +106,10 @@ const Create: FC<Props> = ({ showModal, setShowModal }) => {
           }
         });
         closeModal();
-        toast.success(`Gallery name updated`);
+        toast.success(t`Gallery name updated`);
       }
     } catch (error: any) {
-      toast.error(error?.messaage ?? ERROR_MESSAGE);
+      toast.error(error?.messaage ?? Errors.SomethingWentWrong);
     }
   };
 
@@ -158,7 +157,7 @@ const Create: FC<Props> = ({ showModal, setShowModal }) => {
           }
         });
         closeModal();
-        toast.success(`Gallery updated`);
+        toast.success(t`Gallery updated`);
       }
     } catch (error: any) {
       toast.error(error?.message);
@@ -168,14 +167,14 @@ const Create: FC<Props> = ({ showModal, setShowModal }) => {
   const onClickNext = () => {
     const galleryName = trimify(gallery.name);
     if (galleryName.length > 255) {
-      return toast.error(`Gallery name should be less than 255 characters`);
+      return toast.error(t`Gallery name should be less than 255 characters`);
     } else if (!galleryName.length) {
-      return toast.error(`Gallery name required`);
+      return toast.error(t`Gallery name required`);
     } else if (
       !gallery.items.length &&
       (currentStep === CreateSteps.REVIEW || currentStep === CreateSteps.PICK_NFTS)
     ) {
-      return toast.error(`Select collectibles for your gallery`);
+      return toast.error(t`Select collectibles for your gallery`);
     }
 
     if (currentStep === CreateSteps.NAME) {
@@ -212,13 +211,13 @@ const Create: FC<Props> = ({ showModal, setShowModal }) => {
           </button>
           <span>
             {currentStep === CreateSteps.REVIEW
-              ? `Review collection`
-              : `Select collectibles you want others to see`}
+              ? t`Review collection`
+              : t`Select collectibles you want others to see`}
           </span>
         </div>
       );
     }
-    return `What's your gallery name?`;
+    return t`What's your gallery name?`;
   };
 
   const loadingNext = loading || updating || renaming;
@@ -237,7 +236,7 @@ const Create: FC<Props> = ({ showModal, setShowModal }) => {
           <Picker />
         ) : (
           <textarea
-            className="w-full resize-none border-none bg-white py-2 px-4 outline-none !ring-0 dark:bg-gray-800"
+            className="w-full resize-none border-none bg-white px-4 py-2 outline-none !ring-0 dark:bg-gray-800"
             value={gallery.name}
             onChange={(e) => setGallery({ ...gallery, name: e.target.value, items: gallery.items })}
             rows={4}
@@ -247,14 +246,14 @@ const Create: FC<Props> = ({ showModal, setShowModal }) => {
           {currentStep === 'NAME' ? (
             <EmojiPicker setEmoji={(emoji) => onPickEmoji(emoji)} />
           ) : (
-            {gallery.items.length} selected
+            <Trans>{gallery.items.length} selected</Trans>
           )}
           <Button
             disabled={loadingNext}
             onClick={() => onClickNext()}
             icon={loadingNext ? <Spinner size="xs" /> : null}
           >
-            Next
+            <Trans>Next</Trans>
           </Button>
         </div>
       </div>

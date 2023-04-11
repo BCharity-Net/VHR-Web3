@@ -1,6 +1,4 @@
 import MetaTags from '@components/Common/MetaTags';
-import { Card } from '@components/UI/Card';
-import { GridItemEight, GridItemFour, GridLayout } from '@components/UI/GridLayout';
 import useStaffMode from '@components/utils/hooks/useStaffMode';
 import {
   ArrowDownIcon,
@@ -14,16 +12,18 @@ import {
 } from '@heroicons/react/outline';
 import { PencilAltIcon } from '@heroicons/react/solid';
 import { getTimeAddedNDayUnix, getTimeMinusNDayUnix } from '@lib/formatTime';
-import humanize from '@lib/humanize';
 import { Mixpanel } from '@lib/mixpanel';
 import clsx from 'clsx';
-import { APP_NAME, ERROR_MESSAGE } from 'data/constants';
+import { APP_NAME } from 'data/constants';
+import Errors from 'data/errors';
 import { useBCharityStatsQuery } from 'lens';
+import humanize from 'lib/humanize';
 import type { NextPage } from 'next';
 import type { FC, ReactNode } from 'react';
 import { useEffect } from 'react';
 import Custom404 from 'src/pages/404';
 import { PAGEVIEW } from 'src/tracking';
+import { Card, GridItemEight, GridItemFour, GridLayout } from 'ui';
 
 import StaffToolsSidebar from '../Sidebar';
 
@@ -117,7 +117,7 @@ const Stats: NextPage = () => {
       <GridItemEight className="space-y-5">
         <Card className="p-5">
           {error ? (
-            <b className="text-red-500">{ERROR_MESSAGE}</b>
+            <b className="text-red-500">{Errors.SomethingWentWrong}</b>
           ) : loading || todayLoading || yesterdayLoading ? (
             <div>Loading...</div>
           ) : (

@@ -1,10 +1,9 @@
-import { useApolloClient } from '@apollo/client';
 import MenuTransition from '@components/Shared/MenuTransition';
-import { Button } from '@components/UI/Button';
 import { Menu } from '@headlessui/react';
 import { DotsVerticalIcon } from '@heroicons/react/outline';
+import { t, Trans } from '@lingui/macro';
 import clsx from 'clsx';
-import { ERROR_MESSAGE } from 'data/constants';
+import Errors from 'data/errors';
 import type { Nft, NftGallery } from 'lens';
 import {
   NftGalleriesDocument,
@@ -12,22 +11,24 @@ import {
   useNftGalleriesLazyQuery,
   useUpdateNftGalleryOrderMutation
 } from 'lens';
+import { useApolloClient } from 'lens/apollo';
 import type { FC } from 'react';
 import React, { Fragment, useState } from 'react';
 import { toast } from 'react-hot-toast';
 import { useAppStore } from 'src/store/app';
 import type { NftGalleryItem } from 'src/store/nft-gallery';
 import { GALLERY_DEFAULTS, useNftGalleryStore } from 'src/store/nft-gallery';
+import { Button } from 'ui';
 
 import Create from './Create';
 import NftCard from './NftCard';
 import ReArrange from './ReArrange';
 
-interface Props {
+interface GalleryProps {
   galleries: NftGallery[];
 }
 
-const Gallery: FC<Props> = ({ galleries }) => {
+const Gallery: FC<GalleryProps> = ({ galleries }) => {
   const [isRearrange, setIsRearrange] = useState(false);
   const [showCreateModal, setShowCreateModal] = useState(false);
   const currentProfile = useAppStore((state) => state.currentProfile);
@@ -42,14 +43,14 @@ const Gallery: FC<Props> = ({ galleries }) => {
   const [orderGallery] = useUpdateNftGalleryOrderMutation();
   const [deleteNftGallery] = useDeleteNftGalleryMutation({
     onCompleted: () => {
-      toast.success(`Gallery deleted`);
+      toast.success(t`Gallery deleted`);
       setGallery(GALLERY_DEFAULTS);
     }
   });
 
   const onDelete = async () => {
     try {
-      if (confirm(`Are you sure you want to delete?`)) {
+      if (confirm(t`Are you sure you want to delete?`)) {
         const normalizedId = cache.identify({ id: gallery.id, __typename: 'NftGallery' });
         cache.evict({ id: normalizedId });
         cache.gc();
@@ -63,7 +64,7 @@ const Gallery: FC<Props> = ({ galleries }) => {
         });
       }
     } catch (error: any) {
-      toast.error(error?.messaage ?? ERROR_MESSAGE);
+      toast.error(error?.messaage ?? Errors.SomethingWentWrong);
     }
   };
 
@@ -125,7 +126,7 @@ const Gallery: FC<Props> = ({ galleries }) => {
       });
       setIsRearrange(false);
     } catch (error: any) {
-      toast.error(error?.messaage ?? ERROR_MESSAGE);
+      toast.error(error?.messaage ?? Errors.SomethingWentWrong);
     }
   };
 
@@ -137,10 +138,10 @@ const Gallery: FC<Props> = ({ galleries }) => {
         {isRearrange ? (
           <div className="flex items-center space-x-2">
             <Button onClick={() => setIsRearrange(false)} size="sm" variant="secondary">
-              Cancel
+              <Trans>Cancel</Trans>
             </Button>
             <Button onClick={onSaveRearrange} size="sm">
-              Save
+              <Trans>Save</Trans>
             </Button>
           </div>
         ) : currentProfile && currentProfile?.id === gallery.profileId ? (
@@ -163,7 +164,7 @@ const Gallery: FC<Props> = ({ galleries }) => {
                     )
                   }
                 >
-                  Edit
+                  <Trans>Edit</Trans>
                 </Menu.Item>
                 <Menu.Item
                   as="label"
@@ -175,7 +176,7 @@ const Gallery: FC<Props> = ({ galleries }) => {
                     )
                   }
                 >
-                  Rearrrange
+                  <Trans>Rearrrange</Trans>
                 </Menu.Item>
                 <Menu.Item
                   as="label"
@@ -187,7 +188,7 @@ const Gallery: FC<Props> = ({ galleries }) => {
                     )
                   }
                 >
-                  Delete
+                  <Trans>Delete</Trans>
                 </Menu.Item>
               </Menu.Items>
             </MenuTransition>

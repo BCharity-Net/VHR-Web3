@@ -1,6 +1,4 @@
 import Slug from '@components/Shared/Slug';
-import { Alert } from '@components/UI/Alert';
-import { Button } from '@components/UI/Button';
 import {
   BanIcon,
   ExclamationCircleIcon,
@@ -10,7 +8,6 @@ import {
   ShieldCheckIcon
 } from '@heroicons/react/outline';
 import { Mixpanel } from '@lib/mixpanel';
-import { stopEventPropagation } from '@lib/stopEventPropagation';
 import clsx from 'clsx';
 import type { Publication } from 'lens';
 import {
@@ -19,12 +16,15 @@ import {
   PublicationReportingSpamSubreason,
   useReportPublicationMutation
 } from 'lens';
+import { stopEventPropagation } from 'lib/stopEventPropagation';
 import type { FC } from 'react';
 import { useState } from 'react';
 import { toast } from 'react-hot-toast';
 import { useGlobalAlertStateStore } from 'src/store/alerts';
 import { useGlobalModalStateStore } from 'src/store/modals';
 import { MOD } from 'src/tracking';
+import { Button } from 'ui';
+import { Alert } from 'ui/Alert';
 
 interface Props {
   publication: Publication;

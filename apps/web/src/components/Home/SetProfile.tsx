@@ -1,5 +1,4 @@
 import New from '@components/Shared/Badges/New'
-import { Card } from '@components/UI/Card'
 import { MinusCircleIcon, PencilAltIcon, PhotographIcon } from '@heroicons/react/outline'
 import { CheckCircleIcon } from '@heroicons/react/solid'
 import { Mixpanel } from '@lib/mixpanel'
@@ -10,6 +9,7 @@ import type { FC } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useAppStore } from 'src/store/app'
 import { ONBOARDING } from 'src/tracking'
+import { Card } from 'ui'
 
 interface StatusProps {
   finished: boolean
@@ -45,7 +45,7 @@ const SetProfile: FC = () => {
   return (
     <Card
       as="aside"
-      className="mb-4 bg-green-50 dark:bg-green-900 !border-green-600 space-y-4 text-green-600 p-5"
+      className="mb-4 space-y-4 !border-green-600 !bg-green-50 p-5 text-green-600 dark:bg-green-900"
     >
       <div className="flex items-center space-x-2 font-bold">
         <PhotographIcon className="w-5 h-5" />

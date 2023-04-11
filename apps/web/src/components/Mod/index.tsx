@@ -1,18 +1,16 @@
 import MetaTags from '@components/Common/MetaTags';
 import Footer from '@components/Shared/Footer';
-import { Button } from '@components/UI/Button';
-import { Card } from '@components/UI/Card';
-import { Checkbox } from '@components/UI/Checkbox';
-import { GridItemEight, GridItemFour, GridLayout } from '@components/UI/GridLayout';
 import { Mixpanel } from '@lib/mixpanel';
 import { APP_NAME } from 'data/constants';
 import { CustomFiltersTypes, PublicationTypes } from 'lens';
+import isGardener from 'lib/isGardener';
 import type { NextPage } from 'next';
 import { useEffect, useState } from 'react';
 import Custom404 from 'src/pages/404';
 import { useAppStore } from 'src/store/app';
 import { PAGEVIEW } from 'src/tracking';
-import isGardener from 'utils/isGardener';
+import { Button, Card, GridItemEight, GridItemFour, GridLayout } from 'ui';
+import { Checkbox } from 'ui/Checkbox';
 
 import Feed from './Feed';
 

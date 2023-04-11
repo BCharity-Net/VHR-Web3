@@ -1,6 +1,6 @@
 import { Card } from '@components/UI/Card'
-import type { BCharityPublication } from '@generated/types'
-import getIPFSLink from '@lib/getIPFSLink'
+import type { BCharityPublication } from 'src/types/index.ts /types'
+import sanitizeDStorageUrl from '@lib/sanitizeDStorageUrl'
 import imageProxy from '@lib/imageProxy'
 import type { FC } from 'react'
 import { useState } from 'react'
@@ -27,7 +27,7 @@ const Media: FC<MediaProps> = ({ media }) => {
             key="attachment"
             className="object-cover w-full h-full rounded-lg border-[3px] border-black margin mb-[20px]"
             // height={240}
-            src={imageProxy(getIPFSLink(attachments[activeIndex].item), 'attachment')}
+            src={imageProxy(sanitizeDStorageUrl(attachments[activeIndex].item), 'attachment')}
             alt={attachments[activeIndex].item}
           />
           <div className="w-full h-full overflow-x-scroll scroll whitespace-nowrap scroll-smooth">
@@ -36,7 +36,7 @@ const Media: FC<MediaProps> = ({ media }) => {
                 <img
                   key="attachment"
                   className="object-cover w-[200px] h-[100px] rounded-lg inline-block mr-[20px] border-[3px] border-black"
-                  src={imageProxy(getIPFSLink(i.item), 'attachment')}
+                  src={imageProxy(sanitizeDStorageUrl(i.item), 'attachment')}
                   alt={i.item}
                   onClick={() => {
                     setActiveIndex(index)
@@ -46,7 +46,7 @@ const Media: FC<MediaProps> = ({ media }) => {
                 <img
                   key="attachment"
                   className="object-cover w-[200px] h-[100px] rounded-lg inline-block mr-[20px] cursor-pointer blur-[1px] border-[3px] border-gray-300"
-                  src={imageProxy(getIPFSLink(i.item), 'attachment')}
+                  src={imageProxy(sanitizeDStorageUrl(i.item), 'attachment')}
                   alt={i.item}
                   onClick={() => {
                     setActiveIndex(index)

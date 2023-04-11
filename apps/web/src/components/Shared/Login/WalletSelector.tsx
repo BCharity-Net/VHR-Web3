@@ -1,15 +1,13 @@
 import SwitchNetwork from '@components/Shared/SwitchNetwork'
-import { Button } from '@components/UI/Button'
-import { Spinner } from '@components/UI/Spinner'
 import useIsMounted from '@components/utils/hooks/useIsMounted'
 import { KeyIcon } from '@heroicons/react/outline'
 import { XCircleIcon } from '@heroicons/react/solid'
 import { Mixpanel } from '@lib/mixpanel'
-import getWalletDetails from '@lib/getWalletDetails'
 import onError from '@lib/onError'
 import clsx from 'clsx'
-import { ERROR_MESSAGE } from 'data/constants'
+import Errors from 'data/errors'
 import { useAuthenticateMutation, useChallengeLazyQuery, useUserProfilesLazyQuery } from 'lens'
+import getWalletDetails from 'lib/getWalletDetails'
 import type { Dispatch, FC } from 'react'
 import { useState } from 'react'
 import toast from 'react-hot-toast'
@@ -17,6 +15,7 @@ import { CHAIN_ID } from 'src/constants'
 import { useAppPersistStore, useAppStore } from 'src/store/app'
 import { useAuthStore } from 'src/store/auth'
 import { AUTH } from 'src/tracking'
+import { Button, Spinner } from 'ui'
 import type { Connector } from 'wagmi'
 import { useAccount, useConnect, useDisconnect, useNetwork, useSignMessage } from 'wagmi'
 
@@ -68,7 +67,7 @@ const WalletSelector: FC<Props> = ({ setHasConnected, setHasProfile }) => {
       })
 
       if (!challenge?.data?.challenge?.text) {
-        return toast.error(ERROR_MESSAGE)
+        return toast.error(Errors.SomethingWentWrong)
       }
 
       // Get signature
@@ -148,7 +147,7 @@ const WalletSelector: FC<Props> = ({ setHasConnected, setHasProfile }) => {
       {(errorChallenge || errorAuthenticate || errorProfiles) && (
         <div className="flex items-center space-x-1 font-bold text-red-500">
           <XCircleIcon className="w-5 h-5" />
-          <div>{ERROR_MESSAGE}</div>
+          <div>{Errors.SomethingWentWrong}</div>
         </div>
       )}
     </div>

@@ -1,7 +1,7 @@
 import { S3 } from '@aws-sdk/client-s3';
-import type { BCharityAttachment } from '@generated/types';
 import axios from 'axios';
 import { EVER_API, S3_BUCKET, STS_TOKEN_URL } from 'data/constants';
+import type { BCharityAttachment } from 'src/types';
 import { v4 as uuid } from 'uuid';
 
 const getS3Client = async () => {
@@ -22,7 +22,7 @@ const getS3Client = async () => {
 
 /**
  *
- * @param data - Data to upload to IPFS
+ * @param data Data to upload to IPFS
  * @returns attachment array
  */
 const uploadToIPFS = async (data: any): Promise<BCharityAttachment[]> => {
@@ -56,7 +56,7 @@ const uploadToIPFS = async (data: any): Promise<BCharityAttachment[]> => {
 
 /**
  *
- * @param file - File object
+ * @param file File object
  * @returns attachment or null
  */
 export const uploadFileToIPFS = async (file: File): Promise<BCharityAttachment | null> => {

@@ -2,9 +2,9 @@ import Markup from '@components/Shared/Markup'
 import Collectors from '@components/Shared/Modal/Collectors'
 import { Button } from '@components/UI/Button'
 import { Modal } from '@components/UI/Modal'
-import type { BCharityPublication } from '@generated/types'
+import type { BCharityPublication } from 'src/types/index.ts /types'
 import { ClockIcon, CogIcon, HashtagIcon, PencilAltIcon, UsersIcon } from '@heroicons/react/outline'
-import getIPFSLink from '@lib/getIPFSLink'
+import sanitizeDStorageUrl from '@lib/sanitizeDStorageUrl'
 import imageProxy from '@lib/imageProxy'
 import nFormatter from '@lib/nFormatter'
 import dayjs from 'dayjs'
@@ -47,7 +47,7 @@ const Details: FC<Props> = ({ group }) => {
       <div className="relative w-32 h-32 sm:w-72 sm:h-72">
         <img
           src={imageProxy(
-            getIPFSLink(
+            sanitizeDStorageUrl(
               group?.metadata?.cover?.original?.url
                 ? group?.metadata?.cover?.original?.url
                 : `https://avatar.tobi.sh/${group?.id}.png`

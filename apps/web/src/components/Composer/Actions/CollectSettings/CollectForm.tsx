@@ -1,7 +1,4 @@
 import ToggleWithHelper from '@components/Shared/ToggleWithHelper';
-import { Button } from '@components/UI/Button';
-import { ErrorMessage } from '@components/UI/ErrorMessage';
-import { Spinner } from '@components/UI/Spinner';
 import { getTimeAddedNDay } from '@lib/formatTime';
 import isValidEthAddress from '@lib/isValidEthAddress';
 import { CollectModules, useEnabledModulesQuery } from 'lens';
@@ -10,6 +7,7 @@ import { useEffect } from 'react';
 import { useAccessSettingsStore } from 'src/store/access-settings';
 import { useAppStore } from 'src/store/app';
 import { useCollectModuleStore } from 'src/store/collect-module';
+import { Button, ErrorMessage, Spinner } from 'ui';
 
 import AmountConfig from './AmountConfig';
 import CollectLimitConfig from './CollectLimitConfig';
@@ -176,7 +174,7 @@ const CollectForm: FC<Props> = ({ setShowModal }) => {
 
   if (loading) {
     return (
-      <div className="space-y-2 py-3.5 px-5 text-center font-bold">
+      <div className="space-y-2 px-5 py-3.5 text-center font-bold">
         <Spinner size="md" className="mx-auto" />
         <div>
           Loading collect settings

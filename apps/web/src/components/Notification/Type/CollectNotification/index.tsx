@@ -1,39 +1,48 @@
-import { NotificationProfileAvatar, NotificationProfileName } from '@components/Notification/Profile'
+import { NotificationProfileAvatar, NotificationProfileName } from '@components/Notification/Profile';
 import {
   NotificationWalletProfileAvatar,
   NotificationWalletProfileName
-} from '@components/Notification/WalletProfile'
-import UserPreview from '@components/Shared/UserPreview'
-import type { MessageDescriptor } from '@generated/types'
-import { CashIcon, CollectionIcon, UsersIcon } from '@heroicons/react/solid'
-import { formatTime, getTimeFromNow } from '@lib/formatTime'
-import type { NewCollectNotification } from 'lens'
-import Link from 'next/link'
-import type { FC } from 'react'
+} from '@components/Notification/WalletProfile';
+import UserPreview from '@components/Shared/UserPreview';
+import { CollectionIcon } from '@heroicons/react/solid';
+import { formatTime, getTimeFromNow } from '@lib/formatTime';
+import { defineMessage } from '@lingui/macro';
+import { Trans } from '@lingui/react';
+import type { NewCollectNotification } from 'lens';
+import Link from 'next/link';
+import type { FC } from 'react';
+import type { MessageDescriptor } from 'src/types';
 
-import CollectedAmount from './Amount'
-import CollectedContent from './Content'
+import CollectedAmount from './Amount';
+import CollectedContent from './Content';
 
-interface Props {
-  notification: NewCollectNotification
+const messages: Record<string, MessageDescriptor> = {
+  comment: defineMessage({
+    id: '<0><1/> collected your <2>comment</2></0>'
+  }),
+  mirror: defineMessage({
+    id: '<0><1/> collected your <2>mirror</2></0>'
+  }),
+  post: defineMessage({
+    id: '<0><1/> collected your <2>post</2></0>'
+  })
+};
+
+const defaultMessage = (typeName: string): string => {
+  return '<0><1/> collected your <2>' + typeName + '</2></0>';
+};
+
+interface CollectNotificationProps {
+  notification: NewCollectNotification;
 }
 
-const CollectNotification: FC<Props> = ({ notification }) => {
-  const publicationType =
-    notification?.collectedPublication?.metadata?.attributes[0]?.value ??
-    notification?.collectedPublication?.__typename?.toLowerCase()
-
+const CollectNotification: FC<CollectNotificationProps> = ({ notification }) => {
+  const typeName = notification?.collectedPublication.__typename?.toLowerCase() || '';
   return (
-    <div className="flex justify-between items-start">
-      <div className="space-y-2 w-4/5">
+    <div className="flex items-start justify-between">
+      <div className="w-4/5 space-y-2">
         <div className="flex items-center space-x-3">
-          {publicationType === 'group' ? (
-            <UsersIcon className="h-6 w-6 text-pink-500/70" />
-          ) : publicationType === 'fundraise' ? (
-            <CashIcon className="h-6 w-6 text-pink-500/70" />
-          ) : (
-            <CollectionIcon className="h-6 w-6 text-pink-500/70" />
-          )}
+          <CollectionIcon className="h-6 w-6 text-pink-500/70" />
           {notification?.wallet?.defaultProfile ? (
             <UserPreview isBig={false} profile={notification?.wallet?.defaultProfile}>
               <NotificationProfileAvatar profile={notification?.wallet?.defaultProfile} />
@@ -43,37 +52,27 @@ const CollectNotification: FC<Props> = ({ notification }) => {
           )}
         </div>
         <div className="ml-9">
-          {notification?.wallet?.defaultProfile ? (
-            <NotificationProfileName profile={notification?.wallet?.defaultProfile} />
-          ) : (
-            <NotificationWalletProfileName wallet={notification?.wallet} />
-          )}{' '}
-          <span className="text-gray-600 dark:text-gray-400">
-            {publicationType === 'group'
-              ? 'joined your'
-              : publicationType === 'fundraise'
-              ? 'funded your'
-              : 'collected your'}{' '}
-          </span>
-          <Link
-            href={
-              publicationType === 'group'
-                ? `/groups/${notification?.collectedPublication?.id}`
-                : `/posts/${notification?.collectedPublication?.id}`
-            }
-            className="font-bold"
-          >
-            {publicationType}
-          </Link>
+          <Trans
+            id={messages[typeName]?.id || defaultMessage(typeName)}
+            components={[
+              <span className="text-gray-600 dark:text-gray-400" key="" />,
+              notification?.wallet?.defaultProfile ? (
+                <NotificationProfileName profile={notification?.wallet?.defaultProfile} />
+              ) : (
+                <NotificationWalletProfileName wallet={notification?.wallet} />
+              ),
+              <Link href={`/posts/${notification?.collectedPublication?.id}`} className="font-bold" key="" />
+            ]}
+          />
           <CollectedContent notification={notification} />
-          {publicationType !== 'group' && <CollectedAmount notification={notification} />}
+          <CollectedAmount notification={notification} />
         </div>
       </div>
-      <div className="text-gray-400 text-[12px]" title={formatTime(notification?.createdAt)}>
+      <div className="text-[12px] text-gray-400" title={formatTime(notification?.createdAt)}>
         {getTimeFromNow(notification?.createdAt)}
       </div>
     </div>
-  )
-}
+  );
+};
 
-export default CollectNotification
+export default CollectNotification;

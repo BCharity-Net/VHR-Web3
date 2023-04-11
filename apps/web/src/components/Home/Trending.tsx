@@ -1,14 +1,13 @@
 import TrendingTagShimmer from '@components/Shared/Shimmer/TrendingTagShimmer'
-import { Card } from '@components/UI/Card'
-import { ErrorMessage } from '@components/UI/ErrorMessage'
 import { TrendingUpIcon } from '@heroicons/react/solid'
 import { Mixpanel } from '@lib/mixpanel'
-import nFormatter from '@lib/nFormatter'
 import type { TagResult } from 'lens'
 import { TagSortCriteria, useTrendingQuery } from 'lens'
+import nFormatter from 'lib/nFormatter'
 import Link from 'next/link'
 import type { FC } from 'react'
 import { MISCELLANEOUS } from 'src/tracking'
+import { Card, ErrorMessage } from 'ui'
 
 const Title = () => {
   return (

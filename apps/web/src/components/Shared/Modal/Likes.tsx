@@ -1,14 +1,13 @@
 import UserProfile from '@components/Shared/UserProfile'
-import { EmptyState } from '@components/UI/EmptyState'
-import { ErrorMessage } from '@components/UI/ErrorMessage'
 import { HeartIcon } from '@heroicons/react/outline'
 import type { Profile, WhoReactedPublicationRequest } from 'lens'
 import { useLikesQuery } from 'lens'
 import type { FC } from 'react'
 import { useState } from 'react'
 import { useInView } from 'react-cool-inview'
+import { FollowSource } from 'src/tracking'
+import { EmptyState, ErrorMessage } from 'ui'
 
-import { FollowSource } from '../Follow'
 import Loader from '../Loader'
 
 interface Props {
@@ -60,7 +59,7 @@ const Likes: FC<Props> = ({ publicationId }) => {
   }
 
   return (
-    <div className="max-h-[80vh] overflow-y-auto" id="scrollableLikesDiv">
+    <div className="max-h-[80vh] overflow-y-auto" id="scrollableLikesDiv" data-testid="likes-modal">
       <ErrorMessage className="m-5" title="Failed to load likes" error={error} />
       <div className="divide-y dark:divide-gray-700">
         {profiles?.map((like, index) => (

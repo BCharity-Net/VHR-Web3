@@ -1,22 +1,21 @@
-import { Button } from '@components/UI/Button'
-import { Spinner } from '@components/UI/Spinner'
 import { UserRemoveIcon } from '@heroicons/react/outline'
 import { Mixpanel } from '@lib/mixpanel'
-import getSignature from '@lib/getSignature'
 import onError from '@lib/onError'
 import splitSignature from '@lib/splitSignature'
 import { FollowNFT } from 'abis'
-import { SIGN_WALLET } from 'data/constants'
+import Errors from 'data/errors'
 import type { Signer } from 'ethers'
 import { Contract } from 'ethers'
 import type { CreateBurnEip712TypedData, Profile } from 'lens';
 import { useBroadcastMutation, useCreateUnfollowTypedDataMutation } from 'lens'
+import getSignature from 'lib/getSignature'
 import type { Dispatch, FC } from 'react'
 import { useState } from 'react'
 import toast from 'react-hot-toast'
 import { useTranslation } from 'react-i18next'
 import { useAppStore } from 'src/store/app'
 import { PROFILE } from 'src/tracking'
+import { Button, Spinner } from 'ui'
 import { useSigner, useSignTypedData } from 'wagmi'
 
 interface Props {
@@ -75,7 +74,7 @@ const Unfollow: FC<Props> = ({ profile, showText = false, setFollowing }) => {
 
   const createUnfollow = async () => {
     if (!currentProfile) {
-      return toast.error(SIGN_WALLET)
+      return toast.error(Errors.SignWallet)
     }
 
     try {

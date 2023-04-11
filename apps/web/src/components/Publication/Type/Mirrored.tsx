@@ -1,36 +1,20 @@
-import Slug from '@components/Shared/Slug'
-import type { MessageDescriptor } from '@generated/types'
-import { SwitchHorizontalIcon } from '@heroicons/react/outline'
-import formatHandle from '@lib/formatHandle'
-import type { Mirror } from 'lens'
-import Link from 'next/link'
-import type { FC } from 'react'
-import { useTranslation } from 'react-i18next'
+import Profiles from '@components/Shared/Profiles';
+import { SwitchHorizontalIcon } from '@heroicons/react/outline';
+import { t } from '@lingui/macro';
+import type { Mirror } from 'lens';
+import type { FC } from 'react';
 
-interface Props {
-  publication: Mirror
+interface MirroredProps {
+  publication: Mirror;
 }
 
-const Mirrored: FC<Props> = ({ publication }) => {
-  const { t } = useTranslation('common')
-  const publicationType = publication?.metadata?.attributes[0]?.value
-
+const Mirrored: FC<MirroredProps> = ({ publication }) => {
   return (
-    <div className="flex items-center pb-4 space-x-1 text-gray-500 text-[13px]">
-      <SwitchHorizontalIcon className="w-4 h-4" />
-      <Link href={`/u/${formatHandle(publication?.profile?.handle)}`} className="max-w-xs truncate">
-        {publication?.profile?.name ? (
-          <b>{publication?.profile?.name}</b>
-        ) : (
-          <Slug slug={formatHandle(publication?.profile?.handle)} prefix="@" />
-        )}
-      </Link>
-      <Link href={`/posts/${publication?.mirrorOf?.id}`}>
-        <span>mirrored the </span>
-        <b>{publication?.mirrorOf.__typename?.toLowerCase()}</b>
-      </Link>
+    <div className="lt-text-gray-500 flex items-center space-x-1 pb-4 text-[13px]">
+      <SwitchHorizontalIcon className="h-4 w-4" />
+      <Profiles profiles={[publication.profile]} context={t`mirrored`} />
     </div>
-  )
-}
+  );
+};
 
-export default Mirrored
+export default Mirrored;

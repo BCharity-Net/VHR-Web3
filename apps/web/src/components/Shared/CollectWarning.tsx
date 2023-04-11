@@ -1,9 +1,9 @@
 import Slug from '@components/Shared/Slug'
-import { Card } from '@components/UI/Card'
 import { StarIcon, UsersIcon } from '@heroicons/react/outline'
 import clsx from 'clsx'
 import type { FC } from 'react'
 import { useTranslation } from 'react-i18next'
+import { Card } from 'ui'
 
 interface Props {
   handle: string

@@ -1,7 +1,3 @@
-import { Button } from '@components/UI/Button'
-import { Modal } from '@components/UI/Modal'
-import { Spinner } from '@components/UI/Spinner'
-import { WarningMessage } from '@components/UI/WarningMessage'
 import { ExclamationIcon, MinusIcon, PlusIcon } from '@heroicons/react/outline'
 import { Mixpanel } from '@lib/mixpanel'
 import { getModule } from '@lib/getModule'
@@ -13,7 +9,8 @@ import { useState } from 'react'
 import toast from 'react-hot-toast'
 import { SETTINGS } from 'src/tracking'
 import { useTranslation } from 'react-i18next'
-import { usePrepareSendTransaction, useSendTransaction, useWaitForTransaction } from 'wagmi'
+import { Button, Modal, Spinner, WarningMessage } from 'ui'
+import { useSendTransaction, useWaitForTransaction } from 'wagmi'
 
 interface Props {
   title?: string

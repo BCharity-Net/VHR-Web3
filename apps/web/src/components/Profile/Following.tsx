@@ -1,16 +1,15 @@
-import { FollowSource } from '@components/Shared/Follow'
 import Loader from '@components/Shared/Loader'
 import UserProfile from '@components/Shared/UserProfile'
-import { EmptyState } from '@components/UI/EmptyState'
-import { ErrorMessage } from '@components/UI/ErrorMessage'
 import { UsersIcon } from '@heroicons/react/outline'
 import type { FollowingRequest, Profile } from 'lens'
 import { useFollowingQuery } from 'lens'
+import formatHandle from 'lib/formatHandle'
 import type { FC } from 'react'
 import { useState } from 'react'
 import { useInView } from 'react-cool-inview'
 import { useTranslation } from 'react-i18next'
-import formatHandle from 'utils/formatHandle'
+import { FollowSource } from 'src/tracking'
+import { EmptyState, ErrorMessage } from 'ui'
 
 interface Props {
   profile: Profile
@@ -66,7 +65,7 @@ const Following: FC<Props> = ({ profile, onProfileSelected }) => {
   }
 
   return (
-    <div className="max-h-[80vh] overflow-y-auto" id="scrollableFollowingDiv">
+    <div className="max-h-[80vh] overflow-y-auto" id="scrollableFollowingDiv" data-testid="followings-modal">
       <ErrorMessage className="m-5" title="Failed to load following" error={error} />
       <div className="divide-y dark:divide-gray-700">
         {followings?.map((following, index) => (

@@ -1,8 +1,7 @@
 import Beta from '@components/Shared/Badges/Beta';
-import { Card } from '@components/UI/Card';
-import { Toggle } from '@components/UI/Toggle';
 import type { FC } from 'react';
 import { usePreferencesStore } from 'src/store/preferences';
+import { Card, Toggle } from 'ui';
 
 const LikesPreferences: FC = () => {
   const hideLikesCount = usePreferencesStore((state) => state.hideLikesCount);

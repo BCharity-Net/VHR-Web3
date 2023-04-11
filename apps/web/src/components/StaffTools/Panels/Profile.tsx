@@ -1,4 +1,3 @@
-import { Card } from '@components/UI/Card'
 import {
   AtSymbolIcon,
   CashIcon,
@@ -9,14 +8,15 @@ import {
   PhotographIcon
 } from '@heroicons/react/outline'
 import { ShieldCheckIcon } from '@heroicons/react/solid'
-import { getFollowModule } from '@lib/getFollowModule'
-import getProfileAttribute from '@lib/getProfileAttribute'
-import hasPrideLogo from '@lib/hasPrideLogo'
 import { APP_NAME } from 'data/constants'
 import type { Profile } from 'lens'
+import formatAddress from 'lib/formatAddress'
+import formatHandle from 'lib/formatHandle'
+import getFollowModule from 'lib/getFollowModule'
+import getProfileAttribute from 'lib/getProfileAttribute'
+import hasPrideLogo from 'lib/hasPrideLogo'
 import type { FC } from 'react'
-import formatAddress from 'utils/formatAddress'
-import formatHandle from 'utils/formatHandle'
+import { Card } from 'ui'
 
 import MetaDetails from './MetaDetails'
 

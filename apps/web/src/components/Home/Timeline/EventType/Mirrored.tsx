@@ -1,8 +1,7 @@
+import Profiles from '@components/Shared/Profiles'
 import { SwitchHorizontalIcon } from '@heroicons/react/outline'
 import type { MirrorEvent } from 'lens'
 import type { FC } from 'react'
-
-import ProfileCircles from './ProfileCircles'
 
 interface Props {
   mirrors: MirrorEvent[]
@@ -18,7 +17,7 @@ const Mirrored: FC<Props> = ({ mirrors }) => {
   return (
     <div className="flex items-center pb-4 space-x-1 text-gray-500 text-[13px]">
       <SwitchHorizontalIcon className="w-4 h-4" />
-      <ProfileCircles profiles={getMirroredProfiles()} context="Mirrored by" />
+      <Profiles profiles={getMirroredProfiles()} context="Mirrored" />
     </div>
   )
 }

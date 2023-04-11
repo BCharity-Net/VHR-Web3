@@ -13,7 +13,7 @@ import { Spinner } from '@components/UI/Spinner'
 import { TextArea } from '@components/UI/TextArea'
 import useBroadcast from '@components/utils/hooks/useBroadcast'
 import { PlusIcon } from '@heroicons/react/outline'
-import getIPFSLink from '@lib/getIPFSLink'
+import sanitizeDStorageUrl from '@lib/sanitizeDStorageUrl'
 import getSignature from '@lib/getSignature'
 import imageProxy from '@lib/imageProxy'
 import isVerified from '@lib/isVerified'
@@ -108,7 +108,7 @@ const Media: FC<Props> = ({ media }) => {
             key="attachment"
             className="object-cover w-full h-60 rounded-lg"
             height={240}
-            src={imageProxy(getIPFSLink(i.item), 'attachment')}
+            src={imageProxy(sanitizeDStorageUrl(i.item), 'attachment')}
             alt={i.item}
           />
         ))}

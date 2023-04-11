@@ -1,9 +1,6 @@
 import QueuedPublication from '@components/Publication/QueuedPublication'
 import SinglePublication from '@components/Publication/SinglePublication'
 import PublicationsShimmer from '@components/Shared/Shimmer/PublicationsShimmer'
-import { Card } from '@components/UI/Card'
-import { EmptyState } from '@components/UI/EmptyState'
-import { ErrorMessage } from '@components/UI/ErrorMessage'
 import { CollectionIcon } from '@heroicons/react/outline'
 import type { Comment, Publication, PublicationsQueryRequest } from 'lens'
 import { CommentOrderingTypes, CommentRankingFilter, CustomFiltersTypes, useCommentFeedQuery } from 'lens'
@@ -11,8 +8,10 @@ import type { FC } from 'react'
 import { useState } from 'react';
 import { useInView } from 'react-cool-inview'
 import { useTranslation } from 'react-i18next'
+import { OptmisticPublicationType } from 'src/enums'
 import { useAppStore } from 'src/store/app'
 import { useTransactionPersistStore } from 'src/store/transaction'
+import { Card, EmptyState, ErrorMessage } from 'ui'
 
 import NewPublication from '../Composer/NewPublication'
 import CommentWarning from '../Shared/CommentWarning'
@@ -48,8 +47,10 @@ const Feed: FC<Props> = ({ publication, type = 'comment' }) => {
   const comments = data?.publications?.items ?? []
   const pageInfo = data?.publications?.pageInfo
 
-  const queuedCount = txnQueue.filter((o) => o.type === 'NEW_COMMENT').length
-  const totalComments = comments?.length + queuedCount
+  const queuedCount = txnQueue.filter((o) => o.type === OptmisticPublicationType.NewComment).length
+  const hiddenCount = comments.filter((o) => o?.__typename === 'Comment' && o.hidden).length
+  const hiddenRemovedComments = comments?.length - hiddenCount
+  const totalComments = hiddenRemovedComments + queuedCount
   const canComment = publication?.canComment?.result
 
   const { observe } = useInView({
@@ -84,10 +85,10 @@ const Feed: FC<Props> = ({ publication, type = 'comment' }) => {
       )}
       <ErrorMessage title="Failed to load comment feed" error={error} />
       {!error && !loading && totalComments !== 0 && (
-        <Card className="divide-y-[1px] dark:divide-gray-700">
+        <Card className="divide-y-[1px] dark:divide-gray-700" dataTestId="comments-feed">
           {txnQueue.map(
             (txn) =>
-              txn?.type === 'NEW_COMMENT' &&
+              txn?.type === OptmisticPublicationType.NewComment &&
               txn?.parent === publication?.id && (
                 <div key={txn.id}>
                   <QueuedPublication txn={txn} />

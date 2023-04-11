@@ -1,9 +1,10 @@
-import { ErrorMessage } from '@components/UI/ErrorMessage';
-import type { Emoji } from '@generated/types';
 import { useQuery } from '@tanstack/react-query';
 import axios from 'axios';
-import { ERROR_MESSAGE, STATIC_ASSETS_URL } from 'data/constants';
+import { STATIC_ASSETS_URL } from 'data/constants';
+import Errors from 'data/errors';
 import type { FC } from 'react';
+import type { Emoji } from 'src/types';
+import { ErrorMessage } from 'ui';
 
 import Loader from '../Loader';
 
@@ -22,8 +23,11 @@ const List: FC<Props> = ({ setEmoji }) => {
     return (
       <ErrorMessage
         className="m-5"
-        title={ERROR_MESSAGE}
-        error={{ message: 'Error while loading emojis', name: ERROR_MESSAGE }}
+        title={Errors.SomethingWentWrong}
+        error={{
+          message: 'Error while loading emojis',
+          name: Errors.SomethingWentWrong
+        }}
       />
     );
   }

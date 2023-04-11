@@ -1,18 +1,13 @@
 import ChooseFile from '@components/Shared/ChooseFile';
-import { Button } from '@components/UI/Button';
-import { ErrorMessage } from '@components/UI/ErrorMessage';
-import { Image } from '@components/UI/Image';
-import { Modal } from '@components/UI/Modal';
-import { Spinner } from '@components/UI/Spinner';
 import { PencilIcon } from '@heroicons/react/outline';
-import getSignature from '@lib/getSignature';
 import { Mixpanel } from '@lib/mixpanel';
 import onError from '@lib/onError';
 import splitSignature from '@lib/splitSignature';
 import uploadToIPFS from '@lib/uploadToIPFS';
 import { t, Trans } from '@lingui/macro';
 import { LensHub } from 'abis';
-import { AVATAR, ERROR_MESSAGE, LENSHUB_PROXY, SIGN_WALLET } from 'data/constants';
+import { AVATAR, LENSHUB_PROXY } from 'data/constants';
+import Errors from 'data/errors';
 import { getCroppedImg } from 'image-cropper/cropUtils';
 import type { Area, Size } from 'image-cropper/types';
 import type { MediaSet, NftImage, Profile, UpdateProfileImageRequest } from 'lens';
@@ -21,13 +16,15 @@ import {
   useCreateSetProfileImageUriTypedDataMutation,
   useCreateSetProfileImageUriViaDispatcherMutation
 } from 'lens';
+import getSignature from 'lib/getSignature';
+import imageProxy from 'lib/imageProxy';
+import sanitizeDStorageUrl from 'lib/sanitizeDStorageUrl';
 import type { ChangeEvent, FC } from 'react';
 import { useState } from 'react';
 import toast from 'react-hot-toast';
 import { useAppStore } from 'src/store/app';
 import { SETTINGS } from 'src/tracking';
-import getIPFSLink from 'utils/getIPFSLink';
-import imageProxy from 'utils/imageProxy';
+import { Button, ErrorMessage, Image, Modal, Spinner } from 'ui';
 import { useContractWrite, useSignTypedData } from 'wagmi';
 
 import ImageCropperController from './ImageCropperController';
@@ -122,11 +119,11 @@ const Picture: FC<PictureProps> = ({ profile }) => {
 
   const uploadAndSave = async () => {
     if (!currentProfile) {
-      return toast.error(SIGN_WALLET);
+      return toast.error(Errors.SignWallet);
     }
     const croppedImage = await getCroppedImg(imageSrc, croppedAreaPixels);
     if (!croppedImage) {
-      return toast.error(ERROR_MESSAGE);
+      return toast.error(Errors.SomethingWentWrong);
     }
 
     try {
@@ -178,7 +175,7 @@ const Picture: FC<PictureProps> = ({ profile }) => {
   };
 
   const profilePictureUrl = profile?.picture?.original?.url ?? profile?.picture?.uri;
-  const profilePictureIpfsUrl = profilePictureUrl ? imageProxy(getIPFSLink(profilePictureUrl), AVATAR) : '';
+  const profilePictureIpfsUrl = profilePictureUrl ? imageProxy(sanitizeDStorageUrl(profilePictureUrl), AVATAR) : '';
 
   const cropperPreviewSize: Size = { width: 240, height: 240 };
   const cropperBorderSize = 20;

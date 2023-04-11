@@ -1,11 +1,11 @@
-import { Image } from '@components/UI/Image'
-import getAvatar from '@lib/getAvatar'
 import clsx from 'clsx'
 import type { Profile } from 'lens'
 import { useMutualFollowersQuery } from 'lens'
+import formatHandle from 'lib/formatHandle'
+import getAvatar from 'lib/getAvatar'
 import type { Dispatch, FC, ReactNode } from 'react'
 import { useAppStore } from 'src/store/app'
-import formatHandle from 'utils/formatHandle'
+import { Image } from 'ui'
 
 interface Props {
   setShowMutualFollowersModal?: Dispatch<boolean>

@@ -1,9 +1,9 @@
 import MenuTransition from '@components/Shared/MenuTransition'
 import { Menu } from '@headlessui/react'
 import { DotsVerticalIcon } from '@heroicons/react/outline'
-import { stopEventPropagation } from '@lib/stopEventPropagation'
 import clsx from 'clsx'
 import type { Publication } from 'lens'
+import { stopEventPropagation } from 'lib/stopEventPropagation'
 import type { FC } from 'react'
 import { Fragment } from 'react'
 import { useTranslation } from 'react-i18next'
@@ -30,6 +30,7 @@ const PublicationMenu: FC<Props> = ({ publication }) => {
           className="rounded-full p-1.5 hover:bg-gray-300 hover:bg-opacity-20"
           onClick={stopEventPropagation}
           aria-label="More"
+          data-testid={`publication-${publication.id}-menu`}
         >
           <DotsVerticalIcon className={clsx('lt-text-gray-500', iconClassName)} />
         </button>
@@ -38,6 +39,7 @@ const PublicationMenu: FC<Props> = ({ publication }) => {
         <Menu.Items
           static
           className="absolute right-0 mt-1 w-max bg-white rounded-xl border shadow-sm dark:bg-gray-900 focus:outline-none z-[5] dark:border-gray-700"
+          data-testid={`publication-${publication.id}-menu-items`}
         >
           {currentProfile?.id === publication?.profile?.id ? (
             <Delete publication={publication} />

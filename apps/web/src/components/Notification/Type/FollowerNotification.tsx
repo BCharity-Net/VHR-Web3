@@ -1,26 +1,34 @@
-import UserPreview from '@components/Shared/UserPreview'
-import { UserAddIcon } from '@heroicons/react/solid'
-import { formatTime, getTimeFromNow } from '@lib/formatTime'
-import type { NewFollowerNotification } from 'lens'
-import type { FC } from 'react'
-import { useTranslation } from 'react-i18next'
-import { useAppStore } from 'src/store/app'
+import UserPreview from '@components/Shared/UserPreview';
+import { UserAddIcon } from '@heroicons/react/solid';
+import { formatTime, getTimeFromNow } from '@lib/formatTime';
+import { defineMessage } from '@lingui/macro';
+import { Trans } from '@lingui/react';
+import type { NewFollowerNotification } from 'lens';
+import type { FC } from 'react';
+import { useAppStore } from 'src/store/app';
 
-import { NotificationProfileAvatar, NotificationProfileName } from '../Profile'
-import { NotificationWalletProfileAvatar, NotificationWalletProfileName } from '../WalletProfile'
+import { NotificationProfileAvatar, NotificationProfileName } from '../Profile';
+import { NotificationWalletProfileAvatar, NotificationWalletProfileName } from '../WalletProfile';
 
-interface Props {
-  notification: NewFollowerNotification
+const messageFollow = defineMessage({
+  id: '<0><1/> followed you</0>'
+});
+
+const messageSuperFollow = defineMessage({
+  id: '<0><1/> super followed you</0>'
+});
+
+interface FollowerNotificationProps {
+  notification: NewFollowerNotification;
 }
 
-const FollowerNotification: FC<Props> = ({ notification }) => {
-  const { t } = useTranslation('common')
-  const currentProfile = useAppStore((state) => state.currentProfile)
-  const isSuperFollow = currentProfile?.followModule?.__typename === 'FeeFollowModuleSettings'
+const FollowerNotification: FC<FollowerNotificationProps> = ({ notification }) => {
+  const currentProfile = useAppStore((state) => state.currentProfile);
+  const isSuperFollow = currentProfile?.followModule?.__typename === 'FeeFollowModuleSettings';
 
   return (
-    <div className="flex justify-between items-start">
-      <div className="space-y-2 w-4/5">
+    <div className="flex items-start justify-between">
+      <div className="w-4/5 space-y-2">
         <div className="flex items-center space-x-3">
           {isSuperFollow ? (
             <UserAddIcon className="h-6 w-6 text-pink-500/70" />
@@ -36,21 +44,24 @@ const FollowerNotification: FC<Props> = ({ notification }) => {
           )}
         </div>
         <div className="ml-9">
-          {notification?.wallet?.defaultProfile ? (
-            <NotificationProfileName profile={notification?.wallet?.defaultProfile} />
-          ) : (
-            <NotificationWalletProfileName wallet={notification?.wallet} />
-          )}{' '}
-          <span className="text-gray-600 dark:text-gray-400">
-            {` ${isSuperFollow ? 'super' : ''} ${t('Followed you')}`}
-          </span>
+          <Trans
+            id={(isSuperFollow ? messageSuperFollow.id : messageFollow.id) || ''}
+            components={[
+              <span className="text-gray-600 dark:text-gray-400" key="" />,
+              notification?.wallet?.defaultProfile ? (
+                <NotificationProfileName profile={notification?.wallet?.defaultProfile} />
+              ) : (
+                <NotificationWalletProfileName wallet={notification?.wallet} />
+              )
+            ]}
+          />
         </div>
       </div>
-      <div className="text-gray-400 text-[12px]" title={formatTime(notification?.createdAt)}>
+      <div className="text-[12px] text-gray-400" title={formatTime(notification?.createdAt)}>
         {getTimeFromNow(notification?.createdAt)}
       </div>
     </div>
-  )
-}
+  );
+};
 
-export default FollowerNotification
+export default FollowerNotification;

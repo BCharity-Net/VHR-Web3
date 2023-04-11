@@ -1,8 +1,8 @@
 import MetaTags from '@components/Common/MetaTags'
-import { GridItemEight, GridItemFour, GridLayout } from '@components/UI/GridLayout'
 import type { NextPage } from 'next'
 import { useRouter } from 'next/router'
 import Custom404 from 'src/pages/404'
+import { GridItemEight, GridItemFour, GridLayout } from 'ui'
 
 import Profiles from './Profiles'
 import Publications from './Publications'

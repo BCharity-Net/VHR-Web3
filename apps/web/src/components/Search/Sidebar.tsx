@@ -26,14 +26,17 @@ const Menu: FC<MenuProps> = ({ children, current, url }) => (
 const Sidebar: FC = () => {
   const { t } = useTranslation('common')
   const { query } = useRouter()
+  const searchText = Array.isArray(query.q)
+    ? encodeURIComponent(query.q.join(' '))
+    : encodeURIComponent(query.q || '')
 
   return (
-    <div className="sticky px-3 mb-4 space-y-1.5 sm:px-0 top-[128px]">
-      <Menu current={query.type == 'pubs'} url={`/search?q=${query.q}&type=pubs`}>
+    <div className="mb-4 space-y-1.5 px-3 sm:px-0">
+      <Menu current={query.type === 'pubs'} url={`/search?q=${searchText}&type=pubs`}>
         <PencilAltIcon className="w-4 h-4" />
         <div>{t('Publications')}</div>
       </Menu>
-      <Menu current={query.type == 'profiles'} url={`/search?q=${query.q}&type=profiles`}>
+      <Menu current={query.type === 'profiles'} url={`/search?q=${searchText}&type=profiles`}>
         <UsersIcon className="w-4 h-4" />
         <div>{t('Profiles')}</div>
       </Menu>

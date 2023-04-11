@@ -1,7 +1,4 @@
-import { Card } from '@components/UI/Card'
-import { EmptyState } from '@components/UI/EmptyState'
-import { ErrorMessage } from '@components/UI/ErrorMessage'
-import { LightningBoltIcon } from '@heroicons/react/outline'
+import { BellIcon } from '@heroicons/react/outline'
 import type {
   NewCollectNotification,
   NewCommentNotification,
@@ -16,7 +13,9 @@ import type { FC } from 'react'
 import { useState } from 'react'
 import { useInView } from 'react-cool-inview'
 import { useTranslation } from 'react-i18next'
+import { NotificationType } from 'src/enums'
 import { useAppStore } from 'src/store/app'
+import { Card, EmptyState, ErrorMessage } from 'ui'
 
 import NotificationShimmer from './Shimmer'
 import CollectNotification from './Type/CollectNotification'
@@ -25,14 +24,6 @@ import FollowerNotification from './Type/FollowerNotification'
 import LikeNotification from './Type/LikeNotification'
 import MentionNotification from './Type/MentionNotification'
 import MirrorNotification from './Type/MirrorNotification'
-
-export enum NotificationType {
-  All = 'ALL',
-  Mentions = 'MENTIONS',
-  Comments = 'COMMENTS',
-  Likes = 'LIKES',
-  Collects = 'COLLECTS'
-}
 
 interface Props {
   feedType: string
@@ -112,7 +103,7 @@ const List: FC<Props> = ({ feedType }) => {
             <span>{t('No inbox')}</span>
           </div>
         }
-        icon={<LightningBoltIcon className="w-8 h-8 text-brand" />}
+        icon={<BellIcon className="w-8 h-8 text-brand" />}
         hideCard
       />
     )

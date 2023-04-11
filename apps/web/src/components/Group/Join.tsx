@@ -1,7 +1,7 @@
 import { useMutation } from '@apollo/client'
 import { Button } from '@components/UI/Button'
 import { Spinner } from '@components/UI/Spinner'
-import { Group } from '@generated/types'
+import { Group } from 'src/types/index.ts /types'
 import { PlusIcon } from '@heroicons/react/outline'
 import getSignature from '@lib/getSignature'
 import onError from '@lib/onError'

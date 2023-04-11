@@ -1,4 +1,4 @@
-export const LensHubProxy = [
+export const LensHub = [
   {
     inputs: [
       { internalType: 'address', name: 'followNFTImpl', type: 'address' },

@@ -1,10 +1,9 @@
-import { Card } from '@components/UI/Card';
 import MetaTags from '@components/Common/MetaTags';
-import { GridItemEight, GridLayout } from '@components/UI/GridLayout';
 import { APP_NAME } from 'data/constants';
 import type { NextPage } from 'next';
 import Custom404 from 'src/pages/404';
 import { useAppStore } from 'src/store/app';
+import { Card, GridItemEight, GridLayout } from 'ui';
 
 import PreviewList from './PreviewList';
 
@@ -13,7 +12,7 @@ const NoConversationSelected = () => {
     <div className="text-center flex flex-col h-full">
       <div className="m-auto">
         <span className="text-5xl text-center">👋</span>
-        <h3 className="text-lg mt-3 mb-2">Select a conversation</h3>
+        <h3 className="mb-2 mt-3 text-lg">Select a conversation</h3>
         <p className="max-w-xs text-md text-gray-500">
           Choose an existing conversation or create a new one to start messaging
         </p>

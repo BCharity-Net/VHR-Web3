@@ -1,11 +1,6 @@
 import Attachments from '@components/Shared/Attachments';
 import { AudioPublicationSchema } from '@components/Shared/Audio';
 import withLexicalContext from '@components/Shared/Lexical/withLexicalContext';
-import { Button } from '@components/UI/Button';
-import { Card } from '@components/UI/Card';
-import { ErrorMessage } from '@components/UI/ErrorMessage';
-import { Spinner } from '@components/UI/Spinner';
-import type { BCharityAttachment } from '@generated/types';
 import type { IGif } from '@giphy/js-types';
 import { ChatAlt2Icon, PencilAltIcon } from '@heroicons/react/outline';
 import type { CollectCondition, EncryptedMetadata, FollowCondition } from '@lens-protocol/sdk-gated';
@@ -16,14 +11,13 @@ import type {
 } from '@lens-protocol/sdk-gated/dist/graphql/types';
 import { $convertFromMarkdownString } from '@lexical/markdown';
 import { useLexicalComposerContext } from '@lexical/react/LexicalComposerContext';
-import { Mixpanel } from '@lib/mixpanel';
-import getSignature from '@lib/getSignature';
-import getTags from '@lib/getTags';
 import getTextNftUrl from '@lib/getTextNftUrl';
 import getUserLocale from '@lib/getUserLocale';
+import { Mixpanel } from '@lib/mixpanel';
 import onError from '@lib/onError';
 import splitSignature from '@lib/splitSignature';
 import uploadToArweave from '@lib/uploadToArweave';
+import { t } from '@lingui/macro';
 import { LensHub } from 'abis';
 import clsx from 'clsx';
 import {
@@ -32,9 +26,9 @@ import {
   ALLOWED_VIDEO_TYPES,
   APP_NAME,
   LENSHUB_PROXY,
-  LIT_PROTOCOL_ENVIRONMENT,
-  SIGN_WALLET
+  LIT_PROTOCOL_ENVIRONMENT
 } from 'data/constants';
+import Errors from 'data/errors';
 import type {
   CreatePublicCommentRequest,
   MetadataAttributeInput,
@@ -53,10 +47,13 @@ import {
   useCreatePostViaDispatcherMutation
 } from 'lens';
 import { $getRoot } from 'lexical';
+import getSignature from 'lib/getSignature';
+import getTags from 'lib/getTags';
 import dynamic from 'next/dynamic';
 import type { FC } from 'react';
 import { useEffect, useState } from 'react';
 import toast from 'react-hot-toast';
+import { OptmisticPublicationType } from 'src/enums';
 import { useAccessSettingsStore } from 'src/store/access-settings';
 import { useAppStore } from 'src/store/app';
 import { useCollectModuleStore } from 'src/store/collect-module';
@@ -64,32 +61,34 @@ import { usePublicationStore } from 'src/store/publication';
 import { useReferenceModuleStore } from 'src/store/reference-module';
 import { useTransactionPersistStore } from 'src/store/transaction';
 import { PUBLICATION } from 'src/tracking';
+import type { BCharityAttachment } from 'src/types';
+import { Button, Card, ErrorMessage, Spinner } from 'ui';
 import { v4 as uuid } from 'uuid';
 import { useContractWrite, useProvider, useSigner, useSignTypedData } from 'wagmi';
 
 import Editor from './Editor';
 
 const Attachment = dynamic(() => import('@components/Composer/Actions/Attachment'), {
-  loading: () => <div className="mb-1 w-5 h-5 rounded-lg shimmer" />
+  loading: () => <div className="shimmer mb-1 h-5 w-5 rounded-lg" />
 });
 const Giphy = dynamic(() => import('@components/Composer/Actions/Giphy'), {
-  loading: () => <div className="mb-1 w-5 h-5 rounded-lg shimmer" />
+  loading: () => <div className="shimmer mb-1 h-5 w-5 rounded-lg" />
 });
 const CollectSettings = dynamic(() => import('@components/Composer/Actions/CollectSettings'), {
-  loading: () => <div className="mb-1 w-5 h-5 rounded-lg shimmer" />
+  loading: () => <div className="shimmer mb-1 h-5 w-5 rounded-lg" />
 });
 const ReferenceSettings = dynamic(() => import('@components/Composer/Actions/ReferenceSettings'), {
-  loading: () => <div className="mb-1 w-5 h-5 rounded-lg shimmer" />
+  loading: () => <div className="shimmer mb-1 h-5 w-5 rounded-lg" />
 });
 const AccessSettings = dynamic(() => import('@components/Composer/Actions/AccessSettings'), {
-  loading: () => <div className="mb-1 w-5 h-5 rounded-lg shimmer" />
+  loading: () => <div className="shimmer mb-1 h-5 w-5 rounded-lg" />
 });
 
-interface Props {
+interface NewPublicationProps {
   publication: Publication;
 }
 
-const NewPublication: FC<Props> = ({ publication }) => {
+const NewPublication: FC<NewPublicationProps> = ({ publication }) => {
   // App store
   const userSigNonce = useAppStore((state) => state.userSigNonce);
   const setUserSigNonce = useAppStore((state) => state.setUserSigNonce);
@@ -135,7 +134,11 @@ const NewPublication: FC<Props> = ({ publication }) => {
   const isComment = Boolean(publication);
   const isAudioPublication = ALLOWED_AUDIO_TYPES.includes(attachments[0]?.type);
 
-  const onCompleted = () => {
+  const onCompleted = (__typename?: 'RelayError' | 'RelayerResult') => {
+    if (__typename === 'RelayError') {
+      return;
+    }
+
     editor.update(() => {
       $getRoot().clear();
     });
@@ -147,7 +150,7 @@ const NewPublication: FC<Props> = ({ publication }) => {
       setShowNewPostModal(false);
     }
 
-    // Track in simple mixpanel
+    // Track in mixpanel
     const eventProperties = {
       publication_type: restricted ? 'token_gated' : 'public',
       publication_collect_module: selectedCollectModule,
@@ -178,7 +181,7 @@ const NewPublication: FC<Props> = ({ publication }) => {
     return {
       id: uuid(),
       ...(isComment && { parent: publication.id }),
-      type: isComment ? 'NEW_COMMENT' : 'NEW_POST',
+      type: isComment ? OptmisticPublicationType.NewComment : OptmisticPublicationType.NewPost,
       txHash,
       txId,
       content: publicationContent,
@@ -191,7 +194,11 @@ const NewPublication: FC<Props> = ({ publication }) => {
 
   const { signTypedDataAsync, isLoading: typedDataLoading } = useSignTypedData({ onError });
 
-  const { error, write } = useContractWrite({
+  const {
+    isLoading: writeLoading,
+    error,
+    write
+  } = useContractWrite({
     address: LENSHUB_PROXY,
     abi: LensHub,
     functionName: isComment ? 'commentWithSig' : 'postWithSig',
@@ -204,10 +211,10 @@ const NewPublication: FC<Props> = ({ publication }) => {
   });
 
   const [broadcast] = useBroadcastMutation({
-    onCompleted: (data) => {
-      onCompleted();
-      if (data.broadcast.__typename === 'RelayerResult') {
-        setTxnQueue([generateOptimisticPublication({ txId: data.broadcast.txId }), ...txnQueue]);
+    onCompleted: ({ broadcast }) => {
+      onCompleted(broadcast.__typename);
+      if (broadcast.__typename === 'RelayerResult') {
+        setTxnQueue([generateOptimisticPublication({ txId: broadcast.txId }), ...txnQueue]);
       }
     }
   });
@@ -259,26 +266,20 @@ const NewPublication: FC<Props> = ({ publication }) => {
   });
 
   const [createCommentViaDispatcher] = useCreateCommentViaDispatcherMutation({
-    onCompleted: (data) => {
-      onCompleted();
-      if (data.createCommentViaDispatcher.__typename === 'RelayerResult') {
-        setTxnQueue([
-          generateOptimisticPublication({ txId: data.createCommentViaDispatcher.txId }),
-          ...txnQueue
-        ]);
+    onCompleted: ({ createCommentViaDispatcher }) => {
+      onCompleted(createCommentViaDispatcher.__typename);
+      if (createCommentViaDispatcher.__typename === 'RelayerResult') {
+        setTxnQueue([generateOptimisticPublication({ txId: createCommentViaDispatcher.txId }), ...txnQueue]);
       }
     },
     onError
   });
 
   const [createPostViaDispatcher] = useCreatePostViaDispatcherMutation({
-    onCompleted: (data) => {
-      onCompleted();
-      if (data.createPostViaDispatcher.__typename === 'RelayerResult') {
-        setTxnQueue([
-          generateOptimisticPublication({ txId: data.createPostViaDispatcher.txId }),
-          ...txnQueue
-        ]);
+    onCompleted: ({ createPostViaDispatcher }) => {
+      onCompleted(createPostViaDispatcher.__typename);
+      if (createPostViaDispatcher.__typename === 'RelayerResult') {
+        setTxnQueue([generateOptimisticPublication({ txId: createPostViaDispatcher.txId }), ...txnQueue]);
       }
     },
     onError
@@ -344,11 +345,11 @@ const NewPublication: FC<Props> = ({ publication }) => {
 
   const createTokenGatedMetadata = async (metadata: PublicationMetadataV2Input) => {
     if (!currentProfile) {
-      return toast.error(SIGN_WALLET);
+      return toast.error(Errors.SignWallet);
     }
 
     if (!signer) {
-      return toast.error(SIGN_WALLET);
+      return toast.error(Errors.SignWallet);
     }
 
     // Create the SDK instance
@@ -399,7 +400,7 @@ const NewPublication: FC<Props> = ({ publication }) => {
 
   const createPublication = async () => {
     if (!currentProfile) {
-      return toast.error(SIGN_WALLET);
+      return toast.error(Errors.SignWallet);
     }
 
     try {
@@ -453,7 +454,7 @@ const NewPublication: FC<Props> = ({ publication }) => {
         version: '2.0.0',
         metadata_id: uuid(),
         content: publicationContent,
-        external_url: `https://bcharity.net/u/${currentProfile?.handle}`,
+        external_url: `https://bcharity-test.vercel.app/u/${currentProfile?.handle}`,
         image: attachmentsInput.length > 0 ? getAttachmentImage() : textNftImageUrl,
         imageMimeType:
           attachmentsInput.length > 0
@@ -532,16 +533,16 @@ const NewPublication: FC<Props> = ({ publication }) => {
     addAttachments([attachment]);
   };
 
-  const isLoading = loading || typedDataLoading;
+  const isLoading = loading || typedDataLoading || writeLoading;
 
   return (
-    <Card className={clsx({ 'border-none rounded-none': !isComment }, 'pb-3')}>
-      {error && <ErrorMessage className="mb-3" title="Transaction failed!" error={error} />}
+    <Card className={clsx({ 'rounded-none border-none': !isComment }, 'pb-3')}>
+      {error && <ErrorMessage className="mb-3" title={t`Transaction failed!`} error={error} />}
       <Editor />
       {publicationContentError && (
-        <div className="px-5 pb-3 mt-1 text-sm font-bold text-red-500">{publicationContentError}</div>
+        <div className="mt-1 px-5 pb-3 text-sm font-bold text-red-500">{publicationContentError}</div>
       )}
-      <div className="block items-center sm:flex px-5">
+      <div className="block items-center px-5 sm:flex">
         <div className="flex items-center space-x-4">
           <Attachment />
           <Giphy setGifAttachment={(gif: IGif) => setGifAttachment(gif)} />
@@ -556,14 +557,16 @@ const NewPublication: FC<Props> = ({ publication }) => {
               isLoading ? (
                 <Spinner size="xs" />
               ) : isComment ? (
-                <ChatAlt2Icon className="w-4 h-4" />
+                <ChatAlt2Icon className="h-4 w-4" />
               ) : (
-                <PencilAltIcon className="w-4 h-4" />
+                <PencilAltIcon className="h-4 w-4" />
               )
             }
             onClick={createPublication}
           >
-            {isComment ? 'Comment' : 'Post'}
+            {isComment
+              ? t({ id: '[cta]Comment', message: 'Comment' })
+              : t({ id: '[cta]Post', message: 'Post' })}
           </Button>
         </div>
       </div>

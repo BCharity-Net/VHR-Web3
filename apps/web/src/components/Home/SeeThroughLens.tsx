@@ -1,13 +1,9 @@
 import MenuTransition from '@components/Shared/MenuTransition';
 import UserProfile from '@components/Shared/UserProfile';
-import { Image } from '@components/UI/Image';
-import { Input } from '@components/UI/Input';
-import { Spinner } from '@components/UI/Spinner';
 import { Menu } from '@headlessui/react';
 import { XIcon } from '@heroicons/react/outline';
 import { ChevronDownIcon } from '@heroicons/react/solid';
 import { Mixpanel } from '@lib/mixpanel';
-import getAvatar from '@lib/getAvatar';
 import clsx from 'clsx';
 import type { FeedItem, FeedRequest, Profile, ProfileSearchResult } from 'lens';
 import {
@@ -16,12 +12,14 @@ import {
   useSearchProfilesLazyQuery,
   useTimelineLazyQuery
 } from 'lens';
+import formatHandle from 'lib/formatHandle';
+import getAvatar from 'lib/getAvatar';
 import type { ChangeEvent, FC } from 'react';
 import { Fragment, useState } from 'react';
 import { useAppStore } from 'src/store/app';
 import { useTimelineStore } from 'src/store/timeline';
 import { MISCELLANEOUS } from 'src/tracking';
-import formatHandle from 'utils/formatHandle';
+import { Image, Input, Spinner } from 'ui';
 
 const SeeThroughLens: FC = () => {
   const currentProfile = useAppStore((state) => state.currentProfile);
@@ -55,8 +53,8 @@ const SeeThroughLens: FC = () => {
 
   const [fetchRecommendedProfiles, { loading, error }] = useTimelineLazyQuery({
     variables: { request, profileId: profile?.id },
-    onCompleted: (data) => {
-      const feedItems = data?.feed?.items as FeedItem[];
+    onCompleted: ({ feed }) => {
+      const feedItems = feed?.items as FeedItem[];
       setRecommendedProfiles(feedItems);
     }
   });
@@ -116,10 +114,9 @@ const SeeThroughLens: FC = () => {
           <div className="p-2">
             <Input
               type="text"
-              className="py-2 px-3 text-sm"
+              className="px-3 py-2 text-sm"
               placeholder={`Search`}
               value={searchText}
-              autoFocus
               autoComplete="off"
               iconRight={
                 <XIcon
@@ -132,7 +129,7 @@ const SeeThroughLens: FC = () => {
           </div>
           {seeThroughProfile && (
             <button
-              className="py-2 px-3 mb-2 text-left outline-none w-full mt-1 bg-gray-200 text-sm dark:bg-gray-700"
+              className="px-3 py-2 mb-2 text-left outline-none w-full mt-1 bg-gray-200 text-sm dark:bg-gray-700"
               onClick={() => setSeeThroughProfile(null)}
             >
               Reset filter to your own feed
@@ -140,7 +137,7 @@ const SeeThroughLens: FC = () => {
           )}
           <div className="mx-2 mb-2">
             {searchUsersLoading || loading ? (
-              <div className="py-2 px-4 space-y-2 text-sm font-bold text-center">
+              <div className="space-y-2 px-4 py-2 text-center text-sm font-bold">
                 <Spinner size="sm" className="mx-auto" />
                 <div>
                   Searching users

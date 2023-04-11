@@ -1,7 +1,5 @@
 import UserProfile from '@components/Shared/UserProfile'
 import WalletProfile from '@components/Shared/WalletProfile'
-import { EmptyState } from '@components/UI/EmptyState'
-import { ErrorMessage } from '@components/UI/ErrorMessage'
 import { CollectionIcon } from '@heroicons/react/outline'
 import type { Profile, Wallet, WhoCollectedPublicationRequest } from 'lens'
 import { useCollectorsQuery } from 'lens'
@@ -9,8 +7,9 @@ import type { FC } from 'react'
 import { useState } from 'react'
 import { useInView } from 'react-cool-inview'
 import { useTranslation } from 'react-i18next'
+import { FollowSource } from 'src/tracking'
+import { EmptyState, ErrorMessage } from 'ui'
 
-import { FollowSource } from '../Follow'
 import Loader from '../Loader'
 
 interface Props {
@@ -63,7 +62,7 @@ const Collectors: FC<Props> = ({ publicationId }) => {
   }
 
   return (
-    <div className="max-h-[80vh] overflow-y-auto">
+    <div className="max-h-[80vh] overflow-y-auto" data-testid="collectors-modal">
       <ErrorMessage className="m-5" title="Failed to load collectors" error={error} />
       <div className="divide-y dark:divide-gray-700">
         {profiles?.map((wallet, index) => (

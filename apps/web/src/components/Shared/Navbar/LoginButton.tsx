@@ -1,9 +1,9 @@
-import { Button } from '@components/UI/Button'
 import { Mixpanel } from '@lib/mixpanel'
 import type { FC } from 'react'
 import { useAuthStore } from 'src/store/auth'
 import { useTranslation } from 'react-i18next'
 import { AUTH } from 'src/tracking'
+import { Button } from 'ui'
 
 const LoginButton: FC = () => {
   const { t } = useTranslation('common')

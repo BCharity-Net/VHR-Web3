@@ -1,9 +1,9 @@
 import Slug from '@components/Shared/Slug'
 import { HeartIcon } from '@heroicons/react/solid'
 import type { ElectedMirror, Publication } from 'lens'
+import formatHandle from 'lib/formatHandle'
 import type { FC } from 'react'
 import { useTranslation } from 'react-i18next'
-import formatHandle from 'utils/formatHandle'
 
 interface Props {
   mirror: Publication

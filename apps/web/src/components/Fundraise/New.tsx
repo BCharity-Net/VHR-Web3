@@ -14,7 +14,7 @@ import { Spinner } from '@components/UI/Spinner'
 import { TextArea } from '@components/UI/TextArea'
 import useBroadcast from '@components/utils/hooks/useBroadcast'
 import { PlusIcon } from '@heroicons/react/outline'
-import getIPFSLink from '@lib/getIPFSLink'
+import sanitizeDStorageUrl from '@lib/sanitizeDStorageUrl'
 import getSignature from '@lib/getSignature'
 import getTokenImage from '@lib/getTokenImage'
 import imageProxy from '@lib/imageProxy'
@@ -396,7 +396,7 @@ const NewFundraise: NextPage = () => {
                     <img
                       className="object-cover w-full h-60 rounded-lg"
                       height={240}
-                      src={imageProxy(getIPFSLink(cover), 'attachment')}
+                      src={imageProxy(sanitizeDStorageUrl(cover), 'attachment')}
                       alt={cover}
                     />
                   )}

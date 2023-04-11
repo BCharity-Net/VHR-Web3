@@ -1,36 +1,32 @@
-import { CurrencyDollarIcon, HandIcon } from '@heroicons/react/outline'
-import getTokenImage from '@lib/getTokenImage'
-import humanize from '@lib/humanize'
-import type { NewCollectNotification } from 'lens'
-import type { FC } from 'react'
+import { CurrencyDollarIcon } from '@heroicons/react/outline';
+import { Trans } from '@lingui/macro';
+import type { NewCollectNotification } from 'lens';
+import getTokenImage from 'lib/getTokenImage';
+import humanize from 'lib/humanize';
+import type { FC } from 'react';
 
-interface Props {
-  notification: NewCollectNotification
+interface CollectedAmountProps {
+  notification: NewCollectNotification;
 }
 
-const CollectedAmount: FC<Props> = ({ notification }) => {
-  const publicationType =
-    notification?.collectedPublication?.metadata?.attributes[0]?.value ??
-    notification?.collectedPublication.__typename?.toLowerCase()
-  const collectModule: any = notification?.collectedPublication?.collectModule
+const CollectedAmount: FC<CollectedAmountProps> = ({ notification }) => {
+  const collectModule: any = notification?.collectedPublication?.collectModule;
 
   return (
-    <div className="flex items-center mt-2 space-x-1">
-      {publicationType === 'fundraise' ? (
-        <HandIcon className="text-green-500 h-[15px]" />
-      ) : (
-        <CurrencyDollarIcon className="text-green-500 h-[15px]" />
-      )}
+    <div className="mt-2 flex items-center space-x-1">
+      <CurrencyDollarIcon className="h-[15px] text-green-500" />
       {collectModule.__typename === 'FreeCollectModuleSettings' ? (
         <div className="text-[12px]">Collected for free</div>
       ) : (
         <>
           <div className="text-[12px]">
-            {publicationType === 'fundraise' ? 'Funded' : 'Collected for'}{' '}
-            {humanize(collectModule?.amount?.value)} {collectModule?.amount?.asset?.symbol}
+            <Trans>
+              Collected for {humanize(parseFloat(collectModule?.amount?.value))}{' '}
+              {collectModule?.amount?.asset?.symbol}
+            </Trans>
           </div>
           <img
-            className="w-5 h-5"
+            className="h-5 w-5"
             height={20}
             width={20}
             src={getTokenImage(collectModule?.amount?.asset?.symbol)}
@@ -39,7 +35,7 @@ const CollectedAmount: FC<Props> = ({ notification }) => {
         </>
       )}
     </div>
-  )
-}
+  );
+};
 
-export default CollectedAmount
+export default CollectedAmount;

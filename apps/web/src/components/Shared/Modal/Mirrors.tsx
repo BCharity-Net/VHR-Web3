@@ -1,14 +1,13 @@
 import UserProfile from '@components/Shared/UserProfile';
-import { EmptyState } from '@components/UI/EmptyState';
-import { ErrorMessage } from '@components/UI/ErrorMessage';
 import { SwitchHorizontalIcon } from '@heroicons/react/outline';
 import type { Profile, ProfileQueryRequest } from 'lens';
 import { useMirrorsQuery } from 'lens';
 import type { FC } from 'react';
 import { useState } from 'react';
 import { useInView } from 'react-cool-inview';
+import { FollowSource } from 'src/tracking';
+import { EmptyState, ErrorMessage } from 'ui';
 
-import { FollowSource } from '../Follow';
 import Loader from '../Loader';
 
 interface Props {
@@ -60,7 +59,7 @@ const Mirrors: FC<Props> = ({ publicationId }) => {
   }
 
   return (
-    <div className="max-h-[80vh] overflow-y-auto">
+    <div className="max-h-[80vh] overflow-y-auto" data-testid="mirrors-modal">
       <ErrorMessage className="m-5" title={`Failed to load mirrors`} error={error} />
       <div className="divide-y dark:divide-gray-700">
         {profiles?.map((profile, index) => (

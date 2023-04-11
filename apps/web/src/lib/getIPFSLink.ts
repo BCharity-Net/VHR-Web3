@@ -5,7 +5,7 @@ import { IPFS_GATEWAY } from 'data/constants'
  * @param hash - IPFS hash
  * @returns IPFS link
  */
-const getIPFSLink = (hash: string): string => {
+const sanitizeDStorageUrl = (hash: string): string => {
   if (!hash) {
     return ''
   }
@@ -17,4 +17,4 @@ const getIPFSLink = (hash: string): string => {
     .replace('ipfs://', gateway)
 }
 
-export default getIPFSLink
+export default sanitizeDStorageUrl

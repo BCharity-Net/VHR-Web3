@@ -1,20 +1,19 @@
 import Loader from '@components/Shared/Loader'
-import { Modal } from '@components/UI/Modal'
-import { Tooltip } from '@components/UI/Tooltip'
 import GetModuleIcon from '@components/utils/GetModuleIcon'
 import { CollectionIcon } from '@heroicons/react/outline'
 import { CollectionIcon as CollectionIconSolid } from '@heroicons/react/solid'
 import { Mixpanel } from '@lib/mixpanel'
 import { getModule } from '@lib/getModule'
-import humanize from '@lib/humanize'
-import nFormatter from '@lib/nFormatter'
 import { motion } from 'framer-motion'
 import type { ElectedMirror, Publication } from 'lens';
 import { CollectModules } from 'lens'
+import humanize from 'lib/humanize'
+import nFormatter from 'lib/nFormatter'
 import dynamic from 'next/dynamic'
 import type { FC } from 'react'
 import { useEffect, useState } from 'react'
 import { PUBLICATION } from 'src/tracking'
+import { Modal, Tooltip } from 'ui'
 
 const CollectModule = dynamic(() => import('./CollectModule'), {
   loading: () => <Loader message="Loading collect" />

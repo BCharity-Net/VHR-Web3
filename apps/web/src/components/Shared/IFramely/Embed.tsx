@@ -1,13 +1,12 @@
-import { Card } from '@components/UI/Card'
-import { Image } from '@components/UI/Image'
-import type { OG } from '@generated/types'
 import { Mixpanel } from '@lib/mixpanel'
-import { stopEventPropagation } from '@lib/stopEventPropagation'
 import { ATTACHMENT } from 'data/constants'
+import imageProxy from 'lib/imageProxy'
+import { stopEventPropagation } from 'lib/stopEventPropagation'
 import Link from 'next/link'
 import type { FC } from 'react'
 import { PUBLICATION } from 'src/tracking'
-import imageProxy from 'utils/imageProxy'
+import type { OG } from 'src/types'
+import { Card, Image } from 'ui'
 
 interface Props {
   og: OG
@@ -15,7 +14,7 @@ interface Props {
 
 const Embed: FC<Props> = ({ og }) => {
   return (
-    <div className="mt-4 text-sm sm:w-4/6">
+    <div className="mt-4 text-sm sm:w-4/6" data-testid={`normal-oembed-${og.url}`}>
       <Link
         href={og.url}
         onClick={(event) => {

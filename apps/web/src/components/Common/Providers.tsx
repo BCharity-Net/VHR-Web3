@@ -1,15 +1,15 @@
-import { ApolloProvider } from '@apollo/client';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { ALCHEMY_KEY, IS_MAINNET } from 'data/constants';
+import { ALCHEMY_KEY, IS_MAINNET, WALLETCONNECT_PROJECT_ID } from 'data/constants';
+import { ApolloProvider, webClient } from 'lens/apollo';
 import { ThemeProvider } from 'next-themes';
 import type { ReactNode } from 'react';
+import { useEffect } from 'react';
 import { configureChains, createClient, WagmiConfig } from 'wagmi';
 import { mainnet, polygon, polygonMumbai } from 'wagmi/chains';
 import { InjectedConnector } from 'wagmi/connectors/injected';
-import { WalletConnectLegacyConnector } from 'wagmi/connectors/walletConnectLegacy';
+import { WalletConnectConnector } from 'wagmi/connectors/walletConnect';
 import { alchemyProvider } from 'wagmi/providers/alchemy';
 
-import client from '../../apollo';
 import ErrorBoundary from './ErrorBoundary';
 import Layout from './Layout';
 
@@ -21,7 +21,12 @@ const { chains, provider } = configureChains(
 const connectors = () => {
   return [
     new InjectedConnector({ chains, options: { shimDisconnect: true } }),
-    new WalletConnectLegacyConnector({ chains, options: {} })
+    new WalletConnectConnector({
+      options: {
+        projectId: WALLETCONNECT_PROJECT_ID,
+        showQrModal: true
+      }
+    })
   ];
 };
 
@@ -32,12 +37,16 @@ const wagmiClient = createClient({
 });
 
 const queryClient = new QueryClient();
+const apolloClient = webClient;
 
 const Providers = ({ children }: { children: ReactNode }) => {
+  useEffect(() => {
+  }, []);
+
   return (
     <ErrorBoundary>
       <WagmiConfig client={wagmiClient}>
-        <ApolloProvider client={client}>
+        <ApolloProvider client={apolloClient}>
           <QueryClientProvider client={queryClient}>
             <ThemeProvider defaultTheme="light" attribute="class">
               <Layout>{children}</Layout>

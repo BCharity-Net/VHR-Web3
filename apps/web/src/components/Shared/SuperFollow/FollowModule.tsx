@@ -1,16 +1,12 @@
 import AllowanceButton from '@components/Settings/Allowance/Button'
-import { Button } from '@components/UI/Button'
-import { Spinner } from '@components/UI/Spinner'
-import { WarningMessage } from '@components/UI/WarningMessage'
 import { StarIcon, UserIcon } from '@heroicons/react/outline'
 import { Mixpanel } from '@lib/mixpanel'
-import getSignature from '@lib/getSignature'
-import getTokenImage from '@lib/getTokenImage'
 import onError from '@lib/onError'
 import splitSignature from '@lib/splitSignature'
 import { LensHub } from 'abis'
-import { LENSHUB_PROXY, POLYGONSCAN_URL, SIGN_WALLET } from 'data/constants'
-import type { ApprovedAllowanceAmount, Profile } from 'lens';
+import { LENSHUB_PROXY, POLYGONSCAN_URL } from 'data/constants'
+import Errors from 'data/errors'
+import type { ApprovedAllowanceAmount, Profile } from 'lens'
 import {
   FollowModules,
   useApprovedModuleAllowanceAmountQuery,
@@ -18,14 +14,17 @@ import {
   useCreateFollowTypedDataMutation,
   useSuperFollowQuery
 } from 'lens'
+import formatAddress from 'lib/formatAddress'
+import formatHandle from 'lib/formatHandle'
+import getSignature from 'lib/getSignature'
+import getTokenImage from 'lib/getTokenImage'
 import type { Dispatch, FC } from 'react'
 import { useState } from 'react'
 import toast from 'react-hot-toast'
 import { useTranslation } from 'react-i18next'
 import { useAppStore } from 'src/store/app'
 import { PROFILE } from 'src/tracking'
-import formatAddress from 'utils/formatAddress'
-import formatHandle from 'utils/formatHandle'
+import { Button, Spinner, WarningMessage } from 'ui'
 import { useAccount, useBalance, useContractWrite, useSignTypedData } from 'wagmi'
 
 import Loader from '../Loader'
@@ -81,8 +80,8 @@ const FollowModule: FC<Props> = ({ profile, setFollowing, setShowFollowModal, ag
       }
     },
     skip: !followModule?.amount?.asset?.address || !currentProfile,
-    onCompleted: (data) => {
-      setAllowed(data?.approvedModuleAllowanceAmount[0]?.allowance !== '0x00')
+    onCompleted: ({ approvedModuleAllowanceAmount }) => {
+      setAllowed(approvedModuleAllowanceAmount[0]?.allowance !== '0x00')
     }
   })
 
@@ -127,7 +126,7 @@ const FollowModule: FC<Props> = ({ profile, setFollowing, setShowFollowModal, ag
 
   const createFollow = async () => {
     if (!currentProfile) {
-      return toast.error(SIGN_WALLET)
+      return toast.error(Errors.SignWallet)
     }
 
     try {

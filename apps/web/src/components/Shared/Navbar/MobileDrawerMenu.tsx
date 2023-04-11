@@ -1,14 +1,14 @@
-import { Image } from '@components/UI/Image';
 import { XIcon } from '@heroicons/react/outline';
-import getAvatar from '@lib/getAvatar';
 import type { Profile } from 'lens';
+import formatHandle from 'lib/formatHandle';
+import getAvatar from 'lib/getAvatar';
+import isGardener from 'lib/isGardener';
+import isStaff from 'lib/isStaff';
 import Link from 'next/link';
 import type { FC } from 'react';
 import { useAppStore } from 'src/store/app';
 import { useGlobalModalStateStore } from 'src/store/modals';
-import formatHandle from 'utils/formatHandle';
-import isGardener from 'utils/isGardener';
-import isStaff from 'utils/isStaff';
+import { Image } from 'ui';
 
 import Slug from '../Slug';
 import AppVersion from './NavItems/AppVersion';

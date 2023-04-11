@@ -1,11 +1,11 @@
 import SinglePublication from '@components/Publication/SinglePublication';
-import { Card } from '@components/UI/Card';
 import type { Comment, Publication, PublicationsQueryRequest } from 'lens';
 import { CommentOrderingTypes, CommentRankingFilter, CustomFiltersTypes, useCommentFeedQuery } from 'lens';
 import type { FC } from 'react';
 import { useState } from 'react';
 import { useInView } from 'react-cool-inview';
 import { useAppStore } from 'src/store/app';
+import { Card } from 'ui';
 
 interface Props {
   publication?: Publication;
@@ -63,6 +63,7 @@ const NoneRelevantFeed: FC<Props> = ({ publication }) => {
         onClick={() => {
           setShowMore(!showMore);
         }}
+        dataTestId="none-relevant-feed"
       >
         {showMore ? "Hide more comments" : "Show more comments"}
       </Card>

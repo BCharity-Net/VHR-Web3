@@ -1,10 +1,10 @@
 import MetaTags from '@components/Common/MetaTags'
 import SuperFollow from '@components/Settings/Account/SuperFollow'
-import { GridItemEight, GridItemFour, GridLayout } from '@components/UI/GridLayout'
 import { APP_NAME } from 'data/constants'
 import type { NextPage } from 'next'
 import Custom404 from 'src/pages/404'
 import { useAppStore } from 'src/store/app'
+import { GridItemEight, GridItemFour, GridLayout } from 'ui'
 
 import SettingsSidebar from '../Sidebar'
 import SetProfile from './SetProfile'

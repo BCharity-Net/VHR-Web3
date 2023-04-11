@@ -1,20 +1,19 @@
 import UserProfile from '@components/Shared/UserProfile';
-import useStaffMode from '@components/utils/hooks/useStaffMode';
-import clsx from 'clsx';
+import useModMode from '@components/utils/hooks/useModMode';
 import type { FeedItem, Publication } from 'lens';
+import { stopEventPropagation } from 'lib/stopEventPropagation';
 import type { FC } from 'react';
 
 import PublicationMenu from './Actions/Menu';
 import Source from './Source';
 
-interface Props {
+interface PublicationHeaderProps {
   publication: Publication;
-  className?: string;
   feedItem?: FeedItem;
 }
 
-const PublicationHeader: FC<Props> = ({ publication, className = '', feedItem }) => {
-  const { allowed: staffMode } = useStaffMode();
+const PublicationHeader: FC<PublicationHeaderProps> = ({ publication, feedItem }) => {
+  const { allowed: modMode } = useModMode();
   const isMirror = publication.__typename === 'Mirror';
   const firstComment = feedItem?.comments && feedItem.comments[0];
   const rootPublication = feedItem ? (firstComment ? firstComment : feedItem?.root) : publication;
@@ -30,17 +29,15 @@ const PublicationHeader: FC<Props> = ({ publication, className = '', feedItem })
     : publication?.createdAt;
 
   return (
-    <div className={clsx('flex justify-between space-x-1.5', className)}>
-      <span onClick={(event) => event.stopPropagation()}>
-        <UserProfile
-          // @ts-ignore
-          profile={profile ?? publication?.collectedBy?.defaultProfile}
-          timestamp={timestamp}
-          showStatus
-        />
+    <div
+      className="relative flex justify-between space-x-1.5 pb-4"
+      data-testid={`publication-${publication.id}-header`}
+    >
+      <span onClick={stopEventPropagation}>
+        <UserProfile profile={profile} timestamp={timestamp} showStatus />
       </span>
-      <div className="flex items-center space-x-1 !-mr-[7px]">
-        {staffMode && <Source publication={publication} />}
+      <div className="!-mr-[7px] flex items-center space-x-1">
+        {modMode && <Source publication={publication} />}
         <PublicationMenu publication={publication} />
       </div>
     </div>

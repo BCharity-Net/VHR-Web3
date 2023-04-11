@@ -5,11 +5,6 @@ import Markup from '@components/Shared/Markup';
 import Collectors from '@components/Shared/Modal/Collectors';
 import ReferralAlert from '@components/Shared/ReferralAlert';
 import Uniswap from '@components/Shared/Uniswap';
-import { Button } from '@components/UI/Button';
-import { Modal } from '@components/UI/Modal';
-import { Spinner } from '@components/UI/Spinner';
-import { Tooltip } from '@components/UI/Tooltip';
-import { WarningMessage } from '@components/UI/WarningMessage';
 import {
   CashIcon,
   ClockIcon,
@@ -21,15 +16,14 @@ import {
 import { CheckCircleIcon } from '@heroicons/react/solid';
 import { formatTime } from '@lib/formatTime';
 import getCoingeckoPrice from '@lib/getCoingeckoPrice';
-import getSignature from '@lib/getSignature';
-import getTokenImage from '@lib/getTokenImage';
-import humanize from '@lib/humanize';
 import { Mixpanel } from '@lib/mixpanel';
 import onError from '@lib/onError';
 import splitSignature from '@lib/splitSignature';
+import { t, Trans } from '@lingui/macro';
 import { useQuery } from '@tanstack/react-query';
 import { LensHub, UpdateOwnableFeeCollectModule } from 'abis';
-import { LENSHUB_PROXY, POLYGONSCAN_URL, SIGN_WALLET } from 'data/constants';
+import { LENSHUB_PROXY, POLYGONSCAN_URL } from 'data/constants';
+import Errors from 'data/errors';
 import getEnvConfig from 'data/utils/getEnvConfig';
 import dayjs from 'dayjs';
 import type { BigNumber } from 'ethers';
@@ -44,26 +38,30 @@ import {
   useProxyActionMutation,
   usePublicationRevenueQuery
 } from 'lens';
+import formatAddress from 'lib/formatAddress';
+import formatHandle from 'lib/formatHandle';
+import getAssetAddress from 'lib/getAssetAddress';
+import getSignature from 'lib/getSignature';
+import getTokenImage from 'lib/getTokenImage';
+import humanize from 'lib/humanize';
 import type { Dispatch, FC } from 'react';
 import { useEffect, useState } from 'react';
 import toast from 'react-hot-toast';
 import { useAppStore } from 'src/store/app';
 import { PUBLICATION } from 'src/tracking';
-import formatAddress from 'utils/formatAddress';
-import formatHandle from 'utils/formatHandle';
-import getAssetAddress from 'utils/getAssetAddress';
+import { Button, Modal, Spinner, Tooltip, WarningMessage } from 'ui';
 import { useAccount, useBalance, useContractRead, useContractWrite, useSignTypedData } from 'wagmi';
 
 import Splits from './Splits';
 
-interface Props {
+interface CollectModuleProps {
   count: number;
   setCount: Dispatch<number>;
   publication: Publication;
   electedMirror?: ElectedMirror;
 }
 
-const CollectModule: FC<Props> = ({ count, setCount, publication, electedMirror }) => {
+const CollectModule: FC<CollectModuleProps> = ({ count, setCount, publication, electedMirror }) => {
   const userSigNonce = useAppStore((state) => state.userSigNonce);
   const setUserSigNonce = useAppStore((state) => state.setUserSigNonce);
   const currentProfile = useAppStore((state) => state.currentProfile);
@@ -90,7 +88,7 @@ const CollectModule: FC<Props> = ({ count, setCount, publication, electedMirror 
     setRevenue(revenue + parseFloat(collectModule?.amount?.value));
     setCount(count + 1);
     setHasCollectedByMe(true);
-    toast.success(`Collected successfully!`);
+    toast.success(t`Collected successfully!`);
     Mixpanel.track(PUBLICATION.COLLECT_MODULE.COLLECT, {
       collect_module: collectModule?.type,
       collect_publication_id: publication?.id,
@@ -131,8 +129,8 @@ const CollectModule: FC<Props> = ({ count, setCount, publication, electedMirror 
       }
     },
     skip: !collectModule?.amount?.asset?.address || !currentProfile,
-    onCompleted: (data) => {
-      setAllowed(data?.approvedModuleAllowanceAmount[0]?.allowance !== '0x00');
+    onCompleted: ({ approvedModuleAllowanceAmount }) => {
+      setAllowed(approvedModuleAllowanceAmount[0]?.allowance !== '0x00');
     }
   });
 
@@ -215,7 +213,7 @@ const CollectModule: FC<Props> = ({ count, setCount, publication, electedMirror 
 
   const createCollect = async () => {
     if (!currentProfile) {
-      return toast.error(SIGN_WALLET);
+      return toast.error(Errors.SignWallet);
     }
 
     try {
@@ -251,9 +249,13 @@ const CollectModule: FC<Props> = ({ count, setCount, publication, electedMirror 
   };
 
   if (loading || revenueLoading) {
-    return <Loader message={`Loading collect`} />;
+    return <Loader message={t`Loading collect`} />;
   }
 
+  const isLimitedCollectAllCollected = collectLimit ? count >= parseInt(collectLimit) : false;
+  const isCollectExpired = endTimestamp
+    ? new Date(endTimestamp).getTime() / 1000 < new Date().getTime() / 1000
+    : false
   const isLoading =
     typedDataLoading || proxyActionLoading || signLoading || isFetching || writeLoading || broadcastLoading;
 
@@ -321,10 +323,10 @@ const CollectModule: FC<Props> = ({ count, setCount, publication, electedMirror 
                 type="button"
                 onClick={() => setShowCollectorsModal(!showCollectorsModal)}
               >
-                {humanize(count)} collectors
+                <Trans>{humanize(count)} collectors</Trans>
               </button>
               <Modal
-                title={`Collected by`}
+                title={t`Collected by`}
                 icon={<CollectionIcon className="text-brand h-5 w-5" />}
                 show={showCollectorsModal}
                 onClose={() => setShowCollectorsModal(false)}
@@ -340,7 +342,7 @@ const CollectModule: FC<Props> = ({ count, setCount, publication, electedMirror 
               <div className="flex items-center space-x-2">
                 <PhotographIcon className="lt-text-gray-500 h-4 w-4" />
                 <div className="font-bold">
-                  {parseInt(collectLimit) - count} available
+                  <Trans>{parseInt(collectLimit) - count} available</Trans>
                 </div>
               </div>
             )}
@@ -348,7 +350,7 @@ const CollectModule: FC<Props> = ({ count, setCount, publication, electedMirror 
               <div className="flex items-center space-x-2">
                 <CashIcon className="lt-text-gray-500 h-4 w-4" />
                 <div className="font-bold">
-                  {collectModule.referralFee}% referral fee
+                  <Trans>{collectModule.referralFee}% referral fee</Trans>
                 </div>
               </div>
             ) : null}
@@ -358,7 +360,7 @@ const CollectModule: FC<Props> = ({ count, setCount, publication, electedMirror 
               <CashIcon className="lt-text-gray-500 h-4 w-4" />
               <div className="flex items-center space-x-1.5">
                 <span>
-                  Revenue:
+                  <Trans>Revenue:</Trans>
                 </span>
                 <span className="flex items-center space-x-1">
                   <img
@@ -390,7 +392,7 @@ const CollectModule: FC<Props> = ({ count, setCount, publication, electedMirror 
               <ClockIcon className="lt-text-gray-500 h-4 w-4" />
               <div className="space-x-1.5">
                 <span>
-                  Sale Ends:
+                  <Trans>Sale Ends:</Trans>
                 </span>
                 <span className="font-bold text-gray-600" title={formatTime(endTimestamp)}>
                   {dayjs(endTimestamp).format('MMMM DD, YYYY')} at {dayjs(endTimestamp).format('hh:mm a')}
@@ -403,7 +405,7 @@ const CollectModule: FC<Props> = ({ count, setCount, publication, electedMirror 
               <PuzzleIcon className="lt-text-gray-500 h-4 w-4" />
               <div className="space-x-1.5">
                 <span>
-                  Token:
+                  <Trans>Token:</Trans>
                 </span>
                 <a
                   href={`${POLYGONSCAN_URL}/token/${data?.publication?.collectNftAddress}`}
@@ -419,19 +421,21 @@ const CollectModule: FC<Props> = ({ count, setCount, publication, electedMirror 
           {isMultirecipientFeeCollectModule && <Splits recipients={collectModule?.recipients} />}
         </div>
         <div className="flex items-center space-x-2">
-          {currentProfile && !hasCollectedByMe ? (
+          {currentProfile && (!hasCollectedByMe || !isFreeCollectModule) ? (
             allowanceLoading || balanceLoading ? (
               <div className="shimmer mt-5 h-[34px] w-28 rounded-lg" />
             ) : allowed ? (
               hasAmount ? (
-                <Button
-                  className="mt-5"
-                  onClick={createCollect}
-                  disabled={isLoading}
-                  icon={isLoading ? <Spinner size="xs" /> : <CollectionIcon className="h-4 w-4" />}
-                >
-                  Collect now
-                </Button>
+                !isLimitedCollectAllCollected && !isCollectExpired ? (
+                  <Button
+                    className="mt-5"
+                    onClick={createCollect}
+                    disabled={isLoading}
+                    icon={isLoading ? <Spinner size="xs" /> : <CollectionIcon className="h-4 w-4" />}
+                  >
+                    <Trans>Collect now</Trans>
+                  </Button>
+                ) : null
               ) : (
                 <WarningMessage className="mt-5" message={<Uniswap module={collectModule} />} />
               )
@@ -451,7 +455,7 @@ const CollectModule: FC<Props> = ({ count, setCount, publication, electedMirror 
           <div className="mt-3 flex items-center space-x-1.5 font-bold text-green-500">
             <CheckCircleIcon className="h-5 w-5" />
             <div>
-              You already collected this
+              <Trans>You already collected this</Trans>
             </div>
           </div>
         )}

@@ -1,14 +1,14 @@
-import { Image } from '@components/UI/Image'
-import { Spinner } from '@components/UI/Spinner';
 import { PhotographIcon } from '@heroicons/react/outline';
-import getIPFSLink from '@lib/getIPFSLink';
 import uploadToIPFS from '@lib/uploadToIPFS';
 import clsx from 'clsx';
-import { ATTACHMENT, ERROR_MESSAGE } from 'data/constants';
+import { ATTACHMENT } from 'data/constants';
+import Errors from 'data/errors';
+import imageProxy from 'lib/imageProxy';
+import sanitizeDStorageUrl from 'lib/sanitizeDStorageUrl';
 import type { ChangeEvent, FC, Ref } from 'react';
 import { useState } from 'react';
 import toast from 'react-hot-toast';
-import imageProxy from 'utils/imageProxy';
+import { Image, Spinner } from 'ui';
 
 interface Props {
   isNew: boolean;
@@ -22,7 +22,7 @@ const CoverImage: FC<Props> = ({ isNew = false, cover, setCover, imageRef, expan
   const [loading, setLoading] = useState(false);
 
   const onError = (error: any) => {
-    toast.error(error?.data?.message ?? error?.message ?? ERROR_MESSAGE);
+    toast.error(error?.data?.message ?? error?.message ?? Errors.SomethingWentWrong);
     setLoading(false);
   };
 
@@ -43,16 +43,17 @@ const CoverImage: FC<Props> = ({ isNew = false, cover, setCover, imageRef, expan
       <button
         type="button"
         className="flex focus:outline-none"
-        onClick={() => expandCover(cover ? getIPFSLink(cover) : cover)}
+        onClick={() => expandCover(cover ? sanitizeDStorageUrl(cover) : cover)}
       >
         <Image
           onError={({ currentTarget }) => {
-            currentTarget.src = cover ? getIPFSLink(cover) : cover;
+            currentTarget.src = cover ? sanitizeDStorageUrl(cover) : cover;
           }}
-          src={cover ? imageProxy(getIPFSLink(cover), ATTACHMENT) : cover}
+          src={cover ? imageProxy(sanitizeDStorageUrl(cover), ATTACHMENT) : cover}
           className="object-cover md:w-40 md:h-40 h-24 w-24 rounded-xl md:rounded-none"
           draggable={false}
-          alt="cover"
+          alt={`attachment-audio-cover-${cover}`}
+          data-testid={`attachment-audio-cover-${cover}`}
           ref={imageRef}
         />
       </button>

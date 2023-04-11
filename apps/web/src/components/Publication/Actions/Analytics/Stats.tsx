@@ -1,16 +1,17 @@
 import Loader from '@components/Shared/Loader';
-import { ErrorMessage } from '@components/UI/ErrorMessage';
-import HelpTooltip from '@components/UI/HelpTooltip';
-import humanize from '@lib/humanize';
+import { t } from '@lingui/macro';
 import { useQuery } from '@tanstack/react-query';
 import axios from 'axios';
-import { ERROR_MESSAGE, SIMPLEANALYTICS_API } from 'data/constants';
-import type { Publication } from 'lens'
+import { SIMPLEANALYTICS_API } from 'data/constants';
+import Errors from 'data/errors';
+import type { Publication } from 'lens';
+import humanize from 'lib/humanize';
 import type { FC } from 'react';
+import { ErrorMessage, HelpTooltip } from 'ui';
 
 const Stat: FC<{ title: string; helper: string; stat: number }> = ({ title, helper, stat }) => (
   <>
-    <span className="text-sm lt-text-gray-500 font-bold flex items-center space-x-1">
+    <span className="lt-text-gray-500 flex items-center space-x-1 text-sm font-bold">
       <span>{title}</span>
       <HelpTooltip content={helper} />
     </span>
@@ -18,11 +19,11 @@ const Stat: FC<{ title: string; helper: string; stat: number }> = ({ title, help
   </>
 );
 
-interface Props {
+interface StatsProps {
   publication: Publication;
 }
 
-const Stats: FC<Props> = ({ publication }) => {
+const Stats: FC<StatsProps> = ({ publication }) => {
   const getStats = async () => {
     const response = await axios(SIMPLEANALYTICS_API, {
       params: { version: 5, fields: 'pageviews', info: false, page: `/posts/${publication.id}` }
@@ -34,18 +35,18 @@ const Stats: FC<Props> = ({ publication }) => {
   const { data, isLoading, error } = useQuery(['statsData'], () => getStats().then((res) => res));
 
   if (error) {
-    return <ErrorMessage className="m-5" title={ERROR_MESSAGE} error={error as any} />;
+    return <ErrorMessage className="m-5" title={Errors.SomethingWentWrong} error={error as any} />;
   }
 
   if (isLoading) {
-    return <Loader message="Loading mixpanel" />;
+    return <Loader message={t`Loading analytics`} />;
   }
 
   return (
     <div className="p-5">
       <Stat
-        title="Views"
-        helper="Times people viewed the details about this publication"
+        title={t`Views`}
+        helper={t`Times people viewed the details about this publication`}
         stat={data?.pageviews}
       />
     </div>

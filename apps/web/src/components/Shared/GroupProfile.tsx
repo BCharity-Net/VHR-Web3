@@ -1,6 +1,6 @@
-import type { Group } from '@generated/types'
+import type { Group } from 'src/types/index.ts /types'
 import { UsersIcon } from '@heroicons/react/outline'
-import getIPFSLink from '@lib/getIPFSLink'
+import sanitizeDStorageUrl from '@lib/sanitizeDStorageUrl'
 import humanize from '@lib/humanize'
 import imageProxy from '@lib/imageProxy'
 import Link from 'next/link'
@@ -18,7 +18,7 @@ const GroupProfile: FC<Props> = ({ group }) => {
         <div className="flex items-center space-x-3">
           <img
             src={imageProxy(
-              getIPFSLink(
+              sanitizeDStorageUrl(
                 group?.metadata?.cover?.original?.url
                   ? group?.metadata?.cover?.original?.url
                   : `https://avatar.tobi.sh/${group?.id}.png`

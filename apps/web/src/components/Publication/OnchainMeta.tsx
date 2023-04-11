@@ -1,8 +1,8 @@
-import { Card } from '@components/UI/Card';
 import { ExternalLinkIcon } from '@heroicons/react/outline';
 import { IPFS_GATEWAY, POLYGONSCAN_URL } from 'data/constants';
 import type { Publication } from 'lens';
 import type { FC } from 'react';
+import { Card } from 'ui';
 
 interface MetaProps {
   name: string;
@@ -43,7 +43,7 @@ const OnchainMeta: FC<Props> = ({ publication }) => {
   }
 
   return (
-    <Card as="aside">
+    <Card as="aside" dataTestId="onchain-meta">
       <div className="lt-text-gray-500 divide-y dark:divide-gray-700">
         {isArweaveHash ? (
           <Meta name={`ARWEAVE TRANSACTION`} uri={`https://arweave.app/tx/${hash}`} hash={hash} />

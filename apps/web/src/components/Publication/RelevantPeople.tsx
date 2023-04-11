@@ -1,13 +1,12 @@
-import { FollowSource } from '@components/Shared/Follow'
 import UserProfileShimmer from '@components/Shared/Shimmer/UserProfileShimmer'
 import UserProfile from '@components/Shared/UserProfile'
-import { Card } from '@components/UI/Card'
-import { ErrorMessage } from '@components/UI/ErrorMessage'
 import { ALL_HANDLES_REGEX, HANDLE_SANITIZE_REGEX } from 'data/constants'
 import type { Profile, Publication } from 'lens'
 import { useRelevantPeopleQuery } from 'lens'
+import formatHandle from 'lib/formatHandle'
 import type { FC } from 'react'
-import formatHandle from 'utils/formatHandle'
+import { FollowSource } from 'src/tracking'
+import { Card, ErrorMessage } from 'ui'
 
 interface Props {
   publication: Publication
@@ -59,7 +58,7 @@ const RelevantPeople: FC<Props> = ({ publication }) => {
   }
 
   return (
-    <Card as="aside" className="space-y-4 p-5">
+    <Card as="aside" className="space-y-4 p-5" dataTestId="relevant-profiles">
       <ErrorMessage title="Failed to load relevant people" error={error} />
       {data?.profiles?.items?.map((profile, index) => (
         <div key={profile?.id} className="truncate">

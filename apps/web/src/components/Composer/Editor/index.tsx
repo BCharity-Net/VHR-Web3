@@ -13,7 +13,8 @@ import { HistoryPlugin } from '@lexical/react/LexicalHistoryPlugin';
 import { MarkdownShortcutPlugin } from '@lexical/react/LexicalMarkdownShortcutPlugin';
 import { OnChangePlugin } from '@lexical/react/LexicalOnChangePlugin';
 import { RichTextPlugin } from '@lexical/react/LexicalRichTextPlugin';
-import { ERROR_MESSAGE } from 'data/constants';
+import { t, Trans } from '@lingui/macro';
+import Errors from 'data/errors';
 import { COMMAND_PRIORITY_NORMAL, INSERT_LINE_BREAK_COMMAND, INSERT_PARAGRAPH_COMMAND } from 'lexical';
 import type { FC } from 'react';
 import { useEffect } from 'react';
@@ -30,8 +31,9 @@ const Editor: FC = () => {
 
   const handlePaste = async (pastedFiles: FileList) => {
     if (attachments.length === 4 || attachments.length + pastedFiles.length > 4) {
-      return toast.error(`Please choose either 1 video or up to 4 photos.`);
+      return toast.error(t`Please choose either 1 video or up to 4 photos.`);
     }
+
     if (pastedFiles) {
       await handleUploadAttachments(pastedFiles);
     }
@@ -53,19 +55,19 @@ const Editor: FC = () => {
       <EmojiPickerPlugin />
       <ToolbarPlugin />
       <RichTextPlugin
-        contentEditable={<ContentEditable className="px-5 block my-4 min-h-[65px] overflow-auto" />}
+        contentEditable={<ContentEditable className="my-4 block min-h-[65px] overflow-auto px-5" />}
         placeholder={
-          <div className="px-5 absolute top-[65px] text-gray-400 pointer-events-none whitespace-nowrap">
-            What's happening?
+          <div className="pointer-events-none absolute top-[65px] whitespace-nowrap px-5 text-gray-400">
+            <Trans>What's happening?</Trans>
           </div>
         }
-        ErrorBoundary={() => <div>{ERROR_MESSAGE}</div>}
+        ErrorBoundary={() => <div>{Errors.SomethingWentWrong}</div>}
       />
       <OnChangePlugin
         onChange={(editorState) => {
           editorState.read(() => {
             const markdown = $convertToMarkdownString(TRANSFORMERS);
-            setPublicationContent(markdown.replaceAll('\n\n', '\n'));
+            setPublicationContent(markdown);
           });
         }}
       />

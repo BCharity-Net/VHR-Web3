@@ -1,17 +1,5 @@
 import ChooseFile from '@components/Shared/ChooseFile';
-import { Button } from '@components/UI/Button';
-import { Card } from '@components/UI/Card';
-import { ErrorMessage } from '@components/UI/ErrorMessage';
-import { Form, useZodForm } from '@components/UI/Form';
-import { Image } from '@components/UI/Image';
-import { Input } from '@components/UI/Input';
-import { Spinner } from '@components/UI/Spinner';
-import { TextArea } from '@components/UI/TextArea';
-import { Toggle } from '@components/UI/Toggle';
 import { PencilIcon } from '@heroicons/react/outline';
-import getProfileAttribute from '@lib/getProfileAttribute';
-import getSignature from '@lib/getSignature';
-import hasPrideLogo from '@lib/hasPrideLogo';
 import { Mixpanel } from '@lib/mixpanel';
 import onError from '@lib/onError';
 import splitSignature from '@lib/splitSignature';
@@ -19,20 +7,25 @@ import uploadToArweave from '@lib/uploadToArweave';
 import uploadToIPFS from '@lib/uploadToIPFS';
 import { t, Trans } from '@lingui/macro';
 import { LensPeriphery } from 'abis';
-import { APP_NAME, COVER, LENS_PERIPHERY, SIGN_WALLET, URL_REGEX } from 'data/constants';
+import { APP_NAME, COVER, LENS_PERIPHERY, URL_REGEX } from 'data/constants';
+import Errors from 'data/errors';
 import type { CreatePublicSetProfileMetadataUriRequest, MediaSet, Profile } from 'lens';
 import {
   useBroadcastMutation,
   useCreateSetProfileMetadataTypedDataMutation,
   useCreateSetProfileMetadataViaDispatcherMutation
 } from 'lens';
+import getProfileAttribute from 'lib/getProfileAttribute';
+import getSignature from 'lib/getSignature';
+import hasPrideLogo from 'lib/hasPrideLogo';
+import imageProxy from 'lib/imageProxy';
+import sanitizeDStorageUrl from 'lib/sanitizeDStorageUrl';
 import type { ChangeEvent, FC } from 'react';
 import { useEffect, useState } from 'react';
 import toast from 'react-hot-toast';
 import { useAppStore } from 'src/store/app';
 import { SETTINGS } from 'src/tracking';
-import getIPFSLink from 'utils/getIPFSLink';
-import imageProxy from 'utils/imageProxy';
+import { Button, Card, ErrorMessage, Form, Image, Input, Spinner, TextArea, Toggle, useZodForm } from 'ui';
 import { v4 as uuid } from 'uuid';
 import { useContractWrite, useSignTypedData } from 'wagmi';
 import { object, string, union } from 'zod';
@@ -161,7 +154,7 @@ const ProfileSettingsForm: FC<ProfileSettingsFormProps> = ({ profile }) => {
     bio?: string | null
   ) => {
     if (!currentProfile) {
-      return toast.error(SIGN_WALLET);
+      return toast.error(Errors.SignWallet);
     }
 
     try {
@@ -245,9 +238,9 @@ const ProfileSettingsForm: FC<ProfileSettingsFormProps> = ({ profile }) => {
                 <Image
                   className="h-60 w-full rounded-lg object-cover"
                   onError={({ currentTarget }) => {
-                    currentTarget.src = getIPFSLink(cover);
+                    currentTarget.src = sanitizeDStorageUrl(cover);
                   }}
-                  src={imageProxy(getIPFSLink(cover), COVER)}
+                  src={imageProxy(sanitizeDStorageUrl(cover), COVER)}
                   alt={cover}
                 />
               </div>

@@ -1,6 +1,6 @@
 import { Modal } from '@components/UI/Modal'
 import { Tooltip } from '@components/UI/Tooltip'
-import type { BCharityPublication } from '@generated/types'
+import type { BCharityPublication } from 'src/types/index.ts /types'
 import { ShareIcon } from '@heroicons/react/outline'
 import { ShareIcon as ShareIconSolid } from '@heroicons/react/solid'
 import { motion } from 'framer-motion'

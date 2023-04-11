@@ -1,17 +1,16 @@
-import { Image } from '@components/UI/Image'
 import Markup from '@components/Shared/Markup';
-import { Card } from '@components/UI/Card';
 import { EmojiSadIcon } from '@heroicons/react/outline';
 import { formatTime } from '@lib/formatTime';
-import getAvatar from '@lib/getAvatar';
 import type { DecodedMessage } from '@xmtp/xmtp-js';
 import clsx from 'clsx';
 import dayjs from 'dayjs';
 import type { Profile } from 'lens';
+import formatHandle from 'lib/formatHandle';
+import getAvatar from 'lib/getAvatar';
 import type { FC, ReactNode } from 'react';
 import { memo } from 'react';
 import { useInView } from 'react-cool-inview';
-import formatHandle from 'utils/formatHandle';
+import { Card, Image } from 'ui';
 
 const isOnSameDay = (d1?: Date, d2?: Date): boolean => {
   return dayjs(d1).format('YYYYMMDD') === dayjs(d2).format('YYYYMMDD');
@@ -84,7 +83,7 @@ const DateDividerBorder: FC<Props> = ({ children }) => (
 );
 
 const DateDivider: FC<{ date?: Date }> = ({ date }) => (
-  <div className="flex align-items-center items-center p-4 pt-0 pl-2">
+  <div className="flex align-items-center items-center p-4 pl-2 pt-0">
     <DateDividerBorder>
       <span className="mx-11 flex-none text-gray-300 text-sm font-bold">{formatDate(date)}</span>
     </DateDividerBorder>

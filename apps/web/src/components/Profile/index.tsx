@@ -1,24 +1,24 @@
 import MetaTags from '@components/Common/MetaTags'
 import NFTFeed from '@components/NFT/NFTFeed'
-import { GridItemEight, GridItemFour, GridItemTwelve, GridLayout } from '@components/UI/GridLayout'
-import { Modal } from '@components/UI/Modal'
-import isFeatureEnabled from '@lib/isFeatureEnabled'
 import { APP_NAME, STATIC_IMAGES_URL } from 'data/constants'
 import { FeatureFlag } from 'data/feature-flags'
 import type { Profile } from 'lens'
 import { useProfileQuery } from 'lens'
+import formatHandle from 'lib/formatHandle'
+import isFeatureEnabled from 'lib/isFeatureEnabled'
+import isVerified from 'lib/isVerified'
 import type { NextPage } from 'next'
 import { useRouter } from 'next/router'
 import { useEffect, useState } from 'react'
+import { ProfileFeedType } from 'src/enums'
 import Custom404 from 'src/pages/404'
 import Custom500 from 'src/pages/500'
 import { useAppStore } from 'src/store/app'
-import formatHandle from 'utils/formatHandle'
-import isVerified from 'utils/isVerified'
+import { GridItemEight, GridItemFour, GridLayout, Modal } from 'ui'
 
 import Cover from './Cover'
 import Details from './Details'
-import Feed, { ProfileFeedType } from './Feed'
+import Feed from './Feed'
 import FeedType from './FeedType'
 import FollowDialog from './FollowDialog'
 import FundraiseFeed from './FundraiseFeed'
@@ -51,12 +51,11 @@ const ViewProfile: NextPage = () => {
   const [following, setFollowing] = useState<boolean | null>(null)
   const [showFollowModal, setShowFollowModal] = useState(false)
 
-  // workaround for that profile.isFollowedByMe == true when signed out
-  const isFollowedByMe = !!currentProfile && !!profile?.isFollowedByMe
+  const isFollowedByMe = Boolean(currentProfile) && Boolean(profile?.isFollowedByMe)
 
   const followType = profile?.followModule?.__typename
 
-  const initState = following == null
+  const initState = following === null
   // profile is not defined until the second render
   if (initState && profile) {
     const canFollow = followType !== 'RevertFollowModuleSettings' && !isFollowedByMe
@@ -138,7 +137,7 @@ const ViewProfile: NextPage = () => {
         ) : (
           <>
             <GridItemFour>
-              <Details profile={profile as any} following={!!following} setFollowing={setFollowing} />
+              <Details profile={profile as any} following={Boolean(following)} setFollowing={setFollowing} />
             </GridItemFour>
             <GridItemEight className="space-y-5">
               <FeedType

@@ -1,7 +1,7 @@
-import { Tooltip } from '@components/UI/Tooltip'
 import { STATIC_IMAGES_URL } from 'data/constants'
 import type { Profile } from 'lens'
 import type { FC } from 'react'
+import { Tooltip } from 'ui'
 
 interface Props {
   profile: Profile
@@ -27,6 +27,7 @@ const Ens: FC<Props> = ({ profile }) => {
         width={75}
         src={`${STATIC_IMAGES_URL}/badges/ens.png`}
         alt="ENS Badge"
+        data-testid="profile-ens-badge"
       />
     </Tooltip>
   )

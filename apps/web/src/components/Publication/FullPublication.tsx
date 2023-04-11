@@ -1,14 +1,13 @@
-import UserProfile from '@components/Shared/UserProfile'
 import { formatTime } from '@lib/formatTime'
 import dayjs from 'dayjs'
 import type { Publication } from 'lens'
+import getAppName from 'lib/getAppName'
 import type { FC } from 'react'
-import getAppName from 'utils/getAppName'
 
 import PublicationActions from './Actions'
-import PublicationMenu from './Actions/Menu'
 import HiddenPublication from './HiddenPublication'
 import PublicationBody from './PublicationBody'
+import PublicationHeader from './PublicationHeader'
 import PublicationStats from './PublicationStats'
 import PublicationType from './Type'
 
@@ -19,7 +18,6 @@ interface Props {
 const FullPublication: FC<Props> = ({ publication }) => {
   const publicationType = publication?.metadata?.attributes[0]?.value
   const isMirror = publication.__typename === 'Mirror'
-  const profile = isMirror ? publication?.mirrorOf?.profile : publication?.profile
   const timestamp = isMirror ? publication?.mirrorOf?.createdAt : publication?.createdAt
 
   // Count check to show the publication stats only if the publication has a comment, like or collect
@@ -35,7 +33,7 @@ const FullPublication: FC<Props> = ({ publication }) => {
   const showStats = mirrorCount > 0 || reactionCount > 0 || collectCount > 0
 
   return (
-    <article className="p-5">
+    <article className="p-5" data-testid={`publication-${publication.id}`}>
       <PublicationType publication={publication} showType />
       <div>
         <div className="flex justify-between pb-4 space-x-1.5">
@@ -48,7 +46,7 @@ const FullPublication: FC<Props> = ({ publication }) => {
             }
             showStatus
           />
-          <PublicationMenu publication={publication} />
+          <PublicationHeader publication={publication} />
           <span className="text-sm text-gray-500">{dayjs(new Date(timestamp)).fromNow()}</span>
         </div>
         <div className="ml-[53px]">

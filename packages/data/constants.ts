@@ -1,4 +1,5 @@
 import packageJson from '../../package.json'
+import LensEndpoint from './lens-endpoints'
 import getEnvConfig from './utils/getEnvConfig'
 
 // Environments
@@ -7,11 +8,6 @@ export const IS_DEVELOPMENT = process.env.NODE_ENV === 'development'
 
 // Lens Network
 export const LENS_NETWORK = process.env.NEXT_PUBLIC_LENS_NETWORK ?? 'mainnet'
-export const MAINNET_API_URL = 'https://api.lens.dev'
-export const TESTNET_API_URL = 'https://api-mumbai.lens.dev'
-export const SANDBOX_API_URL = 'https://api-sandbox-mumbai.lens.dev'
-export const STAGING_API_URL = 'https://staging-api-social-mumbai.lens.crtlkey.com'
-export const STAGING_SANDBOX_API_URL = 'https://staging-api-social-mumbai.sandbox.crtlkey.com'
 
 export const SERVERLESS_MAINNET_API_URL = 'https://api.bcharity.net'
 export const SERVERLESS_TESTNET_API_URL = 'https://api-testnet.bcharity.net'
@@ -27,7 +23,7 @@ export const LENS_PERIPHERY = getEnvConfig().lensPeripheryAddress
 export const DEFAULT_COLLECT_TOKEN = getEnvConfig().defaultCollectToken
 export const LIT_PROTOCOL_ENVIRONMENT = getEnvConfig().litProtocolEnvironment
 
-export const IS_MAINNET = API_URL === MAINNET_API_URL
+export const IS_MAINNET = API_URL === LensEndpoint.Mainnet
 
 // XMTP
 export const XMTP_ENV = IS_MAINNET ? 'production' : 'dev'
@@ -48,6 +44,7 @@ export const RELAY_ON = true
 export const ZERO_ADDRESS = '0x0000000000000000000000000000000000000000'
 export const LENSPROTOCOL_HANDLE = 'lensprotocol'
 export const HANDLE_SUFFIX = IS_MAINNET ? '.lens' : '.test'
+export const OLD_LENS_RELAYER_ADDRESS = '0xD1FecCF6881970105dfb2b654054174007f0e07E'
 
 // Mixpanel
 export const MIXPANEL_TOKEN = process.env.NEXT_PUBLIC_MIXPANEL_TOKEN ?? ''
@@ -73,14 +70,6 @@ export const CATEGORIES = [
   'Peace and Justice'
 ]
 
-// Messages
-export const ERROR_MESSAGE = 'Something went wrong!'
-export const SIGN_WALLET = 'Please sign in your wallet.'
-export const WRONG_NETWORK = IS_MAINNET
-  ? 'Please change network to Polygon mainnet.'
-  : 'Please change network to Polygon Mumbai testnet.'
-export const SIGN_ERROR = 'Failed to sign data'
-
 // URLs
 export const STATIC_ASSETS_URL = 'https://assets.bcharity.net'
 export const STATIC_IMAGES_URL = `${STATIC_ASSETS_URL}/images`
@@ -90,12 +79,14 @@ export const VHR_TOP_HOLDERS_URL =
 export const RARIBLE_URL = IS_MAINNET ? 'https://rarible.com' : 'https://testnet.rarible.com'
 export const IMAGEKIT_URL = `https://ik.imagekit.io/${IS_PRODUCTION ? 'bcharityimg' : 'bcharitydev'}`
 export const IPFS_GATEWAY = 'https://gateway.ipfscdn.io/ipfs/'
+export const ARWEAVE_GATEWAY = 'https://arweave.net/'
 export const EVER_API = 'https://endpoint.4everland.co'
 export const SIMPLEANALYTICS_API = 'https://simpleanalytics.com/bcharity.net.json'
 export const DEFAULT_OG = `${STATIC_IMAGES_URL}/og/logo.jpeg`
 export const IFRAMELY_URL = 'https://iframely.bcharity.net/iframely'
 
 // Workers
+export const USER_CONTENT_URL = 'https://user-content.bcharity.net'
 export const MEDIA_PROXY_URL = IS_PRODUCTION ? 'https://media.bcharity.net' : 'http://localhost:8081'
 export const STS_TOKEN_URL = IS_PRODUCTION ? 'https://sts.bcharity.net' : 'http://localhost:8082'
 export const METADATA_WORKER_URL = IS_PRODUCTION ? 'https://metadata.bcharity.net' : 'http://localhost:8083'
@@ -111,13 +102,7 @@ export const ALCHEMY_RPC = IS_MAINNET
 export const INFURA_PROJECT_ID = process.env.NEXT_PUBLIC_INFURA_PROJECT_ID
 export const INFURA_PROJECT_SECRET = process.env.NEXT_PUBLIC_INFURA_PROJECT_SECRET
 
-export const ARWEAVE_KEY = process.env.NEXT_PUBLIC_ARWEAVE_KEY  
-
-// Errors
-export const ERRORS = {
-  notMined:
-    'A previous transaction may not been mined yet or you have passed in a invalid nonce. You must wait for that to be mined before doing another action, please try again in a few moments. Nonce out of sync.'
-}
+export const ARWEAVE_KEY = process.env.NEXT_PUBLIC_ARWEAVE_KEY
 
 //VHR and GOOD Conversion
 export const VHR_TOKEN = '0x28EE241ab245699968F2980D3D1b1d23120ab8BE'
@@ -165,15 +150,6 @@ export const MIN_WIDTH_DESKTOP = 1024
 export const AVATAR = 'avatar'
 export const COVER = 'cover'
 export const ATTACHMENT = 'attachment'
-
-// Localstorage keys
-export const LS_KEYS = {
-  BCHARITY_STORE: 'bcharity.store',
-  PREFERENCES_STORE: 'preferences.store',
-  TRANSACTION_STORE: 'transaction.store',
-  TIMELINE_STORE: 'timeline.store',
-  MESSAGE_STORE: 'message.store'
-}
 
 // S3 bucket
 export const S3_BUCKET = {

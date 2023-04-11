@@ -10,9 +10,9 @@ import { GridItemSix, GridLayout } from '@components/UI/GridLayout'
 import { Modal } from '@components/UI/Modal'
 import { Spinner } from '@components/UI/Spinner'
 import { Tooltip } from '@components/UI/Tooltip'
-import type { BCharityPublication } from '@generated/types'
+import type { BCharityPublication } from 'src/types/index.ts /types'
 import { CashIcon, CurrencyDollarIcon, UsersIcon } from '@heroicons/react/outline'
-import getIPFSLink from '@lib/getIPFSLink'
+import sanitizeDStorageUrl from '@lib/sanitizeDStorageUrl'
 import getSignature from '@lib/getSignature'
 import getTokenImage from '@lib/getTokenImage'
 import imageProxy from '@lib/imageProxy'
@@ -308,7 +308,7 @@ const Fundraise: FC<Props> = ({ fund }) => {
         className="h-40 rounded-t-xl border-b sm:h-52 dark:border-b-gray-700/80"
         style={{
           backgroundImage: `url(${
-            cover ? imageProxy(getIPFSLink(cover), 'attachment') : `${STATIC_IMAGES_URL}/patterns/2.svg`
+            cover ? imageProxy(sanitizeDStorageUrl(cover), 'attachment') : `${STATIC_IMAGES_URL}/patterns/2.svg`
           })`,
           backgroundColor: '#8b5cf6',
           backgroundSize: cover ? 'cover' : '30%',

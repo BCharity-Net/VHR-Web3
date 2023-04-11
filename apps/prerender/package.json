@@ -7,27 +7,28 @@
     "dev": "next dev --port 4784",
     "build": "next build",
     "start": "next start --port 4784",
-    "typecheck": "tsc --noEmit",
-    "lint": "eslint . --ext .js,.ts,.tsx"
+    "typecheck": "tsc --pretty --noEmit",
+    "lint": "eslint . --ext .js,.ts,.tsx",
+    "lint:fix": "eslint . --fix --ext .js,.ts,.tsx"
   },
   "dependencies": {
-    "@apollo/client": "^3.7.10",
-    "axios": "^1.3.4",
+    "axios": "^1.3.5",
+    "data": "*",
     "dotenv": "^16.0.3",
-    "next": "^13.2.4",
+    "lens": "*",
+    "lib": "*",
+    "next": "^13.3.0",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
     "react-schemaorg": "^2.0.0",
-    "schema-dts": "^1.1.2",
-    "utils": "*"
+    "schema-dts": "^1.1.2"
   },
   "devDependencies": {
-    "@types/react": "^18.0.28",
+    "@types/react": "^18.0.33",
     "@types/react-dom": "^18.0.11",
-    "data": "*",
     "eslint-config-weblint": "*",
     "lens": "*",
     "tsconfig": "*",
-    "typescript": "^4.9.5"
+    "typescript": "^5.0.4"
   }
 }

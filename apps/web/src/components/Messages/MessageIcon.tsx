@@ -48,12 +48,24 @@ const MessageIcon: FC = () => {
       }
 
       const topics = matchingConvos.map((convo) => convo.topic);
-      const mostRecentMessages = await cachedClient.listEnvelopes(topics, async (e) => e, {
-        limit: 1,
-        direction: SortDirection.SORT_DIRECTION_DESCENDING
-      });
-      const mostRecentMessage = mostRecentMessages.length > 0 ? mostRecentMessages[0] : null;
-      const sentAt = fromNanoString(mostRecentMessage?.timestampNs);
+      const queryResults = await cachedClient.apiClient.batchQuery(
+        topics.map((topic) => ({
+          contentTopic: topic,
+          pageSize: 1,
+          direction: SortDirection.SORT_DIRECTION_DESCENDING
+        }))
+      );
+      const mostRecentTimestamp = queryResults.reduce((lastTimestamp: string | null, envelopes) => {
+        if (!envelopes.length || !envelopes[0]?.timestampNs) {
+          return lastTimestamp;
+        }
+        if (!lastTimestamp || envelopes[0]?.timestampNs > lastTimestamp) {
+          return envelopes[0].timestampNs;
+        }
+        return lastTimestamp;
+      }, null);
+      // No messages have been sent or received by the user, ever
+      const sentAt = fromNanoString(mostRecentTimestamp ?? undefined);
       const showBadge = shouldShowBadge(viewedMessagesAtNs.get(currentProfile.id), sentAt);
       showMessagesBadge.set(currentProfile.id, showBadge);
       setShowMessagesBadge(new Map(showMessagesBadge));
@@ -101,14 +113,14 @@ const MessageIcon: FC = () => {
   return (
     <Link
       href="/messages"
-      className="md:flex hidde items-start justify-center rounded-md hover:bg-gray-300 p-1 hover:bg-opacity-20 min-w-[40px]"
+      className="hidden min-w-[40px] items-start justify-center rounded-md p-1 hover:bg-gray-300 hover:bg-opacity-20 md:flex"
       onClick={() => {
         currentProfile && clearMessagesBadge(currentProfile.id);
       }}
     >
-      <MailIcon className="w-5 h-5 sm:w-6 sm:h-6" />
+      <MailIcon className="h-5 w-5 sm:h-6 sm:w-6" />
       {showMessagesBadge.get(currentProfile?.id) ? (
-        <span className="w-2 h-2 bg-red-500 rounded-full" />
+        <span className="h-2 w-2 rounded-full bg-red-500" />
       ) : null}
     </Link>
   );

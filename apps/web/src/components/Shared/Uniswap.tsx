@@ -1,6 +1,6 @@
 import { Mixpanel } from '@lib/mixpanel'
-import getUniswapURL from '@lib/getUniswapURL'
 import { STATIC_IMAGES_URL } from 'data/constants'
+import getUniswapURL from 'lib/getUniswapURL'
 import type { FC } from 'react'
 import { PUBLICATION } from 'src/tracking'
 

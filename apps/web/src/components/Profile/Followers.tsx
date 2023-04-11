@@ -1,17 +1,16 @@
-import { FollowSource } from '@components/Shared/Follow'
 import Loader from '@components/Shared/Loader'
 import UserProfile from '@components/Shared/UserProfile'
 import WalletProfile from '@components/Shared/WalletProfile'
-import { EmptyState } from '@components/UI/EmptyState'
-import { ErrorMessage } from '@components/UI/ErrorMessage'
 import { UsersIcon } from '@heroicons/react/outline'
 import type { FollowersRequest, Profile, Wallet } from 'lens'
 import { useFollowersQuery } from 'lens'
+import formatHandle from 'lib/formatHandle'
 import type { FC } from 'react'
 import { useState } from 'react'
 import { useInView } from 'react-cool-inview'
 import { useTranslation } from 'react-i18next'
-import formatHandle from 'utils/formatHandle'
+import { FollowSource } from 'src/tracking'
+import { EmptyState, ErrorMessage } from 'ui'
 
 interface Props {
   profile: Profile
@@ -66,7 +65,7 @@ const Followers: FC<Props> = ({ profile }) => {
   }
 
   return (
-    <div className="max-h-[80vh] overflow-y-auto" id="scrollableFollowersDiv">
+    <div className="max-h-[80vh] overflow-y-auto" id="scrollableFollowersDiv" data-testid="followers-modal">
       <ErrorMessage className="m-5" title="Failed to load followers" error={error} />
       <div className="divide-y dark:divide-gray-700">
         {followers?.map((follower, index) => (

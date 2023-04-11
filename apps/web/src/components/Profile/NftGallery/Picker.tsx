@@ -1,12 +1,11 @@
 import SingleNFT from '@components/NFT/SingleNFT';
 import NftPickerShimmer from '@components/Shared/Shimmer/NftPickerShimmer';
-import { EmptyState } from '@components/UI/EmptyState';
-import { ErrorMessage } from '@components/UI/ErrorMessage';
 import { CheckIcon, CollectionIcon } from '@heroicons/react/outline';
 import clsx from 'clsx';
 import { IS_MAINNET } from 'data/constants';
 import type { Nft, NfTsRequest } from 'lens';
 import { useNftFeedQuery } from 'lens';
+import formatHandle from 'lib/formatHandle';
 import type { FC } from 'react';
 import React from 'react';
 import { useState } from 'react';
@@ -16,7 +15,7 @@ import { CHAIN_ID } from 'src/constants';
 import { useAppStore } from 'src/store/app';
 import type { NftGalleryItem } from 'src/store/nft-gallery';
 import { useNftGalleryStore } from 'src/store/nft-gallery';
-import formatHandle from 'utils/formatHandle';
+import { EmptyState, ErrorMessage } from 'ui';
 import { mainnet } from 'wagmi/chains';
 
 const Picker: FC = () => {

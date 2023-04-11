@@ -1,12 +1,10 @@
-import HelpTooltip from '@components/UI/HelpTooltip';
-import { Modal } from '@components/UI/Modal';
-import { Tooltip } from '@components/UI/Tooltip';
 import { LockClosedIcon } from '@heroicons/react/outline';
 import clsx from 'clsx';
 import { motion } from 'framer-motion';
 import type { FC } from 'react';
 import { useState } from 'react';
 import { useAccessSettingsStore } from 'src/store/access-settings';
+import { HelpTooltip, Modal, Tooltip } from 'ui';
 
 import BasicSettings from './BasicSettings';
 

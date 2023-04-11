@@ -1,4 +1,3 @@
-import TabButton from '@components/UI/TabButton'
 import {
   CashIcon,
   ChatAlt2Icon,
@@ -8,7 +7,6 @@ import {
   PencilAltIcon,
   PhotographIcon
 } from '@heroicons/react/outline'
-import isVerified from '@lib/isVerified'
 import { Mixpanel } from '@lib/mixpanel'
 import type { Profile } from 'lens'
 import type { Dispatch, FC } from 'react'
@@ -16,7 +14,10 @@ import { useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { getTotalVHRSent } from 'src/alchemy'
 import { VHR_TOKEN } from 'data/constants'
+import { ProfileFeedType } from 'src/enums'
 import { PROFILE } from 'src/tracking'
+import { TabButton } from 'ui'
+import isVerified from 'utils/isVerified'
 import { useBalance } from 'wagmi'
 
 import OrgDonors from './Count/OrgDonors'
@@ -123,7 +124,6 @@ const FeedType: FC<Props> = ({ address, id, setFeedType, feedType, profile }) =>
             name="NFTs"
             icon={<PhotographIcon className="w-4 h-4" />}
             active={feedType === 'NFT'}
-            type="nft"
             type={ProfileFeedType.Nft.toLowerCase()}
             onClick={() => switchTab(ProfileFeedType.Nft)}
           />

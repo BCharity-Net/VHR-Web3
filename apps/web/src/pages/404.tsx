@@ -1,10 +1,10 @@
 import MetaTags from '@components/Common/MetaTags'
-import { Button } from '@components/UI/Button'
 import { HomeIcon } from '@heroicons/react/outline'
 import { APP_NAME, STATIC_IMAGES_URL } from 'data/constants'
 import Link from 'next/link'
 import type { FC } from 'react'
 import { useTranslation } from 'react-i18next'
+import { Button } from 'ui'
 
 const Custom404: FC = () => {
   const { t } = useTranslation('common')

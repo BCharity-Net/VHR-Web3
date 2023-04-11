@@ -1,15 +1,15 @@
-import { Image } from '@components/UI/Image';
 import { BadgeCheckIcon } from '@heroicons/react/solid';
 import { formatTime, getTwitterFormat } from '@lib/formatTime';
-import getAvatar from '@lib/getAvatar';
-import getProfileAttribute from '@lib/getProfileAttribute';
 import clsx from 'clsx';
 import type { Profile } from 'lens';
+import formatHandle from 'lib/formatHandle';
+import getAvatar from 'lib/getAvatar';
+import getProfileAttribute from 'lib/getProfileAttribute';
+import isVerified from 'lib/isVerified';
 import Link from 'next/link';
 import type { FC } from 'react';
 import { useState } from 'react';
-import formatHandle from 'utils/formatHandle';
-import isVerified from 'utils/isVerified';
+import { Image } from 'ui';
 
 import Follow from './Follow';
 import Markup from './Markup';
@@ -130,7 +130,7 @@ const UserProfile: FC<Props> = ({
   };
 
   return (
-    <div className="flex items-center justify-between">
+    <div className="flex items-center justify-between" data-testid={`user-profile-${profile.id}`}>
       {linkToProfile ? (
         <Link href={`/u/${formatHandle(profile?.handle)}`}>
           <UserInfo />

@@ -1,37 +1,44 @@
-import IndexStatus from '@components/Shared/IndexStatus'
-import { Button } from '@components/UI/Button'
-import { Spinner } from '@components/UI/Spinner'
-import { CheckCircleIcon, XIcon } from '@heroicons/react/outline'
-import { Mixpanel } from '@lib/mixpanel'
-import getSignature from '@lib/getSignature'
-import onError from '@lib/onError'
-import splitSignature from '@lib/splitSignature'
-import { LensHub } from 'abis'
-import { LENSHUB_PROXY } from 'data/constants'
-import { useBroadcastMutation, useCreateSetDispatcherTypedDataMutation } from 'lens'
-import clsx from 'clsx'
-import type { FC } from 'react'
-import toast from 'react-hot-toast'
-import { useAppStore } from 'src/store/app'
-import { SETTINGS } from 'src/tracking'
-import { useContractWrite, useSignTypedData } from 'wagmi'
+import IndexStatus from '@components/Shared/IndexStatus';
+import { CheckCircleIcon, XIcon } from '@heroicons/react/outline';
+import { Mixpanel } from '@lib/mixpanel';
+import onError from '@lib/onError';
+import splitSignature from '@lib/splitSignature';
+import { t, Trans } from '@lingui/macro';
+import { LensHub } from 'abis';
+import clsx from 'clsx';
+import { LENSHUB_PROXY, OLD_LENS_RELAYER_ADDRESS } from 'data/constants';
+import { useBroadcastMutation, useCreateSetDispatcherTypedDataMutation } from 'lens';
+import getIsDispatcherEnabled from 'lib/getIsDispatcherEnabled';
+import getSignature from 'lib/getSignature';
+import type { FC } from 'react';
+import toast from 'react-hot-toast';
+import { useAppStore } from 'src/store/app';
+import { SETTINGS } from 'src/tracking';
+import { Button, Spinner } from 'ui';
+import { useContractWrite, useSignTypedData } from 'wagmi';
 
-interface Props {
-  buttonSize?: 'sm'
+interface ToggleDispatcherProps {
+  buttonSize?: 'sm';
 }
 
-const ToggleDispatcher: FC<Props> = ({ buttonSize = 'md' }) => {
-  const userSigNonce = useAppStore((state) => state.userSigNonce)
-  const setUserSigNonce = useAppStore((state) => state.setUserSigNonce)
-  const currentProfile = useAppStore((state) => state.currentProfile)
-  const canUseRelay = currentProfile?.dispatcher?.canUseRelay
+const ToggleDispatcher: FC<ToggleDispatcherProps> = ({ buttonSize = 'md' }) => {
+  const userSigNonce = useAppStore((state) => state.userSigNonce);
+  const setUserSigNonce = useAppStore((state) => state.setUserSigNonce);
+  const currentProfile = useAppStore((state) => state.currentProfile);
+  const canUseRelay = getIsDispatcherEnabled(currentProfile);
+  const isOldDispatcherEnabled =
+    currentProfile?.dispatcher?.address?.toLocaleLowerCase() === OLD_LENS_RELAYER_ADDRESS.toLocaleLowerCase();
 
   const onCompleted = () => {
-    toast.success('Profile updated successfully!')
-    Mixpanel.track(SETTINGS.DISPATCHER.TOGGLE)
-  }
+    toast.success(t`Profile updated successfully!`);
+    if (isOldDispatcherEnabled) {
+      Mixpanel.track(SETTINGS.DISPATCHER.UPDATE);
+    } else {
+      Mixpanel.track(SETTINGS.DISPATCHER.TOGGLE);
+    }
+  };
 
-  const { isLoading: signLoading, signTypedDataAsync } = useSignTypedData({ onError })
+  const { isLoading: signLoading, signTypedDataAsync } = useSignTypedData({ onError });
 
   const {
     data: writeData,
@@ -44,36 +51,36 @@ const ToggleDispatcher: FC<Props> = ({ buttonSize = 'md' }) => {
     mode: 'recklesslyUnprepared',
     onSuccess: onCompleted,
     onError
-  })
+  });
 
   const [broadcast, { data: broadcastData, loading: broadcastLoading }] = useBroadcastMutation({
     onCompleted
-  })
-  const [createSetProfileMetadataTypedData, { loading: typedDataLoading }] =
+  });
+  const [createSetDispatcherTypedData, { loading: typedDataLoading }] =
     useCreateSetDispatcherTypedDataMutation({
       onCompleted: async ({ createSetDispatcherTypedData }) => {
-        const { id, typedData } = createSetDispatcherTypedData
-        const { profileId, dispatcher, deadline } = typedData.value
-        const signature = await signTypedDataAsync(getSignature(typedData))
-        const { v, r, s } = splitSignature(signature)
-        const sig = { v, r, s, deadline }
+        const { id, typedData } = createSetDispatcherTypedData;
+        const { profileId, dispatcher, deadline } = typedData.value;
+        const signature = await signTypedDataAsync(getSignature(typedData));
+        const { v, r, s } = splitSignature(signature);
+        const sig = { v, r, s, deadline };
         const inputStruct = {
           profileId,
           dispatcher,
           sig
-        }
-        setUserSigNonce(userSigNonce + 1)
-        const { data } = await broadcast({ variables: { request: { id, signature } } })
+        };
+        setUserSigNonce(userSigNonce + 1);
+        const { data } = await broadcast({ variables: { request: { id, signature } } });
         if (data?.broadcast.__typename === 'RelayError') {
-          return write?.({ recklesslySetUnpreparedArgs: [inputStruct] })
+          return write?.({ recklesslySetUnpreparedArgs: [inputStruct] });
         }
       },
       onError
-    })
+    });
 
   const toggleDispatcher = async () => {
     try {
-      await createSetProfileMetadataTypedData({
+      await createSetDispatcherTypedData({
         variables: {
           request: {
             profileId: currentProfile?.id,
@@ -82,11 +89,21 @@ const ToggleDispatcher: FC<Props> = ({ buttonSize = 'md' }) => {
         }
       });
     } catch {}
-  }
+  };
 
-  const isLoading = signLoading || writeLoading || broadcastLoading || typedDataLoading
+  const getButtonText = () => {
+    if (canUseRelay) {
+      return <Trans>Disable</Trans>;
+    } else if (isOldDispatcherEnabled) {
+      return <Trans>Update</Trans>;
+    } else {
+      return <Trans>Enable</Trans>;
+    }
+  };
+
+  const isLoading = signLoading || writeLoading || broadcastLoading || typedDataLoading;
   const broadcastTxHash =
-    broadcastData?.broadcast.__typename === 'RelayerResult' && broadcastData.broadcast.txHash
+    broadcastData?.broadcast.__typename === 'RelayerResult' && broadcastData.broadcast.txHash;
 
   return writeData?.hash ?? broadcastTxHash ? (
     <div className="mt-2">
@@ -95,22 +112,22 @@ const ToggleDispatcher: FC<Props> = ({ buttonSize = 'md' }) => {
   ) : (
     <Button
       variant={canUseRelay ? 'danger' : 'primary'}
-      className={clsx({ 'text-sm': buttonSize === 'sm' }, `mr-auto`)}
+      className={clsx({ 'text-sm': buttonSize === 'sm' }, 'mr-auto')}
       disabled={isLoading}
       icon={
         isLoading ? (
           <Spinner variant={canUseRelay ? 'danger' : 'primary'} size="xs" />
         ) : canUseRelay ? (
-          <XIcon className="w-4 h-4" />
+          <XIcon className="h-4 w-4" />
         ) : (
-          <CheckCircleIcon className="w-4 h-4" />
+          <CheckCircleIcon className="h-4 w-4" />
         )
       }
       onClick={toggleDispatcher}
     >
-      {canUseRelay ? 'Disable' : 'Enable'} dispatcher
+      {getButtonText()}
     </Button>
-  )
-}
+  );
+};
 
-export default ToggleDispatcher
+export default ToggleDispatcher;

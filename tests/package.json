@@ -4,13 +4,16 @@
   "private": true,
   "license": "GPL-3.0",
   "scripts": {
-    "test:dev": "playwright test --workers 4"
+    "test:dev": "playwright test"
+  },
+  "dependencies": {
+    "data": "*",
+    "lens": "*",
+    "lib": "*"
   },
   "devDependencies": {
-    "@playwright/test": "^1.32.1",
-    "data": "*",
+    "@playwright/test": "^1.32.2",
     "eslint-config-weblint": "*",
-    "lib": "*",
     "tsconfig": "*"
   }
 }

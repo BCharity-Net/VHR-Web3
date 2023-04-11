@@ -1,6 +1,6 @@
 /* eslint-disable react/jsx-key */
 import { gql, useQuery } from '@apollo/client'
-import type { BCharityPublication } from '@generated/types'
+import type { BCharityPublication } from 'src/types/index.ts /types'
 import { PaginatedResultInfo, Profile } from 'lens'
 import { CommentFields } from 'lens/documents/CommentFields'
 import { MirrorFields } from 'lens/documents/MirrorFields'

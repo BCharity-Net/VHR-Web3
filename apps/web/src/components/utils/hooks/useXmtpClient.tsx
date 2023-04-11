@@ -1,10 +1,10 @@
 import { Client } from '@xmtp/xmtp-js';
-import { APP_NAME, APP_VERSION, LS_KEYS, XMTP_ENV } from 'data/constants';
+import { APP_NAME, APP_VERSION, XMTP_ENV } from 'data/constants';
+import { Localstorage } from 'data/storage';
 import { useCallback, useEffect, useState } from 'react';
 import { useAppStore } from 'src/store/app';
-import { useConversationCache } from 'src/store/conversation-cache';
 import { useMessageStore } from 'src/store/message';
-import { useAccount, useSigner } from 'wagmi';
+import { useSigner } from 'wagmi';
 
 const ENCODING = 'binary';
 
@@ -37,9 +37,6 @@ const useXmtpClient = (cacheOnly = false) => {
   const setClient = useMessageStore((state) => state.setClient);
   const [awaitingXmtpAuth, setAwaitingXmtpAuth] = useState<boolean>();
   const { data: signer, isLoading } = useSigner();
-  const { address } = useAccount();
-
-  const conversationExports = useConversationCache((state) => state.conversations[address as `0x${string}`]);
 
   useEffect(() => {
     const initXmtpClient = async () => {
@@ -52,7 +49,9 @@ const useXmtpClient = (cacheOnly = false) => {
           setAwaitingXmtpAuth(true);
           keys = await Client.getKeys(signer, {
             env: XMTP_ENV,
-            appVersion: APP_NAME + '/' + APP_VERSION
+            appVersion: APP_NAME + '/' + APP_VERSION,
+            persistConversations: false,
+            skipContactPublishing: true
           });
           storeKeys(await signer.getAddress(), keys);
         }
@@ -60,12 +59,9 @@ const useXmtpClient = (cacheOnly = false) => {
         const xmtp = await Client.create(null, {
           env: XMTP_ENV,
           appVersion: APP_NAME + '/' + APP_VERSION,
-          privateKeyOverride: keys
+          privateKeyOverride: keys,
+          persistConversations: true
         });
-        if (conversationExports && conversationExports.length) {
-          // Preload the client with conversations from the cache
-          await xmtp.conversations.import(conversationExports);
-        }
         setClient(xmtp);
         setAwaitingXmtpAuth(false);
       } else {
@@ -98,7 +94,7 @@ export const useDisconnectXmtp = () => {
       // eslint-disable-next-line unicorn/no-useless-undefined
       setClient(undefined);
     }
-    localStorage.removeItem(LS_KEYS.MESSAGE_STORE);
+    localStorage.removeItem(Localstorage.MessageStore);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [signer, client]);
 

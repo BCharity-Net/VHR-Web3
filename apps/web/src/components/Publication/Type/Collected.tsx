@@ -1,5 +1,5 @@
 import Slug from '@components/Shared/Slug'
-import { BCharityPublication } from '@generated/types'
+import { BCharityPublication } from 'src/types/index.ts /types'
 import { CollectionIcon } from '@heroicons/react/outline'
 import formatAddress from '@lib/formatAddress'
 import formatHandle from '@lib/formatHandle'

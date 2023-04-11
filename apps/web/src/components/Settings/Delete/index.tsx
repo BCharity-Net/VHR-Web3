@@ -1,25 +1,21 @@
 import MetaTags from '@components/Common/MetaTags'
 import UserProfile from '@components/Shared/UserProfile'
-import { Button } from '@components/UI/Button'
-import { Card } from '@components/UI/Card'
-import { GridItemEight, GridItemFour, GridLayout } from '@components/UI/GridLayout'
-import { Modal } from '@components/UI/Modal'
-import { Spinner } from '@components/UI/Spinner'
-import { WarningMessage } from '@components/UI/WarningMessage'
 import { useDisconnectXmtp } from '@components/utils/hooks/useXmtpClient'
 import { ExclamationIcon, TrashIcon } from '@heroicons/react/outline'
-import getSignature from '@lib/getSignature'
 import onError from '@lib/onError'
 import resetAuthData from '@lib/resetAuthData'
 import splitSignature from '@lib/splitSignature'
 import { LensHub } from 'abis'
-import { APP_NAME, LENSHUB_PROXY, SIGN_WALLET } from 'data/constants'
+import { APP_NAME, LENSHUB_PROXY } from 'data/constants'
+import Errors from 'data/errors'
 import { useCreateBurnProfileTypedDataMutation } from 'lens'
+import getSignature from 'lib/getSignature'
 import type { FC } from 'react'
 import { useState } from 'react'
 import toast from 'react-hot-toast'
 import Custom404 from 'src/pages/404'
 import { useAppPersistStore, useAppStore } from 'src/store/app'
+import { Button, Card, GridItemEight, GridItemFour, GridLayout, Modal, Spinner, WarningMessage } from 'ui'
 import { useContractWrite, useDisconnect, useSignTypedData } from 'wagmi'
 
 import SettingsSidebar from '../Sidebar'
@@ -69,7 +65,7 @@ const DeleteSettings: FC = () => {
 
   const handleDelete = async () => {
     if (!currentProfile) {
-      return toast.error(SIGN_WALLET)
+      return toast.error(Errors.SignWallet)
     }
 
     try {

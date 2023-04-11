@@ -1,19 +1,17 @@
-import { Button } from '@components/UI/Button';
-import { Image } from '@components/UI/Image';
-import { LightBox } from '@components/UI/LightBox';
-import type { NewBCharityAttachment } from '@generated/types';
 import { ExternalLinkIcon, XIcon } from '@heroicons/react/outline';
-import getIPFSLink from '@lib/getIPFSLink';
 import { Mixpanel } from '@lib/mixpanel';
-import { stopEventPropagation } from '@lib/stopEventPropagation';
 import clsx from 'clsx';
 import { ALLOWED_AUDIO_TYPES, ALLOWED_VIDEO_TYPES, ATTACHMENT } from 'data/constants';
 import type { MediaSet, Publication } from 'lens';
+import imageProxy from 'lib/imageProxy';
+import sanitizeDStorageUrl from 'lib/sanitizeDStorageUrl';
+import { stopEventPropagation } from 'lib/stopEventPropagation';
 import type { FC } from 'react';
 import { useState } from 'react';
 import { usePublicationStore } from 'src/store/publication';
 import { PUBLICATION } from 'src/tracking';
-import imageProxy from 'utils/imageProxy';
+import type { NewBCharityAttachment } from 'src/types';
+import { Button, Image, LightBox } from 'ui';
 
 import Audio from './Audio';
 import Video from './Video';
@@ -58,8 +56,8 @@ const Attachments: FC<Props> = ({
   const removeAttachment = (attachment: any) => {
     const arr = attachments;
     setAttachments(
-      arr.filter(function (ele: any) {
-        return ele != attachment;
+      arr.filter((element: any) => {
+        return element !== attachment;
       })
     );
   };
@@ -76,12 +74,12 @@ const Attachments: FC<Props> = ({
 
   return slicedAttachments?.length !== 0 ? (
     <>
-      <div className={clsx(getClass(slicedAttachments?.length)?.row, 'grid gap-2 pt-3')}>
+      <div className={clsx(getClass(slicedAttachments?.length)?.row, 'mt-3 grid gap-2')}>
         {slicedAttachments?.map((attachment: NewBCharityAttachment & MediaSet, index: number) => {
           const type = isNew ? attachment.type : attachment.original?.mimeType;
           const url = isNew
-            ? attachment.previewItem || getIPFSLink(attachment.item!)
-            : getIPFSLink(attachment.original?.url) || getIPFSLink(attachment.item!);
+            ? attachment.previewItem || sanitizeDStorageUrl(attachment.item!)
+            : sanitizeDStorageUrl(attachment.original?.url) || sanitizeDStorageUrl(attachment.item!);
 
           return (
             <div
@@ -136,6 +134,7 @@ const Attachments: FC<Props> = ({
                   }}
                   src={isNew ? url : imageProxy(url, ATTACHMENT)}
                   alt={isNew ? url : imageProxy(url, ATTACHMENT)}
+                  data-testid={`attachment-image-${url}`}
                 />
               )}
               {isNew && !hideDelete && (

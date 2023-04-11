@@ -1,15 +1,15 @@
-import { Image } from '@components/UI/Image'
 import { BadgeCheckIcon } from '@heroicons/react/solid';
 import { formatTime, getTimeFromNow } from '@lib/formatTime';
-import getAvatar from '@lib/getAvatar';
 import type { DecodedMessage } from '@xmtp/xmtp-js';
 import clsx from 'clsx';
 import type { Profile } from 'lens';
+import formatHandle from 'lib/formatHandle';
+import getAvatar from 'lib/getAvatar';
+import isVerified from 'lib/isVerified';
 import { useRouter } from 'next/router';
 import type { FC } from 'react';
 import { useAppStore } from 'src/store/app';
-import formatHandle from 'utils/formatHandle';
-import isVerified from 'utils/isVerified';
+import { Image } from 'ui';
 
 interface Props {
   profile: Profile;
@@ -50,7 +50,7 @@ const Preview: FC<Props> = ({ profile, message, conversationKey, isSelected }) =
         <div className="w-full">
           <div className="flex w-full justify-between space-x-1">
             <div className="flex gap-1 items-center max-w-sm">
-              <div className="line-clamp-1 text-md">{profile?.name ?? formatHandle(profile.handle)}</div>
+              <div className="text-md line-clamp-1">{profile?.name ?? formatHandle(profile.handle)}</div>
               {isVerified(profile?.id) && <BadgeCheckIcon className="min-w-fit w-4 h-4 text-brand" />}
             </div>
             {message.sent && (

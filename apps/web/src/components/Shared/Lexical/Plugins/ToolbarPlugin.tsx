@@ -39,7 +39,7 @@ const ToolbarPlugin: FC = () => {
   }, [editor, updateToolbar]);
 
   return (
-    <div className="flex items-center justify-between border-b dark:border-gray-700/80 px-5 py-2">
+    <div className="divider flex items-center justify-between px-5 py-2">
       <div className="w-full flex toolbar-icons space-x-1">
         <button
           className={isBold ? 'bg-brand-100' : ''}
@@ -48,7 +48,7 @@ const ToolbarPlugin: FC = () => {
             activeEditor.dispatchCommand(FORMAT_TEXT_COMMAND, 'bold');
           }}
         >
-          <i className="toolbar-icon bold text-brand-500" />
+          <i className="toolbar-icon bold text-brand" />
         </button>
         <button
           className={isItalic ? 'bg-brand-100' : ''}

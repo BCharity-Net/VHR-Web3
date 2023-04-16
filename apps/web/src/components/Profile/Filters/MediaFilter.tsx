@@ -4,8 +4,7 @@ import { AdjustmentsIcon } from '@heroicons/react/outline';
 import clsx from 'clsx';
 import type { ChangeEvent } from 'react';
 import { useProfileFeedStore } from 'src/store/profile-feed';
-import { Tooltip } from 'ui';
-import { Checkbox } from 'ui/Checkbox';
+import { Checkbox, Tooltip } from 'ui';
 
 const MediaFilter = () => {
   const mediaFeedFilters = useProfileFeedStore((state) => state.mediaFeedFilters);

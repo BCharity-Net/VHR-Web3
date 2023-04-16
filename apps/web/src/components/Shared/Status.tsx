@@ -3,6 +3,7 @@ import { Mixpanel } from '@lib/mixpanel';
 import onError from '@lib/onError';
 import splitSignature from '@lib/splitSignature';
 import uploadToArweave from '@lib/uploadToArweave';
+import { t, Trans } from '@lingui/macro';
 import { LensPeriphery } from 'abis';
 import { APP_NAME, LENS_PERIPHERY } from 'data/constants';
 import Errors from 'data/errors';
@@ -18,8 +19,8 @@ import getSignature from 'lib/getSignature';
 import type { FC } from 'react';
 import { useState } from 'react';
 import toast from 'react-hot-toast';
-import { useGlobalModalStateStore } from 'src/store/modals';
 import { useAppStore } from 'src/store/app';
+import { useGlobalModalStateStore } from 'src/store/modals';
 import { SETTINGS } from 'src/tracking';
 import { Button, ErrorMessage, Form, Input, Spinner, useZodForm } from 'ui';
 import { v4 as uuid } from 'uuid';
@@ -31,8 +32,8 @@ import Loader from './Loader';
 
 const editStatusSchema = object({
   status: string()
-    .min(1, { message: `Status should not be empty` })
-    .max(100, { message: `Status should not exceed 100 characters` })
+    .min(1, { message: t`Status should not be empty` })
+    .max(100, { message: t`Status should not exceed 100 characters` })
 });
 
 const Status: FC = () => {
@@ -54,8 +55,12 @@ const Status: FC = () => {
     }
   });
 
-  const onCompleted = () => {
-    toast.success(`Status updated successfully!`);
+  const onCompleted = (__typename?: 'RelayError' | 'RelayerResult') => {
+    if (__typename === 'RelayError') {
+      return;
+    }
+
+    toast.success(t`Status updated successfully!`);
     setShowStatusModal(false);
   };
 
@@ -66,12 +71,12 @@ const Status: FC = () => {
     abi: LensPeriphery,
     functionName: 'setProfileMetadataURIWithSig',
     mode: 'recklesslyUnprepared',
-    onSuccess: onCompleted,
+    onSuccess: () => onCompleted(),
     onError
   });
 
   const [broadcast, { loading: broadcastLoading }] = useBroadcastMutation({
-    onCompleted
+    onCompleted: ({ broadcast }) => onCompleted(broadcast.__typename)
   });
   const [createSetProfileMetadataTypedData, { loading: typedDataLoading }] =
     useCreateSetProfileMetadataTypedDataMutation({
@@ -96,7 +101,11 @@ const Status: FC = () => {
     });
 
   const [createSetProfileMetadataViaDispatcher, { loading: dispatcherLoading }] =
-    useCreateSetProfileMetadataViaDispatcherMutation({ onCompleted, onError });
+    useCreateSetProfileMetadataViaDispatcherMutation({
+      onCompleted: ({ createSetProfileMetadataViaDispatcher }) =>
+        onCompleted(createSetProfileMetadataViaDispatcher.__typename),
+      onError
+    });
 
   const createViaDispatcher = async (request: CreatePublicSetProfileMetadataUriRequest) => {
     const { data } = await createSetProfileMetadataViaDispatcher({
@@ -171,20 +180,20 @@ const Status: FC = () => {
   if (loading) {
     return (
       <div className="p-5">
-        <Loader message={`Loading status settings`} />
+        <Loader message={t`Loading status settings`} />
       </div>
     );
   }
 
   if (error) {
-    return <ErrorMessage title={`Failed to load status settings`} error={error} />;
+    return <ErrorMessage title={t`Failed to load status settings`} error={error} />;
   }
 
   const isLoading =
     isUploading || typedDataLoading || dispatcherLoading || signLoading || writeLoading || broadcastLoading;
 
   return (
-    <div className="p-5 space-y-5">
+    <div className="space-y-5 p-5">
       <Form
         form={form}
         className="space-y-4"
@@ -195,10 +204,10 @@ const Status: FC = () => {
       >
         <Input
           prefix={<EmojiPicker emoji={emoji} setEmoji={setEmoji} />}
-          placeholder={`What's happening?`}
+          placeholder={t`What's happening?`}
           {...form.register('status')}
         />
-        <div className="flex items-center space-x-2 ml-auto">
+        <div className="ml-auto flex items-center space-x-2">
           <Button
             type="submit"
             variant="danger"
@@ -211,14 +220,14 @@ const Status: FC = () => {
               Mixpanel.track(SETTINGS.PROFILE.CLEAR_STATUS);
             }}
           >
-            Clear status
+            <Trans>Clear status</Trans>
           </Button>
           <Button
             type="submit"
             disabled={isLoading}
-            icon={isLoading ? <Spinner size="xs" /> : <PencilIcon className="w-4 h-4" />}
+            icon={isLoading ? <Spinner size="xs" /> : <PencilIcon className="h-4 w-4" />}
           >
-            Save
+            <Trans>Save</Trans>
           </Button>
         </div>
       </Form>

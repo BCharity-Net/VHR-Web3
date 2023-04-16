@@ -5,12 +5,12 @@ import type { FC } from 'react';
 import { CHAIN_ID } from 'src/constants';
 import { Card } from 'ui';
 
-interface Props {
+interface SingleNftProps {
   nft: Nft;
   linkToDetail?: boolean;
 }
 
-const SingleNFT: FC<Props> = ({ nft, linkToDetail = true }) => {
+const SingleNft: FC<SingleNftProps> = ({ nft, linkToDetail = true }) => {
   const nftURL = linkToDetail
     ? `${RARIBLE_URL}/token/${nft.chainId === CHAIN_ID ? 'polygon/' : ''}${nft.contractAddress}:${
         nft.tokenId
@@ -20,11 +20,10 @@ const SingleNFT: FC<Props> = ({ nft, linkToDetail = true }) => {
   return (
     <Card>
       {nft?.originalContent?.animatedUrl ? (
-        <div className="h-52 border-b sm:h-80 sm:rounded-t-[10px]">
+        <div className="divider h-52 sm:h-80 sm:rounded-t-[10px]">
           {nft?.originalContent?.animatedUrl?.includes('.gltf') ? (
             <a href={nftURL} target="_blank" rel="noreferrer noopener">
               <div
-                className="h-52 border-b sm:h-80 sm:rounded-t-[10px]"
                 style={{
                   backgroundImage: `url(${`${STATIC_IMAGES_URL}/placeholder.webp`})`,
                   backgroundSize: 'contain',
@@ -37,7 +36,6 @@ const SingleNFT: FC<Props> = ({ nft, linkToDetail = true }) => {
             <iframe
               title={`${nft.contractAddress}:${nft.tokenId}`}
               sandbox=""
-              className="h-full w-full sm:rounded-t-[10px]"
               src={sanitizeDStorageUrl(nft?.originalContent?.animatedUrl)}
             />
           )}
@@ -45,7 +43,7 @@ const SingleNFT: FC<Props> = ({ nft, linkToDetail = true }) => {
       ) : (
         <a href={nftURL} target="_blank" rel="noreferrer noopener">
           <div
-            className="h-52 border-b sm:h-80 sm:rounded-t-[10px]"
+            className="divider h-52 sm:h-80 sm:rounded-t-[10px]"
             style={{
               backgroundImage: `url(${
                 nft.originalContent.uri
@@ -71,4 +69,4 @@ const SingleNFT: FC<Props> = ({ nft, linkToDetail = true }) => {
   );
 };
 
-export default SingleNFT;
+export default SingleNft;

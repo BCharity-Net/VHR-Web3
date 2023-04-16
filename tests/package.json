@@ -4,7 +4,11 @@
   "private": true,
   "license": "GPL-3.0",
   "scripts": {
-    "test:dev": "playwright test"
+    "test:dev": "playwright test",
+    "test:nightly": "playwright test apps",
+    "typecheck": "tsc --pretty --noEmit",
+    "lint": "eslint . --ext .js,.ts,.tsx",
+    "lint:fix": "eslint . --fix --ext .js,.ts,.tsx"
   },
   "dependencies": {
     "data": "*",
@@ -12,8 +16,10 @@
     "lib": "*"
   },
   "devDependencies": {
-    "@playwright/test": "^1.32.2",
+    "@playwright/test": "^1.32.3",
+    "@types/node": "^18.15.11",
     "eslint-config-weblint": "*",
-    "tsconfig": "*"
+    "tsconfig": "*",
+    "typescript": "^5.0.4"
   }
 }

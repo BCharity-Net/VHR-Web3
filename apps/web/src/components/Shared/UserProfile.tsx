@@ -142,7 +142,12 @@ const UserProfile: FC<Props> = ({
         (followStatusLoading ? (
           <div className="shimmer h-8 w-10 rounded-lg" />
         ) : following ? null : profile?.followModule?.__typename === 'FeeFollowModuleSettings' ? (
-          <SuperFollow profile={profile} setFollowing={setFollowing} />
+          <SuperFollow
+            profile={profile}
+            setFollowing={setFollowing}
+            followPosition={followPosition}
+            followSource={followSource}
+          />
         ) : (
           <Follow
             profile={profile}

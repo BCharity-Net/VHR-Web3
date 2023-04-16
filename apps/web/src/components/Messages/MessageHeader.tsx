@@ -30,7 +30,7 @@ const MessageHeader: FC<Props> = ({ profile }) => {
   }
 
   return (
-    <div className="dark:border-gray-700/80 flex items-center justify-between px-4 py-2 border-b-[1px]">
+    <div className="divider flex items-center justify-between px-4 py-2">
       <div className="flex items-center">
         <ChevronLeftIcon onClick={onBackClick} className="w-6 h-6 mr-1 lg:hidden cursor-pointer" />
         <UserProfile profile={profile} />

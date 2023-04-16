@@ -14,6 +14,7 @@
   "devDependencies": {
     "@types/node": "^18.15.11",
     "@types/normalize-wheel": "^1.0.1",
+    "@types/react": "^18.0.35",
     "eslint-config-weblint": "*",
     "tsconfig": "*",
     "typescript": "^5.0.4"

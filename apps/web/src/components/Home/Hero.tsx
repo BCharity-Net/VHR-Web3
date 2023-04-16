@@ -4,7 +4,7 @@ import { useTranslation } from 'react-i18next'
 const Hero: FC = () => {
   const { t } = useTranslation('common')
   return (
-    <div className="py-12 border-b bg-hero dark:border-b-gray-700/80" data-testid="home-hero">
+    <div className="bg-hero divider py-12" data-testid="home-hero">
       <div className="px-5 mx-auto max-w-screen-xl flex items-stretch py-8 w-full text-center sm:py-12 sm:text-left">
         <div className="flex-1 space-y-3">
           <div className="text-2xl font-extrabold sm:text-4xl">{t('Welcome')}</div>

@@ -27,7 +27,7 @@ const Embed: FC<Props> = ({ og }) => {
         <Card forceRounded>
           {!og.isSquare && og.thumbnail && (
             <Image
-            className="w-full rounded-t-xl border-b"
+            className="divider w-full rounded-t-xl"
             onError={({ currentTarget }) => {
               currentTarget.src = og.thumbnail;
             }}

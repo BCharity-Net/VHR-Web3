@@ -99,7 +99,6 @@ const ViewProfile: NextPage = () => {
           setShowFollowModal={setShowFollowModal}
         />
       </Modal>
-
       {profile?.name ? (
         <MetaTags title={`${profile?.name} (@${formatHandle(profile?.handle)}) • ${APP_NAME}`} />
       ) : (

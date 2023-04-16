@@ -4,11 +4,12 @@ import Loader from '@components/Shared/Loader';
 import Search from '@components/Shared/Navbar/Search';
 import useMessagePreviews from '@components/utils/hooks/useMessagePreviews';
 import { MailIcon, PlusCircleIcon, UsersIcon } from '@heroicons/react/outline';
-import { Mixpanel } from '@lib/mixpanel';
 import buildConversationId from '@lib/buildConversationId';
 import { buildConversationKey } from '@lib/conversationKey';
+import { Mixpanel } from '@lib/mixpanel';
+import { t, Trans } from '@lingui/macro';
 import clsx from 'clsx';
-import { ERROR_MESSAGE } from 'data/constants';
+import Errors from 'data/errors';
 import type { Profile } from 'lens';
 import { useRouter } from 'next/router';
 import type { FC } from 'react';
@@ -18,12 +19,12 @@ import { useMessagePersistStore, useMessageStore } from 'src/store/message';
 import { MESSAGES } from 'src/tracking';
 import { Card, EmptyState, ErrorMessage, GridItemFour, Modal } from 'ui';
 
-interface Props {
+interface PreviewListProps {
   className?: string;
   selectedConversationKey?: string;
 }
 
-const PreviewList: FC<Props> = ({ className, selectedConversationKey }) => {
+const PreviewList: FC<PreviewListProps> = ({ className, selectedConversationKey }) => {
   const router = useRouter();
   const currentProfile = useAppStore((state) => state.currentProfile);
   const addProfileAndSelectTab = useMessageStore((state) => state.addProfileAndSelectTab);
@@ -67,12 +68,12 @@ const PreviewList: FC<Props> = ({ className, selectedConversationKey }) => {
   return (
     <GridItemFour
       className={clsx(
-        'xs:h-[85vh] sm:h-[76vh] md:h-[80vh] xl:h-[84vh] mb-0 md:col-span-4 sm:mx-2 xs:mx-2',
+        'xs:h-[85vh] xs:mx-2 mb-0 sm:mx-2 sm:h-[76vh] md:col-span-4 md:h-[80vh] xl:h-[84vh]',
         className
       )}
     >
-      <Card className="h-full flex justify-between flex-col">
-        <div className="flex justify-between items-center p-5 border-b dark:border-gray-700">
+      <Card className="flex h-full flex-col justify-between">
+        <div className="divider flex items-center justify-between p-5">
           <div className="font-bold">Messages</div>
           {currentProfile && !showAuthenticating && !showLoading && (
             <button onClick={newMessageClick} type="button">
@@ -84,53 +85,56 @@ const PreviewList: FC<Props> = ({ className, selectedConversationKey }) => {
           <div
             onClick={() => setSelectedTab('Following')}
             className={clsx(
-              'flex flex-1 justify-center font-bold items-center p-2 m-2 ml-4 rounded text-brand-500 tab-bg cursor-pointer',
+              'text-brand tab-bg m-2 ml-4 flex flex-1 cursor-pointer items-center justify-center rounded p-2 font-bold',
               selectedTab === 'Following' ? 'bg-brand-100' : ''
             )}
           >
             <UsersIcon className="mr-2 h-4 w-4" />
-            Following
+            <Trans>Following</Trans>
           </div>
           <div
             onClick={() => setSelectedTab('Requested')}
             className={clsx(
-              'flex flex-1 justify-center font-bold items-center p-2 m-2 mr-4 rounded text-brand-500 tab-bg cursor-pointer',
+              'text-brand tab-bg m-2 mr-4 flex flex-1 cursor-pointer items-center justify-center rounded p-2 font-bold',
               selectedTab === 'Requested' ? 'bg-brand-100' : ''
             )}
           >
-            Requested
+            <Trans>Requested</Trans>
             {requestedCount > 0 && (
-              <span className="text-sm font-bold ml-2 bg-brand-200 px-3 py-0.5 rounded-2xl">
+              <span className="bg-brand-200 ml-2 rounded-2xl px-3 py-0.5 text-sm font-bold">
                 {requestedCount > 99 ? '99+' : requestedCount}
               </span>
             )}
           </div>
         </div>
         {selectedTab === 'Requested' ? (
-          <div className="p-2 px-5 mt-1 text-sm bg-yellow-100 text-yellow-800">
-            These conversations are from Lens profiles that you don't currently follow.
+          <div className="mt-1 bg-yellow-100 p-2 px-5 text-sm text-yellow-800">
+            <Trans>These conversations are from Lens profiles that you don't currently follow.</Trans>
           </div>
         ) : null}
         <div className="h-full overflow-y-auto overflow-x-hidden">
           {showAuthenticating ? (
-            <div className="flex h-full flex-grow justify-center items-center">
+            <div className="flex h-full flex-grow items-center justify-center">
               <Loader message="Awaiting signature to enable DMs" />
             </div>
           ) : showLoading ? (
-            <div className="flex h-full flex-grow justify-center items-center">
-              <Loader message="Loading conversations" />
+            <div className="flex h-full flex-grow items-center justify-center">
+              <Loader message={t`Loading conversations`} />
             </div>
           ) : profilesError ? (
             <ErrorMessage
               className="m-5"
-              title="Failed to load messages"
-              error={{ message: ERROR_MESSAGE, name: ERROR_MESSAGE }}
+              title={t`Failed to load messages`}
+              error={{
+                message: Errors.SomethingWentWrong,
+                name: Errors.SomethingWentWrong
+              }}
             />
           ) : sortedProfiles.length === 0 ? (
-            <button className="w-full h-full justify-items-center" onClick={newMessageClick} type="button">
+            <button className="h-full w-full justify-items-center" onClick={newMessageClick} type="button">
               <EmptyState
-                message={<div>Start messaging your Lens frens</div>}
-                icon={<MailIcon className="w-8 h-8 text-brand" />}
+                message={t`Start messaging your Lens frens`}
+                icon={<MailIcon className="text-brand h-8 w-8" />}
                 hideCard
               />
             </button>
@@ -155,16 +159,16 @@ const PreviewList: FC<Props> = ({ className, selectedConversationKey }) => {
         </div>
       </Card>
       <Modal
-        title="New message"
-        icon={<MailIcon className="w-5 h-5 text-brand" />}
+        title={t`New message`}
+        icon={<MailIcon className="text-brand h-5 w-5" />}
         size="sm"
         show={showSearchModal}
         onClose={() => setShowSearchModal(false)}
       >
-        <div className="w-full pt-4 px-4">
+        <div className="w-full px-4 pt-4">
           <Search
             modalWidthClassName="max-w-lg"
-            placeholder="Search for someone to message..."
+            placeholder={t`Search for someone to message...`}
             onProfileSelected={onProfileSelected}
           />
         </div>

@@ -1,5 +1,5 @@
 import Sidebar from '@components/Shared/Sidebar';
-import { ChartPieIcon } from '@heroicons/react/outline';
+import { ChartPieIcon, ViewListIcon } from '@heroicons/react/outline';
 import type { FC } from 'react';
 
 const StaffToolsSidebar: FC = () => {
@@ -8,8 +8,13 @@ const StaffToolsSidebar: FC = () => {
       items={[
         {
           title: 'Stats',
-          icon: <ChartPieIcon className="w-4 h-4" />,
+          icon: <ChartPieIcon className="h-4 w-4" />,
           url: '/stafftools'
+        },
+        {
+          title: 'Relay queues',
+          icon: <ViewListIcon className="h-4 w-4" />,
+          url: '/stafftools/relayqueues'
         }
       ]}
     />

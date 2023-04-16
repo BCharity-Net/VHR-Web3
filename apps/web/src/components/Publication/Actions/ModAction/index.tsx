@@ -23,8 +23,7 @@ import { toast } from 'react-hot-toast';
 import { useGlobalAlertStateStore } from 'src/store/alerts';
 import { useGlobalModalStateStore } from 'src/store/modals';
 import { MOD } from 'src/tracking';
-import { Button } from 'ui';
-import { Alert } from 'ui/Alert';
+import { Alert, Button } from 'ui';
 
 interface Props {
   publication: Publication;
@@ -153,8 +152,8 @@ const ModAction: FC<Props> = ({ publication, className = '' }) => {
             });
           }
           Mixpanel.track(MOD.REPORT, {
-            report_reason: 'SHADOW_BAN',
-            report_subreason: 'SHADOW_BAN',
+            report_reason: 'heavySpam',
+            report_subreason: 'HEAVY_SPAM',
             report_publication_id: publication?.id
           });
         }}

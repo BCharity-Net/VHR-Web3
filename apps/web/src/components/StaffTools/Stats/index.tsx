@@ -13,6 +13,7 @@ import {
 import { PencilAltIcon } from '@heroicons/react/solid';
 import { getTimeAddedNDayUnix, getTimeMinusNDayUnix } from '@lib/formatTime';
 import { Mixpanel } from '@lib/mixpanel';
+import { t } from '@lingui/macro';
 import clsx from 'clsx';
 import { APP_NAME } from 'data/constants';
 import Errors from 'data/errors';
@@ -23,7 +24,7 @@ import type { FC, ReactNode } from 'react';
 import { useEffect } from 'react';
 import Custom404 from 'src/pages/404';
 import { PAGEVIEW } from 'src/tracking';
-import { Card, GridItemEight, GridItemFour, GridLayout } from 'ui';
+import { Card, GridItemEight, GridItemFour, GridLayout, Spinner } from 'ui';
 
 import StaffToolsSidebar from '../Sidebar';
 
@@ -110,7 +111,7 @@ const Stats: NextPage = () => {
 
   return (
     <GridLayout>
-      <MetaTags title={`Stafftools • ${APP_NAME}`} />
+      <MetaTags title={t`Stafftools | Stats • ${APP_NAME}`} />
       <GridItemFour>
         <StaffToolsSidebar />
       </GridItemFour>
@@ -119,11 +120,13 @@ const Stats: NextPage = () => {
           {error ? (
             <b className="text-red-500">{Errors.SomethingWentWrong}</b>
           ) : loading || todayLoading || yesterdayLoading ? (
-            <div>Loading...</div>
+            <div className="flex justify-center">
+              <Spinner size="sm" />
+            </div>
           ) : (
             <section className="space-y-3">
               <h1 className="mb-4 text-xl font-bold">Stats</h1>
-              <div className="block justify-between space-y-3 sm:flex sm:space-y-0 sm:space-x-3">
+              <div className="block justify-between space-y-3 sm:flex sm:space-x-3 sm:space-y-0">
                 <StatBox
                   icon={<UsersIcon className="h-6 w-6" />}
                   value={stats?.totalProfiles}
@@ -146,7 +149,7 @@ const Stats: NextPage = () => {
                   title="total posts"
                 />
               </div>
-              <div className="block justify-between space-y-3 sm:flex sm:space-y-0 sm:space-x-3">
+              <div className="block justify-between space-y-3 sm:flex sm:space-x-3 sm:space-y-0">
                 <StatBox
                   icon={<SwitchHorizontalIcon className="h-6 w-6" />}
                   value={stats?.totalMirrors}
@@ -162,7 +165,7 @@ const Stats: NextPage = () => {
                   title="total comments"
                 />
               </div>
-              <div className="block justify-between space-y-3 sm:flex sm:space-y-0 sm:space-x-3">
+              <div className="block justify-between space-y-3 sm:flex sm:space-x-3 sm:space-y-0">
                 <StatBox
                   icon={<CollectionIcon className="h-6 w-6" />}
                   value={stats?.totalCollects}

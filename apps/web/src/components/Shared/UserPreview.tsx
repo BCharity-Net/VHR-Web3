@@ -77,7 +77,11 @@ const UserPreview: FC<Props> = ({
             (followStatusLoading ? (
               <div className="w-10 h-8 rounded-lg shimmer" />
             ) : following ? null : lazyProfile?.followModule?.__typename === 'FeeFollowModuleSettings' ? (
-              <SuperFollow profile={lazyProfile} setFollowing={setFollowing} />
+              <SuperFollow
+              profile={lazyProfile}
+              setFollowing={setFollowing}
+              followSource={FollowSource.PROFILE_POPOVER}
+              />
             ) : (
               <Follow
                 profile={lazyProfile}

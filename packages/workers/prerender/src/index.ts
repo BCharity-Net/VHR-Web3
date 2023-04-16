@@ -1,9 +1,3 @@
-export default {
-  async fetch(request: Request) {
-    return await handleRequest(request);
-  }
-};
-
 async function handleRequest(request: Request) {
   const userAgent = request.headers.get('User-Agent') || '';
   const re = /bot|telegram|baidu|bing|yandex|iframely|whatsapp|facebook/i;
@@ -17,4 +11,10 @@ async function handleRequest(request: Request) {
   }
 
   return fetch(request);
+}
+
+export default {
+  async fetch(request: Request) {
+    return await handleRequest(request);
+  }
 }

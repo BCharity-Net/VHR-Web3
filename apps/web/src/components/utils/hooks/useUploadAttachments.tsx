@@ -1,4 +1,5 @@
 import uploadToIPFS from '@lib/uploadToIPFS';
+import { t } from '@lingui/macro';
 import { useCallback } from 'react';
 import { toast } from 'react-hot-toast';
 import { usePublicationStore } from 'src/store/publication';
@@ -23,9 +24,12 @@ const useUploadAttachments = () => {
 
         return {
           id: attachmentId,
-          type: file.type,
-          altTag: '',
-          previewItem: URL.createObjectURL(file)
+          file: file,
+          previewItem: URL.createObjectURL(file),
+          original: {
+            url: URL.createObjectURL(file),
+            mimeType: file.type
+          }
         };
       });
 
@@ -34,18 +38,18 @@ const useUploadAttachments = () => {
         const isVideo = file.type.includes('video');
         const isAudio = file.type.includes('audio');
 
-        if (isImage && file.size > 30000000) {
-          toast.error(`Image size should be less than 30MB`);
+        if (isImage && file.size > 10000000) {
+          toast.error(t`Image size should be less than 10MB`);
           return false;
         }
 
         if (isVideo && file.size > 100000000) {
-          toast.error(`Video size should be less than 100MB`)
+          toast.error(t`Video size should be less than 100MB`);
           return false;
         }
 
         if (isAudio && file.size > 100000000) {
-          toast.error(`Audio size should be less than 100MB`);
+          toast.error(t`Audio size should be less than 100MB`);
           return false;
         }
 
@@ -65,13 +69,16 @@ const useUploadAttachments = () => {
         if (attachmentsUploaded) {
           attachmentsIPFS = previewAttachments.map((attachment: NewBCharityAttachment, index: number) => ({
             ...attachment,
-            item: attachmentsUploaded[index].item
+            original: {
+              url: attachmentsUploaded[index].original.url,
+              mimeType: attachmentsUploaded[index].original.mimeType
+            }
           }));
           updateAttachments(attachmentsIPFS);
         }
       } catch {
         removeAttachments(attachmentIds);
-        toast.error('Something went wrong while uploading!');
+        toast.error(t`Something went wrong while uploading!`);
       }
       setIsUploading(false);
 

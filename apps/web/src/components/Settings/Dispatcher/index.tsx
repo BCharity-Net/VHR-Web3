@@ -27,7 +27,7 @@ const DispatcherSettings: FC = () => {
     if (canUseRelay) {
       return <Trans>Disable Signless Transactions</Trans>;
     } else if (isOldDispatcherEnabled) {
-      return <Trans>Signless Transactions Update</Trans>;
+      return <Trans>Signless Transactions Upgrade</Trans>;
     } else {
       return <Trans>Signless Transactions</Trans>;
     }

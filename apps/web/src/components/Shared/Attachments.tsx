@@ -1,13 +1,15 @@
+import ChooseThumbnail from '@components/Composer/ChooseThumbnail';
 import { ExternalLinkIcon, XIcon } from '@heroicons/react/outline';
 import { Mixpanel } from '@lib/mixpanel';
+import { Trans } from '@lingui/macro';
 import clsx from 'clsx';
-import { ALLOWED_AUDIO_TYPES, ALLOWED_VIDEO_TYPES, ATTACHMENT } from 'data/constants';
+import { ALLOWED_AUDIO_TYPES, ALLOWED_VIDEO_TYPES, ATTACHMENT, STATIC_IMAGES_URL } from 'data/constants';
 import type { MediaSet, Publication } from 'lens';
 import imageProxy from 'lib/imageProxy';
 import sanitizeDStorageUrl from 'lib/sanitizeDStorageUrl';
 import { stopEventPropagation } from 'lib/stopEventPropagation';
 import type { FC } from 'react';
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { usePublicationStore } from 'src/store/publication';
 import { PUBLICATION } from 'src/tracking';
 import type { NewBCharityAttachment } from 'src/types';
@@ -35,7 +37,7 @@ const getClass = (attachments: number, isNew = false) => {
   }
 };
 
-interface Props {
+interface AttachmentsProps {
   attachments: any;
   isNew?: boolean;
   hideDelete?: boolean;
@@ -43,7 +45,7 @@ interface Props {
   txn?: any;
 }
 
-const Attachments: FC<Props> = ({
+const Attachments: FC<AttachmentsProps> = ({
   attachments = [],
   isNew = false,
   hideDelete = false,
@@ -51,7 +53,22 @@ const Attachments: FC<Props> = ({
   txn
 }) => {
   const setAttachments = usePublicationStore((state) => state.setAttachments);
+  const setVideoDurationInSeconds = usePublicationStore((state) => state.setVideoDurationInSeconds);
   const [expandedImage, setExpandedImage] = useState<string | null>(null);
+  const videoRef = useRef<HTMLVideoElement>(null);
+
+  const onDataLoaded = () => {
+    if (videoRef.current?.duration && videoRef.current?.duration !== Infinity) {
+      setVideoDurationInSeconds(videoRef.current.duration.toFixed(2));
+    }
+  };
+
+  useEffect(() => {
+    if (videoRef.current) {
+      videoRef.current.onloadeddata = onDataLoaded;
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [videoRef, attachments]);
 
   const removeAttachment = (attachment: any) => {
     const arr = attachments;
@@ -62,13 +79,18 @@ const Attachments: FC<Props> = ({
     );
   };
 
-  const getCoverUrl = () => {
-    return publication?.metadata?.cover?.original.url || publication?.metadata?.image;
+  const getThumbnailUrl = () => {
+    const metadata = publication?.metadata;
+    const hasNoThumbnail = metadata?.media[0].original.url === metadata?.image;
+
+    if (hasNoThumbnail) {
+      return `${STATIC_IMAGES_URL}/thumbnail.png`;
+    }
+
+    return metadata?.cover?.original.url || metadata?.image || `${STATIC_IMAGES_URL}/thumbnail.png`;
   };
 
-  const slicedAttachments = isNew
-    ? attachments?.slice(0, 4)
-    : attachments?.some((e: any) => ALLOWED_VIDEO_TYPES.includes(e?.original?.mimeType))
+  const slicedAttachments = attachments?.some((e: any) => ALLOWED_VIDEO_TYPES.includes(e?.original?.mimeType))
     ? attachments?.slice(0, 1)
     : attachments?.slice(0, 4);
 
@@ -76,29 +98,29 @@ const Attachments: FC<Props> = ({
     <>
       <div className={clsx(getClass(slicedAttachments?.length)?.row, 'mt-3 grid gap-2')}>
         {slicedAttachments?.map((attachment: NewBCharityAttachment & MediaSet, index: number) => {
-          const type = isNew ? attachment.type : attachment.original?.mimeType;
-          const url = isNew
-            ? attachment.previewItem || sanitizeDStorageUrl(attachment.item!)
-            : sanitizeDStorageUrl(attachment.original?.url) || sanitizeDStorageUrl(attachment.item!);
+          const type = attachment.original?.mimeType;
+          const url = isNew ? attachment.previewItem : sanitizeDStorageUrl(attachment.original?.url);
+          const isAudio = ALLOWED_AUDIO_TYPES.includes(type);
+          const isVideo = ALLOWED_VIDEO_TYPES.includes(type);
+          const isImage = !(isVideo || isAudio);
 
           return (
             <div
               className={clsx(
-                ALLOWED_VIDEO_TYPES.includes(type) || ALLOWED_AUDIO_TYPES.includes(type)
-                  ? ''
-                  : `${getClass(slicedAttachments?.length, isNew)?.aspect} ${
+                isImage
+                  ? `${getClass(slicedAttachments?.length, isNew)?.aspect} ${
                       slicedAttachments?.length === 3 && index === 0 ? 'row-span-2' : ''
-                    }`,
+                    }`
+                  : '',
                 {
-                  'w-full': ALLOWED_AUDIO_TYPES.includes(type),
-                  'w-2/3':
-                    ALLOWED_VIDEO_TYPES.includes(type) ||
-                    (slicedAttachments.length === 1 && !ALLOWED_AUDIO_TYPES.includes(type))
+                  'w-full': isAudio || isVideo,
+                  'w-2/3': !isVideo && slicedAttachments.length === 1
                 },
                 'relative'
               )}
               key={index + url}
               onClick={stopEventPropagation}
+              aria-hidden="true"
             >
               {type === 'image/svg+xml' ? (
                 <Button
@@ -107,11 +129,28 @@ const Attachments: FC<Props> = ({
                   icon={<ExternalLinkIcon className="h-4 w-4" />}
                   onClick={() => window.open(url, '_blank')}
                 >
-                  <span>Open Image in new tab</span>
+                  <span>
+                    <Trans>Open Image in new tab</Trans>
+                  </span>
                 </Button>
-              ) : ALLOWED_VIDEO_TYPES.includes(type) ? (
-                <Video src={url} poster={getCoverUrl()} />
-              ) : ALLOWED_AUDIO_TYPES.includes(type) ? (
+              ) : isVideo ? (
+                isNew ? (
+                  <>
+                    <video
+                      className="w-full overflow-hidden rounded-xl"
+                      src={url}
+                      ref={videoRef}
+                      disablePictureInPicture
+                      disableRemotePlayback
+                      controlsList="nodownload noplaybackrate"
+                      controls
+                    />
+                    <ChooseThumbnail />
+                  </>
+                ) : (
+                  <Video src={url} poster={getThumbnailUrl()} />
+                )
+              ) : isAudio ? (
                 <Audio
                   src={url}
                   isNew={isNew}
@@ -121,7 +160,7 @@ const Attachments: FC<Props> = ({
                 />
               ) : (
                 <Image
-                  className="object-cover bg-gray-100 rounded-lg border cursor-pointer dark:bg-gray-800 dark:border-gray-700/80"
+                  className="cursor-pointer rounded-lg border bg-gray-100 object-cover dark:border-gray-700 dark:bg-gray-800"
                   loading="lazy"
                   height={1000}
                   width={1000}
@@ -137,19 +176,30 @@ const Attachments: FC<Props> = ({
                   data-testid={`attachment-image-${url}`}
                 />
               )}
-              {isNew && !hideDelete && (
-                <div
-                  className={clsx(ALLOWED_AUDIO_TYPES.includes(type) ? 'absolute -top-2.5 -left-2' : 'm-3')}
-                >
-                  <button
-                    type="button"
-                    className="p-1.5 bg-gray-900 rounded-full opacity-75"
+              {isNew &&
+                !hideDelete &&
+                (isVideo ? (
+                  <Button
+                    className="mt-3"
+                    variant="danger"
+                    size="sm"
+                    icon={<XIcon className="h-4 w-4" />}
                     onClick={() => removeAttachment(attachment)}
+                    outline
                   >
-                    <XIcon className="w-4 h-4 text-white" />
-                  </button>
-                </div>
-              )}
+                    <Trans>Cancel Upload</Trans>
+                  </Button>
+                ) : (
+                  <div className={clsx(isAudio ? 'absolute left-2 top-2' : 'm-3')}>
+                    <button
+                      type="button"
+                      className="rounded-full bg-gray-900 p-1.5 opacity-75"
+                      onClick={() => removeAttachment(attachment)}
+                    >
+                      <XIcon className="h-4 w-4 text-white" />
+                    </button>
+                  </div>
+                ))}
             </div>
           );
         })}

@@ -15,7 +15,7 @@ import { PAGEVIEW } from 'src/tracking';
 import { Card, GridItemEight, GridItemFour, GridLayout, PageLoading } from 'ui';
 
 import SettingsSidebar from '../Sidebar';
-import NFTPicture from './NFTPicture';
+import NftPicture from './NftPicture';
 import Picture from './Picture';
 import ProfileSettingsForm from './Profile';
 
@@ -86,7 +86,7 @@ const ProfileSettings: NextPage = () => {
             <TypeButton icon={<PhotographIcon className="h-5 w-5" />} type="NFT" name="NFT Avatar" />
           </div>
           {settingsType === 'NFT' ? (
-            <NFTPicture profile={profile as any} />
+            <NftPicture profile={profile as any} />
           ) : (
             <Picture profile={profile as any} />
           )}

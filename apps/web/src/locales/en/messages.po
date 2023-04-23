@@ -92,6 +92,7 @@ msgid "File format not allowed."
 msgstr ""
 
 #: src/components/Composer/Actions/Attachment.tsx
+#: src/components/utils/hooks/useUploadAttachments.tsx
 msgid "Something went wrong while uploading!"
 msgstr ""
 
@@ -233,6 +234,24 @@ msgstr "Friend of friends can comment and mirror"
 msgid "Everyone can comment and mirror"
 msgstr "Everyone can comment and mirror"
 
+#: src/components/Composer/ChooseThumbnail.tsx
+#: src/components/Composer/ChooseThumbnail.tsx
+msgid "Failed to upload thumbnail"
+msgstr "Failed to upload thumbnail"
+
+#: src/components/Composer/ChooseThumbnail.tsx
+msgid "Please upload a custom thumbnail"
+msgstr "Please upload a custom thumbnail"
+
+#: src/components/Composer/ChooseThumbnail.tsx
+msgid "Choose Thumbnail"
+msgstr "Choose Thumbnail"
+
+#: src/components/Composer/ChooseThumbnail.tsx
+#: src/components/Settings/Profile/Profile.tsx
+msgid "Upload"
+msgstr "Upload"
+
 #: src/components/Composer/Editor/index.tsx
 msgid "Please choose either 1 video or up to 4 photos."
 msgstr ""
@@ -252,11 +271,12 @@ msgid "Transaction failed!"
 msgstr ""
 
 #: src/components/Composer/NewPublication.tsx
-msgid "[cta]Comment"
-msgstr "Comment"
+#: src/components/Publication/Actions/Comment.tsx
+msgid "Comment"
+msgstr ""
 
 #: src/components/Composer/NewPublication.tsx
-msgid "[cta]Post"
+msgid "Post"
 msgstr "Post"
 
 #: src/components/Composer/Post/New.tsx
@@ -1421,10 +1441,6 @@ msgstr ""
 msgid "{0} Comments"
 msgstr ""
 
-#: src/components/Publication/Actions/Comment.tsx
-msgid "Comment"
-msgstr ""
-
 #: src/components/Publication/Actions/Like.tsx
 msgid "Dislike"
 msgstr ""
@@ -1670,6 +1686,7 @@ msgid "Request Verification"
 msgstr ""
 
 #: src/components/Settings/Account/index.tsx
+#: src/components/Settings/Export/index.tsx
 msgid "Account settings • {APP_NAME}"
 msgstr "Account settings • {APP_NAME}"
 
@@ -1843,6 +1860,62 @@ msgstr "Disable Signless Transactions"
 msgid "Dispatcher • {APP_NAME}"
 msgstr "Dispatcher • {APP_NAME}"
 
+#: src/components/Settings/Export/Notifications.tsx
+msgid "Export notifications"
+msgstr "Export notifications"
+
+#: src/components/Settings/Export/Notifications.tsx
+msgid "Export all your notifications to a JSON file."
+msgstr "Export all your notifications to a JSON file."
+
+#: src/components/Settings/Export/Notifications.tsx
+msgid "Exported <0>{0}</0> notifications"
+msgstr "Exported <0>{0}</0> notifications"
+
+#: src/components/Settings/Export/Notifications.tsx
+msgid "Download notifications"
+msgstr "Download notifications"
+
+#: src/components/Settings/Export/Notifications.tsx
+#: src/components/Settings/Export/Profile.tsx
+#: src/components/Settings/Export/Publications.tsx
+msgid "Exporting..."
+msgstr "Exporting..."
+
+#: src/components/Settings/Export/Notifications.tsx
+#: src/components/Settings/Export/Profile.tsx
+#: src/components/Settings/Export/Publications.tsx
+msgid "Export now"
+msgstr "Export now"
+
+#: src/components/Settings/Export/Profile.tsx
+msgid "Export profile"
+msgstr "Export profile"
+
+#: src/components/Settings/Export/Profile.tsx
+msgid "Export all your profile data to a JSON file."
+msgstr "Export all your profile data to a JSON file."
+
+#: src/components/Settings/Export/Profile.tsx
+msgid "Download profile"
+msgstr "Download profile"
+
+#: src/components/Settings/Export/Publications.tsx
+msgid "Export publications"
+msgstr "Export publications"
+
+#: src/components/Settings/Export/Publications.tsx
+msgid "Export all your posts, comments and mirrors to a JSON file."
+msgstr "Export all your posts, comments and mirrors to a JSON file."
+
+#: src/components/Settings/Export/Publications.tsx
+msgid "Exported <0>{0}</0> publications"
+msgstr "Exported <0>{0}</0> publications"
+
+#: src/components/Settings/Export/Publications.tsx
+msgid "Download publications"
+msgstr "Download publications"
+
 #: src/components/Settings/Interests/index.tsx
 msgid "Interests settings • {APP_NAME}"
 msgstr "Interests settings • {APP_NAME}"
@@ -1885,10 +1958,12 @@ msgid "Token Id"
 msgstr ""
 
 #: src/components/Settings/Profile/Picture.tsx
+#: src/components/Settings/Profile/Profile.tsx
 msgid "Upload failed"
 msgstr "Upload failed"
 
 #: src/components/Settings/Profile/Picture.tsx
+#: src/components/Settings/Profile/Profile.tsx
 msgid "Crop image"
 msgstr "Crop image"
 
@@ -1945,6 +2020,10 @@ msgid "Tell us something about you!"
 msgstr ""
 
 #: src/components/Settings/Profile/Profile.tsx
+msgid "Cover picture crop preview"
+msgstr "Cover picture crop preview"
+
+#: src/components/Settings/Profile/Profile.tsx
 msgid "Celebrate pride every day"
 msgstr ""
 
@@ -1984,6 +2063,10 @@ msgstr ""
 msgid "Allowance"
 msgstr ""
 
+#: src/components/Settings/Sidebar.tsx
+msgid "Export"
+msgstr "Export"
+
 #: src/components/Shared/Alert/DeletePublication.tsx
 msgid "Publication deleted successfully"
 msgstr "Publication deleted successfully"
@@ -1999,6 +2082,10 @@ msgstr "This can't be undone and it will be removed from your profile, the timel
 #: src/components/Shared/Attachments.tsx
 msgid "Open Image in new tab"
 msgstr ""
+
+#: src/components/Shared/Attachments.tsx
+msgid "Cancel Upload"
+msgstr "Cancel Upload"
 
 #: src/components/Shared/Audio/index.tsx
 msgid "Invalid audio title"
@@ -2152,6 +2239,7 @@ msgid "Sign up to {APP_NAME}"
 msgstr ""
 
 #: src/components/Shared/Login/New/index.tsx
+#: src/components/StaffTools/Panels/Profile.tsx
 msgid "Handle"
 msgstr ""
 
@@ -2521,13 +2609,113 @@ msgstr ""
 msgid "Swap in Uniswap"
 msgstr ""
 
+#: src/components/StaffTools/Panels/Profile.tsx
+#: src/components/StaffTools/Panels/Publication.tsx
+msgid "Staff tool"
+msgstr "Staff tool"
+
+#: src/components/StaffTools/Panels/Profile.tsx
+msgid "{APP_NAME} account"
+msgstr "{APP_NAME} account"
+
+#: src/components/StaffTools/Panels/Profile.tsx
+msgid "Profile ID"
+msgstr "Profile ID"
+
+#: src/components/StaffTools/Panels/Profile.tsx
+msgid "Address"
+msgstr "Address"
+
+#: src/components/StaffTools/Panels/Profile.tsx
+msgid "Can use relay"
+msgstr "Can use relay"
+
+#: src/components/StaffTools/Panels/Profile.tsx
+msgid "NFT address"
+msgstr "NFT address"
+
+#: src/components/StaffTools/Panels/Profile.tsx
+msgid "Follow module"
+msgstr "Follow module"
+
+#: src/components/StaffTools/Panels/Profile.tsx
+msgid "Metadata"
+msgstr "Metadata"
+
+#: src/components/StaffTools/Panels/Profile.tsx
+#: src/components/StaffTools/Panels/Publication.tsx
+msgid "Open"
+msgstr "Open"
+
+#: src/components/StaffTools/Panels/Publication.tsx
+msgid "Publication ID"
+msgstr "Publication ID"
+
+#: src/components/StaffTools/Panels/Publication.tsx
+msgid "Comment on"
+msgstr "Comment on"
+
+#: src/components/StaffTools/Panels/Publication.tsx
+msgid "Collect module"
+msgstr "Collect module"
+
+#: src/components/StaffTools/Panels/Publication.tsx
+msgid "App ID"
+msgstr "App ID"
+
+#: src/components/StaffTools/Panels/Publication.tsx
+msgid "On-chain content URI"
+msgstr "On-chain content URI"
+
+#: src/components/StaffTools/RelayQueues.tsx
+msgid "Transactions"
+msgstr "Transactions"
+
 #: src/components/StaffTools/RelayQueues.tsx
 msgid "Stafftools | Relay queues • {APP_NAME}"
 msgstr "Stafftools | Relay queues • {APP_NAME}"
 
+#: src/components/StaffTools/RelayQueues.tsx
+#: src/components/StaffTools/Sidebar.tsx
+msgid "Relay queues"
+msgstr "Relay queues"
+
+#: src/components/StaffTools/Sidebar.tsx
+#: src/components/StaffTools/Stats/index.tsx
+msgid "Stats"
+msgstr "Stats"
+
 #: src/components/StaffTools/Stats/index.tsx
 msgid "Stafftools | Stats • {APP_NAME}"
 msgstr "Stafftools | Stats • {APP_NAME}"
+
+#: src/components/StaffTools/Stats/index.tsx
+msgid "total profiles"
+msgstr "total profiles"
+
+#: src/components/StaffTools/Stats/index.tsx
+msgid "profiles burnt"
+msgstr "profiles burnt"
+
+#: src/components/StaffTools/Stats/index.tsx
+msgid "total posts"
+msgstr "total posts"
+
+#: src/components/StaffTools/Stats/index.tsx
+msgid "total mirrors"
+msgstr "total mirrors"
+
+#: src/components/StaffTools/Stats/index.tsx
+msgid "total comments"
+msgstr "total comments"
+
+#: src/components/StaffTools/Stats/index.tsx
+msgid "total collects"
+msgstr "total collects"
+
+#: src/components/StaffTools/Stats/index.tsx
+msgid "total follows"
+msgstr "total follows"
 
 #: src/components/utils/hooks/useUploadAttachments.tsx
 msgid "Image size should be less than 10MB"

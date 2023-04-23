@@ -105,7 +105,7 @@ const CleanupSettings: NextPage = () => {
                   <Trans>Note: Cleaning will log you out</Trans>
                 </div>
               </div>
-              <Button onClick={() => cleanup(Localstorage.BCharityStore)}>
+              <Button onClick={() => cleanup(Localstorage.LensterStore)}>
                 <Trans>Cleanup</Trans>
               </Button>
             </div>

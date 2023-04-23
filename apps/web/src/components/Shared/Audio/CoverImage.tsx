@@ -1,5 +1,5 @@
 import { PhotographIcon } from '@heroicons/react/outline';
-import uploadToIPFS from '@lib/uploadToIPFS';
+import { uploadFileToIPFS } from '@lib/uploadToIPFS';
 import clsx from 'clsx';
 import { ATTACHMENT } from 'data/constants';
 import Errors from 'data/errors';
@@ -10,7 +10,7 @@ import { useState } from 'react';
 import toast from 'react-hot-toast';
 import { Image, Spinner } from 'ui';
 
-interface Props {
+interface CoverImageProps {
   isNew: boolean;
   cover: string;
   setCover: (url: string, mimeType: string) => void;
@@ -18,7 +18,7 @@ interface Props {
   expandCover: (url: string) => void;
 }
 
-const CoverImage: FC<Props> = ({ isNew = false, cover, setCover, imageRef, expandCover }) => {
+const CoverImage: FC<CoverImageProps> = ({ isNew = false, cover, setCover, imageRef, expandCover }) => {
   const [loading, setLoading] = useState(false);
 
   const onError = (error: any) => {
@@ -26,12 +26,12 @@ const CoverImage: FC<Props> = ({ isNew = false, cover, setCover, imageRef, expan
     setLoading(false);
   };
 
-  const onChange = async (e: ChangeEvent<HTMLInputElement>) => {
-    if (e.target.files?.length) {
+  const onChange = async (event: ChangeEvent<HTMLInputElement>) => {
+    if (event.target.files?.length) {
       try {
         setLoading(true);
-        const attachment = await uploadToIPFS(e.target.files);
-        setCover(attachment[0].item, attachment[0].type);
+        const attachment = await uploadFileToIPFS(event.target.files[0]);
+        setCover(attachment.original.url, attachment.original.mimeType);
       } catch (error) {
         onError(error);
       }
@@ -39,7 +39,7 @@ const CoverImage: FC<Props> = ({ isNew = false, cover, setCover, imageRef, expan
   };
 
   return (
-    <div className="relative flex-none overflow-hidden group">
+    <div className="group relative flex-none overflow-hidden">
       <button
         type="button"
         className="flex focus:outline-none"
@@ -50,7 +50,7 @@ const CoverImage: FC<Props> = ({ isNew = false, cover, setCover, imageRef, expan
             currentTarget.src = cover ? sanitizeDStorageUrl(cover) : cover;
           }}
           src={cover ? imageProxy(sanitizeDStorageUrl(cover), ATTACHMENT) : cover}
-          className="object-cover md:w-40 md:h-40 h-24 w-24 rounded-xl md:rounded-none"
+          className="h-24 w-24 rounded-xl object-cover md:h-40 md:w-40 md:rounded-none"
           draggable={false}
           alt={`attachment-audio-cover-${cover}`}
           data-testid={`attachment-audio-cover-${cover}`}
@@ -61,14 +61,14 @@ const CoverImage: FC<Props> = ({ isNew = false, cover, setCover, imageRef, expan
         <label
           className={clsx(
             { visible: loading && !cover, invisible: cover },
-            'absolute top-0 grid md:w-40 md:h-40 h-24 w-24 bg-gray-100 dark:bg-gray-900 cursor-pointer place-items-center group-hover:visible backdrop-blur-lg'
+            'absolute top-0 grid h-24 w-24 cursor-pointer place-items-center bg-gray-100 backdrop-blur-lg group-hover:visible dark:bg-gray-900 md:h-40 md:w-40'
           )}
         >
           {loading && !cover ? (
             <Spinner size="sm" />
           ) : (
-            <div className="text-sm dark:text-white text-black flex flex-col opacity-60 items-center">
-              <PhotographIcon className="w-5 h-5" />
+            <div className="flex flex-col items-center text-sm text-black opacity-60 dark:text-white">
+              <PhotographIcon className="h-5 w-5" />
               <span>Add cover</span>
             </div>
           )}

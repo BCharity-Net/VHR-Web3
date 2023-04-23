@@ -94,7 +94,8 @@ export const FRESHDESK_WORKER_URL = IS_PRODUCTION ? 'https://freshdesk.bcharity.
 
 // Web3
 export const ALCHEMY_KEY = 'HHfOFn8jsYguteTVvL0cz4g9aydrbjTV'
-export const WALLETCONNECT_PROJECT_ID = 'cd542acc70c2b548030f9901a52e70c8'
+export const WALLETCONNECT_PROJECT_ID = '2fd8d306dd6193fc7a64a4d8e23c3c65'
+export const LIVEPEER_TOKEN = '72730749-1f34-4b16-b9f0-27bd4e05113e'
 export const ALCHEMY_RPC = IS_MAINNET
   ? `https://polygon-mainnet.g.alchemy.com/v2/${ALCHEMY_KEY}`
   : `https://polygon-mumbai.g.alchemy.com/v2/${ALCHEMY_KEY}`

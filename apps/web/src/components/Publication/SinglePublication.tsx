@@ -41,6 +41,7 @@ const SinglePublication: FC<Props> = ({
         }
       }}
       data-testid={`publication-${publication.id}`}
+      aria-hidden="true"
     >
       {feedItem ? (
         <ActionType feedItem={feedItem} />

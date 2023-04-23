@@ -1,20 +1,25 @@
-import clsx from 'clsx'
-import type { Profile } from 'lens'
-import { useMutualFollowersQuery } from 'lens'
-import formatHandle from 'lib/formatHandle'
-import getAvatar from 'lib/getAvatar'
-import type { Dispatch, FC, ReactNode } from 'react'
-import { useAppStore } from 'src/store/app'
-import { Image } from 'ui'
+import { Trans } from '@lingui/macro';
+import clsx from 'clsx';
+import type { Profile } from 'lens';
+import { useMutualFollowersQuery } from 'lens';
+import formatHandle from 'lib/formatHandle';
+import getAvatar from 'lib/getAvatar';
+import type { Dispatch, FC, ReactNode } from 'react';
+import { useAppStore } from 'src/store/app';
+import { Image } from 'ui';
 
-interface Props {
-  setShowMutualFollowersModal?: Dispatch<boolean>
-  profile: Profile
-  variant?: 'xs' | 'sm'
+interface MutualFollowersProps {
+  setShowMutualFollowersModal?: Dispatch<boolean>;
+  profile: Profile;
+  variant?: 'xs' | 'sm';
 }
 
-const MutualFollowers: FC<Props> = ({ setShowMutualFollowersModal, profile, variant = 'sm' }) => {
-  const currentProfile = useAppStore((state) => state.currentProfile)
+const MutualFollowers: FC<MutualFollowersProps> = ({
+  setShowMutualFollowersModal,
+  profile,
+  variant = 'sm'
+}) => {
+  const currentProfile = useAppStore((state) => state.currentProfile);
 
   const { data, loading, error } = useMutualFollowersQuery({
     variables: {
@@ -25,24 +30,25 @@ const MutualFollowers: FC<Props> = ({ setShowMutualFollowersModal, profile, vari
       }
     },
     skip: !profile?.id || !currentProfile?.id
-  })
+  });
 
-  const profiles = data?.mutualFollowersProfiles?.items ?? []
-  const totalCount = data?.mutualFollowersProfiles?.pageInfo?.totalCount ?? 0
+  const profiles = data?.mutualFollowersProfiles?.items ?? [];
+  const totalCount = data?.mutualFollowersProfiles?.pageInfo?.totalCount ?? 0;
 
   const Wrapper = ({ children }: { children: ReactNode }) => (
     <div
-    className={clsx('text-gray-500 flex items-center space-x-2.5 cursor-pointer', {
-      'text-sm': variant === 'sm',
-      'text-xs': variant === 'xs'
-    })}
+      className={clsx('lt-text-gray-500 flex cursor-pointer items-center space-x-2.5', {
+        'text-sm': variant === 'sm',
+        'text-xs': variant === 'xs'
+      })}
       onClick={() => setShowMutualFollowersModal?.(true)}
+      aria-hidden="true"
     >
       <div className="contents -space-x-2">
         {profiles?.map((profile) => (
           <Image
             key={profile.handle}
-            className="w-5 h-5 rounded-full border dark:border-gray-700/80"
+            className="h-5 w-5 rounded-full border dark:border-gray-700"
             onError={({ currentTarget }) => {
               currentTarget.src = getAvatar(profile, false);
             }}
@@ -52,40 +58,42 @@ const MutualFollowers: FC<Props> = ({ setShowMutualFollowersModal, profile, vari
         ))}
       </div>
       <div>
-        <span>Followed by </span>
+        <span>
+          <Trans>Followed by</Trans>{' '}
+        </span>
         {children}
       </div>
     </div>
-  )
+  );
 
   if (totalCount === 0 || loading || error) {
-    return null
+    return null;
   }
 
-  const profileOne = profiles[0]
-  const profileTwo = profiles[1]
-  const profileThree = profiles[2]
+  const profileOne = profiles[0];
+  const profileTwo = profiles[1];
+  const profileThree = profiles[2];
 
   if (profiles?.length === 1) {
     return (
       <Wrapper>
         <span>{profileOne?.name ?? formatHandle(profileOne?.handle)}</span>
       </Wrapper>
-    )
+    );
   }
 
   if (profiles?.length === 2) {
     return (
       <Wrapper>
-        <span>{profileOne?.name ?? formatHandle(profileOne?.handle)}, </span>
+        <span>{profileOne?.name ?? formatHandle(profileOne?.handle)} and </span>
         <span>{profileTwo?.name ?? formatHandle(profileTwo?.handle)}</span>
       </Wrapper>
-    )
+    );
   }
 
   if (profiles?.length === 3) {
-    const calculatedCount = totalCount - 3
-    const isZero = calculatedCount === 0
+    const calculatedCount = totalCount - 3;
+    const isZero = calculatedCount === 0;
 
     return (
       <Wrapper>
@@ -101,10 +109,10 @@ const MutualFollowers: FC<Props> = ({ setShowMutualFollowersModal, profile, vari
           </span>
         )}
       </Wrapper>
-    )
+    );
   }
 
-  return null
-}
+  return null;
+};
 
-export default MutualFollowers
+export default MutualFollowers;

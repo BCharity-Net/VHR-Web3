@@ -8,7 +8,7 @@ msgstr ""
 "Language: fr\n"
 "Project-Id-Version: lenster\n"
 "Report-Msgid-Bugs-To: \n"
-"PO-Revision-Date: 2023-04-16 16:10\n"
+"PO-Revision-Date: 2023-04-23 16:31\n"
 "Last-Translator: \n"
 "Language-Team: French\n"
 "Plural-Forms: nplurals=2; plural=(n > 1);\n"
@@ -20,19 +20,19 @@ msgstr ""
 
 #: src/components/Comment/Feed.tsx
 msgid "Be the first one to comment!"
-msgstr ""
+msgstr "Soyez le premier à laisser un commentaire !"
 
 #: src/components/Comment/Feed.tsx
 msgid "Failed to load comment feed"
-msgstr ""
+msgstr "Échec du chargement des commentaires"
 
 #: src/components/Comment/NoneRelevantFeed.tsx
 msgid "Hide more comments"
-msgstr ""
+msgstr "Masquer plus de commentaires"
 
 #: src/components/Comment/NoneRelevantFeed.tsx
 msgid "Show more comments"
-msgstr ""
+msgstr "Afficher plus de commentaires"
 
 #: src/components/Composer/Actions/AccessSettings/BasicSettings.tsx
 msgid "Add restrictions on who can view this post"
@@ -52,7 +52,7 @@ msgstr ""
 
 #: src/components/Composer/Actions/AccessSettings/BasicSettings.tsx
 msgid "Followers can view"
-msgstr ""
+msgstr "Les abonnés peuvent voir"
 
 #: src/components/Composer/Actions/AccessSettings/BasicSettings.tsx
 msgid "People need to follow you to be able to view it"
@@ -62,7 +62,7 @@ msgstr ""
 #: src/components/Composer/Actions/CollectSettings/CollectForm.tsx
 #: src/components/Profile/NftGallery/Gallery.tsx
 msgid "Cancel"
-msgstr ""
+msgstr "Annuler"
 
 #: src/components/Composer/Actions/AccessSettings/BasicSettings.tsx
 #: src/components/Composer/Actions/CollectSettings/CollectForm.tsx
@@ -77,7 +77,7 @@ msgstr ""
 
 #: src/components/Composer/Actions/AccessSettings/index.tsx
 msgid "Access settings"
-msgstr ""
+msgstr "Accéder aux paramètres"
 
 #: src/components/Composer/Actions/AccessSettings/index.tsx
 msgid "Add restrictions on who can view your content, and who can't. For instance - token gate your posts on the condition of owning specific NFTs or tokens."
@@ -92,6 +92,7 @@ msgid "File format not allowed."
 msgstr ""
 
 #: src/components/Composer/Actions/Attachment.tsx
+#: src/components/utils/hooks/useUploadAttachments.tsx
 msgid "Something went wrong while uploading!"
 msgstr ""
 
@@ -119,7 +120,7 @@ msgstr ""
 
 #: src/components/Composer/Actions/CollectSettings/CollectForm.tsx
 msgid "Failed to load modules"
-msgstr ""
+msgstr "Échec du chargement des modules"
 
 #: src/components/Composer/Actions/CollectSettings/CollectForm.tsx
 msgid "This post can be collected"
@@ -127,7 +128,7 @@ msgstr ""
 
 #: src/components/Composer/Actions/CollectSettings/CollectLimitConfig.tsx
 msgid "Limited edition"
-msgstr ""
+msgstr "Édition limitée"
 
 #: src/components/Composer/Actions/CollectSettings/CollectLimitConfig.tsx
 msgid "Make the collects exclusive"
@@ -135,7 +136,7 @@ msgstr ""
 
 #: src/components/Composer/Actions/CollectSettings/CollectLimitConfig.tsx
 msgid "Collect limit"
-msgstr ""
+msgstr "Limite de collecte"
 
 #: src/components/Composer/Actions/CollectSettings/FollowersConfig.tsx
 msgid "Who can collect"
@@ -215,7 +216,7 @@ msgstr ""
 
 #: src/components/Composer/Actions/ReferenceSettings/index.tsx
 msgid "Everyone"
-msgstr ""
+msgstr "Tout le monde"
 
 #: src/components/Composer/Actions/ReferenceSettings/index.tsx
 msgid "My followers can comment and mirror"
@@ -231,6 +232,24 @@ msgstr ""
 
 #: src/components/Composer/Actions/ReferenceSettings/index.tsx
 msgid "Everyone can comment and mirror"
+msgstr ""
+
+#: src/components/Composer/ChooseThumbnail.tsx
+#: src/components/Composer/ChooseThumbnail.tsx
+msgid "Failed to upload thumbnail"
+msgstr ""
+
+#: src/components/Composer/ChooseThumbnail.tsx
+msgid "Please upload a custom thumbnail"
+msgstr ""
+
+#: src/components/Composer/ChooseThumbnail.tsx
+msgid "Choose Thumbnail"
+msgstr ""
+
+#: src/components/Composer/ChooseThumbnail.tsx
+#: src/components/Settings/Profile/Profile.tsx
+msgid "Upload"
 msgstr ""
 
 #: src/components/Composer/Editor/index.tsx
@@ -252,11 +271,12 @@ msgid "Transaction failed!"
 msgstr ""
 
 #: src/components/Composer/NewPublication.tsx
-msgid "[cta]Comment"
+#: src/components/Publication/Actions/Comment.tsx
+msgid "Comment"
 msgstr ""
 
 #: src/components/Composer/NewPublication.tsx
-msgid "[cta]Post"
+msgid "Post"
 msgstr ""
 
 #: src/components/Composer/Post/New.tsx
@@ -419,7 +439,7 @@ msgstr ""
 
 #: src/components/Home/SeeThroughLens.tsx
 msgid "Search"
-msgstr ""
+msgstr "Rechercher"
 
 #: src/components/Home/SeeThroughLens.tsx
 msgid "Reset filter to your own feed"
@@ -433,7 +453,7 @@ msgstr ""
 #: src/components/Home/SeeThroughLens.tsx
 #: src/components/Shared/Navbar/Search.tsx
 msgid "No matching users"
-msgstr ""
+msgstr "Aucun utilisateur correspondant"
 
 #: src/components/Home/SetDefaultProfile.tsx
 msgid "Set default profile"
@@ -520,7 +540,7 @@ msgstr ""
 
 #: src/components/Messages/Composer.tsx
 msgid "Error sending message"
-msgstr ""
+msgstr "Erreur lors de l'envoi du message"
 
 #: src/components/Messages/Composer.tsx
 msgid "Type Something"
@@ -528,11 +548,11 @@ msgstr ""
 
 #: src/components/Messages/Composer.tsx
 msgid "Send"
-msgstr ""
+msgstr "Envoyer"
 
 #: src/components/Messages/Message.tsx
 msgid "Loading messages"
-msgstr ""
+msgstr "Chargement des messages"
 
 #: src/components/Messages/MessagesList.tsx
 msgid "This fren hasn't enabled DMs yet"
@@ -566,11 +586,11 @@ msgstr ""
 
 #: src/components/Messages/PreviewList.tsx
 msgid "Loading conversations"
-msgstr ""
+msgstr "Chargement des conversations"
 
 #: src/components/Messages/PreviewList.tsx
 msgid "Failed to load messages"
-msgstr ""
+msgstr "Échec du chargement des messages"
 
 #: src/components/Messages/PreviewList.tsx
 msgid "Start messaging your Lens frens"
@@ -578,7 +598,7 @@ msgstr ""
 
 #: src/components/Messages/PreviewList.tsx
 msgid "New message"
-msgstr ""
+msgstr "Nouveau message"
 
 #: src/components/Messages/PreviewList.tsx
 msgid "Search for someone to message..."
@@ -586,7 +606,7 @@ msgstr ""
 
 #: src/components/Messages/index.tsx
 msgid "Select a conversation"
-msgstr ""
+msgstr "Sélectionnez une conversation"
 
 #: src/components/Messages/index.tsx
 msgid "Choose an existing conversation or create a new one to start messaging"
@@ -764,11 +784,11 @@ msgstr ""
 
 #: src/components/Pages/Contact.tsx
 msgid "Message should not be empty"
-msgstr ""
+msgstr "Le message ne doit pas être vide"
 
 #: src/components/Pages/Contact.tsx
 msgid "Message should not exceed 1000 characters"
-msgstr ""
+msgstr "Le message ne doit pas dépasser 1000 caractères"
 
 #: src/components/Pages/Contact.tsx
 msgid "Contact • {APP_NAME}"
@@ -1421,10 +1441,6 @@ msgstr ""
 msgid "{0} Comments"
 msgstr ""
 
-#: src/components/Publication/Actions/Comment.tsx
-msgid "Comment"
-msgstr ""
-
 #: src/components/Publication/Actions/Like.tsx
 msgid "Dislike"
 msgstr ""
@@ -1670,6 +1686,7 @@ msgid "Request Verification"
 msgstr ""
 
 #: src/components/Settings/Account/index.tsx
+#: src/components/Settings/Export/index.tsx
 msgid "Account settings • {APP_NAME}"
 msgstr ""
 
@@ -1678,7 +1695,11 @@ msgid "Allow"
 msgstr ""
 
 #: src/components/Settings/Allowance/Button.tsx
-msgid "Module {0} successfully!"
+msgid "Module disabled successfully!"
+msgstr ""
+
+#: src/components/Settings/Allowance/Button.tsx
+msgid "Module enabled successfully!"
 msgstr ""
 
 #: src/components/Settings/Allowance/Button.tsx
@@ -1839,6 +1860,62 @@ msgstr ""
 msgid "Dispatcher • {APP_NAME}"
 msgstr ""
 
+#: src/components/Settings/Export/Notifications.tsx
+msgid "Export notifications"
+msgstr ""
+
+#: src/components/Settings/Export/Notifications.tsx
+msgid "Export all your notifications to a JSON file."
+msgstr ""
+
+#: src/components/Settings/Export/Notifications.tsx
+msgid "Exported <0>{0}</0> notifications"
+msgstr ""
+
+#: src/components/Settings/Export/Notifications.tsx
+msgid "Download notifications"
+msgstr ""
+
+#: src/components/Settings/Export/Notifications.tsx
+#: src/components/Settings/Export/Profile.tsx
+#: src/components/Settings/Export/Publications.tsx
+msgid "Exporting..."
+msgstr ""
+
+#: src/components/Settings/Export/Notifications.tsx
+#: src/components/Settings/Export/Profile.tsx
+#: src/components/Settings/Export/Publications.tsx
+msgid "Export now"
+msgstr ""
+
+#: src/components/Settings/Export/Profile.tsx
+msgid "Export profile"
+msgstr ""
+
+#: src/components/Settings/Export/Profile.tsx
+msgid "Export all your profile data to a JSON file."
+msgstr ""
+
+#: src/components/Settings/Export/Profile.tsx
+msgid "Download profile"
+msgstr ""
+
+#: src/components/Settings/Export/Publications.tsx
+msgid "Export publications"
+msgstr ""
+
+#: src/components/Settings/Export/Publications.tsx
+msgid "Export all your posts, comments and mirrors to a JSON file."
+msgstr ""
+
+#: src/components/Settings/Export/Publications.tsx
+msgid "Exported <0>{0}</0> publications"
+msgstr ""
+
+#: src/components/Settings/Export/Publications.tsx
+msgid "Download publications"
+msgstr ""
+
 #: src/components/Settings/Interests/index.tsx
 msgid "Interests settings • {APP_NAME}"
 msgstr ""
@@ -1881,10 +1958,12 @@ msgid "Token Id"
 msgstr ""
 
 #: src/components/Settings/Profile/Picture.tsx
+#: src/components/Settings/Profile/Profile.tsx
 msgid "Upload failed"
 msgstr ""
 
 #: src/components/Settings/Profile/Picture.tsx
+#: src/components/Settings/Profile/Profile.tsx
 msgid "Crop image"
 msgstr ""
 
@@ -1941,6 +2020,10 @@ msgid "Tell us something about you!"
 msgstr ""
 
 #: src/components/Settings/Profile/Profile.tsx
+msgid "Cover picture crop preview"
+msgstr ""
+
+#: src/components/Settings/Profile/Profile.tsx
 msgid "Celebrate pride every day"
 msgstr ""
 
@@ -1980,6 +2063,10 @@ msgstr ""
 msgid "Allowance"
 msgstr ""
 
+#: src/components/Settings/Sidebar.tsx
+msgid "Export"
+msgstr ""
+
 #: src/components/Shared/Alert/DeletePublication.tsx
 msgid "Publication deleted successfully"
 msgstr ""
@@ -1994,6 +2081,10 @@ msgstr ""
 
 #: src/components/Shared/Attachments.tsx
 msgid "Open Image in new tab"
+msgstr ""
+
+#: src/components/Shared/Attachments.tsx
+msgid "Cancel Upload"
 msgstr ""
 
 #: src/components/Shared/Audio/index.tsx
@@ -2148,6 +2239,7 @@ msgid "Sign up to {APP_NAME}"
 msgstr ""
 
 #: src/components/Shared/Login/New/index.tsx
+#: src/components/StaffTools/Panels/Profile.tsx
 msgid "Handle"
 msgstr ""
 
@@ -2517,12 +2609,112 @@ msgstr ""
 msgid "Swap in Uniswap"
 msgstr ""
 
+#: src/components/StaffTools/Panels/Profile.tsx
+#: src/components/StaffTools/Panels/Publication.tsx
+msgid "Staff tool"
+msgstr ""
+
+#: src/components/StaffTools/Panels/Profile.tsx
+msgid "{APP_NAME} account"
+msgstr ""
+
+#: src/components/StaffTools/Panels/Profile.tsx
+msgid "Profile ID"
+msgstr ""
+
+#: src/components/StaffTools/Panels/Profile.tsx
+msgid "Address"
+msgstr ""
+
+#: src/components/StaffTools/Panels/Profile.tsx
+msgid "Can use relay"
+msgstr ""
+
+#: src/components/StaffTools/Panels/Profile.tsx
+msgid "NFT address"
+msgstr ""
+
+#: src/components/StaffTools/Panels/Profile.tsx
+msgid "Follow module"
+msgstr ""
+
+#: src/components/StaffTools/Panels/Profile.tsx
+msgid "Metadata"
+msgstr ""
+
+#: src/components/StaffTools/Panels/Profile.tsx
+#: src/components/StaffTools/Panels/Publication.tsx
+msgid "Open"
+msgstr ""
+
+#: src/components/StaffTools/Panels/Publication.tsx
+msgid "Publication ID"
+msgstr ""
+
+#: src/components/StaffTools/Panels/Publication.tsx
+msgid "Comment on"
+msgstr ""
+
+#: src/components/StaffTools/Panels/Publication.tsx
+msgid "Collect module"
+msgstr ""
+
+#: src/components/StaffTools/Panels/Publication.tsx
+msgid "App ID"
+msgstr ""
+
+#: src/components/StaffTools/Panels/Publication.tsx
+msgid "On-chain content URI"
+msgstr ""
+
+#: src/components/StaffTools/RelayQueues.tsx
+msgid "Transactions"
+msgstr ""
+
 #: src/components/StaffTools/RelayQueues.tsx
 msgid "Stafftools | Relay queues • {APP_NAME}"
 msgstr ""
 
+#: src/components/StaffTools/RelayQueues.tsx
+#: src/components/StaffTools/Sidebar.tsx
+msgid "Relay queues"
+msgstr ""
+
+#: src/components/StaffTools/Sidebar.tsx
+#: src/components/StaffTools/Stats/index.tsx
+msgid "Stats"
+msgstr ""
+
 #: src/components/StaffTools/Stats/index.tsx
 msgid "Stafftools | Stats • {APP_NAME}"
+msgstr ""
+
+#: src/components/StaffTools/Stats/index.tsx
+msgid "total profiles"
+msgstr ""
+
+#: src/components/StaffTools/Stats/index.tsx
+msgid "profiles burnt"
+msgstr ""
+
+#: src/components/StaffTools/Stats/index.tsx
+msgid "total posts"
+msgstr ""
+
+#: src/components/StaffTools/Stats/index.tsx
+msgid "total mirrors"
+msgstr ""
+
+#: src/components/StaffTools/Stats/index.tsx
+msgid "total comments"
+msgstr ""
+
+#: src/components/StaffTools/Stats/index.tsx
+msgid "total collects"
+msgstr ""
+
+#: src/components/StaffTools/Stats/index.tsx
+msgid "total follows"
 msgstr ""
 
 #: src/components/utils/hooks/useUploadAttachments.tsx

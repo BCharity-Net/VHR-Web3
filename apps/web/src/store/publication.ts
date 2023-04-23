@@ -18,6 +18,14 @@ interface PublicationState {
   addAttachments: (attachments: NewBCharityAttachment[]) => void;
   updateAttachments: (attachments: NewBCharityAttachment[]) => void;
   removeAttachments: (ids: string[]) => void;
+  videoThumbnail: {
+    url?: string;
+    type?: string;
+    uploading?: boolean;
+  };
+  setVideoThumbnail: (videoThumbnail: { url?: string; type?: string; uploading?: boolean }) => void;
+  videoDurationInSeconds: string;
+  setVideoDurationInSeconds: (videoDurationInSeconds: string) => void;
   isUploading: boolean;
   setIsUploading: (isUploading: boolean) => void;
 }
@@ -57,6 +65,10 @@ export const usePublicationStore = create<PublicationState>((set) => ({
       });
       return { attachments };
     }),
+  videoThumbnail: { url: '', type: '', uploading: false },
+  setVideoThumbnail: (videoThumbnail) => set(() => ({ videoThumbnail })),
+  videoDurationInSeconds: '',
+  setVideoDurationInSeconds: (videoDurationInSeconds) => set(() => ({ videoDurationInSeconds })),
   isUploading: false,
   setIsUploading: (isUploading) => set(() => ({ isUploading }))
 }));

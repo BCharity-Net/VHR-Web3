@@ -106,6 +106,7 @@ const Search: FC<Props> = ({
                       setSearchText('')
                     }}
                     data-testid={`search-profile-${formatHandle(profile?.handle)}`}
+                    aria-hidden="true"
                   >
                     <UserProfile
                       linkToProfile={!onProfileSelected}

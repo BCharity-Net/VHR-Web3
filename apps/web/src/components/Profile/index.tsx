@@ -94,7 +94,7 @@ const ViewProfile: NextPage = () => {
     <>
       <Modal show={showFollowModal} onClose={() => setShowFollowModal(false)}>
         <FollowDialog
-          profile={profile as any}
+          profile={profile as Profile}
           setFollowing={setFollowing}
           setShowFollowModal={setShowFollowModal}
         />
@@ -119,18 +119,18 @@ const ViewProfile: NextPage = () => {
               id={profile?.id}
               setFeedType={setFeedType}
               feedType={feedType}
-              profile={profile as any}
+              profile={profile as Profile}
             />
             {isVerified(profile?.id) ? (
               feedType === 'org' ? (
-                <OrganizationFeed profile={profile as any} />
+                <OrganizationFeed profile={profile as Profile} />
               ) : (
-                feedType === 'org-opp' && <OpportunitiesOrgFeed profile={profile as any} />
+                feedType === 'org-opp' && <OpportunitiesOrgFeed profile={profile as Profile} />
               )
             ) : feedType === 'vhr' ? (
               <HourFeed profile={profile as any} />
             ) : (
-              feedType === 'opp' && <OpportunitiesFeed profile={profile as any} />
+              feedType === 'opp' && <OpportunitiesFeed profile={profile as Profile} />
             )}
           </GridItemTwelve>
         ) : (
@@ -144,7 +144,7 @@ const ViewProfile: NextPage = () => {
                 id={profile?.id}
                 setFeedType={setFeedType}
                 feedType={feedType}
-                profile={profile as any}
+                profile={profile as Profile}
               />
               {(feedType === ProfileFeedType.Feed ||
                 feedType === ProfileFeedType.Replies ||

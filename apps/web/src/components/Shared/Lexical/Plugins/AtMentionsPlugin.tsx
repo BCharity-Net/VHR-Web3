@@ -114,9 +114,10 @@ const MentionsTypeaheadMenuItem: FC<Props> = ({ isSelected, onClick, onMouseEnte
       className="cursor-pointer"
       ref={option.setRefElement}
       role="option"
-      aria-selected={isSelected}
       onMouseEnter={onMouseEnter}
       onClick={onClick}
+      aria-selected={isSelected}
+      aria-hidden="true"
     >
       <div
         className={clsx(

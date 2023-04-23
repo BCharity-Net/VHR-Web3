@@ -3,7 +3,12 @@ import { AudioPublicationSchema } from '@components/Shared/Audio';
 import withLexicalContext from '@components/Shared/Lexical/withLexicalContext';
 import type { IGif } from '@giphy/js-types';
 import { ChatAlt2Icon, PencilAltIcon } from '@heroicons/react/outline';
-import type { CollectCondition, EncryptedMetadata, FollowCondition } from '@lens-protocol/sdk-gated';
+import type {
+  CollectCondition,
+  EncryptedMetadata,
+  FollowCondition,
+  LensEnvironment
+} from '@lens-protocol/sdk-gated';
 import { LensGatedSDK } from '@lens-protocol/sdk-gated';
 import type {
   AccessConditionOutput,
@@ -33,6 +38,7 @@ import type {
   CreatePublicCommentRequest,
   MetadataAttributeInput,
   Publication,
+  PublicationMetadataMediaInput,
   PublicationMetadataV2Input
 } from 'lens';
 import {
@@ -61,7 +67,7 @@ import { usePublicationStore } from 'src/store/publication';
 import { useReferenceModuleStore } from 'src/store/reference-module';
 import { useTransactionPersistStore } from 'src/store/transaction';
 import { PUBLICATION } from 'src/tracking';
-import type { BCharityAttachment } from 'src/types';
+import type { NewBCharityAttachment } from 'src/types';
 import { Button, Card, ErrorMessage, Spinner } from 'ui';
 import { v4 as uuid } from 'uuid';
 import { useContractWrite, useProvider, useSigner, useSignTypedData } from 'wagmi';
@@ -103,6 +109,9 @@ const NewPublication: FC<NewPublicationProps> = ({ publication }) => {
   const setAttachments = usePublicationStore((state) => state.setAttachments);
   const addAttachments = usePublicationStore((state) => state.addAttachments);
   const isUploading = usePublicationStore((state) => state.isUploading);
+  const videoThumbnail = usePublicationStore((state) => state.videoThumbnail);
+  const setVideoThumbnail = usePublicationStore((state) => state.setVideoThumbnail);
+  const videoDurationInSeconds = usePublicationStore((state) => state.videoDurationInSeconds);
 
   // Transaction persist store
   const txnQueue = useTransactionPersistStore((state) => state.txnQueue);
@@ -132,7 +141,8 @@ const NewPublication: FC<NewPublicationProps> = ({ publication }) => {
   const { data: signer } = useSigner();
 
   const isComment = Boolean(publication);
-  const isAudioPublication = ALLOWED_AUDIO_TYPES.includes(attachments[0]?.type);
+  const hasAudio = ALLOWED_AUDIO_TYPES.includes(attachments[0]?.original.mimeType);
+  const hasVideo = ALLOWED_VIDEO_TYPES.includes(attachments[0]?.original.mimeType);
 
   const onCompleted = (__typename?: 'RelayError' | 'RelayerResult') => {
     if (__typename === 'RelayError') {
@@ -144,6 +154,11 @@ const NewPublication: FC<NewPublicationProps> = ({ publication }) => {
     });
     setPublicationContent('');
     setAttachments([]);
+    setVideoThumbnail({
+      url: '',
+      type: '',
+      uploading: false
+    });
     resetCollectSettings();
     resetAccessSettings();
     if (!isComment) {
@@ -161,7 +176,7 @@ const NewPublication: FC<NewPublicationProps> = ({ publication }) => {
           : null,
       publication_has_attachments: attachments.length > 0,
       publication_attachment_types:
-        attachments.length > 0 ? attachments.map((attachment) => attachment.type) : null
+        attachments.length > 0 ? attachments.map((attachment) => attachment.original.mimeType) : null
     };
     Mixpanel.track(isComment ? PUBLICATION.NEW_COMMENT : PUBLICATION.NEW_POST, eventProperties);
   };
@@ -310,11 +325,11 @@ const NewPublication: FC<NewPublicationProps> = ({ publication }) => {
 
   const getMainContentFocus = () => {
     if (attachments.length > 0) {
-      if (isAudioPublication) {
+      if (hasAudio) {
         return PublicationMainFocus.Audio;
-      } else if (ALLOWED_IMAGE_TYPES.includes(attachments[0]?.type)) {
+      } else if (ALLOWED_IMAGE_TYPES.includes(attachments[0]?.original.mimeType)) {
         return PublicationMainFocus.Image;
-      } else if (ALLOWED_VIDEO_TYPES.includes(attachments[0]?.type)) {
+      } else if (hasVideo) {
         return PublicationMainFocus.Video;
       } else {
         return PublicationMainFocus.TextOnly;
@@ -325,22 +340,27 @@ const NewPublication: FC<NewPublicationProps> = ({ publication }) => {
   };
 
   const getAnimationUrl = () => {
-    if (
-      attachments.length > 0 &&
-      (isAudioPublication || ALLOWED_VIDEO_TYPES.includes(attachments[0]?.type))
-    ) {
-      return attachments[0]?.item;
+    if (attachments.length > 0 && (hasAudio || hasVideo)) {
+      return attachments[0]?.original.url;
     }
 
     return null;
   };
 
   const getAttachmentImage = () => {
-    return isAudioPublication ? audioPublication.cover : attachments[0]?.item;
+    return hasAudio ? audioPublication.cover : hasVideo ? videoThumbnail.url : attachments[0]?.original.url;
   };
 
   const getAttachmentImageMimeType = () => {
-    return isAudioPublication ? audioPublication.coverMimeType : attachments[0]?.type;
+    return hasAudio ? audioPublication.coverMimeType : attachments[0]?.original.mimeType;
+  };
+
+  const getTitlePrefix = () => {
+    if (hasVideo) {
+      return 'Video';
+    }
+
+    return isComment ? 'Comment' : 'Post';
   };
 
   const createTokenGatedMetadata = async (metadata: PublicationMetadataV2Input) => {
@@ -354,15 +374,15 @@ const NewPublication: FC<NewPublicationProps> = ({ publication }) => {
 
     // Create the SDK instance
     const tokenGatedSdk = await LensGatedSDK.create({
-      provider,
+      provider: provider as any,
       signer,
-      env: LIT_PROTOCOL_ENVIRONMENT as any
+      env: LIT_PROTOCOL_ENVIRONMENT as LensEnvironment
     });
 
     // Connect to the SDK
     await tokenGatedSdk.connect({
       address: currentProfile.ownedBy,
-      env: LIT_PROTOCOL_ENVIRONMENT as any
+      env: LIT_PROTOCOL_ENVIRONMENT as LensEnvironment
     });
 
     // Condition for gating the content
@@ -405,7 +425,7 @@ const NewPublication: FC<NewPublicationProps> = ({ publication }) => {
 
     try {
       setLoading(true);
-      if (isAudioPublication) {
+      if (hasAudio) {
         setPublicationContentError('');
         const parsedData = AudioPublicationSchema.safeParse(audioPublication);
         if (!parsedData.success) {
@@ -433,10 +453,19 @@ const NewPublication: FC<NewPublicationProps> = ({ publication }) => {
           traitType: 'type',
           displayType: PublicationMetadataDisplayTypes.String,
           value: getMainContentFocus()?.toLowerCase()
-        }
+        },
+        ...(hasVideo
+          ? [
+              {
+                traitType: 'durationInSeconds',
+                displayType: PublicationMetadataDisplayTypes.String,
+                value: videoDurationInSeconds
+              }
+            ]
+          : [])
       ];
 
-      if (isAudioPublication) {
+      if (hasAudio) {
         attributes.push({
           traitType: 'author',
           displayType: PublicationMetadataDisplayTypes.String,
@@ -444,17 +473,17 @@ const NewPublication: FC<NewPublicationProps> = ({ publication }) => {
         });
       }
 
-      const attachmentsInput: BCharityAttachment[] = attachments.map((attachment) => ({
-        type: attachment.type,
-        altTag: attachment.altTag,
-        item: attachment.item!
+      const attachmentsInput: PublicationMetadataMediaInput[] = attachments.map((attachment) => ({
+        item: attachment.original.url,
+        type: attachment.original.mimeType,
+        altTag: attachment.original.altTag
       }));
 
       const metadata: PublicationMetadataV2Input = {
         version: '2.0.0',
         metadata_id: uuid(),
         content: publicationContent,
-        external_url: `https://bcharity-test.vercel.app/u/${currentProfile?.handle}`,
+        external_url: `https://lenster.xyz/u/${currentProfile?.handle}`,
         image: attachmentsInput.length > 0 ? getAttachmentImage() : textNftImageUrl,
         imageMimeType:
           attachmentsInput.length > 0
@@ -462,9 +491,7 @@ const NewPublication: FC<NewPublicationProps> = ({ publication }) => {
             : textNftImageUrl
             ? 'image/svg+xml'
             : null,
-        name: isAudioPublication
-          ? audioPublication.title
-          : `${isComment ? 'Comment' : 'Post'} by @${currentProfile?.handle}`,
+        name: hasAudio ? audioPublication.title : `${getTitlePrefix()} by @${currentProfile?.handle}`,
         tags: getTags(publicationContent),
         animation_url: getAnimationUrl(),
         mainContentFocus: getMainContentFocus(),
@@ -524,11 +551,14 @@ const NewPublication: FC<NewPublicationProps> = ({ publication }) => {
   };
 
   const setGifAttachment = (gif: IGif) => {
-    const attachment = {
+    const attachment: NewBCharityAttachment = {
       id: uuid(),
-      item: gif.images.original.url,
-      type: 'image/gif',
-      altTag: gif.title
+      previewItem: gif.images.original.url,
+      original: {
+        url: gif.images.original.url,
+        mimeType: 'image/gif',
+        altTag: gif.title
+      }
     };
     addAttachments([attachment]);
   };
@@ -552,7 +582,7 @@ const NewPublication: FC<NewPublicationProps> = ({ publication }) => {
         </div>
         <div className="ml-auto pt-2 sm:pt-0">
           <Button
-            disabled={isLoading || isUploading}
+            disabled={isLoading || isUploading || videoThumbnail.uploading}
             icon={
               isLoading ? (
                 <Spinner size="xs" />
@@ -564,9 +594,7 @@ const NewPublication: FC<NewPublicationProps> = ({ publication }) => {
             }
             onClick={createPublication}
           >
-            {isComment
-              ? t({ id: '[cta]Comment', message: 'Comment' })
-              : t({ id: '[cta]Post', message: 'Post' })}
+            {isComment ? t`Comment` : t`Post`}
           </Button>
         </div>
       </div>

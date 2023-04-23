@@ -1,5 +1,6 @@
 import MetaTags from '@components/Common/MetaTags';
 import { Mixpanel } from '@lib/mixpanel';
+import { t } from '@lingui/macro';
 import { APP_NAME } from 'data/constants';
 import type { NextPage } from 'next';
 import { useEffect } from 'react';
@@ -24,7 +25,7 @@ const PreferencesSettings: NextPage = () => {
 
   return (
     <GridLayout>
-      <MetaTags title={`Preferences • ${APP_NAME}`} />
+      <MetaTags title={t`Preferences • ${APP_NAME}`} />
       <GridItemFour>
         <SettingsSidebar />
       </GridItemFour>

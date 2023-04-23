@@ -4,17 +4,17 @@
   "license": "MIT",
   "scripts": {
     "typecheck": "tsc --pretty --noEmit",
-    "lint": "eslint . --ext .ts",
-    "lint:fix": "eslint . --fix --ext .ts"
+    "lint": "eslint . --ext .ts,.tsx",
+    "lint:fix": "eslint . --fix --ext .ts,.tsx"
   },
   "dependencies": {
     "normalize-wheel": "^1.0.1",
     "rc-slider": "^10.1.1"
   },
   "devDependencies": {
-    "@types/node": "^18.15.11",
+    "@types/node": "^18.15.13",
     "@types/normalize-wheel": "^1.0.1",
-    "@types/react": "^18.0.35",
+    "@types/react": "^18.0.38",
     "eslint-config-weblint": "*",
     "tsconfig": "*",
     "typescript": "^5.0.4"

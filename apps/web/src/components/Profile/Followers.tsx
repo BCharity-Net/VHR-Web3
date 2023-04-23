@@ -9,6 +9,7 @@ import type { FC } from 'react'
 import { useState } from 'react'
 import { useInView } from 'react-cool-inview'
 import { useTranslation } from 'react-i18next'
+import { useAppStore } from 'src/store/app'
 import { FollowSource } from 'src/tracking'
 import { EmptyState, ErrorMessage } from 'ui'
 
@@ -19,6 +20,7 @@ interface Props {
 const Followers: FC<Props> = ({ profile }) => {
   const { t } = useTranslation('common')
   const [hasMore, setHasMore] = useState(true)
+  const currentProfile = useAppStore((state) => state.currentProfile)
 
   // Variables
   const request: FollowersRequest = { profileId: profile?.id, limit: 30 }
@@ -77,7 +79,7 @@ const Followers: FC<Props> = ({ profile }) => {
                 followPosition={index + 1}
                 followSource={FollowSource.FOLLOWERS_MODAL}
                 showBio
-                showFollow
+                showFollow={currentProfile?.id !== follower?.wallet?.defaultProfile?.id}
                 showUserPreview={false}
               />
             ) : (

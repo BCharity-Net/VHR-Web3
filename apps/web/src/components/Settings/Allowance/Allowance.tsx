@@ -1,14 +1,14 @@
-import type { ApprovedAllowanceAmount, ApprovedModuleAllowanceAmountQuery } from 'lens'
-import { CollectModules } from 'lens'
-import type { FC } from 'react'
+import type { ApprovedAllowanceAmount, ApprovedModuleAllowanceAmountQuery } from 'lens';
+import { CollectModules } from 'lens';
+import type { FC } from 'react';
 
-import Module from './Module'
+import Module from './Module';
 
-interface Props {
-  allowance: ApprovedModuleAllowanceAmountQuery | undefined
+interface AllowanceProps {
+  allowance: ApprovedModuleAllowanceAmountQuery | undefined;
 }
 
-const Allowance: FC<Props> = ({ allowance }) => {
+const Allowance: FC<AllowanceProps> = ({ allowance }) => {
   return (
     <div className="space-y-4 p-5">
       {allowance?.approvedModuleAllowanceAmount?.map((item: ApprovedAllowanceAmount) =>
@@ -20,7 +20,7 @@ const Allowance: FC<Props> = ({ allowance }) => {
         )
       )}
     </div>
-  )
-}
+  );
+};
 
-export default Allowance
+export default Allowance;

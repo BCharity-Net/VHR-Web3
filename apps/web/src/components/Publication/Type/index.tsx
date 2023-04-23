@@ -25,7 +25,7 @@ const PublicationType: FC<Props> = ({ publication, showType, showThread }) => {
   }
 
   return (
-    <span onClick={stopEventPropagation}>
+    <span onClick={stopEventPropagation} aria-hidden="true">
       {type === 'Mirror' && <Mirrored publication={publication} />}
       {type === 'Comment' && pathname === '/posts/[id]' && publicationType !== 'group post' && (
         <Commented publication={publication} />

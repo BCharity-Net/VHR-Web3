@@ -13,11 +13,11 @@ import {
 import { PencilAltIcon } from '@heroicons/react/solid';
 import { getTimeAddedNDayUnix, getTimeMinusNDayUnix } from '@lib/formatTime';
 import { Mixpanel } from '@lib/mixpanel';
-import { t } from '@lingui/macro';
+import { t, Trans } from '@lingui/macro';
 import clsx from 'clsx';
 import { APP_NAME } from 'data/constants';
 import Errors from 'data/errors';
-import { useBCharityStatsQuery } from 'lens';
+import { useLensterStatsQuery } from 'lens';
 import humanize from 'lib/humanize';
 import type { NextPage } from 'next';
 import type { FC, ReactNode } from 'react';
@@ -77,11 +77,11 @@ const Stats: NextPage = () => {
     Mixpanel.track(PAGEVIEW, { page: 'stafftools', subpage: 'stats' });
   }, []);
 
-  const { data, loading, error } = useBCharityStatsQuery({
+  const { data, loading, error } = useLensterStatsQuery({
     variables: { request: { sources: [APP_NAME] } }
   });
 
-  const { data: todayData, loading: todayLoading } = useBCharityStatsQuery({
+  const { data: todayData, loading: todayLoading } = useLensterStatsQuery({
     variables: {
       request: {
         sources: [APP_NAME],
@@ -91,7 +91,7 @@ const Stats: NextPage = () => {
     }
   });
 
-  const { data: yesterdayData, loading: yesterdayLoading } = useBCharityStatsQuery({
+  const { data: yesterdayData, loading: yesterdayLoading } = useLensterStatsQuery({
     variables: {
       request: {
         sources: [APP_NAME],
@@ -125,28 +125,30 @@ const Stats: NextPage = () => {
             </div>
           ) : (
             <section className="space-y-3">
-              <h1 className="mb-4 text-xl font-bold">Stats</h1>
+              <h1 className="mb-4 text-xl font-bold">
+                <Trans>Stats</Trans>
+              </h1>
               <div className="block justify-between space-y-3 sm:flex sm:space-x-3 sm:space-y-0">
                 <StatBox
                   icon={<UsersIcon className="h-6 w-6" />}
                   value={stats?.totalProfiles}
                   todayValue={todayStats?.totalProfiles}
                   differenceValue={yesterdayStats?.totalProfiles - todayStats?.totalProfiles}
-                  title="total profiles"
+                  title={t`total profiles`}
                 />
                 <StatBox
                   icon={<FireIcon className="h-6 w-6" />}
                   value={stats?.totalBurntProfiles}
                   todayValue={todayStats?.totalBurntProfiles}
                   differenceValue={yesterdayStats?.totalBurntProfiles - todayStats?.totalBurntProfiles}
-                  title="profiles burnt"
+                  title={t`profiles burnt`}
                 />
                 <StatBox
                   icon={<PencilAltIcon className="h-6 w-6" />}
                   value={stats?.totalPosts}
                   todayValue={todayStats?.totalPosts}
                   differenceValue={yesterdayStats?.totalPosts - todayStats?.totalPosts}
-                  title="total posts"
+                  title={t`total posts`}
                 />
               </div>
               <div className="block justify-between space-y-3 sm:flex sm:space-x-3 sm:space-y-0">
@@ -155,14 +157,14 @@ const Stats: NextPage = () => {
                   value={stats?.totalMirrors}
                   todayValue={todayStats?.totalMirrors}
                   differenceValue={yesterdayStats?.totalMirrors - todayStats?.totalMirrors}
-                  title="total mirrors"
+                  title={t`total mirrors`}
                 />
                 <StatBox
                   icon={<ChatAlt2Icon className="h-6 w-6" />}
                   value={stats?.totalComments}
                   todayValue={todayStats?.totalComments}
                   differenceValue={yesterdayStats?.totalComments - todayStats?.totalComments}
-                  title="total comments"
+                  title={t`total comments`}
                 />
               </div>
               <div className="block justify-between space-y-3 sm:flex sm:space-x-3 sm:space-y-0">
@@ -171,14 +173,14 @@ const Stats: NextPage = () => {
                   value={stats?.totalCollects}
                   todayValue={todayStats?.totalCollects}
                   differenceValue={yesterdayStats?.totalCollects - todayStats?.totalCollects}
-                  title="total collects"
+                  title={t`total collects`}
                 />
                 <StatBox
                   icon={<UserAddIcon className="h-6 w-6" />}
                   value={stats?.totalFollows}
                   todayValue={todayStats?.totalFollows}
                   differenceValue={yesterdayStats?.totalFollows - todayStats?.totalFollows}
-                  title="total follows"
+                  title={t`total follows`}
                 />
               </div>
             </section>

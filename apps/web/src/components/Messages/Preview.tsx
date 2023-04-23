@@ -34,6 +34,7 @@ const Preview: FC<Props> = ({ profile, message, conversationKey, isSelected }) =
         isSelected && 'bg-gray-50 dark:bg-gray-700'
       )}
       onClick={() => onConversationSelected(profile.id)}
+      aria-hidden="true"
     >
       <div className="flex justify-between space-x-3 px-5">
         <Image

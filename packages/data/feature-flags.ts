@@ -8,7 +8,8 @@ export enum FeatureFlag {
   NftGallery = 'nft-gallery',
   NftDetail = 'nft-detail',
   GatedLocales = 'gated-locales',
-  PublicationAnalytics = 'publication-analytics'
+  PublicationAnalytics = 'publication-analytics',
+  ExportData = 'export-data'
 }
 
 export const featureFlags = [
@@ -59,6 +60,11 @@ export const featureFlags = [
   {
     key: FeatureFlag.PublicationAnalytics,
     name: 'Publication Analytics',
+    enabledFor: [...mainnetStaffs]
+  },
+  {
+    key: FeatureFlag.ExportData,
+    name: 'Export Data Settings',
     enabledFor: [...mainnetStaffs]
   }
 ]

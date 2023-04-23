@@ -1,57 +1,53 @@
-import { ExclamationIcon, MinusIcon, PlusIcon } from '@heroicons/react/outline'
-import { Mixpanel } from '@lib/mixpanel'
-import { getModule } from '@lib/getModule'
-import onError from '@lib/onError'
-import type { ApprovedAllowanceAmount } from 'lens'
-import { useGenerateModuleCurrencyApprovalDataLazyQuery } from 'lens'
-import type { Dispatch, FC } from 'react'
-import { useState } from 'react'
-import toast from 'react-hot-toast'
-import { SETTINGS } from 'src/tracking'
-import { useTranslation } from 'react-i18next'
-import { Button, Modal, Spinner, WarningMessage } from 'ui'
-import { useSendTransaction, useWaitForTransaction } from 'wagmi'
+import { ExclamationIcon, MinusIcon, PlusIcon } from '@heroicons/react/outline';
+import { getModule } from '@lib/getModule';
+import { Mixpanel } from '@lib/mixpanel';
+import onError from '@lib/onError';
+import { t, Trans } from '@lingui/macro';
+import type { ApprovedAllowanceAmount } from 'lens';
+import { useGenerateModuleCurrencyApprovalDataLazyQuery } from 'lens';
+import type { Dispatch, FC } from 'react';
+import { useState } from 'react';
+import toast from 'react-hot-toast';
+import { SETTINGS } from 'src/tracking';
+import { Button, Modal, Spinner, WarningMessage } from 'ui';
+import { useSendTransaction, useWaitForTransaction } from 'wagmi';
 
-interface Props {
-  title?: string
-  module: ApprovedAllowanceAmount
-  allowed: boolean
-  setAllowed: Dispatch<boolean>
+interface AllowanceButtonProps {
+  title?: string;
+  module: ApprovedAllowanceAmount;
+  allowed: boolean;
+  setAllowed: Dispatch<boolean>;
 }
 
-const AllowanceButton: FC<Props> = ({ title = 'Allow', module, allowed, setAllowed }) => {
-  const { t } = useTranslation('common')
-  const [showWarningModal, setShowWarningModal] = useState(false)
+const AllowanceButton: FC<AllowanceButtonProps> = ({ title = t`Allow`, module, allowed, setAllowed }) => {
+  const [showWarningModal, setShowWarningModal] = useState(false);
   const [generateAllowanceQuery, { loading: queryLoading }] =
-    useGenerateModuleCurrencyApprovalDataLazyQuery()
-
-  // const { config } = usePrepareSendTransaction({
-  //   request: {}
-  // })
+    useGenerateModuleCurrencyApprovalDataLazyQuery();
 
   const {
     data: txData,
     isLoading: transactionLoading,
     sendTransaction
   } = useSendTransaction({
-    // ...config,
+    request: {},
     mode: 'recklesslyUnprepared',
     onError
-  })
+  });
+
   const { isLoading: waitLoading } = useWaitForTransaction({
     hash: txData?.hash,
     onSuccess: () => {
-      toast.success(`Module ${allowed ? 'disabled' : 'enabled'} successfully!`)
-      setShowWarningModal(false)
-      setAllowed(!allowed)
+      toast.success(allowed ? t`Module disabled successfully!` : t`Module enabled successfully!`);
+      setShowWarningModal(false);
+      setAllowed(!allowed);
       Mixpanel.track(SETTINGS.ALLOWANCE.TOGGLE, {
         allowance_module: module.module,
         allowance_currency: module.currency,
         allowance_allowed: !allowed
-      })
+      });
     },
     onError
-  })
+  });
 
   const handleAllowance = (currencies: string, value: string, selectedModule: string) => {
     generateAllowanceQuery({
@@ -63,16 +59,16 @@ const AllowanceButton: FC<Props> = ({ title = 'Allow', module, allowed, setAllow
         }
       }
     }).then((res) => {
-      const data = res?.data?.generateModuleCurrencyApprovalData
+      const data = res?.data?.generateModuleCurrencyApprovalData;
       sendTransaction?.({
         recklesslySetUnpreparedRequest: {
           from: data?.from,
           to: data?.to,
           data: data?.data
         }
-      })
-    })
-  }
+      });
+    });
+  };
 
   return allowed ? (
     <Button
@@ -81,31 +77,33 @@ const AllowanceButton: FC<Props> = ({ title = 'Allow', module, allowed, setAllow
         queryLoading || transactionLoading || waitLoading ? (
           <Spinner variant="warning" size="xs" />
         ) : (
-          <MinusIcon className="w-4 h-4" />
+          <MinusIcon className="h-4 w-4" />
         )
       }
       onClick={() => handleAllowance(module.currency, '0', module.module)}
     >
-      {t('Revoke')}
+      <Trans>Revoke</Trans>
     </Button>
   ) : (
     <>
-      <Button icon={<PlusIcon className="w-4 h-4" />} onClick={() => setShowWarningModal(!showWarningModal)}>
+      <Button icon={<PlusIcon className="h-4 w-4" />} onClick={() => setShowWarningModal(!showWarningModal)}>
         {title}
       </Button>
       <Modal
-        title="Warning"
-        icon={<ExclamationIcon className="w-5 h-5 text-yellow-500" />}
+        title={t`Warning`}
+        icon={<ExclamationIcon className="h-5 w-5 text-yellow-500" />}
         show={showWarningModal}
         onClose={() => setShowWarningModal(false)}
       >
-        <div className="p-5 space-y-3">
+        <div className="space-y-3 p-5">
           <WarningMessage
-            title={t('Handle with care')}
+            title={t`Handle with care!`}
             message={
               <div className="leading-6">
-                {t('Care 1')}
-                <b>{t('Collect')}</b>,<b> {t('fund')}</b> {t('And')} <b>{t('Super follow')}</b>.
+                <Trans>
+                  Please be aware that by allowing this module, the amount indicated will be automatically
+                  deducted when you <b>collect</b> and <b>super follow</b>.
+                </Trans>
               </div>
             }
           />
@@ -114,7 +112,7 @@ const AllowanceButton: FC<Props> = ({ title = 'Allow', module, allowed, setAllow
               queryLoading || transactionLoading || waitLoading ? (
                 <Spinner size="xs" />
               ) : (
-                <PlusIcon className="w-4 h-4" />
+                <PlusIcon className="h-4 w-4" />
               )
             }
             onClick={() =>
@@ -126,7 +124,7 @@ const AllowanceButton: FC<Props> = ({ title = 'Allow', module, allowed, setAllow
         </div>
       </Modal>
     </>
-  )
-}
+  );
+};
 
-export default AllowanceButton
+export default AllowanceButton;

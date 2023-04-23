@@ -1,75 +1,87 @@
-import Sidebar from '@components/Shared/Sidebar'
-import UserProfile from '@components/Shared/UserProfile'
+import Sidebar from '@components/Shared/Sidebar';
+import UserProfile from '@components/Shared/UserProfile';
 import {
   AdjustmentsIcon,
   BookmarkIcon,
   ChipIcon,
+  DatabaseIcon,
   ExclamationIcon,
   FingerPrintIcon,
   ShareIcon,
   SparklesIcon,
   UserIcon
-} from '@heroicons/react/outline'
-import type { Profile } from 'lens'
-import type { FC } from 'react'
-import { useTranslation } from 'react-i18next'
-import { useAppStore } from 'src/store/app'
+} from '@heroicons/react/outline';
+import { t, Trans } from '@lingui/macro';
+import { FeatureFlag } from 'data';
+import type { Profile } from 'lens';
+import isFeatureEnabled from 'lib/isFeatureEnabled';
+import type { FC } from 'react';
+import { useAppStore } from 'src/store/app';
 
 const SettingsSidebar: FC = () => {
-  const { t } = useTranslation('common')
-  const currentProfile = useAppStore((state) => state.currentProfile)
+  const currentProfile = useAppStore((state) => state.currentProfile);
 
   return (
-    <div className="px-3 mb-4 space-y-1.5 sm:px-0">
+    <div className="mb-4 space-y-1.5 px-3 sm:px-0">
       <div className="pb-3">
         <UserProfile profile={currentProfile as Profile} showUserPreview={false} />
       </div>
       <Sidebar
         items={[
           {
-            title: 'Profile',
-            icon: <UserIcon className="w-4 h-4" />,
+            title: t`Profile`,
+            icon: <UserIcon className="h-4 w-4" />,
             url: '/settings'
           },
           {
-            title: 'Account',
-            icon: <ChipIcon className="w-4 h-4" />,
+            title: t`Account`,
+            icon: <ChipIcon className="h-4 w-4" />,
             url: '/settings/account'
           },
           {
             title: t`Preferences`,
-            icon: <AdjustmentsIcon className="w-4 h-4" />,
+            icon: <AdjustmentsIcon className="h-4 w-4" />,
             url: '/settings/preferences'
           },
           {
-            title: 'Interests',
-            icon: <BookmarkIcon className="w-4 h-4" />,
+            title: t`Interests`,
+            icon: <BookmarkIcon className="h-4 w-4" />,
             url: '/settings/interests'
           },
           {
-            title: 'Dispatcher',
-            icon: <FingerPrintIcon className="w-4 h-4" />,
+            title: t`Dispatcher`,
+            icon: <FingerPrintIcon className="h-4 w-4" />,
             url: '/settings/dispatcher'
           },
           {
-            title: 'Allowance',
-            icon: <ShareIcon className="w-4 h-4" />,
+            title: t`Allowance`,
+            icon: <ShareIcon className="h-4 w-4" />,
             url: '/settings/allowance'
           },
           {
-            title: 'Cleanup',
-            icon: <SparklesIcon className="w-4 h-4" />,
+            title: t`Cleanup`,
+            icon: <SparklesIcon className="h-4 w-4" />,
             url: '/settings/cleanup'
           },
           {
-            title: <div className="text-red-500">Danger Zone</div>,
-            icon: <ExclamationIcon className="w-4 h-4 text-red-500" />,
+            title: t`Export`,
+            icon: <DatabaseIcon className="h-4 w-4" />,
+            url: '/settings/export',
+            enabled: isFeatureEnabled(FeatureFlag.ExportData, currentProfile?.id)
+          },
+          {
+            title: (
+              <div className="text-red-500">
+                <Trans>Danger Zone</Trans>
+              </div>
+            ),
+            icon: <ExclamationIcon className="h-4 w-4 text-red-500" />,
             url: '/settings/delete'
           }
         ]}
       />
     </div>
-  )
-}
+  );
+};
 
-export default SettingsSidebar
+export default SettingsSidebar;

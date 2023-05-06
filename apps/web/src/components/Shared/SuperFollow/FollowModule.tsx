@@ -1,7 +1,6 @@
 import AllowanceButton from '@components/Settings/Allowance/Button';
 import { StarIcon, UserIcon } from '@heroicons/react/outline';
 import { Mixpanel } from '@lib/mixpanel';
-import onError from '@lib/onError';
 import splitSignature from '@lib/splitSignature';
 import { t, Trans } from '@lingui/macro';
 import { LensHub } from 'abis';
@@ -26,7 +25,12 @@ import toast from 'react-hot-toast';
 import { useAppStore } from 'src/store/app';
 import { PROFILE } from 'src/tracking';
 import { Button, Spinner, WarningMessage } from 'ui';
-import { useAccount, useBalance, useContractWrite, useSignTypedData } from 'wagmi';
+import {
+  useAccount,
+  useBalance,
+  useContractWrite,
+  useSignTypedData
+} from 'wagmi';
 
 import Loader from '../Loader';
 import Slug from '../Slug';
@@ -55,15 +59,16 @@ const FollowModule: FC<FollowModuleProps> = ({
   const userSigNonce = useAppStore((state) => state.userSigNonce);
   const setUserSigNonce = useAppStore((state) => state.setUserSigNonce);
   const currentProfile = useAppStore((state) => state.currentProfile);
+  const [isLoading, setIsLoading] = useState(false);
   const [allowed, setAllowed] = useState(true);
   const { address } = useAccount();
-  const { isLoading: signLoading, signTypedDataAsync } = useSignTypedData({ onError });
 
   const onCompleted = (__typename?: 'RelayError' | 'RelayerResult') => {
     if (__typename === 'RelayError') {
       return;
     }
 
+    setIsLoading(false);
     setFollowing(true);
     setShowFollowModal(false);
     toast.success(t`Followed successfully!`);
@@ -75,7 +80,15 @@ const FollowModule: FC<FollowModuleProps> = ({
     });
   };
 
-  const { isLoading: writeLoading, write } = useContractWrite({
+  const onError = (error: any) => {
+    setIsLoading(false);
+    toast.error(
+      error?.data?.message ?? error?.message ?? Errors.SomethingWentWrong
+    );
+  };
+
+  const { signTypedDataAsync } = useSignTypedData({ onError });
+  const { write } = useContractWrite({
     address: LENSHUB_PROXY,
     abi: LensHub,
     functionName: 'followWithSig',
@@ -91,20 +104,21 @@ const FollowModule: FC<FollowModuleProps> = ({
 
   const followModule: any = data?.profile?.followModule;
 
-  const { data: allowanceData, loading: allowanceLoading } = useApprovedModuleAllowanceAmountQuery({
-    variables: {
-      request: {
-        currencies: followModule?.amount?.asset?.address,
-        followModules: [FollowModules.FeeFollowModule],
-        collectModules: [],
-        referenceModules: []
+  const { data: allowanceData, loading: allowanceLoading } =
+    useApprovedModuleAllowanceAmountQuery({
+      variables: {
+        request: {
+          currencies: followModule?.amount?.asset?.address,
+          followModules: [FollowModules.FeeFollowModule],
+          collectModules: [],
+          referenceModules: []
+        }
+      },
+      skip: !followModule?.amount?.asset?.address || !currentProfile,
+      onCompleted: ({ approvedModuleAllowanceAmount }) => {
+        setAllowed(approvedModuleAllowanceAmount[0]?.allowance !== '0x00');
       }
-    },
-    skip: !followModule?.amount?.asset?.address || !currentProfile,
-    onCompleted: ({ approvedModuleAllowanceAmount }) => {
-      setAllowed(approvedModuleAllowanceAmount[0]?.allowance !== '0x00');
-    }
-  });
+    });
 
   const { data: balanceData } = useBalance({
     address: currentProfile?.ownedBy,
@@ -114,16 +128,19 @@ const FollowModule: FC<FollowModuleProps> = ({
   });
   let hasAmount = false;
 
-  if (balanceData && parseFloat(balanceData?.formatted) < parseFloat(followModule?.amount?.value)) {
+  if (
+    balanceData &&
+    parseFloat(balanceData?.formatted) < parseFloat(followModule?.amount?.value)
+  ) {
     hasAmount = false;
   } else {
     hasAmount = true;
   }
 
-  const [broadcast, { loading: broadcastLoading }] = useBroadcastMutation({
+  const [broadcast] = useBroadcastMutation({
     onCompleted: ({ broadcast }) => onCompleted(broadcast.__typename)
   });
-  const [createFollowTypedData, { loading: typedDataLoading }] = useCreateFollowTypedDataMutation({
+  const [createFollowTypedData] = useCreateFollowTypedDataMutation({
     onCompleted: async ({ createFollowTypedData }) => {
       const { id, typedData } = createFollowTypedData;
       const { profileIds, datas: followData, deadline } = typedData.value;
@@ -137,7 +154,9 @@ const FollowModule: FC<FollowModuleProps> = ({
         sig
       };
       setUserSigNonce(userSigNonce + 1);
-      const { data } = await broadcast({ variables: { request: { id, signature } } });
+      const { data } = await broadcast({
+        variables: { request: { id, signature } }
+      });
       if (data?.broadcast.__typename === 'RelayError') {
         return write?.({ recklesslySetUnpreparedArgs: [inputStruct] });
       }
@@ -151,7 +170,8 @@ const FollowModule: FC<FollowModuleProps> = ({
     }
 
     try {
-      await createFollowTypedData({
+      setIsLoading(true);
+      return await createFollowTypedData({
         variables: {
           options: { overrideSigNonce: userSigNonce },
           request: {
@@ -171,7 +191,9 @@ const FollowModule: FC<FollowModuleProps> = ({
           }
         }
       });
-    } catch {}
+    } catch (error) {
+      onError(error);
+    }
   };
 
   if (loading) {
@@ -182,9 +204,12 @@ const FollowModule: FC<FollowModuleProps> = ({
     <div className="p-5">
       <div className="space-y-1.5 pb-2">
         <div className="text-lg font-bold">
-          Super follow <Slug slug={formatHandle(profile?.handle)} prefix="@" /> {again ? 'again' : ''}
+          Super follow <Slug slug={formatHandle(profile?.handle)} prefix="@" />{' '}
+          {again ? 'again' : ''}
         </div>
-        <div className="lt-text-gray-500">Follow {again ? 'again' : ''} and get some awesome perks!</div>
+        <div className="lt-text-gray-500">
+          Follow {again ? 'again' : ''} and get some awesome perks!
+        </div>
       </div>
       <div className="flex items-center space-x-1.5 py-2">
         <img
@@ -196,7 +221,9 @@ const FollowModule: FC<FollowModuleProps> = ({
           title={followModule?.amount?.asset?.name}
         />
         <span className="space-x-1">
-          <span className="text-2xl font-bold">{followModule?.amount?.value}</span>
+          <span className="text-2xl font-bold">
+            {followModule?.amount?.value}
+          </span>
           <span className="text-xs">{followModule?.amount?.asset?.symbol}</span>
         </span>
       </div>
@@ -222,25 +249,35 @@ const FollowModule: FC<FollowModuleProps> = ({
           <li className="flex space-x-2 leading-6 tracking-normal">
             <div>•</div>
             <div>
-              <Trans>You can comment on @{formatHandle(profile?.handle)}'s publications</Trans>
+              <Trans>
+                You can comment on @{formatHandle(profile?.handle)}'s
+                publications
+              </Trans>
             </div>
           </li>
           <li className="flex space-x-2 leading-6 tracking-normal">
             <div>•</div>
             <div>
-              <Trans>You can collect @{formatHandle(profile?.handle)}'s publications</Trans>
+              <Trans>
+                You can collect @{formatHandle(profile?.handle)}'s publications
+              </Trans>
             </div>
           </li>
           <li className="flex space-x-2 leading-6 tracking-normal">
             <div>•</div>
             <div>
-              <Trans>You will get super follow badge in @{formatHandle(profile?.handle)}'s profile</Trans>
+              <Trans>
+                You will get super follow badge in @
+                {formatHandle(profile?.handle)}'s profile
+              </Trans>
             </div>
           </li>
           <li className="flex space-x-2 leading-6 tracking-normal">
             <div>•</div>
             <div>
-              <Trans>You will have high voting power if you followed multiple times</Trans>
+              <Trans>
+                You will have high voting power if you followed multiple times
+              </Trans>
             </div>
           </li>
           <li className="flex space-x-2 leading-6 tracking-normal">
@@ -261,9 +298,9 @@ const FollowModule: FC<FollowModuleProps> = ({
               variant="super"
               outline
               onClick={createFollow}
-              disabled={typedDataLoading || signLoading || writeLoading || broadcastLoading}
+              disabled={isLoading}
               icon={
-                typedDataLoading || signLoading || writeLoading || broadcastLoading ? (
+                isLoading ? (
                   <Spinner variant="super" size="xs" />
                 ) : (
                   <StarIcon className="h-4 w-4" />
@@ -273,13 +310,19 @@ const FollowModule: FC<FollowModuleProps> = ({
               {again ? t`Super follow again` : t`Super follow now`}
             </Button>
           ) : (
-            <WarningMessage className="mt-5" message={<Uniswap module={followModule} />} />
+            <WarningMessage
+              className="mt-5"
+              message={<Uniswap module={followModule} />}
+            />
           )
         ) : (
           <div className="mt-5">
             <AllowanceButton
               title={t`Allow follow module`}
-              module={allowanceData?.approvedModuleAllowanceAmount[0] as ApprovedAllowanceAmount}
+              module={
+                allowanceData
+                  ?.approvedModuleAllowanceAmount[0] as ApprovedAllowanceAmount
+              }
               allowed={allowed}
               setAllowed={setAllowed}
             />

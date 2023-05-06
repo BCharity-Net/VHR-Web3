@@ -1,9 +1,9 @@
 import { AssumeRoleCommand, STSClient } from '@aws-sdk/client-sts';
 
-type EnvType = {
+interface EnvType {
   EVER_ACCESS_KEY: string;
   EVER_ACCESS_SECRET: string;
-};
+}
 
 const headers = {
   'Access-Control-Allow-Origin': '*',
@@ -60,7 +60,10 @@ async function handleRequest(request: Request, env: EnvType) {
       { headers }
     );
   } catch {
-    return new Response(JSON.stringify({ success: false, message: 'Something went wrong!' }), { headers });
+    return new Response(
+      JSON.stringify({ success: false, message: 'Something went wrong!' }),
+      { headers }
+    );
   }
 }
 
@@ -68,4 +71,4 @@ export default {
   async fetch(request: Request, env: EnvType) {
     return await handleRequest(request, env);
   }
-}
+};

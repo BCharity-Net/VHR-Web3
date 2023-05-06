@@ -10,6 +10,7 @@
 
 - [Cloudflare Workers](https://workers.cloudflare.com/) - Serverless platform
 - [Node.js](https://nodejs.org/en/) - JavaScript runtime
+- [GraphQL](https://graphql.org/) - GraphQL API
 
 ## Testing
 

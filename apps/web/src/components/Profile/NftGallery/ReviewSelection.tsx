@@ -1,5 +1,6 @@
-import SingleNFT from '@components/NFT/SingleNFT';
+import SingleNft from '@components/Nft/SingleNft';
 import { CollectionIcon, XIcon } from '@heroicons/react/outline';
+import { t } from '@lingui/macro';
 import type { Nft } from 'lens';
 import React from 'react';
 import type { NftGalleryItem } from 'src/store/nft-gallery';
@@ -33,7 +34,8 @@ const ReviewSelection = () => {
     nfts.splice(index, 1);
 
     const sanitizeRemoveDuplicates = toRemove?.filter(
-      (value, index, self) => index === self.findIndex((t) => t.itemId === value.itemId)
+      (value, index, self) =>
+        index === self.findIndex((t) => t.itemId === value.itemId)
     );
 
     setGallery({
@@ -50,7 +52,7 @@ const ReviewSelection = () => {
       <div className="p-10">
         <EmptyState
           hideCard
-          message={`No collectables selected!`}
+          message={t`No collectables selected!`}
           icon={<CollectionIcon className="text-brand h-8 w-8" />}
         />
       </div>
@@ -68,7 +70,7 @@ const ReviewSelection = () => {
             >
               <XIcon className="h-6 w-6 rounded-full bg-white p-1 text-black" />
             </button>
-            <SingleNFT nft={item as Nft} linkToDetail={false} />
+            <SingleNft nft={item as Nft} linkToDetail={false} />
           </div>
         </div>
       ))}

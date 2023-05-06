@@ -1,9 +1,11 @@
+import { t } from '@lingui/macro';
 import { CollectModules, FollowModules, ReferenceModules } from 'lens';
 
 /**
+ * Returns the name and field of the specified module.
  *
- * @param name Module to format
- * @returns module config
+ * @param name Name of the module.
+ * @returns Object containing the name and field of the module.
  */
 export const getModule = (
   name: string
@@ -14,29 +16,29 @@ export const getModule = (
   switch (name) {
     // Collect Modules
     case CollectModules.MultirecipientFeeCollectModule:
-      return { name: `Multirecipient Paid Collect`, field: 'collectModule' }
+      return { name: t`Multirecipient Paid Collect`, field: 'collectModule' };
     case CollectModules.UnknownCollectModule:
-      return { name: `Unknown Collect`, field: 'collectModule' };
+      return { name: t`Unknown Collect`, field: 'collectModule' };
     case CollectModules.FeeCollectModule:
-      return { name: `Paid Collect`, field: 'collectModule' };
+      return { name: t`Paid Collect`, field: 'collectModule' };
     case CollectModules.LimitedFeeCollectModule:
-      return { name: `Rare Paid Collect`, field: 'collectModule' };
+      return { name: t`Rare Paid Collect`, field: 'collectModule' };
     case CollectModules.TimedFeeCollectModule:
-      return { name: `24 Hour Collect`, field: 'collectModule' };
+      return { name: t`24 Hour Collect`, field: 'collectModule' };
     case CollectModules.LimitedTimedFeeCollectModule:
-      return { name: `Rare 24 Hour Collect`, field: 'collectModule' };
+      return { name: t`Rare 24 Hour Collect`, field: 'collectModule' };
     case CollectModules.FreeCollectModule:
-      return { name: `Free Collect`, field: 'collectModule' };
+      return { name: t`Free Collect`, field: 'collectModule' };
     case CollectModules.RevertCollectModule:
-      return { name: `No Collect`, field: 'collectModule' };
+      return { name: t`No Collect`, field: 'collectModule' };
 
     // Follow modules
     case FollowModules.FeeFollowModule:
-      return { name: `Fee Follow`, field: 'followModule' };
+      return { name: t`Fee Follow`, field: 'followModule' };
 
     // Reference modules
     case ReferenceModules.FollowerOnlyReferenceModule:
-      return { name: `Follower Only Reference`, field: 'referenceModule' };
+      return { name: t`Follower Only Reference`, field: 'referenceModule' };
     default:
       return { name: name, field: 'collectModule' };
   }

@@ -1,34 +1,40 @@
-import { UserAddIcon } from '@heroicons/react/outline'
-import { Mixpanel } from '@lib/mixpanel'
-import onError from '@lib/onError'
-import splitSignature from '@lib/splitSignature'
-import { LensHub } from 'abis'
-import { LENSHUB_PROXY } from 'data/constants'
-import type { Profile } from 'lens'
-import { useBroadcastMutation, useCreateFollowTypedDataMutation, useProxyActionMutation } from 'lens'
-import type { ApolloCache } from 'lens/apollo'
-import getSignature from 'lib/getSignature'
-import { useRouter } from 'next/router'
-import type { Dispatch, FC } from 'react'
-import toast from 'react-hot-toast'
-import { useAppStore } from 'src/store/app'
-import { useAuthStore } from 'src/store/auth'
-import { PROFILE } from 'src/tracking'
-import { Button, Spinner } from 'ui'
-import { useAccount, useContractWrite, useSignTypedData } from 'wagmi'
+import { UserAddIcon } from '@heroicons/react/outline';
+import { Mixpanel } from '@lib/mixpanel';
+import splitSignature from '@lib/splitSignature';
+import { t } from '@lingui/macro';
+import { LensHub } from 'abis';
+import { Errors } from 'data';
+import { LENSHUB_PROXY } from 'data/constants';
+import type { Profile } from 'lens';
+import {
+  useBroadcastMutation,
+  useCreateFollowTypedDataMutation,
+  useProxyActionMutation
+} from 'lens';
+import type { ApolloCache } from 'lens/apollo';
+import getSignature from 'lib/getSignature';
+import { useRouter } from 'next/router';
+import type { Dispatch, FC } from 'react';
+import { useState } from 'react';
+import toast from 'react-hot-toast';
+import { useAppStore } from 'src/store/app';
+import { useAuthStore } from 'src/store/auth';
+import { PROFILE } from 'src/tracking';
+import { Button, Spinner } from 'ui';
+import { useAccount, useContractWrite, useSignTypedData } from 'wagmi';
 
-interface Props {
-  profile: Profile
-  setFollowing: Dispatch<boolean>
-  showText?: boolean
-  outline?: boolean
+interface FollowProps {
+  profile: Profile;
+  setFollowing: Dispatch<boolean>;
+  showText?: boolean;
+  outline?: boolean;
 
-  // For data mixpanel
+  // For data analytics
   followPosition?: number;
   followSource?: string;
 }
 
-const Follow: FC<Props> = ({
+const Follow: FC<FollowProps> = ({
   profile,
   showText = false,
   setFollowing,
@@ -36,29 +42,13 @@ const Follow: FC<Props> = ({
   followSource,
   followPosition
 }) => {
-  const { pathname } = useRouter()
-  const userSigNonce = useAppStore((state) => state.userSigNonce)
-  const setUserSigNonce = useAppStore((state) => state.setUserSigNonce)
-  const currentProfile = useAppStore((state) => state.currentProfile)
-  const { address } = useAccount()
-  const setShowAuthModal = useAuthStore((state) => state.setShowAuthModal)
-
-  const { isLoading: signLoading, signTypedDataAsync } = useSignTypedData({ onError })
-
-  const onCompleted = (__typename?: 'RelayError' | 'RelayerResult') => {
-    if (__typename === 'RelayError') {
-      return
-    }
-
-    setFollowing(true)
-    toast.success('Followed successfully!')
-    Mixpanel.track(PROFILE.FOLLOW, {
-      follow_path: pathname,
-      ...(followSource && { follow_source: followSource }),
-      ...(followPosition && { follow_position: followPosition }),
-      follow_target: profile?.id
-    })
-  }
+  const { pathname } = useRouter();
+  const userSigNonce = useAppStore((state) => state.userSigNonce);
+  const setUserSigNonce = useAppStore((state) => state.setUserSigNonce);
+  const currentProfile = useAppStore((state) => state.currentProfile);
+  const setShowAuthModal = useAuthStore((state) => state.setShowAuthModal);
+  const [isLoading, setIsLoading] = useState(false);
+  const { address } = useAccount();
 
   const updateCache = (cache: ApolloCache<any>) => {
     cache.modify({
@@ -66,27 +56,59 @@ const Follow: FC<Props> = ({
       fields: {
         isFollowedByMe: () => true
       }
-    })
-  }
+    });
+  };
 
-  const { isLoading: writeLoading, write } = useContractWrite({
+  const onCompleted = (__typename?: 'RelayError' | 'RelayerResult') => {
+    if (__typename === 'RelayError') {
+      return;
+    }
+
+    setIsLoading(false);
+    setFollowing(true);
+    toast.success(t`Followed successfully!`);
+    Mixpanel.track(PROFILE.FOLLOW, {
+      follow_path: pathname,
+      ...(followSource && { follow_source: followSource }),
+      ...(followPosition && { follow_position: followPosition }),
+      follow_target: profile?.id
+    });
+  };
+
+  const onError = (error: any) => {
+    if (
+      error?.message?.includes('Usage limit exceeded, please try again later')
+    ) {
+      return;
+    }
+
+    setIsLoading(false);
+    toast.error(
+      error?.data?.message ?? error?.message ?? Errors.SomethingWentWrong
+    );
+  };
+
+  const { signTypedDataAsync } = useSignTypedData({ onError });
+  const { write } = useContractWrite({
     address: LENSHUB_PROXY,
     abi: LensHub,
     functionName: 'followWithSig',
     mode: 'recklesslyUnprepared',
     onSuccess: () => onCompleted(),
     onError
-  })
+  });
 
-  const [broadcast, { loading: broadcastLoading }] = useBroadcastMutation({
+  const [broadcast] = useBroadcastMutation({
     onCompleted: ({ broadcast }) => onCompleted(broadcast.__typename)
-  })
-  const [createFollowTypedData, { loading: typedDataLoading }] = useCreateFollowTypedDataMutation({
+  });
+  const [createFollowTypedData] = useCreateFollowTypedDataMutation({
     onCompleted: async ({ createFollowTypedData }) => {
-      const { id, typedData } = createFollowTypedData
-      const { deadline } = typedData.value
+      const { id, typedData } = createFollowTypedData;
+      const { deadline } = typedData.value;
       // TODO: Replace deep clone with right helper
-      const signature = await signTypedDataAsync(getSignature(JSON.parse(JSON.stringify(typedData))));
+      const signature = await signTypedDataAsync(
+        getSignature(JSON.parse(JSON.stringify(typedData)))
+      );
       setUserSigNonce(userSigNonce + 1);
       const { profileIds, datas: followData } = typedData.value;
       const { v, r, s } = splitSignature(signature);
@@ -97,44 +119,47 @@ const Follow: FC<Props> = ({
         datas: followData,
         sig
       };
-      const { data } = await broadcast({ variables: { request: { id, signature } } })
+      const { data } = await broadcast({
+        variables: { request: { id, signature } }
+      });
       if (data?.broadcast.__typename === 'RelayError') {
-        return write?.({ recklesslySetUnpreparedArgs: [inputStruct] })
+        return write?.({ recklesslySetUnpreparedArgs: [inputStruct] });
       }
     },
     onError,
     update: updateCache
-  })
+  });
 
-  const [createFollowProxyAction, { loading: proxyActionLoading }] = useProxyActionMutation({
+  const [createFollowProxyAction] = useProxyActionMutation({
     onCompleted: () => onCompleted(),
     onError,
     update: updateCache
-  })
+  });
 
   const createViaProxyAction = async (variables: any) => {
     const { data } = await createFollowProxyAction({
       variables
-    })
+    });
     if (!data?.proxyAction) {
-      await createFollowTypedData({
+      return await createFollowTypedData({
         variables: {
           request: { follow: [{ profile: profile?.id }] },
           options: { overrideSigNonce: userSigNonce }
         }
-      })
+      });
     }
-  }
+  };
 
   const createFollow = async () => {
     if (!currentProfile) {
-      setShowAuthModal(true)
-      return
+      setShowAuthModal(true);
+      return;
     }
 
     try {
+      setIsLoading(true);
       if (profile?.followModule) {
-        await createFollowTypedData({
+        return await createFollowTypedData({
           variables: {
             options: { overrideSigNonce: userSigNonce },
             request: {
@@ -142,42 +167,43 @@ const Follow: FC<Props> = ({
                 {
                   profile: profile?.id,
                   followModule:
-                    profile?.followModule?.__typename === 'ProfileFollowModuleSettings'
-                      ? { profileFollowModule: { profileId: currentProfile?.id } }
+                    profile?.followModule?.__typename ===
+                    'ProfileFollowModuleSettings'
+                      ? {
+                          profileFollowModule: { profileId: currentProfile?.id }
+                        }
                       : null
                 }
               ]
             }
           }
-        })
-      } else {
-        await createViaProxyAction({
-          request: {
-            follow: {
-              freeFollow: {
-                profileId: profile?.id
-              }
-            }
-          }
-        })
+        });
       }
-    } catch {}
-  }
 
-  const isLoading = typedDataLoading || proxyActionLoading || signLoading || writeLoading || broadcastLoading  
+      return await createViaProxyAction({
+        request: {
+          follow: { freeFollow: { profileId: profile?.id } }
+        }
+      });
+    } catch (error) {
+      onError(error);
+    }
+  };
 
   return (
     <Button
-      className="text-sm !px-3 !py-1.5"
+      className="!px-3 !py-1.5 text-sm"
       outline={outline}
       onClick={createFollow}
       aria-label="Follow"
       disabled={isLoading}
-      icon={isLoading ? <Spinner size="xs" /> : <UserAddIcon className="w-4 h-4" />}
+      icon={
+        isLoading ? <Spinner size="xs" /> : <UserAddIcon className="h-4 w-4" />
+      }
     >
-      {showText && 'Follow'}
+      {showText && t`Follow`}
     </Button>
-  )
-}
+  );
+};
 
-export default Follow
+export default Follow;

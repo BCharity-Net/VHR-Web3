@@ -18,6 +18,6 @@ const getToastOptions = (theme?: string) => ({
     }
   },
   loading: { className: 'border border-gray-300' }
-})
+});
 
-export default getToastOptions
+export default getToastOptions;

@@ -1,4 +1,5 @@
 import { ExternalLinkIcon } from '@heroicons/react/outline';
+import { t } from '@lingui/macro';
 import { IPFS_GATEWAY, POLYGONSCAN_URL } from 'data/constants';
 import type { Publication } from 'lens';
 import type { FC } from 'react';
@@ -22,11 +23,11 @@ const Meta: FC<MetaProps> = ({ name, uri, hash }) => (
   </div>
 );
 
-interface Props {
+interface OnchainMetaProps {
   publication: Publication;
 }
 
-const OnchainMeta: FC<Props> = ({ publication }) => {
+const OnchainMeta: FC<OnchainMetaProps> = ({ publication }) => {
   const hash =
     publication?.__typename === 'Mirror'
       ? publication.mirrorOf.onChainContentURI?.split('/').pop()
@@ -46,12 +47,19 @@ const OnchainMeta: FC<Props> = ({ publication }) => {
     <Card as="aside" dataTestId="onchain-meta">
       <div className="lt-text-gray-500 divide-y dark:divide-gray-700">
         {isArweaveHash ? (
-          <Meta name={`ARWEAVE TRANSACTION`} uri={`https://arweave.app/tx/${hash}`} hash={hash} />
+          <Meta name={t`ARWEAVE TRANSACTION`} uri={`https://arweave.app/tx/${hash}`} hash={hash} />
+        ) : null}
+        {publication?.isDataAvailability ? (
+          <Meta
+            name={t`DATA AVAILABILITY PROOF`}
+            uri={`https://arweave.app/tx/${publication.dataAvailabilityProofs?.split('/').pop()}`}
+            hash={publication.dataAvailabilityProofs?.split('/').pop() as string}
+          />
         ) : null}
         {isIPFSHash ? <Meta name="IPFS TRANSACTION" uri={`${IPFS_GATEWAY}${hash}`} hash={hash} /> : null}
         {collectNftAddress ? (
           <Meta
-            name={`NFT ADDRESS`}
+            name={t`NFT ADDRESS`}
             uri={`${POLYGONSCAN_URL}/token/${collectNftAddress}`}
             hash={collectNftAddress}
           />

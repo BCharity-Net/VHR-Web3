@@ -1,20 +1,26 @@
 import Beta from '@components/Shared/Badges/Beta';
 import ToggleWithHelper from '@components/Shared/ToggleWithHelper';
-import { PlusIcon, SwitchHorizontalIcon, UsersIcon, XCircleIcon } from '@heroicons/react/outline';
-import isValidEthAddress from '@lib/isValidEthAddress';
+import {
+  PlusIcon,
+  SwitchHorizontalIcon,
+  UsersIcon,
+  XCircleIcon
+} from '@heroicons/react/outline';
+import { t, Trans } from '@lingui/macro';
 import { HANDLE_SUFFIX, LENSPROTOCOL_HANDLE } from 'data/constants';
 import { useProfileLazyQuery } from 'lens';
+import isValidEthAddress from 'lib/isValidEthAddress';
 import splitNumber from 'lib/splitNumber';
 import type { FC } from 'react';
 import { useAppStore } from 'src/store/app';
 import { useCollectModuleStore } from 'src/store/collect-module';
 import { Button, Input } from 'ui';
 
-interface Props {
+interface SplitConfigProps {
   isRecipientsDuplicated: () => boolean;
 }
 
-const SplitConfig: FC<Props> = ({ isRecipientsDuplicated }) => {
+const SplitConfig: FC<SplitConfigProps> = ({ isRecipientsDuplicated }) => {
   const currentProfile = useAppStore((state) => state.currentProfile);
   const recipients = useCollectModuleStore((state) => state.recipients);
   const setRecipients = useCollectModuleStore((state) => state.setRecipients);
@@ -36,10 +42,16 @@ const SplitConfig: FC<Props> = ({ isRecipientsDuplicated }) => {
   };
 
   const getIsHandle = (handle: string) => {
-    return handle === LENSPROTOCOL_HANDLE ? true : handle.includes(HANDLE_SUFFIX);
+    return handle === LENSPROTOCOL_HANDLE
+      ? true
+      : handle.includes(HANDLE_SUFFIX);
   };
 
-  const onChangeRecipientOrSplit = (index: number, value: string, type: 'recipient' | 'split') => {
+  const onChangeRecipientOrSplit = (
+    index: number,
+    value: string,
+    type: 'recipient' | 'split'
+  ) => {
     const getRecipients = (value: string) => {
       return recipients.map((recipient, i) => {
         if (i === index) {
@@ -55,9 +67,9 @@ const SplitConfig: FC<Props> = ({ isRecipientsDuplicated }) => {
     if (type === 'recipient' && getIsHandle(value)) {
       getProfileByHandle({
         variables: { request: { handle: value } },
-        onCompleted: (data) => {
-          if (data.profile) {
-            setRecipients(getRecipients(data.profile.ownedBy));
+        onCompleted: ({ profile }) => {
+          if (profile) {
+            setRecipients(getRecipients(profile.ownedBy));
           }
         }
       });
@@ -80,25 +92,34 @@ const SplitConfig: FC<Props> = ({ isRecipientsDuplicated }) => {
         heading={
           <div className="flex items-center space-x-2">
             <span>
-              Split revenue
+              <Trans>Split revenue</Trans>
             </span>
             <Beta />
           </div>
         }
-        description={`Set multiple recipients for the collect fee`}
+        description={t`Set multiple recipients for the collect fee`}
         icon={<UsersIcon className="h-4 w-4" />}
       />
       {hasRecipients ? (
         <div className="space-y-3 pt-4">
           <div className="space-y-2">
             {recipients.map((recipient, index) => (
-              <div key={recipient.recipient} className="flex items-center space-x-2 text-sm">
+              <div key={index} className="flex items-center space-x-2 text-sm">
                 <Input
                   placeholder="0x3A5bd...5e3 or wagmi.lens"
                   value={recipient.recipient}
                   disabled={loading}
-                  error={recipient.recipient.length > 0 && !isValidEthAddress(recipient.recipient)}
-                  onChange={(event) => onChangeRecipientOrSplit(index, event.target.value, 'recipient')}
+                  error={
+                    recipient.recipient.length > 0 &&
+                    !isValidEthAddress(recipient.recipient)
+                  }
+                  onChange={(event) =>
+                    onChangeRecipientOrSplit(
+                      index,
+                      event.target.value,
+                      'recipient'
+                    )
+                  }
                 />
                 <div className="w-1/3">
                   <Input
@@ -108,7 +129,13 @@ const SplitConfig: FC<Props> = ({ isRecipientsDuplicated }) => {
                     max="100"
                     value={recipient.split}
                     iconRight="%"
-                    onChange={(event) => onChangeRecipientOrSplit(index, event.target.value, 'split')}
+                    onChange={(event) =>
+                      onChangeRecipientOrSplit(
+                        index,
+                        event.target.value,
+                        'split'
+                      )
+                    }
                   />
                 </div>
                 <button
@@ -148,7 +175,14 @@ const SplitConfig: FC<Props> = ({ isRecipientsDuplicated }) => {
           </div>
           {splitTotal > 100 ? (
             <div className="text-sm font-bold text-red-500">
+              <Trans>
                 Splits cannot exceed 100%. Total: <span>{splitTotal}</span>%
+              </Trans>
+            </div>
+          ) : null}
+          {isRecipientsDuplicated() ? (
+            <div className="text-sm font-bold text-red-500">
+              <Trans>Duplicate recipient address found</Trans>
             </div>
           ) : null}
         </div>

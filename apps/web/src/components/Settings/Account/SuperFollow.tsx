@@ -1,10 +1,13 @@
 import { StarIcon, XIcon } from '@heroicons/react/outline';
 import { Mixpanel } from '@lib/mixpanel';
-import onError from '@lib/onError';
 import splitSignature from '@lib/splitSignature';
 import { t, Trans } from '@lingui/macro';
 import { LensHub } from 'abis';
-import { ADDRESS_REGEX, DEFAULT_COLLECT_TOKEN, LENSHUB_PROXY } from 'data/constants';
+import {
+  ADDRESS_REGEX,
+  DEFAULT_COLLECT_TOKEN,
+  LENSHUB_PROXY
+} from 'data/constants';
 import Errors from 'data/errors';
 import type { Erc20 } from 'lens';
 import {
@@ -34,23 +37,40 @@ const SuperFollow: FC = () => {
   const userSigNonce = useAppStore((state) => state.userSigNonce);
   const setUserSigNonce = useAppStore((state) => state.setUserSigNonce);
   const currentProfile = useAppStore((state) => state.currentProfile);
-  const [selectedCurrency, setSelectedCurrency] = useState(DEFAULT_COLLECT_TOKEN);
-  const [selectedCurrencySymbol, setSelectedCurrencySymbol] = useState('WMATIC');
-  const { isLoading: signLoading, signTypedDataAsync } = useSignTypedData({ onError });
-  const { data: currencyData, loading } = useEnabledCurrencyModulesWithProfileQuery({
-    variables: { request: { profileId: currentProfile?.id } },
-    skip: !currentProfile?.id
-  });
+  const [isLoading, setIsLoading] = useState(false);
+  const [selectedCurrency, setSelectedCurrency] = useState(
+    DEFAULT_COLLECT_TOKEN
+  );
+  const [selectedCurrencySymbol, setSelectedCurrencySymbol] =
+    useState('WMATIC');
 
   const onCompleted = (__typename?: 'RelayError' | 'RelayerResult') => {
     if (__typename === 'RelayError') {
       return;
     }
 
+    setIsLoading(false);
+    toast.success(t`Super Follow updated successfully!`);
     Mixpanel.track(SETTINGS.ACCOUNT.SET_SUPER_FOLLOW);
   };
 
-  const { isLoading: writeLoading, write } = useContractWrite({
+  const onError = (error: any) => {
+    setIsLoading(false);
+    toast.error(
+      error?.data?.message ?? error?.message ?? Errors.SomethingWentWrong
+    );
+  };
+
+  const { signTypedDataAsync } = useSignTypedData({
+    onError
+  });
+  const { data: currencyData, loading } =
+    useEnabledCurrencyModulesWithProfileQuery({
+      variables: { request: { profileId: currentProfile?.id } },
+      skip: !currentProfile?.id
+    });
+
+  const { write } = useContractWrite({
     address: LENSHUB_PROXY,
     abi: LensHub,
     functionName: 'setFollowModuleWithSig',
@@ -66,14 +86,15 @@ const SuperFollow: FC = () => {
     }
   });
 
-  const [broadcast, { loading: broadcastLoading }] = useBroadcastMutation({
+  const [broadcast] = useBroadcastMutation({
     onCompleted: ({ broadcast }) => onCompleted(broadcast.__typename)
   });
-  const [createSetFollowModuleTypedData, { loading: typedDataLoading }] =
+  const [createSetFollowModuleTypedData] =
     useCreateSetFollowModuleTypedDataMutation({
       onCompleted: async ({ createSetFollowModuleTypedData }) => {
         const { id, typedData } = createSetFollowModuleTypedData;
-        const { profileId, followModule, followModuleInitData, deadline } = typedData.value;
+        const { profileId, followModule, followModuleInitData, deadline } =
+          typedData.value;
         const signature = await signTypedDataAsync(getSignature(typedData));
         const { v, r, s } = splitSignature(signature);
         const sig = { v, r, s, deadline };
@@ -84,7 +105,9 @@ const SuperFollow: FC = () => {
           sig
         };
         setUserSigNonce(userSigNonce + 1);
-        const { data } = await broadcast({ variables: { request: { id, signature } } });
+        const { data } = await broadcast({
+          variables: { request: { id, signature } }
+        });
         if (data?.broadcast.__typename === 'RelayError') {
           return write?.({ recklesslySetUnpreparedArgs: [inputStruct] });
         }
@@ -92,13 +115,17 @@ const SuperFollow: FC = () => {
       onError
     });
 
-  const setSuperFollow = async (amount: string | null, recipient: string | null) => {
+  const setSuperFollow = async (
+    amount: string | null,
+    recipient: string | null
+  ) => {
     if (!currentProfile) {
       return toast.error(Errors.SignWallet);
     }
 
     try {
-      await createSetFollowModuleTypedData({
+      setIsLoading(true);
+      return await createSetFollowModuleTypedData({
         variables: {
           options: { overrideSigNonce: userSigNonce },
           request: {
@@ -106,20 +133,17 @@ const SuperFollow: FC = () => {
             followModule: amount
               ? {
                   feeFollowModule: {
-                    amount: {
-                      currency: selectedCurrency,
-                      value: amount
-                    },
+                    amount: { currency: selectedCurrency, value: amount },
                     recipient
                   }
                 }
-              : {
-                  freeFollowModule: true
-                }
+              : { freeFollowModule: true }
           }
         }
       });
-    } catch {}
+    } catch (error) {
+      onError(error);
+    }
   };
 
   if (loading) {
@@ -151,8 +175,9 @@ const SuperFollow: FC = () => {
         </div>
         <p>
           <Trans>
-            Setting super follow makes users spend crypto to follow you, and it's a good way to earn it, you
-            can change the amount and currency or disable/enable it anytime.
+            Setting super follow makes users spend crypto to follow you, and
+            it's a good way to earn it, you can change the amount and currency
+            or disable/enable it anytime.
           </Trans>
         </p>
         <div className="pt-2">
@@ -160,7 +185,7 @@ const SuperFollow: FC = () => {
             <Trans>Select Currency</Trans>
           </div>
           <select
-            className="focus:border-brand-500 focus:ring-brand-400 w-full rounded-xl border border-gray-300 bg-white outline-none disabled:bg-gray-500 disabled:bg-opacity-20 disabled:opacity-60 dark:border-gray-700 dark:bg-gray-800"
+            className="focus:border-brand-500 focus:ring-brand-400 w-full rounded-xl border border-gray-300 bg-white outline-none dark:border-gray-700 dark:bg-gray-800"
             onChange={(e) => {
               const currency = e.target.value.split('-');
               setSelectedCurrency(currency[0]);
@@ -168,7 +193,10 @@ const SuperFollow: FC = () => {
             }}
           >
             {currencyData?.enabledModuleCurrencies?.map((currency: Erc20) => (
-              <option key={currency.address} value={`${currency.address}-${currency.symbol}`}>
+              <option
+                key={currency.address}
+                value={`${currency.address}-${currency.symbol}`}
+              >
                 {currency.name}
               </option>
             ))}
@@ -206,7 +234,7 @@ const SuperFollow: FC = () => {
                 variant="danger"
                 outline
                 onClick={() => setSuperFollow(null, null)}
-                disabled={typedDataLoading || signLoading || writeLoading || broadcastLoading}
+                disabled={isLoading}
                 icon={<XIcon className="h-4 w-4" />}
               >
                 <Trans>Disable Super follow</Trans>
@@ -214,10 +242,12 @@ const SuperFollow: FC = () => {
             )}
             <Button
               type="submit"
-              disabled={typedDataLoading || signLoading || writeLoading || broadcastLoading}
+              disabled={isLoading}
               icon={<StarIcon className="h-4 w-4" />}
             >
-              {followType === 'FeeFollowModuleSettings' ? t`Update Super follow` : t`Set Super follow`}
+              {followType === 'FeeFollowModuleSettings'
+                ? t`Update Super follow`
+                : t`Set Super follow`}
             </Button>
           </div>
         </div>

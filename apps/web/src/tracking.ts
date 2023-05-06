@@ -25,8 +25,8 @@ export const PUBLICATION = {
   LIKE: 'Like publication',
   DISLIKE: 'Dislike publication',
   MIRROR: 'Mirror publication',
-  EMBED: 'Embed publication',
   PERMALINK: 'Permalink publication',
+  TRANSLATE: 'Translate publication',
   DELETE: 'Delete publication',
   REPORT: 'Report publication',
   OEMBED_CLICK: 'Click publication oembed',
@@ -94,6 +94,11 @@ export const SETTINGS = {
   INTERESTS: {
     ADD: 'Add profile interest',
     REMOVE: 'Remove profile interest'
+  },
+  EXPORT: {
+    PROFILE: 'Export profile',
+    PUBLICATIONS: 'Export publications',
+    NOTIFICATIONS: 'Export notifications'
   },
   DELETE: 'Delete profile'
 };

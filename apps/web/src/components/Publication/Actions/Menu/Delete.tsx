@@ -2,15 +2,15 @@ import { Menu } from '@headlessui/react';
 import { TrashIcon } from '@heroicons/react/outline';
 import clsx from 'clsx';
 import type { Publication } from 'lens';
-import { stopEventPropagation } from 'lib/stopEventPropagation';
+import stopEventPropagation from 'lib/stopEventPropagation';
 import type { FC } from 'react';
 import { useGlobalAlertStateStore } from 'src/store/alerts';
 
-interface Props {
+interface DeleteProps {
   publication: Publication;
 }
 
-const Delete: FC<Props> = ({ publication }) => {
+const Delete: FC<DeleteProps> = ({ publication }) => {
   const setShowPublicationDeleteAlert = useGlobalAlertStateStore(
     (state) => state.setShowPublicationDeleteAlert
   );

@@ -1,44 +1,44 @@
-import MenuTransition from '@components/Shared/MenuTransition'
-import { Menu } from '@headlessui/react'
-import { DotsVerticalIcon } from '@heroicons/react/outline'
-import clsx from 'clsx'
-import type { Publication } from 'lens'
-import { stopEventPropagation } from 'lib/stopEventPropagation'
-import type { FC } from 'react'
-import { Fragment } from 'react'
-import { useTranslation } from 'react-i18next'
-import { useAppStore } from 'src/store/app'
+import MenuTransition from '@components/Shared/MenuTransition';
+import { Menu } from '@headlessui/react';
+import { DotsVerticalIcon } from '@heroicons/react/outline';
+import clsx from 'clsx';
+import type { Publication } from 'lens';
+import stopEventPropagation from 'lib/stopEventPropagation';
+import type { FC } from 'react';
+import { Fragment } from 'react';
+import { useAppStore } from 'src/store/app';
 
-import Delete from './Delete'
-import Embed from './Embed'
-import Permalink from './Permalink'
-import Report from './Report'
+import Delete from './Delete';
+import Permalink from './Permalink';
+import Report from './Report';
+import Translate from './Translate';
 
-interface Props {
-  publication: Publication
+interface PublicationMenuProps {
+  publication: Publication;
 }
 
-const PublicationMenu: FC<Props> = ({ publication }) => {
-  const { t } = useTranslation('common')
-  const currentProfile = useAppStore((state) => state.currentProfile)
-  const iconClassName = 'w-[15px] sm:w-[18px]'
+const PublicationMenu: FC<PublicationMenuProps> = ({ publication }) => {
+  const currentProfile = useAppStore((state) => state.currentProfile);
+  const iconClassName = 'w-[15px] sm:w-[18px]';
 
   return (
     <Menu as="div" className="relative">
       <Menu.Button as={Fragment}>
         <button
-          className="rounded-full p-1.5 hover:bg-gray-300 hover:bg-opacity-20"
+          className="rounded-full p-1.5 hover:bg-gray-300/20"
           onClick={stopEventPropagation}
           aria-label="More"
           data-testid={`publication-${publication.id}-menu`}
         >
-          <DotsVerticalIcon className={clsx('lt-text-gray-500', iconClassName)} />
+          <DotsVerticalIcon
+            className={clsx('lt-text-gray-500', iconClassName)}
+          />
         </button>
       </Menu.Button>
       <MenuTransition>
         <Menu.Items
           static
-          className="absolute right-0 mt-1 w-max bg-white rounded-xl border shadow-sm dark:bg-gray-900 focus:outline-none z-[5] dark:border-gray-700"
+          className="absolute right-0 z-[5] mt-1 w-max rounded-xl border bg-white shadow-sm focus:outline-none dark:border-gray-700 dark:bg-gray-900"
           data-testid={`publication-${publication.id}-menu-items`}
         >
           {currentProfile?.id === publication?.profile?.id ? (
@@ -46,12 +46,12 @@ const PublicationMenu: FC<Props> = ({ publication }) => {
           ) : (
             <Report publication={publication} />
           )}
-          <Embed publication={publication} />
           <Permalink publication={publication} />
+          <Translate publication={publication} />
         </Menu.Items>
       </MenuTransition>
     </Menu>
-  )
-}
+  );
+};
 
-export default PublicationMenu
+export default PublicationMenu;

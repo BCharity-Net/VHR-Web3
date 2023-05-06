@@ -1,132 +1,111 @@
-import packageJson from '../../package.json'
-import LensEndpoint from './lens-endpoints'
-import getEnvConfig from './utils/getEnvConfig'
+import packageJson from '../../package.json';
+import LensEndpoint from './lens-endpoints';
+import getEnvConfig from './utils/getEnvConfig';
 
 // Environments
-export const IS_PRODUCTION = process.env.NODE_ENV === 'production'
-export const IS_DEVELOPMENT = process.env.NODE_ENV === 'development'
+export const IS_PRODUCTION = process.env.NODE_ENV === 'production';
+export const IS_PREVIEW = process.env.NEXT_PUBLIC_VERCEL_ENV === 'preview';
 
 // Lens Network
-export const LENS_NETWORK = process.env.NEXT_PUBLIC_LENS_NETWORK ?? 'mainnet'
+export const LENS_NETWORK = process.env.NEXT_PUBLIC_LENS_NETWORK ?? 'mainnet';
 
-export const SERVERLESS_MAINNET_API_URL = 'https://api.bcharity.net'
-export const SERVERLESS_TESTNET_API_URL = 'https://api-testnet.bcharity.net'
-export const SERVERLESS_STAGING_API_URL = 'https://api-staging.bcharity.net'
-export const SERVERLESS_STAGING_SANDBOX_API_URL = 'https://api-staging-sandbox.bcharity.net'
-export const SERVERLESS_SANDBOX_API_URL = 'https://api-sandbox.bcharity.net'
-export const SERVERLESS_DEVELOPMENT_API_URL = 'http://localhost:4784'
+export const API_URL = getEnvConfig().apiEndpoint;
+export const LENSHUB_PROXY = getEnvConfig().lensHubProxyAddress;
+export const LENS_PERIPHERY = getEnvConfig().lensPeripheryAddress;
+export const DEFAULT_COLLECT_TOKEN = getEnvConfig().defaultCollectToken;
+export const LIT_PROTOCOL_ENVIRONMENT = getEnvConfig().litProtocolEnvironment;
 
-export const SERVERLESS_URL = getEnvConfig().serverlessEndpoint
-export const API_URL = getEnvConfig().apiEndpoint
-export const LENSHUB_PROXY = getEnvConfig().lensHubProxyAddress
-export const LENS_PERIPHERY = getEnvConfig().lensPeripheryAddress
-export const DEFAULT_COLLECT_TOKEN = getEnvConfig().defaultCollectToken
-export const LIT_PROTOCOL_ENVIRONMENT = getEnvConfig().litProtocolEnvironment
-
-export const IS_MAINNET = API_URL === LensEndpoint.Mainnet
+export const IS_MAINNET = API_URL === LensEndpoint.Mainnet;
 
 // XMTP
-export const XMTP_ENV = IS_MAINNET ? 'production' : 'dev'
-export const XMTP_PREFIX = 'lens.dev/dm'
+export const XMTP_ENV = IS_MAINNET ? 'production' : 'dev';
+export const XMTP_PREFIX = 'lens.dev/dm';
+
+// Snapshot
+export const SNAPSHOT_HUB_URL = IS_MAINNET
+  ? 'https://hub.snapshot.org'
+  : 'https://testnet.snapshot.org';
+export const LENSTER_POLLS_SPACE = 'polls.lenster.xyz';
+export const SNAPSHOT_URL = IS_MAINNET
+  ? 'https://snapshot.org'
+  : 'https://demo.snapshot.org';
 
 // Application
-
-export const APP_NAME = 'BCharity'
+export const APP_NAME = 'Lenster';
 export const DESCRIPTION =
-  'Next generation group-driven composable, decentralized, and permissionless public good Web3 built on blockchain.'
+  'Lenster is a composable, decentralized, and permissionless social media web app built with Lens Protocol 🌿';
 export const APP_VERSION = packageJson.version;
 
 // Git
-export const GIT_COMMIT_SHA = process.env.NEXT_PUBLIC_VERCEL_GIT_COMMIT_SHA?.slice(0, 7)
+export const GIT_COMMIT_SHA =
+  process.env.NEXT_PUBLIC_VERCEL_GIT_COMMIT_SHA?.slice(0, 7);
 
 // Misc
-export const RELAY_ON = true
-export const ZERO_ADDRESS = '0x0000000000000000000000000000000000000000'
-export const LENSPROTOCOL_HANDLE = 'lensprotocol'
-export const HANDLE_SUFFIX = IS_MAINNET ? '.lens' : '.test'
-export const OLD_LENS_RELAYER_ADDRESS = '0xD1FecCF6881970105dfb2b654054174007f0e07E'
+export const ZERO_ADDRESS = '0x0000000000000000000000000000000000000000';
+export const LENSPROTOCOL_HANDLE = 'lensprotocol';
+export const HANDLE_SUFFIX = IS_MAINNET ? '.lens' : '.test';
+export const OLD_LENS_RELAYER_ADDRESS =
+  '0xD1FecCF6881970105dfb2b654054174007f0e07E';
 
 // Mixpanel
-export const MIXPANEL_TOKEN = process.env.NEXT_PUBLIC_MIXPANEL_TOKEN ?? ''
-export const MIXPANEL_ENABLED = MIXPANEL_TOKEN && IS_PRODUCTION
-
-export const CATEGORIES = [
-  'Education',
-  'Environment',
-  'Animals',
-  'Social',
-  'Healthcare',
-  'Sports and Leisure',
-  'Disaster Relief',
-  'Reduce Poverty',
-  'Reduce Hunger',
-  'Health',
-  'Clean Water',
-  'Gender Equality',
-  'Affordable and Clean Energy',
-  'Work Experience',
-  'Technology',
-  'Infrastructure',
-  'Peace and Justice'
-]
+export const MIXPANEL_TOKEN = process.env.NEXT_PUBLIC_MIXPANEL_TOKEN ?? '';
+export const MIXPANEL_ENABLED = MIXPANEL_TOKEN && IS_PRODUCTION;
 
 // URLs
-export const STATIC_ASSETS_URL = 'https://assets.bcharity.net'
-export const STATIC_IMAGES_URL = `${STATIC_ASSETS_URL}/images`
-export const POLYGONSCAN_URL = IS_MAINNET ? 'https://polygonscan.com' : 'https://mumbai.polygonscan.com'
-export const VHR_TOP_HOLDERS_URL =
-  'https://mumbai.polygonscan.com/token/tokenholderchart/0x28ee241ab245699968f2980d3d1b1d23120ab8be'
-export const RARIBLE_URL = IS_MAINNET ? 'https://rarible.com' : 'https://testnet.rarible.com'
-export const IMAGEKIT_URL = `https://ik.imagekit.io/${IS_PRODUCTION ? 'bcharityimg' : 'bcharitydev'}`
-export const IPFS_GATEWAY = 'https://gateway.ipfscdn.io/ipfs/'
-export const ARWEAVE_GATEWAY = 'https://arweave.net/'
-export const EVER_API = 'https://endpoint.4everland.co'
-export const SIMPLEANALYTICS_API = 'https://simpleanalytics.com/bcharity.net.json'
-export const DEFAULT_OG = `${STATIC_IMAGES_URL}/og/logo.jpeg`
-export const IFRAMELY_URL = 'https://iframely.bcharity.net/iframely'
+export const STATIC_ASSETS_URL = 'https://static-assets.lenster.xyz';
+export const STATIC_IMAGES_URL = `${STATIC_ASSETS_URL}/images`;
+export const POLYGONSCAN_URL = IS_MAINNET
+  ? 'https://polygonscan.com'
+  : 'https://mumbai.polygonscan.com';
+export const RARIBLE_URL = IS_MAINNET
+  ? 'https://rarible.com'
+  : 'https://testnet.rarible.com';
+export const IPFS_GATEWAY = 'https://gateway.ipfscdn.io/ipfs/';
+export const ARWEAVE_GATEWAY = 'https://arweave.net/';
+export const EVER_API = 'https://endpoint.4everland.co';
+export const SIMPLEANALYTICS_API =
+  'https://simpleanalytics.com/lenster.xyz.json';
+export const DEFAULT_OG = `${STATIC_IMAGES_URL}/og/logo.jpeg`;
+export const IFRAMELY_URL = 'https://iframely.lenster.xyz/iframely';
 
 // Workers
-export const USER_CONTENT_URL = 'https://user-content.bcharity.net'
-export const MEDIA_PROXY_URL = IS_PRODUCTION ? 'https://media.bcharity.net' : 'http://localhost:8081'
-export const STS_TOKEN_URL = IS_PRODUCTION ? 'https://sts.bcharity.net' : 'http://localhost:8082'
-export const METADATA_WORKER_URL = IS_PRODUCTION ? 'https://metadata.bcharity.net' : 'http://localhost:8083'
-export const FRESHDESK_WORKER_URL = IS_PRODUCTION ? 'https://freshdesk.bcharity.net' : 'http://localhost:8084'
+export const USER_CONTENT_URL = 'https://user-content.lenster.xyz';
+export const STS_TOKEN_URL = IS_PRODUCTION
+  ? 'https://sts.lenster.xyz'
+  : 'http://localhost:8082';
+export const METADATA_WORKER_URL = IS_PRODUCTION
+  ? 'https://metadata.lenster.xyz'
+  : 'http://localhost:8083';
+export const FRESHDESK_WORKER_URL = IS_PRODUCTION
+  ? 'https://freshdesk.lenster.xyz'
+  : 'http://localhost:8084';
+export const SNAPSHOR_RELAY_WORKER_URL = IS_PRODUCTION
+  ? 'https://snapshot-relay.lenster.xyz'
+  : 'http://localhost:8085';
 
-// Web3
-export const ALCHEMY_KEY = 'HHfOFn8jsYguteTVvL0cz4g9aydrbjTV'
-export const WALLETCONNECT_PROJECT_ID = '2fd8d306dd6193fc7a64a4d8e23c3c65'
-export const LIVEPEER_TOKEN = '72730749-1f34-4b16-b9f0-27bd4e05113e'
-export const ALCHEMY_RPC = IS_MAINNET
-  ? `https://polygon-mainnet.g.alchemy.com/v2/${ALCHEMY_KEY}`
-  : `https://polygon-mumbai.g.alchemy.com/v2/${ALCHEMY_KEY}`
-
-export const INFURA_PROJECT_ID = process.env.NEXT_PUBLIC_INFURA_PROJECT_ID
-export const INFURA_PROJECT_SECRET = process.env.NEXT_PUBLIC_INFURA_PROJECT_SECRET
-
-export const ARWEAVE_KEY = process.env.NEXT_PUBLIC_ARWEAVE_KEY
-
-//VHR and GOOD Conversion
-export const VHR_TOKEN = '0x28EE241ab245699968F2980D3D1b1d23120ab8BE'
-export const GOOD_TOKEN = '0xd21932b453f0dC0918384442D7AaD5B033C4217B'
-export const GIVE_DAI_LP = '0x4373C35bB4E55Dea2dA2Ba695605a768f011b4B9'
-export const DAI_TOKEN = '0xf0728Bfe68B96Eb241603994de44aBC2412548bE'
-export const VHR_TO_DAI_PRICE = 0.009
-export const GOOD_TO_DAI_DONATE_RATE = 0.003
-
-export const WMATIC_GOOD_LP = '0xbe796a61F8d6E4CA823485D9D47BDBBD5eCbf909'
-export const WMATIC_TOKEN = '0x9c3C9283D3e44854697Cd22D3Faa240Cfb032889'
-export const DAI_CHECK_FOR_CONVERSION = '0x001B3B4d0F3714Ca98ba10F6042DaEbF0B1B7b6F'
+// Tokens / Keys
+export const ALCHEMY_KEY = '7jxlM7yIx-aJXDivcEZxsLFFRKQS6-ue';
+export const WALLETCONNECT_PROJECT_ID = 'cd542acc70c2b548030f9901a52e70c8';
+export const LIVEPEER_TOKEN = '4d4daf15-a037-4b8c-b7de-51f1994cc416';
+export const GROWTHBOOK_KEY = IS_MAINNET
+  ? 'sdk-fDLRMwvpyh4Kq3b'
+  : 'sdk-STENQl8vU1da648';
 
 // Regex
 export const URL_REGEX =
-  /^(http:\/\/www\.|https:\/\/www\.|http:\/\/|https:\/\/)?[\da-z]+([.\-][\da-z]+)*\.[a-z]{2,63}(:\d{1,5})?(\/.*)?$/
-export const ADDRESS_REGEX = /^(0x)?[\da-f]{40}$/i
-export const HANDLE_REGEX = /^[\da-z]+$/
-export const ALL_HANDLES_REGEX = /([\s+])@(\S+)/g
-export const HANDLE_SANITIZE_REGEX = /[^\d .A-Za-z]/g
+  /^(http:\/\/www\.|https:\/\/www\.|http:\/\/|https:\/\/)?[\da-z]+([.\-][\da-z]+)*\.[a-z]{2,63}(:\d{1,5})?(\/.*)?$/;
+export const ADDRESS_REGEX = /^(0x)?[\da-f]{40}$/i;
+export const HANDLE_REGEX = /^[\da-z]+$/;
+export const ALL_HANDLES_REGEX = /([\s+])@(\S+)/g;
+export const HANDLE_SANITIZE_REGEX = /[^\d .A-Za-z]/g;
 
 // Utils
-export const ALLOWED_IMAGE_TYPES = ['image/jpeg', 'image/png', 'image/webp', 'image/gif']
+export const ALLOWED_IMAGE_TYPES = [
+  'image/jpeg',
+  'image/png',
+  'image/webp',
+  'image/gif'
+];
 export const ALLOWED_AUDIO_TYPES = [
   'audio/mpeg',
   'audio/wav',
@@ -135,24 +114,30 @@ export const ALLOWED_AUDIO_TYPES = [
   'audio/ogg',
   'audio/webm',
   'audio/flac'
-]
-export const ALLOWED_VIDEO_TYPES = ['video/mp4', 'video/mpeg', 'video/ogg', 'video/webm', 'video/quicktime']
-export const ALLOWED_MEDIA_TYPES = [...ALLOWED_VIDEO_TYPES, ...ALLOWED_IMAGE_TYPES, ...ALLOWED_AUDIO_TYPES]
-
-// Bundlr
-export const BUNDLR_CURRENCY = 'matic'
-export const BUNDLR_NODE_URL = IS_MAINNET ? 'https://node2.bundlr.network' : 'https://devnet.bundlr.network'
+];
+export const ALLOWED_VIDEO_TYPES = [
+  'video/mp4',
+  'video/mpeg',
+  'video/ogg',
+  'video/webm',
+  'video/quicktime'
+];
+export const ALLOWED_MEDIA_TYPES = [
+  ...ALLOWED_VIDEO_TYPES,
+  ...ALLOWED_IMAGE_TYPES,
+  ...ALLOWED_AUDIO_TYPES
+];
 
 // UI
-export const MESSAGE_PAGE_LIMIT = 15
-export const MIN_WIDTH_DESKTOP = 1024
+export const MESSAGE_PAGE_LIMIT = 15;
+export const MIN_WIDTH_DESKTOP = 1024;
 
 // Named transforms
-export const AVATAR = 'avatar'
-export const COVER = 'cover'
-export const ATTACHMENT = 'attachment'
+export const AVATAR = '300x300';
+export const COVER = '1500x500';
+export const ATTACHMENT = '1000,fit';
 
 // S3 bucket
 export const S3_BUCKET = {
-  BCHARITY_MEDIA: 'bcharity-media'
-}
+  LENSTER_MEDIA: 'lenster-media'
+};

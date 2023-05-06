@@ -3,18 +3,21 @@ import MessageHeader from '@components/Messages/MessageHeader';
 import Loader from '@components/Shared/Loader';
 import useGetConversation from '@components/utils/hooks/useGetConversation';
 import useGetMessages from '@components/utils/hooks/useGetMessages';
+import { useGetProfile } from '@components/utils/hooks/useMessageDb';
 import useSendMessage from '@components/utils/hooks/useSendMessage';
 import useStreamMessages from '@components/utils/hooks/useStreamMessages';
 import { parseConversationKey } from '@lib/conversationKey';
+import { Mixpanel } from '@lib/mixpanel';
+import { t } from '@lingui/macro';
 import { APP_NAME } from 'data/constants';
 import formatHandle from 'lib/formatHandle';
 import type { NextPage } from 'next';
 import { useRouter } from 'next/router';
 import type { FC } from 'react';
-import { useCallback, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import Custom404 from 'src/pages/404';
 import { useAppStore } from 'src/store/app';
-import { useMessageStore } from 'src/store/message';
+import { PAGEVIEW } from 'src/tracking';
 import { Card, GridItemEight, GridLayout } from 'ui';
 
 import Composer from './Composer';
@@ -27,8 +30,11 @@ interface MessageProps {
 
 const Message: FC<MessageProps> = ({ conversationKey }) => {
   const currentProfile = useAppStore((state) => state.currentProfile);
-  const profile = useMessageStore((state) => state.messageProfiles.get(conversationKey));
-  const { selectedConversation, missingXmtpAuth } = useGetConversation(conversationKey, profile);
+  const { profile } = useGetProfile(currentProfile?.id, conversationKey);
+  const { selectedConversation, missingXmtpAuth } = useGetConversation(
+    conversationKey,
+    profile
+  );
   const [endTime, setEndTime] = useState<Map<string, Date>>(new Map());
   const { messages, hasMore } = useGetMessages(
     conversationKey,
@@ -53,23 +59,26 @@ const Message: FC<MessageProps> = ({ conversationKey }) => {
     return <Custom404 />;
   }
 
-  const showLoading = !missingXmtpAuth && (!profile || !currentProfile || !selectedConversation);
+  const showLoading =
+    !missingXmtpAuth && (!profile || !currentProfile || !selectedConversation);
 
   const userNameForTitle = profile?.name ?? formatHandle(profile?.handle);
-  const title = userNameForTitle ? `${userNameForTitle} • ${APP_NAME}` : APP_NAME;
+  const title = userNameForTitle
+    ? `${userNameForTitle} • ${APP_NAME}`
+    : APP_NAME;
 
   return (
     <GridLayout classNameChild="md:gap-8">
       <MetaTags title={title} />
       <PreviewList
-        className="lg:block md:hidden sm:hidden xs:hidden"
+        className="xs:hidden sm:hidden md:hidden lg:block"
         selectedConversationKey={conversationKey}
       />
-      <GridItemEight className="xs:h-[85vh] sm:h-[76vh] md:h-[80vh] xl:h-[84vh] mb-0 md:col-span-8 sm:mx-2 xs:mx-2">
-        <Card className="h-full flex justify-between flex-col">
+      <GridItemEight className="xs:h-[85vh] xs:mx-2 mb-0 sm:mx-2 sm:h-[76vh] md:col-span-8 md:h-[80vh] xl:h-[84vh]">
+        <Card className="flex h-full flex-col justify-between">
           {showLoading ? (
-            <div className="flex h-full flex-grow justify-center items-center">
-              <Loader message="Loading messages" />
+            <div className="flex h-full grow items-center justify-center">
+              <Loader message={t`Loading messages`} />
             </div>
           ) : (
             <>
@@ -101,8 +110,16 @@ const MessagePage: NextPage = () => {
     query: { conversationKey }
   } = useRouter();
 
+  useEffect(() => {
+    Mixpanel.track(PAGEVIEW, { page: 'conversation' });
+  }, []);
+
   // Need to have a login page for when there is no currentProfileId
-  if (!conversationKey || !currentProfileId || !Array.isArray(conversationKey)) {
+  if (
+    !conversationKey ||
+    !currentProfileId ||
+    !Array.isArray(conversationKey)
+  ) {
     return <Custom404 />;
   }
 

@@ -1,4 +1,5 @@
 import { LockClosedIcon } from '@heroicons/react/outline';
+import { t, Trans } from '@lingui/macro';
 import clsx from 'clsx';
 import { motion } from 'framer-motion';
 import type { FC } from 'react';
@@ -16,7 +17,7 @@ const AccessSettings: FC = () => {
 
   return (
     <>
-      <Tooltip placement="top" content="Access">
+      <Tooltip placement="top" content={t`Access`}>
         <motion.button
           whileTap={{ scale: 0.9 }}
           type="button"
@@ -29,11 +30,15 @@ const AccessSettings: FC = () => {
       <Modal
         title={
           <div className="flex items-center space-x-2">
-            <span>Access settings</span>
-            <HelpTooltip content="Add restrictions on who can view your content, and who can't. For instance - token gate your posts on the condition of owning specific NFTs or tokens." />
+            <span>
+              <Trans>Access settings</Trans>
+            </span>
+            <HelpTooltip
+              content={t`Add restrictions on who can view your content, and who can't. For instance - token gate your posts on the condition of owning specific NFTs or tokens.`}
+            />
           </div>
         }
-        icon={<LockClosedIcon className="w-5 h-5 text-brand" />}
+        icon={<LockClosedIcon className="text-brand h-5 w-5" />}
         show={showModal}
         onClose={() => {
           setShowModal(false);

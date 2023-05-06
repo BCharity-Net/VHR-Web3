@@ -1,13 +1,13 @@
-import SingleNFT from '@components/NFT/SingleNFT';
+import SingleNft from '@components/Nft/SingleNft';
 import NftPickerShimmer from '@components/Shared/Shimmer/NftPickerShimmer';
 import { CheckIcon, CollectionIcon } from '@heroicons/react/outline';
+import { t, Trans } from '@lingui/macro';
 import clsx from 'clsx';
 import { IS_MAINNET } from 'data/constants';
 import type { Nft, NfTsRequest } from 'lens';
 import { useNftFeedQuery } from 'lens';
 import formatHandle from 'lib/formatHandle';
 import type { FC } from 'react';
-import React from 'react';
 import { useState } from 'react';
 import { useInView } from 'react-cool-inview';
 import { toast } from 'react-hot-toast';
@@ -62,9 +62,11 @@ const Picker: FC = () => {
       <EmptyState
         message={
           <div>
-            <span className="mr-1 font-bold">@{formatHandle(currentProfile?.handle)}</span>
+            <span className="mr-1 font-bold">
+              @{formatHandle(currentProfile?.handle)}
+            </span>
             <span>
-              doesn't have any NFTs!
+              <Trans>doesn't have any NFTs!</Trans>
             </span>
           </div>
         }
@@ -74,22 +76,26 @@ const Picker: FC = () => {
   }
 
   if (error) {
-    return <ErrorMessage title={`Failed to load nft feed`} error={error} />;
+    return <ErrorMessage title={t`Failed to load nft feed`} error={error} />;
   }
 
   const onSelectItem = (item: Nft) => {
     if (gallery.items.length === 50) {
-      return toast.error(`Only 50 items allowed for gallery`);
+      return toast.error(t`Only 50 items allowed for gallery`);
     }
     const customId = `${item.chainId}_${item.contractAddress}_${item.tokenId}`;
     const nft = {
       itemId: customId,
       ...item
     };
-    const alreadySelectedIndex = gallery.items.findIndex((n) => n.itemId === customId);
+    const alreadySelectedIndex = gallery.items.findIndex(
+      (n) => n.itemId === customId
+    );
     if (alreadySelectedIndex !== -1) {
       // remove selection from gallery items
-      const alreadyExistsIndex = gallery.alreadySelectedItems.findIndex((i) => i.itemId === customId);
+      const alreadyExistsIndex = gallery.alreadySelectedItems.findIndex(
+        (i) => i.itemId === customId
+      );
       let toRemove: NftGalleryItem[] = [];
       // if exists
       if (alreadyExistsIndex >= 0) {
@@ -100,7 +106,8 @@ const Picker: FC = () => {
       nfts.splice(alreadySelectedIndex, 1);
       // removing duplicates in the selection
       const sanitizeRemoveDuplicates = toRemove?.filter(
-        (value, index, self) => index === self.findIndex((t) => t.itemId === value.itemId)
+        (value, index, self) =>
+          index === self.findIndex((t) => t.itemId === value.itemId)
       );
       setGallery({
         ...gallery,
@@ -111,7 +118,9 @@ const Picker: FC = () => {
       });
     } else {
       // add selection to gallery items
-      const alreadyExistsIndex = gallery.alreadySelectedItems.findIndex((i) => i.itemId === customId);
+      const alreadyExistsIndex = gallery.alreadySelectedItems.findIndex(
+        (i) => i.itemId === customId
+      );
       let toAdd: NftGalleryItem[] = [];
       // if not exists
       if (alreadyExistsIndex < 0) {
@@ -119,7 +128,8 @@ const Picker: FC = () => {
       }
       // removing duplicates in the selection
       const sanitizeAddDuplicates = toAdd?.filter(
-        (value, index, self) => index === self.findIndex((t) => t.itemId === value.itemId)
+        (value, index, self) =>
+          index === self.findIndex((t) => t.itemId === value.itemId)
       );
       setGallery({
         ...gallery,
@@ -153,8 +163,11 @@ const Picker: FC = () => {
                 <CheckIcon className="h-5 w-5 p-1 text-white" />
               </button>
             )}
-            <button className="w-full text-left" onClick={() => onSelectItem(nft as Nft)}>
-              <SingleNFT nft={nft as Nft} linkToDetail={false} />
+            <button
+              className="w-full text-left"
+              onClick={() => onSelectItem(nft as Nft)}
+            >
+              <SingleNft nft={nft as Nft} linkToDetail={false} />
             </button>
           </div>
         );

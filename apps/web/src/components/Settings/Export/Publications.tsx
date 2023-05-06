@@ -1,10 +1,12 @@
 import downloadJson from '@lib/downloadJson';
+import { Mixpanel } from '@lib/mixpanel';
 import { Trans } from '@lingui/macro';
 import type { PublicationsQueryRequest } from 'lens';
 import { PublicationTypes, useProfileFeedLazyQuery } from 'lens';
 import type { FC } from 'react';
 import { useState } from 'react';
 import { useAppStore } from 'src/store/app';
+import { SETTINGS } from 'src/tracking';
 import { Button, Card } from 'ui';
 
 const Publications: FC = () => {
@@ -15,7 +17,11 @@ const Publications: FC = () => {
 
   const request: PublicationsQueryRequest = {
     profileId: currentProfile?.id,
-    publicationTypes: [PublicationTypes.Post, PublicationTypes.Comment, PublicationTypes.Mirror],
+    publicationTypes: [
+      PublicationTypes.Post,
+      PublicationTypes.Comment,
+      PublicationTypes.Mirror
+    ],
     limit: 50
   };
 
@@ -24,22 +30,30 @@ const Publications: FC = () => {
   });
 
   const handleExportClick = async () => {
+    Mixpanel.track(SETTINGS.EXPORT.PUBLICATIONS);
     setExporting(true);
     const fetchPublications = async (cursor?: string) => {
       const { data } = await exportPublications({
         variables: { request: { ...request, cursor } },
         onCompleted: (data) => {
           setPublications((prev) => {
-            const newPublications = data.publications.items.filter((newPublication) => {
-              return !prev.some((publication) => publication.id === newPublication.id);
-            });
+            const newPublications = data.publications.items.filter(
+              (newPublication) => {
+                return !prev.some(
+                  (publication) => publication.id === newPublication.id
+                );
+              }
+            );
 
             return [...prev, ...newPublications];
           });
         }
       });
 
-      if (data?.publications.items.length === 0 || !data?.publications.pageInfo.next) {
+      if (
+        data?.publications.items.length === 0 ||
+        !data?.publications.pageInfo.next
+      ) {
         setFetchCompleted(true);
         setExporting(false);
       } else {
@@ -63,7 +77,9 @@ const Publications: FC = () => {
         <Trans>Export publications</Trans>
       </div>
       <div className="pb-2">
-        <Trans>Export all your posts, comments and mirrors to a JSON file.</Trans>
+        <Trans>
+          Export all your posts, comments and mirrors to a JSON file.
+        </Trans>
       </div>
       {publications.length > 0 ? (
         <div className="pb-2">

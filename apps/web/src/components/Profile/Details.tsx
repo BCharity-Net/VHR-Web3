@@ -1,66 +1,81 @@
-import Message from '@components/Profile/Message'
-import Follow from '@components/Shared/Follow'
-import Markup from '@components/Shared/Markup'
-import Slug from '@components/Shared/Slug'
-import SuperFollow from '@components/Shared/SuperFollow'
-import Unfollow from '@components/Shared/Unfollow'
-import ProfileStaffTool from '@components/StaffTools/Panels/Profile'
-import useStaffMode from '@components/utils/hooks/useStaffMode'
-import { CogIcon, HashtagIcon, LocationMarkerIcon, UsersIcon } from '@heroicons/react/outline'
-import { BadgeCheckIcon } from '@heroicons/react/solid'
-import buildConversationId from '@lib/buildConversationId'
-import { buildConversationKey } from '@lib/conversationKey'
-import { RARIBLE_URL, STATIC_IMAGES_URL } from 'data/constants'
-import getEnvConfig from 'data/utils/getEnvConfig'
-import type { Profile } from 'lens'
-import formatAddress from 'lib/formatAddress'
-import formatHandle from 'lib/formatHandle'
-import getAvatar from 'lib/getAvatar'
-import getProfileAttribute from 'lib/getProfileAttribute'
-import isStaff from 'lib/isStaff'
-import isVerified from 'lib/isVerified'
-import Link from 'next/link'
-import { useRouter } from 'next/router'
-import { useTheme } from 'next-themes'
-import type { Dispatch, FC, ReactNode } from 'react'
-import { useState } from 'react'
-import { useTranslation } from 'react-i18next'
-import { useAppStore } from 'src/store/app'
-import { useMessageStore } from 'src/store/message'
-import { FollowSource } from 'src/tracking'
-import { Button, Image, Modal, Tooltip } from 'ui'
+import Message from '@components/Profile/Message';
+import Follow from '@components/Shared/Follow';
+import Markup from '@components/Shared/Markup';
+import Slug from '@components/Shared/Slug';
+import SuperFollow from '@components/Shared/SuperFollow';
+import Unfollow from '@components/Shared/Unfollow';
+import ProfileStaffTool from '@components/StaffTools/Panels/Profile';
+import { useMessageDb } from '@components/utils/hooks/useMessageDb';
+import useStaffMode from '@components/utils/hooks/useStaffMode';
+import {
+  CogIcon,
+  HashtagIcon,
+  LocationMarkerIcon,
+  UsersIcon
+} from '@heroicons/react/outline';
+import { BadgeCheckIcon } from '@heroicons/react/solid';
+import buildConversationId from '@lib/buildConversationId';
+import { buildConversationKey } from '@lib/conversationKey';
+import { t, Trans } from '@lingui/macro';
+import { RARIBLE_URL, STATIC_IMAGES_URL } from 'data/constants';
+import getEnvConfig from 'data/utils/getEnvConfig';
+import type { Profile } from 'lens';
+import formatAddress from 'lib/formatAddress';
+import formatHandle from 'lib/formatHandle';
+import getAvatar from 'lib/getAvatar';
+import getProfileAttribute from 'lib/getProfileAttribute';
+import isStaff from 'lib/isStaff';
+import isVerified from 'lib/isVerified';
+import Link from 'next/link';
+import { useRouter } from 'next/router';
+import { useTheme } from 'next-themes';
+import type { Dispatch, FC, ReactNode } from 'react';
+import { useState } from 'react';
+import { useAppStore } from 'src/store/app';
+import type { TabValues } from 'src/store/message';
+import { useMessageStore } from 'src/store/message';
+import { FollowSource } from 'src/tracking';
+import { Button, Image, LightBox, Modal, Tooltip } from 'ui';
 
-import Badges from './Badges'
-import Followerings from './Followerings'
-import MutualFollowers from './MutualFollowers'
-import MutualFollowersList from './MutualFollowers/List'
+import Badges from './Badges';
+import Followerings from './Followerings';
+import MutualFollowers from './MutualFollowers';
+import MutualFollowersList from './MutualFollowers/List';
 
-interface Props {
-  profile: Profile
-  following: boolean
-  setFollowing: Dispatch<boolean>
+interface DetailsProps {
+  profile: Profile;
+  following: boolean;
+  setFollowing: Dispatch<boolean>;
 }
 
-const Details: FC<Props> = ({ profile, following, setFollowing }) => {
-  const { t } = useTranslation('common')
-  const currentProfile = useAppStore((state) => state.currentProfile)
-  const [showMutualFollowersModal, setShowMutualFollowersModal] = useState(false)
-  const { allowed: staffMode } = useStaffMode()
-  const { resolvedTheme } = useTheme()
-  const router = useRouter()
-  const addProfileAndSelectTab = useMessageStore((state) => state.addProfileAndSelectTab)
+const Details: FC<DetailsProps> = ({ profile, following, setFollowing }) => {
+  const currentProfile = useAppStore((state) => state.currentProfile);
+  const [showMutualFollowersModal, setShowMutualFollowersModal] =
+    useState(false);
+  const [expandedImage, setExpandedImage] = useState<string | null>(null);
+  const { allowed: staffMode } = useStaffMode();
+  const { resolvedTheme } = useTheme();
+  const router = useRouter();
+
+  const { persistProfile } = useMessageDb();
+  const setSelectedTab = useMessageStore((state) => state.setSelectedTab);
 
   const onMessageClick = () => {
     if (!currentProfile) {
-      return
+      return;
     }
-    const conversationId = buildConversationId(currentProfile.id, profile.id)
-    const conversationKey = buildConversationKey(profile.ownedBy, conversationId)
-    addProfileAndSelectTab(conversationKey, profile)
-    router.push(`/messages/${conversationKey}`)
-  }
-
-  const hasOnChainIdentity = profile?.onChainIdentity?.proofOfHumanity || profile?.onChainIdentity?.ens?.name
+    const conversationId = buildConversationId(currentProfile.id, profile.id);
+    const conversationKey = buildConversationKey(
+      profile.ownedBy,
+      conversationId
+    );
+    persistProfile(conversationKey, profile);
+    const selectedTab: TabValues = profile.isFollowedByMe
+      ? 'Following'
+      : 'Requested';
+    setSelectedTab(selectedTab);
+    router.push(`/messages/${conversationKey}`);
+  };
 
   const MetaDetails = ({
     children,
@@ -73,53 +88,77 @@ const Details: FC<Props> = ({ profile, following, setFollowing }) => {
   }) => (
     <div className="flex items-center gap-2" data-testid={dataTestId}>
       {icon}
-      <div className="truncate text-md">{children}</div>
+      <div className="text-md truncate">{children}</div>
     </div>
-  )
+  );
 
-  const followType = profile?.followModule?.__typename
+  const followType = profile?.followModule?.__typename;
 
   return (
-    <div className="px-5 mb-4 space-y-5 sm:px-0">
-      <div className="relative -mt-24 w-32 h-32 sm:-mt-32 sm:w-52 sm:h-52">
+    <div className="mb-4 space-y-5 px-5 sm:px-0">
+      <div className="relative -mt-24 h-32 w-32 sm:-mt-32 sm:h-52 sm:w-52">
         <Image
           onError={({ currentTarget }) => {
             currentTarget.src = getAvatar(profile, false);
           }}
+          onClick={() => setExpandedImage(getAvatar(profile, false))}
           src={getAvatar(profile)}
-          className="w-32 h-32 bg-gray-200 rounded-xl ring-8 ring-gray-50 sm:w-52 sm:h-52 dark:bg-gray-700 dark:ring-black"
+          className="h-32 w-32 cursor-pointer rounded-xl bg-gray-200 ring-8 ring-gray-50 dark:bg-gray-700 dark:ring-black sm:h-52 sm:w-52"
           height={128}
           width={128}
           alt={formatHandle(profile?.handle)}
           data-testid="profile-avatar"
         />
+        <LightBox
+          show={Boolean(expandedImage)}
+          url={expandedImage}
+          onClose={() => setExpandedImage(null)}
+        />
       </div>
-      <div className="py-2 space-y-1">
-        <div className="flex gap-1.5 items-center text-2xl font-bold">
+      <div className="space-y-1 py-2">
+        <div className="flex items-center gap-1.5 text-2xl font-bold">
           <div className="truncate" data-testid="profile-name">
             {profile?.name ?? formatHandle(profile?.handle)}
           </div>
           {isVerified(profile?.id) && (
-            <Tooltip content="Verified">
-              <BadgeCheckIcon className="w-6 h-6 text-brand" data-testid="profile-verified-badge" />
+            <Tooltip content={t`Verified`}>
+              <BadgeCheckIcon
+                className="text-brand h-6 w-6"
+                data-testid="profile-verified-badge"
+              />
             </Tooltip>
           )}
         </div>
-        <div className="flex items-center space-x-3" data-testid="profile-handle">
+        <div
+          className="flex items-center space-x-3"
+          data-testid="profile-handle"
+        >
           {profile?.name ? (
-            <Slug className="text-sm sm:text-base" slug={formatHandle(profile?.handle)} prefix="@" />
+            <Slug
+              className="text-sm sm:text-base"
+              slug={formatHandle(profile?.handle)}
+              prefix="@"
+            />
           ) : (
-            <Slug className="text-sm sm:text-base" slug={formatAddress(profile?.ownedBy)} />
+            <Slug
+              className="text-sm sm:text-base"
+              slug={formatAddress(profile?.ownedBy)}
+            />
           )}
-          {currentProfile && currentProfile?.id !== profile?.id && profile?.isFollowing && (
-            <div className="rounded-full bg-gray-200 px-2 py-0.5 text-xs dark:bg-gray-700">
-              {t('Follows you')}
-            </div>
-          )}
+          {currentProfile &&
+            currentProfile?.id !== profile?.id &&
+            profile?.isFollowing && (
+              <div className="rounded-full bg-gray-200 px-2 py-0.5 text-xs dark:bg-gray-700">
+                <Trans>Follows you</Trans>
+              </div>
+            )}
         </div>
       </div>
       {profile?.bio && (
-        <div className="markup linkify text-md mr-0 break-words sm:mr-10" data-testid="profile-bio">
+        <div
+          className="markup linkify text-md mr-0 break-words sm:mr-10"
+          data-testid="profile-bio"
+        >
           <Markup>{profile?.bio}</Markup>
         </div>
       )}
@@ -128,16 +167,28 @@ const Details: FC<Props> = ({ profile, following, setFollowing }) => {
         <div>
           {currentProfile?.id === profile?.id ? (
             <Link href="/settings">
-              <Button variant="secondary" icon={<CogIcon className="w-5 h-5" />} outline>
-                Edit Profile
+              <Button
+                variant="secondary"
+                icon={<CogIcon className="h-5 w-5" />}
+                outline
+              >
+                <Trans>Edit Profile</Trans>
               </Button>
             </Link>
           ) : followType !== 'RevertFollowModuleSettings' ? (
             following ? (
               <div className="flex space-x-2">
-                <Unfollow profile={profile} setFollowing={setFollowing} showText />
+                <Unfollow
+                  profile={profile}
+                  setFollowing={setFollowing}
+                  showText
+                />
                 {followType === 'FeeFollowModuleSettings' && (
-                  <SuperFollow profile={profile} setFollowing={setFollowing} again />
+                  <SuperFollow
+                    profile={profile}
+                    setFollowing={setFollowing}
+                    again
+                  />
                 )}
                 {currentProfile && <Message onClick={onMessageClick} />}
               </div>
@@ -166,10 +217,13 @@ const Details: FC<Props> = ({ profile, following, setFollowing }) => {
         </div>
         {currentProfile?.id !== profile?.id && (
           <>
-            <MutualFollowers setShowMutualFollowersModal={setShowMutualFollowersModal} profile={profile} />
+            <MutualFollowers
+              setShowMutualFollowersModal={setShowMutualFollowersModal}
+              profile={profile}
+            />
             <Modal
-              title="Followers you know"
-              icon={<UsersIcon className="w-5 h-5 text-brand" />}
+              title={t`Followers you know`}
+              icon={<UsersIcon className="text-brand h-5 w-5" />}
               show={showMutualFollowersModal}
               onClose={() => setShowMutualFollowersModal(false)}
             >
@@ -177,14 +231,17 @@ const Details: FC<Props> = ({ profile, following, setFollowing }) => {
             </Modal>
           </>
         )}
-        <div className="w-full divider" />
+        <div className="divider w-full" />
         <div className="space-y-2">
-          <MetaDetails icon={<HashtagIcon className="w-4 h-4"/>} dataTestId="profile-meta-id">
+          <MetaDetails
+            icon={<HashtagIcon className="h-4 w-4" />}
+            dataTestId="profile-meta-id"
+          >
             <Tooltip content={`#${profile?.id}`}>
               <a
-                href={`${RARIBLE_URL}/token/polygon/${getEnvConfig().lensHubProxyAddress}:${parseInt(
-                  profile?.id
-                )}`}
+                href={`${RARIBLE_URL}/token/polygon/${
+                  getEnvConfig().lensHubProxyAddress
+                }:${parseInt(profile?.id)}`}
                 target="_blank"
                 rel="noreferrer"
               >
@@ -193,7 +250,10 @@ const Details: FC<Props> = ({ profile, following, setFollowing }) => {
             </Tooltip>
           </MetaDetails>
           {getProfileAttribute(profile?.attributes, 'location') && (
-            <MetaDetails icon={<LocationMarkerIcon className="w-4 h-4" />} dataTestId="profile-meta-location">
+            <MetaDetails
+              icon={<LocationMarkerIcon className="h-4 w-4" />}
+              dataTestId="profile-meta-location"
+            >
               {getProfileAttribute(profile?.attributes, 'location')}
             </MetaDetails>
           )}
@@ -202,7 +262,7 @@ const Details: FC<Props> = ({ profile, following, setFollowing }) => {
               icon={
                 <img
                   src={`${STATIC_IMAGES_URL}/brands/ens.svg`}
-                  className="w-4 h-4"
+                  className="h-4 w-4"
                   height={16}
                   width={16}
                   alt="ENS Logo"
@@ -223,7 +283,7 @@ const Details: FC<Props> = ({ profile, following, setFollowing }) => {
                   )
                     ?.replace('https://', '')
                     .replace('http://', '')}`}
-                  className="w-4 h-4 rounded-full"
+                  className="h-4 w-4 rounded-full"
                   height={16}
                   width={16}
                   alt="Website"
@@ -232,13 +292,18 @@ const Details: FC<Props> = ({ profile, following, setFollowing }) => {
               dataTestId="profile-meta-website"
             >
               <a
-                href={`https://${getProfileAttribute(profile?.attributes, 'website')
+                href={`https://${getProfileAttribute(
+                  profile?.attributes,
+                  'website'
+                )
                   ?.replace('https://', '')
                   .replace('http://', '')}`}
                 target="_blank"
                 rel="noreferrer noopener me"
               >
-                {getProfileAttribute(profile?.attributes, 'website')?.replace('https://', '').replace('http://', '')}
+                {getProfileAttribute(profile?.attributes, 'website')
+                  ?.replace('https://', '')
+                  .replace('http://', '')}
               </a>
             </MetaDetails>
           )}
@@ -248,7 +313,7 @@ const Details: FC<Props> = ({ profile, following, setFollowing }) => {
                 resolvedTheme === 'dark' ? (
                   <img
                     src={`${STATIC_IMAGES_URL}/brands/twitter-light.svg`}
-                    className="w-4 h-4"
+                    className="h-4 w-4"
                     height={16}
                     width={16}
                     alt="Twitter Logo"
@@ -256,7 +321,7 @@ const Details: FC<Props> = ({ profile, following, setFollowing }) => {
                 ) : (
                   <img
                     src={`${STATIC_IMAGES_URL}/brands/twitter-dark.svg`}
-                    className="w-4 h-4"
+                    className="h-4 w-4"
                     height={16}
                     width={16}
                     alt="Twitter Logo"
@@ -266,45 +331,28 @@ const Details: FC<Props> = ({ profile, following, setFollowing }) => {
               dataTestId="profile-meta-twitter"
             >
               <a
-                href={`https://twitter.com/${getProfileAttribute(profile?.attributes, 'twitter')}`}
+                href={`https://twitter.com/${getProfileAttribute(
+                  profile?.attributes,
+                  'twitter'
+                )}`}
                 target="_blank"
                 rel="noreferrer noopener"
               >
-                {getProfileAttribute(profile?.attributes, 'twitter')?.replace('https://twitter.com/', '')}
+                {getProfileAttribute(profile?.attributes, 'twitter')?.replace(
+                  'https://twitter.com/',
+                  ''
+                )}
               </a>
             </MetaDetails>
           )}
         </div>
       </div>
-      {hasOnChainIdentity && (
-        <>
-          <div className="w-full divider" />
-          <div className="flex flex-row gap-3">
-            {profile?.onChainIdentity?.proofOfHumanity && (
-              <img
-                className="drop-shadow-xl"
-                height={75}
-                width={75}
-                src={`${STATIC_IMAGES_URL}/badges/poh.png`}
-                alt="POH Badge"
-              />
-            )}
-            {profile?.onChainIdentity?.ens?.name && (
-              <img
-                className="drop-shadow-xl"
-                height={75}
-                width={75}
-                src={`${STATIC_IMAGES_URL}/badges/ens.png`}
-                alt="ENS Badge"
-              />
-            )}
-          </div>
-        </>
-      )}
       <Badges profile={profile} />
-      {isStaff(currentProfile?.id) && staffMode && <ProfileStaffTool profile={profile} />}
+      {isStaff(currentProfile?.id) && staffMode && (
+        <ProfileStaffTool profile={profile} />
+      )}
     </div>
-  )
-}
+  );
+};
 
-export default Details
+export default Details;

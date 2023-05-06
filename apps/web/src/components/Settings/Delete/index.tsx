@@ -3,7 +3,6 @@ import UserProfile from '@components/Shared/UserProfile';
 import { useDisconnectXmtp } from '@components/utils/hooks/useXmtpClient';
 import { ExclamationIcon, TrashIcon } from '@heroicons/react/outline';
 import { Mixpanel } from '@lib/mixpanel';
-import onError from '@lib/onError';
 import resetAuthData from '@lib/resetAuthData';
 import splitSignature from '@lib/splitSignature';
 import { t, Trans } from '@lingui/macro';
@@ -18,7 +17,16 @@ import toast from 'react-hot-toast';
 import Custom404 from 'src/pages/404';
 import { useAppPersistStore, useAppStore } from 'src/store/app';
 import { PAGEVIEW } from 'src/tracking';
-import { Button, Card, GridItemEight, GridItemFour, GridLayout, Modal, Spinner, WarningMessage } from 'ui';
+import {
+  Button,
+  Card,
+  GridItemEight,
+  GridItemFour,
+  GridLayout,
+  Modal,
+  Spinner,
+  WarningMessage
+} from 'ui';
 import { useContractWrite, useDisconnect, useSignTypedData } from 'wagmi';
 
 import SettingsSidebar from '../Sidebar';
@@ -30,7 +38,7 @@ const DeleteSettings: FC = () => {
   const currentProfile = useAppStore((state) => state.currentProfile);
   const setCurrentProfile = useAppStore((state) => state.setCurrentProfile);
   const setProfileId = useAppPersistStore((state) => state.setProfileId);
-  const { isLoading: signLoading, signTypedDataAsync } = useSignTypedData({ onError });
+  const [isLoading, setIsLoading] = useState(false);
   const disconnectXmtp = useDisconnectXmtp();
   const { disconnect } = useDisconnect();
 
@@ -47,7 +55,18 @@ const DeleteSettings: FC = () => {
     location.href = '/';
   };
 
-  const { isLoading: writeLoading, write } = useContractWrite({
+  const onError = (error: any) => {
+    setIsLoading(false);
+    toast.error(
+      error?.data?.message ?? error?.message ?? Errors.SomethingWentWrong
+    );
+  };
+
+  const { signTypedDataAsync } = useSignTypedData({
+    onError
+  });
+
+  const { write } = useContractWrite({
     address: LENSHUB_PROXY,
     abi: LensHub,
     functionName: 'burnWithSig',
@@ -56,7 +75,7 @@ const DeleteSettings: FC = () => {
     onError
   });
 
-  const [createBurnProfileTypedData, { loading: typedDataLoading }] = useCreateBurnProfileTypedDataMutation({
+  const [createBurnProfileTypedData] = useCreateBurnProfileTypedDataMutation({
     onCompleted: async ({ createBurnProfileTypedData }) => {
       const { typedData } = createBurnProfileTypedData;
       const { tokenId, deadline } = typedData.value;
@@ -76,16 +95,16 @@ const DeleteSettings: FC = () => {
     }
 
     try {
-      await createBurnProfileTypedData({
+      return await createBurnProfileTypedData({
         variables: {
           options: { overrideSigNonce: userSigNonce },
           request: { profileId: currentProfile?.id }
         }
       });
-    } catch {}
+    } catch (error) {
+      onError(error);
+    }
   };
-
-  const isDeleting = typedDataLoading || signLoading || writeLoading;
 
   if (!currentProfile) {
     return <Custom404 />;
@@ -105,33 +124,44 @@ const DeleteSettings: FC = () => {
           </div>
           <p>
             <Trans>
-              Deleting your account is permanent. All your data will be wiped out immediately and you won't be
-              able to get it back.
+              Deleting your account is permanent. All your data will be wiped
+              out immediately and you won't be able to get it back.
             </Trans>
           </p>
           <div className="text-lg font-bold">What else you should know</div>
           <div className="lt-text-gray-500 divide-y text-sm dark:divide-gray-700">
             <p className="pb-3">
               <Trans>
-                You cannot restore your {APP_NAME} account if it was accidentally or wrongfully deleted.
+                You cannot restore your {APP_NAME} account if it was
+                accidentally or wrongfully deleted.
               </Trans>
             </p>
             <p className="py-3">
               <Trans>
-                Some account information may still be available in search engines, such as Google or Bing.
+                Some account information may still be available in search
+                engines, such as Google or Bing.
               </Trans>
             </p>
             <p className="py-3">
-              <Trans>Your @handle will be released immediately after deleting the account.</Trans>
+              <Trans>
+                Your @handle will be released immediately after deleting the
+                account.
+              </Trans>
             </p>
           </div>
           <Button
             variant="danger"
-            icon={isDeleting ? <Spinner variant="danger" size="xs" /> : <TrashIcon className="h-5 w-5" />}
-            disabled={isDeleting}
+            icon={
+              isLoading ? (
+                <Spinner variant="danger" size="xs" />
+              ) : (
+                <TrashIcon className="h-5 w-5" />
+              )
+            }
+            disabled={isLoading}
             onClick={() => setShowWarningModal(true)}
           >
-            {isDeleting ? t`Deleting...` : t`Delete your account`}
+            {isLoading ? t`Deleting...` : t`Delete your account`}
           </Button>
           <Modal
             title={t`Danger Zone`}
@@ -145,7 +175,8 @@ const DeleteSettings: FC = () => {
                 message={
                   <div className="leading-6">
                     <Trans>
-                      Confirm that you have read all consequences and want to delete your account anyway
+                      Confirm that you have read all consequences and want to
+                      delete your account anyway
                     </Trans>
                   </div>
                 }

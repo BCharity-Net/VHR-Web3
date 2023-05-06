@@ -1,34 +1,15 @@
 import { PencilAltIcon } from '@heroicons/react/outline';
+import { t, Trans } from '@lingui/macro';
 import formatHandle from 'lib/formatHandle';
 import getAvatar from 'lib/getAvatar';
 import { useRouter } from 'next/router';
-import type { FC, ReactNode } from 'react';
-import { useEffect, useState } from 'react';
+import type { FC } from 'react';
+import { useEffect } from 'react';
 import { useAppStore } from 'src/store/app';
 import { usePublicationStore } from 'src/store/publication';
-import { Card, Image, Modal, Tooltip } from 'ui';
+import { Card, Image, Modal } from 'ui';
 
 import NewPublication from '../NewPublication';
-
-type Action = 'update' | 'image' | 'video' | 'audio' | 'article';
-
-interface ActionProps {
-  icon: ReactNode;
-  text: string;
-  onClick: () => void;
-}
-
-const Action: FC<ActionProps> = ({ icon, text, onClick }) => (
-  <Tooltip content={text} placement="top">
-    <button
-      className="lt-text-gray-500 hover:text-brand flex flex-col items-center"
-      onClick={onClick}
-      type="button"
-    >
-      {icon}
-    </button>
-  </Tooltip>
-);
 
 const NewPost: FC = () => {
   const { query, isReady, push } = useRouter();
@@ -36,10 +17,8 @@ const NewPost: FC = () => {
   const showNewPostModal = usePublicationStore((state) => state.showNewPostModal);
   const setShowNewPostModal = usePublicationStore((state) => state.setShowNewPostModal);
   const setPublicationContent = usePublicationStore((state) => state.setPublicationContent);
-  const [selectedAction, setSelectedAction] = useState<Action>('update');
 
-  const openModal = (action: Action) => {
-    setSelectedAction(action);
+  const openModal = () => {
     setShowNewPostModal(true);
   };
 
@@ -66,32 +45,34 @@ const NewPost: FC = () => {
   }, []);
 
   return (
-    <Card className="p-5 space-y-3">
+    <Card className="space-y-3 p-5">
       <div className="flex items-center space-x-3">
         <Image
           onError={({ currentTarget }) => {
             currentTarget.src = getAvatar(currentProfile, false);
           }}
           src={getAvatar(currentProfile)}
-          className="h-9 w-9 bg-gray-200 rounded-full border dark:border-gray-700 cursor-pointer"
+          className="h-9 w-9 cursor-pointer rounded-full border bg-gray-200 dark:border-gray-700"
           onClick={() => push(`/u/${currentProfile?.handle}`)}
           alt={formatHandle(currentProfile?.handle)}
         />
         <button
-          className="w-full flex items-center space-x-2 bg-gray-100 dark:bg-gray-900 px-4 py-2 rounded-xl border border-gray-200 dark:border-gray-700"
+          className="flex w-full items-center space-x-2 rounded-xl border bg-gray-100 px-4 py-2 dark:border-gray-700 dark:bg-gray-900"
           type="button"
-          onClick={() => openModal('update')}
+          onClick={() => openModal()}
         >
           <PencilAltIcon className="h-5 w-5" />
-          <span>What's happening?</span>
+          <span>
+            <Trans>What's happening?</Trans>
+          </span>
         </button>
         <Modal
-          title="Create post"
+          title={t`Create post`}
           size="md"
           show={showNewPostModal}
           onClose={() => setShowNewPostModal(false)}
         >
-          {selectedAction === 'update' && <NewPublication />}
+          <NewPublication />
         </Modal>
       </div>
     </Card>

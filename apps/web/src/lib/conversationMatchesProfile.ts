@@ -1,10 +1,12 @@
-import { XMTP_PREFIX } from 'data/constants'
+import { XMTP_PREFIX } from 'data/constants';
 
 /**
+ * Returns a regex that matches a conversation ID for the given profile ID.
  *
- * @param profileId the profile id
- * @returns a regex that matches a conversation id for the given profile id
+ * @param profileId The profile ID to match.
+ * @returns A regular expression object that matches the conversation ID.
  */
-const conversationMatchesProfile = (profileId: string) => new RegExp(`${XMTP_PREFIX}/.*${profileId}`)
+const conversationMatchesProfile = (profileId: string) =>
+  new RegExp(`${XMTP_PREFIX}/.*${profileId}`);
 
-export default conversationMatchesProfile
+export default conversationMatchesProfile;

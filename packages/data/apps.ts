@@ -1,1 +1,16 @@
-export const apps = ['BCharity', 'lenster', 'lenstube', 'lensport', 'buttrfly', 'pinsta', 'chainjet', 'wav3s', 'lensta'];
+export const apps = [
+  'lenster',
+  'lenstube',
+  'lenstube-bytes',
+  'orb',
+  'phaver',
+  'lensport',
+  'buttrfly',
+  'memester',
+  'pinsta',
+  'chainjet',
+  'wav3s',
+  'lensta',
+  'beats',
+  'diversehq'
+];

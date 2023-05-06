@@ -2,13 +2,12 @@ query UserProfiles($ownedBy: [EthereumAddress!]) {
   profiles(request: { ownedBy: $ownedBy }) {
     items {
       ...ProfileFields
-      stats {
-        totalFollowing
-      }
+      interests
       isDefault
       dispatcher {
         address
         canUseRelay
+        sponsor
       }
     }
   }

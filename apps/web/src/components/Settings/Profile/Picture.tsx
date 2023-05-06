@@ -1,7 +1,6 @@
 import ChooseFile from '@components/Shared/ChooseFile';
 import { PencilIcon } from '@heroicons/react/outline';
 import { Mixpanel } from '@lib/mixpanel';
-import onError from '@lib/onError';
 import uploadCroppedImage, { readFile } from '@lib/profilePictureUtils';
 import splitSignature from '@lib/splitSignature';
 import { t, Trans } from '@lingui/macro';
@@ -10,7 +9,12 @@ import { AVATAR, LENSHUB_PROXY } from 'data/constants';
 import Errors from 'data/errors';
 import { getCroppedImg } from 'image-cropper/cropUtils';
 import type { Area } from 'image-cropper/types';
-import type { MediaSet, NftImage, Profile, UpdateProfileImageRequest } from 'lens';
+import type {
+  MediaSet,
+  NftImage,
+  Profile,
+  UpdateProfileImageRequest
+} from 'lens';
 import {
   useBroadcastMutation,
   useCreateSetProfileImageUriTypedDataMutation,
@@ -38,26 +42,34 @@ const Picture: FC<PictureProps> = ({ profile }) => {
   const setUserSigNonce = useAppStore((state) => state.setUserSigNonce);
   const currentProfile = useAppStore((state) => state.currentProfile);
   const [avatarDataUrl, setAvatarDataUrl] = useState('');
-  const [uploading, setUploading] = useState(false);
-  const { isLoading: signLoading, signTypedDataAsync } = useSignTypedData({ onError });
+  const [isLoading, setIsLoading] = useState(false);
   const [croppedAreaPixels, setCroppedAreaPixels] = useState<Area | null>(null);
   const [imageSrc, setImageSrc] = useState('');
   const [showCropModal, setShowCropModal] = useState(false);
+
+  // Dispatcher
+  const canUseRelay = currentProfile?.dispatcher?.canUseRelay;
+  const isSponsored = currentProfile?.dispatcher?.sponsor;
 
   const onCompleted = (__typename?: 'RelayError' | 'RelayerResult') => {
     if (__typename === 'RelayError') {
       return;
     }
 
+    setIsLoading(false);
     toast.success(t`Avatar updated successfully!`);
     Mixpanel.track(SETTINGS.PROFILE.SET_PICTURE);
   };
 
-  const {
-    isLoading: writeLoading,
-    error,
-    write
-  } = useContractWrite({
+  const onError = (error: any) => {
+    setIsLoading(false);
+    toast.error(
+      error?.data?.message ?? error?.message ?? Errors.SomethingWentWrong
+    );
+  };
+
+  const { signTypedDataAsync } = useSignTypedData({ onError });
+  const { error, write } = useContractWrite({
     address: LENSHUB_PROXY,
     abi: LensHub,
     functionName: 'setProfileImageURIWithSig',
@@ -66,10 +78,10 @@ const Picture: FC<PictureProps> = ({ profile }) => {
     onError
   });
 
-  const [broadcast, { loading: broadcastLoading }] = useBroadcastMutation({
+  const [broadcast] = useBroadcastMutation({
     onCompleted: ({ broadcast }) => onCompleted(broadcast.__typename)
   });
-  const [createSetProfileImageURITypedData, { loading: typedDataLoading }] =
+  const [createSetProfileImageURITypedData] =
     useCreateSetProfileImageUriTypedDataMutation({
       onCompleted: async ({ createSetProfileImageURITypedData }) => {
         const { id, typedData } = createSetProfileImageURITypedData;
@@ -83,7 +95,9 @@ const Picture: FC<PictureProps> = ({ profile }) => {
           sig
         };
         setUserSigNonce(userSigNonce + 1);
-        const { data } = await broadcast({ variables: { request: { id, signature } } });
+        const { data } = await broadcast({
+          variables: { request: { id, signature } }
+        });
         if (data?.broadcast.__typename === 'RelayError') {
           return write?.({ recklesslySetUnpreparedArgs: [inputStruct] });
         }
@@ -91,7 +105,7 @@ const Picture: FC<PictureProps> = ({ profile }) => {
       onError
     });
 
-  const [createSetProfileImageURIViaDispatcher, { loading: dispatcherLoading }] =
+  const [createSetProfileImageURIViaDispatcher] =
     useCreateSetProfileImageUriViaDispatcherMutation({
       onCompleted: ({ createSetProfileImageURIViaDispatcher }) =>
         onCompleted(createSetProfileImageURIViaDispatcher.__typename),
@@ -102,8 +116,10 @@ const Picture: FC<PictureProps> = ({ profile }) => {
     const { data } = await createSetProfileImageURIViaDispatcher({
       variables: { request }
     });
-    if (data?.createSetProfileImageURIViaDispatcher?.__typename === 'RelayError') {
-      await createSetProfileImageURITypedData({
+    if (
+      data?.createSetProfileImageURIViaDispatcher?.__typename === 'RelayError'
+    ) {
+      return await createSetProfileImageURITypedData({
         variables: {
           options: { overrideSigNonce: userSigNonce },
           request
@@ -122,7 +138,7 @@ const Picture: FC<PictureProps> = ({ profile }) => {
     }
 
     try {
-      setUploading(true);
+      setIsLoading(true);
       const ipfsUrl = await uploadCroppedImage(croppedImage);
       const dataUrl = croppedImage.toDataURL('image/png');
 
@@ -131,27 +147,22 @@ const Picture: FC<PictureProps> = ({ profile }) => {
         url: ipfsUrl
       };
 
-      if (currentProfile?.dispatcher?.canUseRelay) {
-        await createViaDispatcher(request);
-      } else {
-        await createSetProfileImageURITypedData({
-          variables: {
-            options: { overrideSigNonce: userSigNonce },
-            request
-          }
-        });
-      }
       setAvatarDataUrl(dataUrl);
+      if (canUseRelay && isSponsored) {
+        return await createViaDispatcher(request);
+      }
+      return await createSetProfileImageURITypedData({
+        variables: {
+          options: { overrideSigNonce: userSigNonce },
+          request
+        }
+      });
     } catch (error) {
-      toast.error(t`Upload failed`);
+      onError(error);
     } finally {
       setShowCropModal(false);
-      setUploading(false);
     }
   };
-
-  const isLoading =
-    typedDataLoading || dispatcherLoading || signLoading || writeLoading || broadcastLoading || uploading;
 
   const onFileChange = async (event: ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
@@ -161,7 +172,8 @@ const Picture: FC<PictureProps> = ({ profile }) => {
     }
   };
 
-  const profilePictureUrl = profile?.picture?.original?.url ?? profile?.picture?.uri;
+  const profilePictureUrl =
+    profile?.picture?.original?.url ?? profile?.picture?.uri;
   const profilePictureIpfsUrl = profilePictureUrl
     ? imageProxy(sanitizeDStorageUrl(profilePictureUrl), AVATAR)
     : '';
@@ -191,14 +203,26 @@ const Picture: FC<PictureProps> = ({ profile }) => {
             type="submit"
             disabled={isLoading || !imageSrc}
             onClick={() => uploadAndSave()}
-            icon={isLoading ? <Spinner size="xs" /> : <PencilIcon className="h-4 w-4" />}
+            icon={
+              isLoading ? (
+                <Spinner size="xs" />
+              ) : (
+                <PencilIcon className="h-4 w-4" />
+              )
+            }
           >
             <Trans>Save</Trans>
           </Button>
         </div>
       </Modal>
       <div className="space-y-1.5">
-        {error && <ErrorMessage className="mb-3" title={t`Transaction failed!`} error={error} />}
+        {error && (
+          <ErrorMessage
+            className="mb-3"
+            title={t`Transaction failed!`}
+            error={error}
+          />
+        )}
         <div className="space-y-3">
           <div>
             <Image

@@ -3,35 +3,41 @@ import { t } from '@lingui/macro';
 import { useCallback } from 'react';
 import { toast } from 'react-hot-toast';
 import { usePublicationStore } from 'src/store/publication';
-import type { NewBCharityAttachment } from 'src/types';
+import type { NewLensterAttachment } from 'src/types';
 import { v4 as uuid } from 'uuid';
 
 const useUploadAttachments = () => {
   const addAttachments = usePublicationStore((state) => state.addAttachments);
-  const updateAttachments = usePublicationStore((state) => state.updateAttachments);
-  const removeAttachments = usePublicationStore((state) => state.removeAttachments);
+  const updateAttachments = usePublicationStore(
+    (state) => state.updateAttachments
+  );
+  const removeAttachments = usePublicationStore(
+    (state) => state.removeAttachments
+  );
   const setIsUploading = usePublicationStore((state) => state.setIsUploading);
 
   const handleUploadAttachments = useCallback(
-    async (attachments: any): Promise<NewBCharityAttachment[]> => {
+    async (attachments: any): Promise<NewLensterAttachment[]> => {
       setIsUploading(true);
       const files = Array.from(attachments);
       const attachmentIds: string[] = [];
 
-      const previewAttachments: NewBCharityAttachment[] = files.map((file: any) => {
-        const attachmentId = uuid();
-        attachmentIds.push(attachmentId);
+      const previewAttachments: NewLensterAttachment[] = files.map(
+        (file: any) => {
+          const attachmentId = uuid();
+          attachmentIds.push(attachmentId);
 
-        return {
-          id: attachmentId,
-          file: file,
-          previewItem: URL.createObjectURL(file),
-          original: {
-            url: URL.createObjectURL(file),
-            mimeType: file.type
-          }
-        };
-      });
+          return {
+            id: attachmentId,
+            file: file,
+            previewItem: URL.createObjectURL(file),
+            original: {
+              url: URL.createObjectURL(file),
+              mimeType: file.type
+            }
+          };
+        }
+      );
 
       const hasLargeAttachment = files.map((file: any) => {
         const isImage = file.type.includes('image');
@@ -57,7 +63,7 @@ const useUploadAttachments = () => {
       });
 
       addAttachments(previewAttachments);
-      let attachmentsIPFS: NewBCharityAttachment[] = [];
+      let attachmentsIPFS: NewLensterAttachment[] = [];
       try {
         if (hasLargeAttachment.includes(false)) {
           setIsUploading(false);
@@ -67,13 +73,15 @@ const useUploadAttachments = () => {
 
         const attachmentsUploaded = await uploadToIPFS(attachments);
         if (attachmentsUploaded) {
-          attachmentsIPFS = previewAttachments.map((attachment: NewBCharityAttachment, index: number) => ({
-            ...attachment,
-            original: {
-              url: attachmentsUploaded[index].original.url,
-              mimeType: attachmentsUploaded[index].original.mimeType
-            }
-          }));
+          attachmentsIPFS = previewAttachments.map(
+            (attachment: NewLensterAttachment, index: number) => ({
+              ...attachment,
+              original: {
+                url: attachmentsUploaded[index].original.url,
+                mimeType: attachmentsUploaded[index].original.mimeType
+              }
+            })
+          );
           updateAttachments(attachmentsIPFS);
         }
       } catch {

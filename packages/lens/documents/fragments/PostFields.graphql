@@ -8,6 +8,8 @@ fragment PostFields on Post {
   hasCollectedByMe
   onChainContentURI
   isGated
+  isDataAvailability
+  dataAvailabilityProofs
   canComment(profileId: $profileId) {
     result
   }
@@ -17,12 +19,6 @@ fragment PostFields on Post {
   canDecrypt(profileId: $profileId) {
     result
     reasons
-  }
-  collectedBy {
-    address
-    defaultProfile {
-      ...ProfileFields
-    }
   }
   collectModule {
     ...CollectModuleFields

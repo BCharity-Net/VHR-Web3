@@ -1,9 +1,10 @@
 export const hashflags: Record<string, string> = {
-  bcharity: 'bcharity',
   lenster: 'lenster',
   lenstube: 'lenstube',
   bitcoin: 'bitcoin',
+  btc: 'bitcoin',
   ethereum: 'ethereum',
+  eth: 'ethereum',
   lens: 'lens',
   bts: 'bts',
   btsarmy: 'btsarmy',
@@ -12,5 +13,7 @@ export const hashflags: Record<string, string> = {
   bhm: 'blm',
   pride: 'pride',
   lgbt: 'pride',
-  voted: 'voted'
-}
+  voted: 'voted',
+  hashtag: 'hashtag',
+  bonsai: 'bonsai'
+};

@@ -1,10 +1,12 @@
 import downloadJson from '@lib/downloadJson';
+import { Mixpanel } from '@lib/mixpanel';
 import { Trans } from '@lingui/macro';
 import type { NotificationRequest } from 'lens';
 import { useNotificationsLazyQuery } from 'lens';
 import type { FC } from 'react';
 import { useState } from 'react';
 import { useAppStore } from 'src/store/app';
+import { SETTINGS } from 'src/tracking';
 import { Button, Card } from 'ui';
 
 const Notifications: FC = () => {
@@ -23,24 +25,32 @@ const Notifications: FC = () => {
   });
 
   const handleExportClick = async () => {
+    Mixpanel.track(SETTINGS.EXPORT.NOTIFICATIONS);
     setExporting(true);
     const fetchNotifications = async (cursor?: string) => {
       const { data } = await exportNotificiations({
         variables: { request: { ...request, cursor } },
         onCompleted: (data) => {
           setNotifications((prev) => {
-            const newNotifications = data.notifications.items.filter((newNotification) => {
-              return !prev.some(
-                (notification) => notification.notificationId === newNotification.notificationId
-              );
-            });
+            const newNotifications = data.notifications.items.filter(
+              (newNotification) => {
+                return !prev.some(
+                  (notification) =>
+                    notification.notificationId ===
+                    newNotification.notificationId
+                );
+              }
+            );
 
             return [...prev, ...newNotifications];
           });
         }
       });
 
-      if (data?.notifications.items.length === 0 || !data?.notifications.pageInfo.next) {
+      if (
+        data?.notifications.items.length === 0 ||
+        !data?.notifications.pageInfo.next
+      ) {
         setFetchCompleted(true);
         setExporting(false);
       } else {

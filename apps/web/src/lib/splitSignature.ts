@@ -1,12 +1,13 @@
-import { utils } from 'ethers'
+import { utils } from 'ethers';
 
 /**
+ * Split an Ethereum signature into its constituent parts.
  *
- * @param signature Signature to split
- * @returns signature parts
+ * @param signature The signature to split.
+ * @returns The signature's `r`, `s`, and `v` components.
  */
 const splitSignature = (signature: string) => {
-  return utils.splitSignature(signature)
-}
+  return utils.splitSignature(signature);
+};
 
-export default splitSignature
+export default splitSignature;

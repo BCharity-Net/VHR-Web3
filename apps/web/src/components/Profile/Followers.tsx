@@ -1,54 +1,51 @@
-import Loader from '@components/Shared/Loader'
-import UserProfile from '@components/Shared/UserProfile'
-import WalletProfile from '@components/Shared/WalletProfile'
-import { UsersIcon } from '@heroicons/react/outline'
-import type { FollowersRequest, Profile, Wallet } from 'lens'
-import { useFollowersQuery } from 'lens'
-import formatHandle from 'lib/formatHandle'
-import type { FC } from 'react'
-import { useState } from 'react'
-import { useInView } from 'react-cool-inview'
-import { useTranslation } from 'react-i18next'
-import { useAppStore } from 'src/store/app'
-import { FollowSource } from 'src/tracking'
-import { EmptyState, ErrorMessage } from 'ui'
+import Loader from '@components/Shared/Loader';
+import UserProfile from '@components/Shared/UserProfile';
+import WalletProfile from '@components/Shared/WalletProfile';
+import { UsersIcon } from '@heroicons/react/outline';
+import { t, Trans } from '@lingui/macro';
+import type { FollowersRequest, Profile, Wallet } from 'lens';
+import { useFollowersQuery } from 'lens';
+import formatHandle from 'lib/formatHandle';
+import type { FC } from 'react';
+import { useState } from 'react';
+import { Virtuoso } from 'react-virtuoso';
+import { useAppStore } from 'src/store/app';
+import { FollowSource } from 'src/tracking';
+import { EmptyState, ErrorMessage } from 'ui';
 
-interface Props {
-  profile: Profile
+interface FollowersProps {
+  profile: Profile;
 }
 
-const Followers: FC<Props> = ({ profile }) => {
-  const { t } = useTranslation('common')
-  const [hasMore, setHasMore] = useState(true)
-  const currentProfile = useAppStore((state) => state.currentProfile)
+const Followers: FC<FollowersProps> = ({ profile }) => {
+  const [hasMore, setHasMore] = useState(true);
+  const currentProfile = useAppStore((state) => state.currentProfile);
 
   // Variables
-  const request: FollowersRequest = { profileId: profile?.id, limit: 30 }
+  const request: FollowersRequest = { profileId: profile?.id, limit: 30 };
 
   const { data, loading, error, fetchMore } = useFollowersQuery({
     variables: { request },
     skip: !profile?.id
-  })
+  });
 
-  const followers = data?.followers?.items
-  const pageInfo = data?.followers?.pageInfo
+  const followers = data?.followers?.items;
+  const pageInfo = data?.followers?.pageInfo;
 
-  const { observe } = useInView({
-    onChange: async ({ inView }) => {
-      if (!inView || !hasMore) {
-        return
-      }
-
-      await fetchMore({
-        variables: { request: { ...request, cursor: pageInfo?.next } }
-      }).then(({ data }) => {
-        setHasMore(data?.followers?.items?.length > 0)
-      })
+  const onEndReached = async () => {
+    if (!hasMore) {
+      return;
     }
-  })
+
+    await fetchMore({
+      variables: { request: { ...request, cursor: pageInfo?.next } }
+    }).then(({ data }) => {
+      setHasMore(data?.followers?.items?.length > 0);
+    });
+  };
 
   if (loading) {
-    return <Loader message="Loading followers" />
+    return <Loader message={t`Loading followers`} />;
   }
 
   if (followers?.length === 0) {
@@ -57,40 +54,46 @@ const Followers: FC<Props> = ({ profile }) => {
         message={
           <div>
             <span className="mr-1 font-bold">@{formatHandle(profile?.handle)}</span>
-            <span>{t('No followers')}</span>
+            <span>
+              <Trans>doesn’t have any followers yet.</Trans>
+            </span>
           </div>
         }
-        icon={<UsersIcon className="w-8 h-8 text-brand" />}
+        icon={<UsersIcon className="text-brand h-8 w-8" />}
         hideCard
       />
-    )
+    );
   }
 
   return (
-    <div className="max-h-[80vh] overflow-y-auto" id="scrollableFollowersDiv" data-testid="followers-modal">
-      <ErrorMessage className="m-5" title="Failed to load followers" error={error} />
-      <div className="divide-y dark:divide-gray-700">
-        {followers?.map((follower, index) => (
-          <div className="p-5" key={follower?.wallet?.defaultProfile?.id}>
-            {follower?.wallet?.defaultProfile ? (
-              <UserProfile
-                profile={follower?.wallet?.defaultProfile as Profile}
-                isFollowing={follower?.wallet?.defaultProfile?.isFollowedByMe}
-                followPosition={index + 1}
-                followSource={FollowSource.FOLLOWERS_MODAL}
-                showBio
-                showFollow={currentProfile?.id !== follower?.wallet?.defaultProfile?.id}
-                showUserPreview={false}
-              />
-            ) : (
-              <WalletProfile wallet={follower?.wallet as Wallet} />
-            )}
-          </div>
-        ))}
-      </div>
-      {hasMore && <span ref={observe} />}
+    <div className="max-h-[80vh] overflow-y-auto" data-testid="followers-modal">
+      <ErrorMessage className="m-5" title={t`Failed to load followers`} error={error} />
+      <Virtuoso
+        className="virtual-profile-list"
+        data={followers}
+        endReached={onEndReached}
+        itemContent={(index, follower) => {
+          return (
+            <div className="p-5">
+              {follower?.wallet?.defaultProfile ? (
+                <UserProfile
+                  profile={follower?.wallet?.defaultProfile as Profile}
+                  isFollowing={follower?.wallet?.defaultProfile?.isFollowedByMe}
+                  followPosition={index + 1}
+                  followSource={FollowSource.FOLLOWERS_MODAL}
+                  showBio
+                  showFollow={currentProfile?.id !== follower?.wallet?.defaultProfile?.id}
+                  showUserPreview={false}
+                />
+              ) : (
+                <WalletProfile wallet={follower?.wallet as Wallet} />
+              )}
+            </div>
+          );
+        }}
+      />
     </div>
-  )
-}
+  );
+};
 
-export default Followers
+export default Followers;

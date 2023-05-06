@@ -7,11 +7,11 @@ import { Button } from 'ui';
 
 import Create from './Create';
 
-interface Props {
+interface NoGalleryProps {
   profile: Profile;
 }
 
-const NoGallery: FC<Props> = ({ profile }) => {
+const NoGallery: FC<NoGalleryProps> = ({ profile }) => {
   const [showCreateModal, setShowCreateModal] = useState(false);
   const currentProfile = useAppStore((state) => state.currentProfile);
 
@@ -57,7 +57,9 @@ const NoGallery: FC<Props> = ({ profile }) => {
       <div className="text-center">
         {!isOwner ? (
           <>
-            <h5 className="mb-2 text-xl">{profile.name ?? profile.handle} hasn't setup gallery yet!</h5>
+            <h5 className="mb-2 text-xl">
+              {profile.name ?? profile.handle} hasn't setup gallery yet!
+            </h5>
             <p className="text-sm opacity-60">Check again later</p>
           </>
         ) : (
@@ -66,7 +68,9 @@ const NoGallery: FC<Props> = ({ profile }) => {
               <Trans>Welcome to your gallery</Trans>
             </h5>
             <p className="text-sm opacity-60">
-              <Trans>Create a curated space for your digital collectibles</Trans>
+              <Trans>
+                Create a curated space for your digital collectibles
+              </Trans>
             </p>
           </>
         )}
